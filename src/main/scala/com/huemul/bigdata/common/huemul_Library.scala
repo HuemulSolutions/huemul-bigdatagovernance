@@ -362,6 +362,55 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     return SQL_DF
   }
   
+  /**
+   * Valid if Hive is alive
+   */
+  def testHive(): Boolean = {
+    var Resultado:Boolean = false
+    try {
+      val DFNow = this.spark.sql("select now() as IsAlive")
+      this.spark.sql("show tables")
+      
+      if (DFNow.first().getAs[String]("IsAlive").length() >= 10)
+        Resultado = true
+        
+    } catch {
+      case e: Exception => e.printStackTrace() // TODO: handle error
+      Resultado = false
+    }
+           
+    return Resultado
+  }
+  
+  /**
+   * Valid if HDFS is alive
+   */
+  def testHDFS(path: String): Boolean = {
+    var Resultado:Boolean = false
+    try {
+      val DFWrite = this.spark.sql("select now() as IsAlive")
+      val WriteValue = DFWrite.first().getAs[String]("IsAlive")
+      
+      val fullpath = s"${path}/testHDFS_IsAlive.parquet"
+      println(s"test: save HDFS to path: ${fullpath}")
+      
+      DFWrite.write.mode(SaveMode.Overwrite).format("parquet").save(fullpath)
+      DFWrite.unpersist()
+      
+      //try to open data and read
+      val DFRead = this.spark.read.format("parquet").load(fullpath)
+      val ReadValue = DFWrite.first().getAs[String]("IsAlive")
+     
+      if (ReadValue == WriteValue)
+        Resultado = true
+        
+    } catch {
+      case e: Exception => e.printStackTrace() // TODO: handle error
+      Resultado = false
+    }
+           
+    return Resultado
+  }
   
   
 }
