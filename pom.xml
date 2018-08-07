@@ -15,6 +15,21 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  
+  <developers>
+    <developer>
+      <name>Sebastián Rodríguez</name>
+      <email>developer.code@HuemulSolutions.com</email>
+      <organization>Huemul Solutions</organization>
+      <organizationUrl>http://www.HuemulSolutions.com</organizationUrl>
+    </developer>
+  </developers>
+  
+  <scm>
+    <connection>https://github.com/HuemulSolutions/HuemulBigData.git</connection>
+    <developerConnection>https://github.com/HuemulSolutions/HuemulBigData.git</developerConnection>
+    <url>https://github.com/HuemulSolutions/HuemulBigData</url>
+   </scm>
  
 
   <properties>
