@@ -1,26 +1,36 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.huemul</groupId>
-  <version>1.0</version>
-  <name>HuemulSolutions - BigData Warehouse</name>
-  <description></description>
+  <groupId>com.huemul.bigdata</groupId>
+  <artifactId>bigdata</artifactId>
+  <version>0.8</version>
+  <packaging>jar</packaging>
+  <name>HuemulSolutions - BigData</name>
+  <description>Enable full data quality and data linage for BigData Projects</description>
+  <url>http://www.HuemulSolutions.com</url>
   <inceptionYear>2018</inceptionYear>
   <licenses>
     <license>
-      <name>Choose License</name>
-      <url>http://....</url>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
-  <!-- Example definition of a non-restrictive license (MIT)
-   <licenses>
-    <license>
-      <name>MIT License</name>
-      <url>http://www.opensource.org/licenses/mit-license.php</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-   -->
+  
+  <developers>
+    <developer>
+      <name>Sebastián Rodríguez</name>
+      <email>developer.code@HuemulSolutions.com</email>
+      <organization>Huemul Solutions</organization>
+      <organizationUrl>http://www.HuemulSolutions.com</organizationUrl>
+    </developer>
+  </developers>
+  
+  <scm>
+    <connection>https://github.com/HuemulSolutions/HuemulBigData.git</connection>
+    <developerConnection>https://github.com/HuemulSolutions/HuemulBigData.git</developerConnection>
+    <url>https://github.com/HuemulSolutions/HuemulBigData</url>
+   </scm>
+ 
 
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -134,5 +144,5 @@
 
     </plugins>
   </build>
-  <artifactId>bigdata</artifactId>
+ 
 </project>
