@@ -1,19 +1,19 @@
 # HuemulBigData
-Esta librería permite simplificar y optimizar el trabajo de DataEngineering para la creación
-de cargas de información en ambientes complejos de datos.
+Esta librerï¿½a permite simplificar y optimizar el trabajo de DataEngineering para la creaciï¿½n
+de cargas de informaciï¿½n en ambientes complejos de datos.
 
-algunas características:
+algunas caracterï¿½sticas:
 
-- Permite hacer la definición de tablas en una clase de scala
+- Permite hacer la definiciï¿½n de tablas en una clase de scala
     - las tablas son creadas en parquet (o el formato que el usuario escoja)
-    - las tablas también son automáticamente creadas en Hive, como tabla externa
-    - si usa Impala, se crea automáticamente la referencia
+    - las tablas tambiï¿½n son automï¿½ticamente creadas en Hive, como tabla externa
+    - si usa Impala, se crea automï¿½ticamente la referencia
     
 - En la clase en scala, se definen los campos, con los criterios de DataQuality en forma sencilla.
- 	- máximos y mínimos de largo, fechas y números
- 	- Validación de Primary Key
- 	- Validación de Foreing Key (solo al momento de crear los datos)
- 	- Posibilidad de agregar DataQuality fácilmente, definiendo umbrales de éxito
+ 	- mï¿½ximos y mï¿½nimos de largo, fechas y nï¿½meros
+ 	- Validaciï¿½n de Primary Key
+ 	- Validaciï¿½n de Foreing Key (solo al momento de crear los datos)
+ 	- Posibilidad de agregar DataQuality fï¿½cilmente, definiendo umbrales de ï¿½xito
  	
  - Control de procesos
  	- Se tiene trazabilidad de archivos RAW --> Tablas
