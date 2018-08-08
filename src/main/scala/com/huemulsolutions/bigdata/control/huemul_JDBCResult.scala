@@ -1,4 +1,4 @@
-package com.huemul.bigdata.control
+package com.huemulsolutions.bigdata.control
 
 import org.apache.spark.sql._
 

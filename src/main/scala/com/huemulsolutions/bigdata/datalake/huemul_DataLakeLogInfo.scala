@@ -1,4 +1,4 @@
-package com.huemul.bigdata.datalake
+package com.huemulsolutions.bigdata.datalake
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql._

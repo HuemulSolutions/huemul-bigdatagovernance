@@ -1,11 +1,11 @@
-package com.huemul.bigdata.control
+package com.huemulsolutions.bigdata.control
 
 
 import org.apache.spark.sql.types._
 import java.util.Calendar;
-import com.huemul.bigdata.datalake.huemul_DataLake
-import com.huemul.bigdata.common._
-import com.huemul.bigdata.tables._
+import com.huemulsolutions.bigdata.datalake.huemul_DataLake
+import com.huemulsolutions.bigdata.common._
+import com.huemulsolutions.bigdata.tables._
 
 class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulLib = phuemulLib

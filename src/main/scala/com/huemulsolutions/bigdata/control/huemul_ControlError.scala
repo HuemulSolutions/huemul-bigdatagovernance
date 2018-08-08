@@ -1,7 +1,7 @@
-package com.huemul.bigdata.control
+package com.huemulsolutions.bigdata.control
 
-import com.huemul.bigdata.common.huemul_Library
-import com.huemul.bigdata.datalake.huemul_DataLake
+import com.huemulsolutions.bigdata.common.huemul_Library
+import com.huemulsolutions.bigdata.datalake.huemul_DataLake
 
 class huemul_ControlError (huemulLib: huemul_Library) extends Serializable  {
   var ControlError_Trace: String = null

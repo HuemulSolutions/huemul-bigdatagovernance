@@ -1,4 +1,4 @@
-package com.huemul.bigdata.dataquality
+package com.huemulsolutions.bigdata.dataquality
 
 import org.apache.spark.sql._
 

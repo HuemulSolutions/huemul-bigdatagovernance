@@ -1,4 +1,4 @@
-package com.huemul.bigdata.common
+package com.huemulsolutions.bigdata.common
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
@@ -15,7 +15,7 @@ import java.text.SimpleDateFormat
 import scala.io.Source
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.permission.FsPermission
-import com.huemul.bigdata.control.huemul_JDBCResult
+import com.huemulsolutions.bigdata.control.huemul_JDBCResult
 import scala.math.BigInt.int2bigInt
       
 /*

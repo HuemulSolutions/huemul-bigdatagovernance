@@ -1,9 +1,9 @@
-package com.huemul.bigdata.datalake
+package com.huemulsolutions.bigdata.datalake
 
 import java.util.Calendar
 import scala.collection.mutable.ArrayBuffer
-import com.huemul.bigdata.common.huemul_Library
-import com.huemul.bigdata.common.huemul_KeyValuePath
+import com.huemulsolutions.bigdata.common.huemul_Library
+import com.huemulsolutions.bigdata.common.huemul_KeyValuePath
 import huemulType_FileType._
 
 class huemul_DataLakeSetting(huemulLib: huemul_Library) extends Serializable {

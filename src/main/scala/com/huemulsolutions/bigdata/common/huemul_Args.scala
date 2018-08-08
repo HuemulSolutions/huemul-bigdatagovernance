@@ -1,4 +1,4 @@
-package com.huemul.bigdata.common
+package com.huemulsolutions.bigdata.common
 
 import java.util.HashMap;
 

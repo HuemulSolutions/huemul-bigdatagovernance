@@ -1,11 +1,11 @@
-package com.huemul.bigdata.datalake
+package com.huemulsolutions.bigdata.datalake
 
 import org.apache.spark.rdd._
 import java.util.Calendar
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
-import com.huemul.bigdata.common._
-import com.huemul.bigdata.control._
+import com.huemulsolutions.bigdata.common._
+import com.huemulsolutions.bigdata.control._
 import huemulType_FileType._
 
 class huemul_DataLake(huemulLib: huemul_Library) extends Serializable {
@@ -373,7 +373,7 @@ instrucciones (parte b):
    5. seguir las instrucciones del código Class que viene a continuación.
 */
 
-package com.huemul.bigdata.datalake{Param_PackageBase.concat(".").concat(Param_PackageModule) }
+package com.huemulsolutions.bigdata.datalake{Param_PackageBase.concat(".").concat(Param_PackageModule) }
 
 import bigdata.warehouse.huemul._
 import bigdata.warehouse.control._

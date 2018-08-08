@@ -1,4 +1,4 @@
-package com.huemul.bigdata.datalake
+package com.huemulsolutions.bigdata.datalake
 
 import huemulType_Separator._
 

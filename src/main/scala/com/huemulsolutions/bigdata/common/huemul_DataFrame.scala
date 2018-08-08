@@ -1,12 +1,12 @@
-package com.huemul.bigdata.common
+package com.huemulsolutions.bigdata.common
 
 import org.apache.spark.sql._
 import org.apache.spark.rdd._
 import org.apache.spark.sql.types._
 import scala.collection.mutable._
-import com.huemul.bigdata.dataquality._
-import com.huemul.bigdata.tables._
-import com.huemul.bigdata.control._
+import com.huemulsolutions.bigdata.dataquality._
+import com.huemulsolutions.bigdata.tables._
+import com.huemulsolutions.bigdata.control._
 
 /**
  * Def_Fabric_DataInfo: Define method to improve DQ over DF

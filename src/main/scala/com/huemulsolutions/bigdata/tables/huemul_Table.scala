@@ -1,4 +1,4 @@
-package com.huemul.bigdata.tables
+package com.huemulsolutions.bigdata.tables
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
@@ -9,10 +9,10 @@ import scala.collection.mutable._
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.permission.FsPermission
 import huemulType_Tables._
-import com.huemul.bigdata._
-import com.huemul.bigdata.dataquality._
-import com.huemul.bigdata.common._
-import com.huemul.bigdata.control._
+import com.huemulsolutions.bigdata._
+import com.huemulsolutions.bigdata.dataquality._
+import com.huemulsolutions.bigdata.common._
+import com.huemulsolutions.bigdata.control._
 
 
 class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends Serializable {

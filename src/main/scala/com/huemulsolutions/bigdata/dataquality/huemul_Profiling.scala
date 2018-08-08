@@ -1,4 +1,4 @@
-package com.huemul.bigdata.dataquality
+package com.huemulsolutions.bigdata.dataquality
 
 class huemul_Profiling extends Serializable {
   var max_Col: String = null

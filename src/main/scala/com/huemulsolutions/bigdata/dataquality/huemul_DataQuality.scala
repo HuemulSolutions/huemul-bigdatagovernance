@@ -1,7 +1,7 @@
-package com.huemul.bigdata.dataquality
+package com.huemulsolutions.bigdata.dataquality
 
 import org.apache.spark.sql.types._
-import com.huemul.bigdata.tables.huemul_Columns
+import com.huemulsolutions.bigdata.tables.huemul_Columns
 
 class huemul_DataQuality(FieldName: huemul_Columns
             ,IsAggregated: Boolean

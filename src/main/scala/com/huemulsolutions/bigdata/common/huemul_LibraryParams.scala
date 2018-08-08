@@ -1,4 +1,4 @@
-package com.huemul.bigdata.common
+package com.huemulsolutions.bigdata.common
 
 class huemul_LibraryParams() extends Serializable {
   var param_name: String = null

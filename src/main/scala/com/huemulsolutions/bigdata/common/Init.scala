@@ -1,6 +1,6 @@
-package com.huemul.bigdata.common
+package com.huemulsolutions.bigdata.common
 
-import com.huemul.bigdata.control.huemul_Control
+import com.huemulsolutions.bigdata.control.huemul_Control
 
 object Init {
   def main(args: Array[String]): Unit = {

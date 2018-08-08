@@ -1,4 +1,4 @@
-package com.huemul.bigdata.tables
+package com.huemulsolutions.bigdata.tables
 
 object huemulType_Tables extends Enumeration {
   type huemulType_Tables = Value

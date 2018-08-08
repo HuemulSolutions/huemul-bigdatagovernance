@@ -1,4 +1,4 @@
-package com.huemul.bigdata.tables
+package com.huemulsolutions.bigdata.tables
 
 import org.apache.spark.sql.types._
 import huemulType_SecurityLevel._
