@@ -42,7 +42,8 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   
   
   //Insert processExcec
-  if (RegisterInControlLog)
+  if (RegisterInControlLog) {
+    println(s"ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
   huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_add (
             '${Control_Id}'  --p_processExec_id
            ,'${Control_IdParent}'  --p_processExec_idParent
@@ -55,6 +56,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
            ,'${Control_ClassName}'  --p_MDM_ProcessName
           )
           """)
+          }
   
   //Insert new record
   if (RegisterInControlLog)
@@ -1854,7 +1856,7 @@ LANGUAGE plpgsql;
                          , ${x.MDM_EnableDTLog} --as Column_EnableDTLog
                          , ${x.MDM_EnableOldValue} --as Column_EnableOldValue
                          , ${x.MDM_EnableProcessLog} --as Column_EnableProcessLog
-                         , '${x.DefaultValue}' --as Column_DefaultValue
+                         , '${x.DefaultValue.replace("'", "''")}' --as Column_DefaultValue
                          , '${x.SecurityLevel}' --as Column_SecurityLevel
                          , '${x.EncryptedType}' --as Column_Encrypted
                          , '${x.ARCO_Data}' --as Column_ARCO
