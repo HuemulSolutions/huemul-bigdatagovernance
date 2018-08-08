@@ -174,6 +174,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   
   def ApplyTableDefinition(): Boolean = {
+    if (this.PartitionField == null)
+      PartitionField = ""
+      
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
     } foreach { x =>
@@ -371,12 +374,16 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       var DataTypeLocal = Field.DataType.sql
+      
+      /*
       if (ForHive && DataTypeLocal.toUpperCase() == "DATE"){
         DataTypeLocal = TimestampType.sql
       }
+      * 
+      */
           
       //create StructType
-      if (PartitionField.toUpperCase() != x.getName.toUpperCase()) {
+      if (PartitionField != null && PartitionField.toUpperCase() != x.getName.toUpperCase()) {
         ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
         coma = ","
       }
@@ -557,10 +564,18 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         if (huemulLib.HasName(Field.get_SQLForUpdate()))
           StringSQL_FullJoin += s",CAST(${Field.get_SQLForUpdate()} as ${Field.DataType.sql} ) as new_update_${x.getName} \n"
           
-        //Change field, take update field if exist, otherwise use get_name()
-        if (Field.MDM_EnableOldValue || Field.MDM_EnableDTLog || Field.MDM_EnableProcessLog)
-          StringSQL_FullJoin += s",CAST(CASE WHEN ${if (this.huemulLib.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName())} = ${if (columnExist) "old.".concat(x.getName) else "null"} THEN 0 ELSE 1 END as ${Field.DataType.sql} ) as __Change_${x.getName}  \n"
-          
+        if (Field.MDM_EnableOldValue || Field.MDM_EnableDTLog || Field.MDM_EnableProcessLog) {
+          //Change field, take update field if exist, otherwise use get_name()
+          if (huemulLib.HasName(Field.get_MappedName()))
+            StringSQL_FullJoin += s",CAST(CASE WHEN ${if (this.huemulLib.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName())} = ${if (columnExist) "old.".concat(x.getName) else "null"} THEN 0 ELSE 1 END as Integer ) as __Change_${x.getName}  \n"
+          else {
+            StringSQL_FullJoin += s",CAST(0 as Integer ) as __Change_${x.getName}  \n"
+            //Cambio aplicado el 8 de agosto, al no tener campo del df mapeado se cae, 
+            //la solución es poner el campo "tiene cambio" en falso
+          }
+              
+        }
+      
         if (Field.MDM_EnableOldValue){
           if (OfficialColumns.filter { y => y.name == s"${x.getName}_old"}.length == 0) //no existe columna en dataframe
             StringSQL_FullJoin += s",CAST(null AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
@@ -578,7 +593,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
             StringSQL_FullJoin += s",CAST(null AS STRING) as old_${x.getName}_ProcessLog \n"
           else //existe columna en dataframe
             StringSQL_FullJoin += s",CAST(old.${x.getName}_ProcessLog AS STRING) as old_${x.getName}_ProcessLog \n"
-        }
+        }   
+        
+        
           
       }
        
@@ -1211,38 +1228,46 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     return new huemul_AuthorizationPair(ClassNameInvoker,PackageNameInvoker)
   }
   
-  def doFullhuemul(NewAlias: String) {
+  def executeFull(NewAlias: String): Boolean = {
+    var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_DoFullhuemul.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      this.dohuemul(Control, NewAlias, true, true)      
+      Result = this.dohuemul(Control, NewAlias, true, true)      
     else {
       RaiseError(s"Don't have access to doFullhuemul in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
+    
+    return Result
   }
   
-  def DoOnlyInserthuemul(NewAlias: String) {
+  def executeOnlyInsert(NewAlias: String): Boolean = {
+    var Result: Boolean = false
     if (this.TableType == huemulType_Tables.Transaction)
       RaiseError("DoOnlyInserthuemul is not available for Transaction Tables")
 
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_DoFullhuemul.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      this.dohuemul(Control, NewAlias, true, false) 
+      Result = this.dohuemul(Control, NewAlias, true, false) 
     else {
       RaiseError(s"Don't have access to DoOnlyInserthuemul in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
          
+    return Result
   }
   
-  def DoOnlyUpdatehuemul(NewAlias: String) {   
+  def executeOnlyUpdate(NewAlias: String): Boolean = {   
+    var Result: Boolean = false
     if (this.TableType == huemulType_Tables.Transaction)
       RaiseError("DoOnlyUpdatehuemul is not available for Transaction Tables")
       
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_DoFullhuemul.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      this.dohuemul(Control, NewAlias, false, true)  
+      Result = this.dohuemul(Control, NewAlias, false, true)  
     else {
       RaiseError(s"Don't have access to DoOnlyUpdatehuemul in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
+    
+    return Result
         
   }
   /**
@@ -1347,7 +1372,12 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     if (CreateInHive ) {
       if (LocalControl != null) LocalControl.NewStep("Save: Drop Hive table Def")
       if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(sqlDrop01)
-      huemulLib.spark.sql(sqlDrop01)
+      try {
+        huemulLib.spark.sql(sqlDrop01)
+      } catch {
+        case t: Throwable => println(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+      }
+     
     }
     
     if (PartitionField == null || PartitionField == ""){
@@ -1390,23 +1420,24 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       if (LocalControl != null) LocalControl.NewStep("Save: Create Table in Hive Metadata")
       DF_CreateTableScript() 
       
-      if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(sqlDrop01)
-      huemulLib.spark.sql(sqlDrop01)
       huemulLib.spark.sql(CreateTableScript)
       
-      val sqlrefresh01 = s"refresh ${GetTable()}"
-      if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(sqlrefresh01)
-      if (LocalControl != null) LocalControl.NewStep("Save: Refresh Hive Metadata")
-      huemulLib.spark.sql(sqlrefresh01)
+      //val sqlrefresh01 = s"refresh ${GetTable()}"
+      //if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(sqlrefresh01)
+      //if (LocalControl != null) LocalControl.NewStep("Save: Refresh Hive Metadata")
+      //huemulLib.spark.sql(sqlrefresh01)
       
     }
 
+    /*
     //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
     if (CreateInHive && (PartitionField != null && PartitionField != "")) {
       if (LocalControl != null) LocalControl.NewStep("Save: Repair Hive Metadata")
       println(s"MSCK REPAIR TABLE ${GetTable()}")
       huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
     }
+    * 
+    */
   }
   
   
