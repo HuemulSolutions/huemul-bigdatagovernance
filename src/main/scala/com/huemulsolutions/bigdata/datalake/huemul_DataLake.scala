@@ -294,10 +294,10 @@ instrucciones (parte a):
    4. seguir las instrucciones "parte b"
 */
 
-import bigdata.warehouse.huemul._
-import bigdata.warehouse.control._
-import bigdata.warehouse.tables._
-import bigdata.warehouse.dataquality._
+import com.huemulsolutions.bigdata.common._
+import com.huemulsolutions.bigdata.control._
+import com.huemulsolutions.bigdata.tables._
+import com.huemulsolutions.bigdata.dataquality._
 import org.apache.spark.sql.types._
 
 
@@ -323,9 +323,9 @@ class ${TableName}(huemulLib: huemul_Library, Control: huemul_Control) extends h
     this.DQ_MaxNewRecords_Perc = null
     
     //Security to execute huemul (not defined = all clasess can execute the command)
-    this.WhoCanRun_DoFullhuemul.AddAccess("master_${param_ClassName}","${Param_PackageBase.concat(".").concat(Param_PackageModule)}")
-    //this.WhoCanRun_DoOnlyInserthuemul.AddAccess([[changeclassname]],[[my.package.path]])
-    //this.WhoCanRun_DoOnlyUpdatehuemul.AddAccess([[changeclassname]],[[my.package.path]])
+    this.WhoCanRun_executeFull.AddAccess("master_${param_ClassName}","${Param_PackageBase.concat(".").concat(Param_PackageModule)}")
+    //this.WhoCanRun_executeOnlyInsert.AddAccess([[changeclassname]],[[my.package.path]])
+    //this.WhoCanRun_executeOnlyUpdate.AddAccess([[changeclassname]],[[my.package.path]])
 
     /********************************/
     /**** DEFINICION DE COLUMNAS ****/
@@ -373,12 +373,12 @@ instrucciones (parte b):
    5. seguir las instrucciones del código Class que viene a continuación.
 */
 
-package com.huemulsolutions.bigdata.datalake{Param_PackageBase.concat(".").concat(Param_PackageModule) }
+package ${Param_PackageBase.concat(".").concat(Param_PackageModule) }
 
-import bigdata.warehouse.huemul._
-import bigdata.warehouse.control._
-import bigdata.warehouse.tables._
-import bigdata.warehouse.dataquality._
+import com.huemulsolutions.bigdata.common._
+import com.huemulsolutions.bigdata.control._
+import com.huemulsolutions.bigdata.tables._
+import com.huemulsolutions.bigdata.dataquality._
 import huemulType_Tables._
 import java.util.Calendar;
 import org.apache.spark.sql.types._
@@ -389,7 +389,7 @@ object master_${param_ClassName} {
   
   /**
    * Este código se ejecuta cuando se llama el JAR desde spark2-submit. el código está preparado para hacer reprocesamiento masivo.
-  /*
+  */
   def main(args : Array[String]) {
     //Creación API
     val huemulLib  = new huemul_Library(s"BigData Fabrics - ${Symbol}{this.getClass.getSimpleName}", args, GlobalSettings.Global)
@@ -482,7 +482,7 @@ ${LocalMapping}
       /*************** FIN PROCESO *****************************/
       /*********************************************************/
       Control.NewStep("Crear Tabla")      
-      huemulTable.doFullhuemul("FinalSaved")
+      huemulTable.executeFull("FinalSaved")
             
       Control.FinishProcessOK
     } catch {
