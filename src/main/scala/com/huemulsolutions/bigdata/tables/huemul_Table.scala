@@ -77,9 +77,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   var GlobalPaths: ArrayBuffer[huemul_KeyValuePath] = null
   
-  var WhoCanRun_DoFullhuemul: huemul_Authorization = new huemul_Authorization()
-  var WhoCanRun_DoOnlyInserthuemul: huemul_Authorization = new huemul_Authorization()
-  var WhoCanRun_DoOnlyUpdatehuemul: huemul_Authorization = new huemul_Authorization()
+  var WhoCanRun_executeFull: huemul_Authorization = new huemul_Authorization()
+  var WhoCanRun_executeOnlyInsert: huemul_Authorization = new huemul_Authorization()
+  var WhoCanRun_executeOnlyUpdate: huemul_Authorization = new huemul_Authorization()
   
   private var CreateInHive: Boolean = true
   /**
@@ -1217,7 +1217,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   }
   
   private def GetClassAndPackage(): huemul_AuthorizationPair = {
-    val Invoker = new Exception().getStackTrace()(1)
+    val Invoker = new Exception().getStackTrace()(2)
     val InvokerName: String = Invoker.getClassName().replace("$", "")
     
     val ArrayResult = InvokerName.split('.')
@@ -1231,10 +1231,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   def executeFull(NewAlias: String): Boolean = {
     var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
-    if (this.WhoCanRun_DoFullhuemul.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this.WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.dohuemul(Control, NewAlias, true, true)      
     else {
-      RaiseError(s"Don't have access to doFullhuemul in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
+      RaiseError(s"Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
     
     return Result
@@ -1246,10 +1246,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       RaiseError("DoOnlyInserthuemul is not available for Transaction Tables")
 
     val whoExecute = GetClassAndPackage()  
-    if (this.WhoCanRun_DoFullhuemul.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this.WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.dohuemul(Control, NewAlias, true, false) 
     else {
-      RaiseError(s"Don't have access to DoOnlyInserthuemul in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
+      RaiseError(s"Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
          
     return Result
@@ -1261,10 +1261,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       RaiseError("DoOnlyUpdatehuemul is not available for Transaction Tables")
       
     val whoExecute = GetClassAndPackage()  
-    if (this.WhoCanRun_DoFullhuemul.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this.WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.dohuemul(Control, NewAlias, false, true)  
     else {
-      RaiseError(s"Don't have access to DoOnlyUpdatehuemul in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
+      RaiseError(s"Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
     
     return Result
@@ -1429,15 +1429,14 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
     }
 
-    /*
+    
     //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
     if (CreateInHive && (PartitionField != null && PartitionField != "")) {
       if (LocalControl != null) LocalControl.NewStep("Save: Repair Hive Metadata")
       println(s"MSCK REPAIR TABLE ${GetTable()}")
       huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
     }
-    * 
-    */
+    
   }
   
   
