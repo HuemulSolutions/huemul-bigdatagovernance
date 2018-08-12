@@ -16,6 +16,8 @@ import com.huemulsolutions.bigdata.control._
 
 
 class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends Serializable {
+  if (Control == null) 
+    sys.error("Control is null in huemul_DataFrame")
   
   /*  ********************************************************************************
    *****   T A B L E   P R O P E R T I E S    **************************************** 
@@ -166,7 +168,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   /**
    get execution's info about rows and DF
    */
-  var DataFramehuemul: huemul_DataFrame = new huemul_DataFrame(huemulLib)  
+  var DataFramehuemul: huemul_DataFrame = new huemul_DataFrame(huemulLib, Control)  
 
    
   var Error_isError: Boolean = false
@@ -177,6 +179,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     if (this.PartitionField == null)
       PartitionField = ""
       
+      
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
     } foreach { x =>
@@ -186,6 +189,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       if (x.get(this).isInstanceOf[huemul_Columns]) {
         val DataField = x.get(this).asInstanceOf[huemul_Columns]
         DataField.Set_MyName(x.getName)
+        
+        if (DataField.DQ_MaxLen != null && DataField.DQ_MaxLen < 0)
+          Control.RaiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive  ")
       }
       
       //Nombre de DQ      
@@ -942,7 +948,25 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
       if (Control != null) {
         val NumTotalDistinct = DF_Distinct.count()
-        Control.RegisterDQ(TableName, DataBaseName, DataFramehuemul.Alias, null, s"FK - ${SQLFields}", s"FK Validation: PK Table: ${InstanceTable.GetTable()} ", false, true, SQLLeft, 0, null, Result.Description, NumTotalDistinct - TotalLeft, TotalLeft, NumTotalDistinct) 
+        
+        val Values = new huemul_DQRecord()
+        Values.Table_Name =TableName
+        Values.BBDD_Name =DataBaseName
+        Values.DF_Alias = DataFramehuemul.Alias
+        Values.ColumnName =null
+        Values.DQ_Name =s"FK - ${SQLFields}"
+        Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.GetTable()} "
+        Values.DQ_IsAggregate =false
+        Values.DQ_RaiseError =true
+        Values.DQ_SQLFormula =SQLLeft
+        Values.DQ_Error_MaxNumRows =0
+        Values.DQ_Error_MaxPercent =null
+        Values.DQ_ResultDQ =Result.Description
+        Values.DQ_NumRowsOK =NumTotalDistinct - TotalLeft
+        Values.DQ_NumRowsError =TotalLeft
+        Values.DQ_NumRowsTotal =NumTotalDistinct
+  
+        this.DataFramehuemul.DQ_Register(Values) 
       }
       
       DF_Distinct.unpersist()
@@ -973,7 +997,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     }    
     
     if (huemulLib.DebugMode) println("DF_SAVE DQ: VALIDATE PRIMARY KEY")
-    val DQ_PK = DataFramehuemul.DQ_DuplicateValues(Control, this, SQL_PK, null, "PK")
+    val DQ_PK = DataFramehuemul.DQ_DuplicateValues(this, SQL_PK, null, "PK")
     if (DQ_PK.isError) {
       Result.isError = true
       Result.Description += s"error PK: ${DQ_PK.Description} " 
@@ -983,7 +1007,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     //Aplicar DQ según definición de campos en DataDefDQ: Unique Values    
     SQL_Unique_FinalTable().foreach { x => 
       if (huemulLib.DebugMode) println(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
-      val DQ_Unique = DataFramehuemul.DQ_DuplicateValues(Control, this, x, null) 
+      val DQ_Unique = DataFramehuemul.DQ_DuplicateValues(this, x, null) 
       if (DQ_Unique.isError) {
         Result.isError = true
         Result.Description += s"error Unique for field $x: ${DQ_Unique.Description} "
@@ -1054,7 +1078,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         ArrayDQ.append(MinMaxDT)
     }
     
-    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.GetDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, Control, this)
+    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.GetDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this)
     if (ResultDQ.isError){
       Result.isError = true
       Result.Description += ResultDQ.Description
@@ -1441,8 +1465,12 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true) {
-    this.DataFramehuemul.DF_from_SQL(Alias, sql, SaveInTemp)
-    
+    this.DataFramehuemul.DF_from_SQL(Alias, sql, SaveInTemp) 
+  }
+  
+  
+  def DF_from_DF(Alias: String, DF: DataFrame, SaveInTemp: Boolean = true) {
+    this.DataFramehuemul.setDataFrame(DF, Alias, SaveInTemp)  
   }
   
   
