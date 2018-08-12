@@ -37,9 +37,9 @@
 	</distributionManagement>
   
   <scm>
-    <connection>https://github.com/HuemulSolutions/HuemulBigData.git</connection>
-    <developerConnection>https://github.com/HuemulSolutions/HuemulBigData.git</developerConnection>
-    <url>https://github.com/HuemulSolutions/HuemulBigData</url>
+    <connection>https://github.com/HuemulSolutions/Bigdata-Governance.git</connection>
+    <developerConnection>https://github.com/HuemulSolutions/Bigdata-Governance.git</developerConnection>
+    <url>https://github.com/HuemulSolutions/Bigdata-Governance</url>
    </scm>
  
 
