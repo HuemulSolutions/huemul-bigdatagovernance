@@ -9,19 +9,19 @@ import com.huemulsolutions.bigdata.tables._
 
 class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulLib = phuemulLib
-  var Control_Id: String = huemulLib.huemul_GetUniqueId() 
+  val Control_Id: String = huemulLib.huemul_GetUniqueId() 
   
   val Invoker = new Exception().getStackTrace()
   
-  var Control_IdParent: String = if (ControlParent == null) null else ControlParent.Control_Id
-  var Control_ClassName: String = Invoker(1).getClassName().replace("$", "")
-  var Control_ProcessName: String = Invoker(1).getMethodName().replace("$", "")
-  var Control_FileName: String = Invoker(1).getFileName.replace("$", "")
+  val Control_IdParent: String = if (ControlParent == null) null else ControlParent.Control_Id
+  val Control_ClassName: String = Invoker(1).getClassName().replace("$", "")
+  val Control_ProcessName: String = Invoker(1).getMethodName().replace("$", "")
+  val Control_FileName: String = Invoker(1).getFileName.replace("$", "")
   
   var Control_Start_dt: Calendar = Calendar.getInstance()
   var Control_Stop_dt: Calendar = null
-  var Control_Error: huemul_ControlError = new huemul_ControlError(huemulLib)
-  var Control_Params: scala.collection.mutable.ListBuffer[huemul_LibraryParams] = new scala.collection.mutable.ListBuffer[huemul_LibraryParams]() 
+  val Control_Error: huemul_ControlError = new huemul_ControlError(huemulLib)
+  val Control_Params: scala.collection.mutable.ListBuffer[huemul_LibraryParams] = new scala.collection.mutable.ListBuffer[huemul_LibraryParams]() 
   private var LocalIdStep: String = ""
   private var Step_IsDQ: Boolean = false
   
@@ -1672,7 +1672,7 @@ LANGUAGE plpgsql;
         """)
   }
   
-  def RegisterDQ (Table_Name: String
+  def RegisterDQuality (Table_Name: String
                              , BBDD_Name: String
                              , DF_Alias: String
                              , ColumnName: String
