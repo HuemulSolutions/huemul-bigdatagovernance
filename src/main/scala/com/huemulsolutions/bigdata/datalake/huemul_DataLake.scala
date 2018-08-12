@@ -8,7 +8,7 @@ import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import huemulType_FileType._
 
-class huemul_DataLake(huemulLib: huemul_Library) extends Serializable {
+class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extends Serializable {
   /***
    * Id of data (example: PlanCuentas)
    */
@@ -34,7 +34,7 @@ class huemul_DataLake(huemulLib: huemul_Library) extends Serializable {
   /***
    * get execution's info about rows and DF
    */
-  var DataFramehuemul: huemul_DataFrame = new huemul_DataFrame(huemulLib)
+  var DataFramehuemul: huemul_DataFrame = new huemul_DataFrame(huemulLib, Control)
   var Log: huemul_DataLakeLogInfo = new huemul_DataLakeLogInfo()
   
    
