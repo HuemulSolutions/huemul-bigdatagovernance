@@ -87,7 +87,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       if (!Ejec.IsError && ApplicationInUse == null)
         ContinueInLoop = false
       else {      
-        if (huemulLib.DebugMode) println("waiting for Singleton...")
+        if (huemulLib.DebugMode) println(s"waiting for Singleton... (class: $Control_ClassName, appId: ${huemulLib.IdApplication} )")
         //if has error, verify other process still alive
         if (NumCycle == 1) //First cicle don't wait
           Thread.sleep(10000)
