@@ -55,8 +55,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
   def Alias: String = {return AliasDF}
   //val TempDir: String = 
   
-  private var DQ_List: ArrayBuffer[huemul_DQRecord] = new ArrayBuffer[huemul_DQRecord]()
-  def getDQ(): ArrayBuffer[huemul_DQRecord] = {return DQ_List}
+  private var DQ_Result: ArrayBuffer[huemul_DQRecord] = new ArrayBuffer[huemul_DQRecord]()
+  def getDQResult(): ArrayBuffer[huemul_DQRecord] = {return DQ_Result}
   
   def setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean = true) {
     DataDF = DF
@@ -124,34 +124,33 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       DQResult.Description = s"Rows($NumRows) > MaxDef($NumMax)"
     }
     
-    if (Control != null) {
-      var TableName: String = null
-      var BBDDName: String = null
-      if (ObjectData.isInstanceOf[huemul_Table]) {
-        val Data = ObjectData.asInstanceOf[huemul_Table]
-        TableName = Data.TableName
-        BBDDName = Data.GetDataBase(Data.DataBase)
-      }
-      
-      val Values = new huemul_DQRecord()
-      Values.Table_Name =TableName
-      Values.BBDD_Name =BBDDName
-      Values.DF_Alias =AliasDF
-      Values.ColumnName =null
-      Values.DQ_Name ="DQ_NumRowsInterval"
-      Values.DQ_Description =s"N° rows between ${NumMin} and ${NumMax}"
-      Values.DQ_IsAggregate =true
-      Values.DQ_RaiseError =true
-      Values.DQ_SQLFormula =""
-      Values.DQ_Error_MaxNumRows =0
-      Values.DQ_Error_MaxPercent =Decimal.apply(0)
-      Values.DQ_ResultDQ =DQResult.Description
-      Values.DQ_NumRowsOK =0
-      Values.DQ_NumRowsError =0
-      Values.DQ_NumRowsTotal =NumRows
-      
-      this.DQ_Register(Values)    
+    var TableName: String = null
+    var BBDDName: String = null
+    if (ObjectData.isInstanceOf[huemul_Table]) {
+      val Data = ObjectData.asInstanceOf[huemul_Table]
+      TableName = Data.TableName
+      BBDDName = Data.GetDataBase(Data.DataBase)
     }
+    
+    val Values = new huemul_DQRecord()
+    Values.Table_Name =TableName
+    Values.BBDD_Name =BBDDName
+    Values.DF_Alias =AliasDF
+    Values.ColumnName =null
+    Values.DQ_Name ="DQ_NumRowsInterval"
+    Values.DQ_Description =s"N° rows between ${NumMin} and ${NumMax}"
+    Values.DQ_IsAggregate =true
+    Values.DQ_RaiseError =true
+    Values.DQ_SQLFormula =""
+    Values.DQ_Error_MaxNumRows =0
+    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_NumRowsOK =0
+    Values.DQ_NumRowsError =0
+    Values.DQ_NumRowsTotal =NumRows
+    
+    this.DQ_Register(Values)    
+    
     
     return DQResult
   }
@@ -172,35 +171,35 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       DQResult.Description = s"Rows($NumRows) > NumExpected($NumRowsExpected)"
     }
     
-    if (Control != null) {
-      var TableName: String = null
-      var BBDDName: String = null
-      if (ObjectData.isInstanceOf[huemul_Table]) {
-        val Data = ObjectData.asInstanceOf[huemul_Table]
-        TableName = Data.TableName
-        BBDDName = Data.GetDataBase(Data.DataBase)
-      }
+    
+    var TableName: String = null
+    var BBDDName: String = null
+    if (ObjectData.isInstanceOf[huemul_Table]) {
+      val Data = ObjectData.asInstanceOf[huemul_Table]
+      TableName = Data.TableName
+      BBDDName = Data.GetDataBase(Data.DataBase)
+    }
+    
+    val Values = new huemul_DQRecord()
+    Values.Table_Name =TableName
+    Values.BBDD_Name =BBDDName
+    Values.DF_Alias =AliasDF
+    Values.ColumnName =null
+    Values.DQ_Name ="DQ_NumRows"
+    Values.DQ_Description =s"N° rows = ${NumRowsExpected} "
+    Values.DQ_IsAggregate =true
+    Values.DQ_RaiseError =true
+    Values.DQ_SQLFormula =""
+    Values.DQ_Error_MaxNumRows = 0
+    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_NumRowsOK =0
+    Values.DQ_NumRowsError =0
+    Values.DQ_NumRowsTotal =NumRows
       
-      val Values = new huemul_DQRecord()
-      Values.Table_Name =TableName
-      Values.BBDD_Name =BBDDName
-      Values.DF_Alias =AliasDF
-      Values.ColumnName =null
-      Values.DQ_Name ="DQ_NumRows"
-      Values.DQ_Description =s"N° rows = ${NumRowsExpected} "
-      Values.DQ_IsAggregate =true
-      Values.DQ_RaiseError =true
-      Values.DQ_SQLFormula =""
-      Values.DQ_Error_MaxNumRows = 0
-      Values.DQ_Error_MaxPercent =Decimal.apply(0)
-      Values.DQ_ResultDQ =DQResult.Description
-      Values.DQ_NumRowsOK =0
-      Values.DQ_NumRowsError =0
-      Values.DQ_NumRowsTotal =NumRows
-        
-      this.DQ_Register(Values)
-      
-    }    
+    this.DQ_Register(Values)
+    
+   
     
     return DQResult
   }
@@ -245,8 +244,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       //Query Final
       SQL_Compare = s""" ${SQL_Compare} \n FROM ${this.AliasDF} DF FULL JOIN __Compare ON ${SQLWhere} """
       if (huemulLib.DebugMode) println(SQL_Compare)
-      DQResult.dqDF = huemulLib.spark.sql(SQL_Compare)
-      DQResult.dqDF.createOrReplaceTempView("__DF_CompareResult")
+      DQResult.dqDF = huemulLib.DF_ExecuteQuery("__DF_CompareResult", SQL_Compare)
       
       if (huemulLib.DebugMode) DQResult.dqDF.show()
       
@@ -254,7 +252,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       //Query Resume
       SQL_Resumen = s"${SQL_Resumen} FROM __DF_CompareResult "
       if (huemulLib.DebugMode) println(SQL_Resumen)
-      val DF_FinalResult = huemulLib.spark.sql(SQL_Resumen)
+      val DF_FinalResult = huemulLib.DF_ExecuteQuery("__DF_CompareResultRes",SQL_Resumen)
       if (huemulLib.DebugMode) DF_FinalResult.show()
       
       
@@ -284,35 +282,35 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     }
     
     
-    if (Control != null) {
-      var TableName: String = null
-      var BBDDName: String = null
-      if (ObjectData.isInstanceOf[huemul_Table]) {
-        val Data = ObjectData.asInstanceOf[huemul_Table]
-        TableName = Data.TableName
-        BBDDName = Data.GetDataBase(Data.DataBase)
-      }
-      
-      val Values = new huemul_DQRecord()
-      Values.Table_Name =TableName
-      Values.BBDD_Name =BBDDName
-      Values.DF_Alias =AliasDF
-      Values.ColumnName =null
-      Values.DQ_Name ="COMPARE"
-      Values.DQ_Description ="COMPARE TWO DATAFRAMES"
-      Values.DQ_IsAggregate =true
-      Values.DQ_RaiseError =true
-      Values.DQ_SQLFormula =""
-      Values.DQ_Error_MaxNumRows =0
-      Values.DQ_Error_MaxPercent =Decimal.apply(0)
-      Values.DQ_ResultDQ =DQResult.Description
-      Values.DQ_NumRowsOK =NumColumns - NumColumnsError
-      Values.DQ_NumRowsError =NumColumnsError
-      Values.DQ_NumRowsTotal =NumColumns
+    
+    var TableName: String = null
+    var BBDDName: String = null
+    if (ObjectData.isInstanceOf[huemul_Table]) {
+      val Data = ObjectData.asInstanceOf[huemul_Table]
+      TableName = Data.TableName
+      BBDDName = Data.GetDataBase(Data.DataBase)
+    }
+    
+    val Values = new huemul_DQRecord()
+    Values.Table_Name =TableName
+    Values.BBDD_Name =BBDDName
+    Values.DF_Alias =AliasDF
+    Values.ColumnName =null
+    Values.DQ_Name ="COMPARE"
+    Values.DQ_Description ="COMPARE TWO DATAFRAMES"
+    Values.DQ_IsAggregate =true
+    Values.DQ_RaiseError =true
+    Values.DQ_SQLFormula =""
+    Values.DQ_Error_MaxNumRows =0
+    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_NumRowsOK =NumColumns - NumColumnsError
+    Values.DQ_NumRowsError =NumColumnsError
+    Values.DQ_NumRowsTotal =NumColumns
 
-      this.DQ_Register(Values)
+    this.DQ_Register(Values)
       
-    }  
+    
     
     
     return DQResult
@@ -356,7 +354,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (Colfield != null) {
       DataType = Colfield(0).dataType
     }
-    println(DataType)
+    if (huemulLib.DebugMode) println(DataType)
     var SQL : String = s""" SELECT "$Col"            as ColName
                                   ,cast(Min($Col) as String)        as min_Col
                                   ,cast(Max($Col) as String)         as max_Col
@@ -460,7 +458,6 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
                         """   
 
     var DQDup: Long = 0
-    
     if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(SQL)
     try {
       DQResult.dqDF = huemulLib.spark.sql(SQL) 
@@ -491,34 +488,32 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       }
     }
     
-    if (Control != null) {
-      var TableName: String = null
-      var BBDDName: String = null
-      if (ObjectData.isInstanceOf[huemul_Table]) {
-        val Data = ObjectData.asInstanceOf[huemul_Table]
-        TableName = Data.TableName
-        BBDDName = Data.GetDataBase(Data.DataBase)
-      }
-      
-      val Values = new huemul_DQRecord()
-      Values.Table_Name =TableName
-      Values.BBDD_Name =BBDDName
-      Values.DF_Alias =AliasDF
-      Values.ColumnName =ColDuplicate
-      Values.DQ_Name ="UNIQUE"
-      Values.DQ_Description =s"UNIQUE VALUES FOR FIELD $ColDuplicate"
-      Values.DQ_IsAggregate =true
-      Values.DQ_RaiseError =true
-      Values.DQ_SQLFormula =""
-      Values.DQ_Error_MaxNumRows =0
-      Values.DQ_Error_MaxPercent =Decimal.apply(0)
-      Values.DQ_ResultDQ =DQResult.Description
-      Values.DQ_NumRowsOK =0
-      Values.DQ_NumRowsError =DQDup
-      Values.DQ_NumRowsTotal =NumRows
+    var TableName: String = null
+    var BBDDName: String = null
+    if (ObjectData.isInstanceOf[huemul_Table]) {
+      val Data = ObjectData.asInstanceOf[huemul_Table]
+      TableName = Data.TableName
+      BBDDName = Data.GetDataBase(Data.DataBase)
+    }
+    
+    val Values = new huemul_DQRecord()
+    Values.Table_Name =TableName
+    Values.BBDD_Name =BBDDName
+    Values.DF_Alias =AliasDF
+    Values.ColumnName = if (TempFileName == "PK") null else ColDuplicate
+    Values.DQ_Name = if (TempFileName == "PK") "PK" else "UNIQUE"
+    Values.DQ_Description =s"UNIQUE VALUES FOR FIELD $ColDuplicate"
+    Values.DQ_IsAggregate =true
+    Values.DQ_RaiseError =true
+    Values.DQ_SQLFormula =""
+    Values.DQ_Error_MaxNumRows =0
+    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_NumRowsOK =0
+    Values.DQ_NumRowsError =DQDup
+    Values.DQ_NumRowsTotal =NumRows
 
-      this.DQ_Register(Values)
-    }  
+    this.DQ_Register(Values)
     
     return DQResult
   }
@@ -562,34 +557,34 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       }
     }
     
-    if (Control != null) {
-      var TableName: String = null
-      var BBDDName: String = null
-      if (ObjectData.isInstanceOf[huemul_Table]) {
-        val Data = ObjectData.asInstanceOf[huemul_Table]
-        TableName = Data.TableName
-        BBDDName = Data.GetDataBase(Data.DataBase)
-      }
-      
-      val Values = new huemul_DQRecord()
-      Values.Table_Name =TableName
-      Values.BBDD_Name =BBDDName
-      Values.DF_Alias =AliasDF
-      Values.ColumnName =Col
-      Values.DQ_Name ="NOT NULL"
-      Values.DQ_Description =s"NOT NULL VALUES FOR FIELD $Col"
-      Values.DQ_IsAggregate =false
-      Values.DQ_RaiseError =true
-      Values.DQ_SQLFormula =""
-      Values.DQ_Error_MaxNumRows =0
-      Values.DQ_Error_MaxPercent =Decimal.apply(0)
-      Values.DQ_ResultDQ =DQResult.Description
-      Values.DQ_NumRowsOK =0
-      Values.DQ_NumRowsError =DQDup
-      Values.DQ_NumRowsTotal =0
+  
+    var TableName: String = null
+    var BBDDName: String = null
+    if (ObjectData.isInstanceOf[huemul_Table]) {
+      val Data = ObjectData.asInstanceOf[huemul_Table]
+      TableName = Data.TableName
+      BBDDName = Data.GetDataBase(Data.DataBase)
+    }
+    
+    val Values = new huemul_DQRecord()
+    Values.Table_Name =TableName
+    Values.BBDD_Name =BBDDName
+    Values.DF_Alias =AliasDF
+    Values.ColumnName =Col
+    Values.DQ_Name ="NOT NULL"
+    Values.DQ_Description =s"NOT NULL VALUES FOR FIELD $Col"
+    Values.DQ_IsAggregate =false
+    Values.DQ_RaiseError =true
+    Values.DQ_SQLFormula =""
+    Values.DQ_Error_MaxNumRows =0
+    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_NumRowsOK =0
+    Values.DQ_NumRowsError =DQDup
+    Values.DQ_NumRowsTotal =0
 
-      this.DQ_Register(Values)
-    }  
+    this.DQ_Register(Values)
+    
             
     return DQResult
   }
@@ -739,8 +734,22 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
   }
   
   def DQ_Register(DQ: huemul_DQRecord) {
-    DQ_List.append(DQ)
-    
+    DQ_Result.append(DQ)
+    Control.RegisterDQuality(DQ.Table_Name
+        , DQ.BBDD_Name
+        , DQ.DF_Alias
+        , DQ.ColumnName
+        , DQ.DQ_Name
+        , DQ.DQ_Description
+        , DQ.DQ_IsAggregate
+        , DQ.DQ_RaiseError
+        , DQ.DQ_SQLFormula
+        , DQ.DQ_Error_MaxNumRows
+        , DQ.DQ_Error_MaxPercent
+        , DQ.DQ_ResultDQ
+        , DQ.DQ_NumRowsOK
+        , DQ.DQ_NumRowsError
+        , DQ.DQ_NumRowsTotal)
   }
   
 }
