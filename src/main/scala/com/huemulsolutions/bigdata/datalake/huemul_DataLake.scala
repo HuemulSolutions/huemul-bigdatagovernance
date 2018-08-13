@@ -7,6 +7,7 @@ import org.apache.spark.sql.types._
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import huemulType_FileType._
+import scala.collection.mutable._
 
 class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extends Serializable {
   /***
@@ -24,7 +25,7 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
   /***
    * Configuration Details for dates
    */
-  var SettingByDate: Array[huemul_DataLakeSetting] = null    
+  var SettingByDate: ArrayBuffer[huemul_DataLakeSetting] = new ArrayBuffer[huemul_DataLakeSetting]()
   
   /***
    * Information about interfaces
@@ -129,15 +130,15 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
     val DateProcess = huemulLib.setDateTime(ano, mes, dia, hora, min, seg)
     
     if (huemulLib.DebugMode) println("N° array config: " + this.SettingByDate.length.toString())
-    for (Data <- this.SettingByDate) {
-      if (DateProcess.getTimeInMillis >= Data.StartDate.getTimeInMillis && DateProcess.getTimeInMillis <= Data.EndDate.getTimeInMillis) {
-        this.SettingInUse = Data
-      }
-    }
+    val DataResult = this.SettingByDate.filter { x => DateProcess.getTimeInMillis >= x.StartDate.getTimeInMillis && DateProcess.getTimeInMillis <= x.EndDate.getTimeInMillis  }
     
-    if (this.SettingInUse == null) {
+    if (DataResult.length == 0) {
       RaiseError_RAW("Logical Error: No definition found in " + this.LogicalName + " (" + this.SettingByDate.length.toString() + ")" )
-    }
+    } else if (DataResult.length > 1) {
+      RaiseError_RAW("Logical Error: Multiple definitions found in " + this.LogicalName + " (" + this.SettingByDate.length.toString() + ")" )
+    } else if (DataResult.length == 1) {
+       this.SettingInUse = DataResult(0)
+    }         
     
     try {
         this.StartRead_dt = Calendar.getInstance()
