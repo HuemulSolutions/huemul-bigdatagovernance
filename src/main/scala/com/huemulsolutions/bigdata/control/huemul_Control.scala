@@ -135,8 +135,6 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   
   
   def Init_CreateTables() {
-    //huemulLib.spark.sql("""CREATE DATABASE IF NOT EXISTS data_control""")
-    
     //control_Executors
     huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,"""CREATE TABLE IF NOT EXISTS control_Executors (
                                               application_Id         VARCHAR(100)
@@ -522,8 +520,72 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                                                        
                     """)
                     
+    //control_ProcessExec
+    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,"""
+                CREATE TABLE IF NOT EXISTS control_TestPlan ( 
+                                              testPlan_Id             VARCHAR(200)
+                                             ,testPlanGroup_Id        VARCHAR(200)
+                                             ,processExec_id          VARCHAR(200)
+                                             ,process_id              VARCHAR(200)
+                                             ,testPlan_name           VARCHAR(200)
+                                             ,testPlan_description    VARCHAR(1000)
+                                             ,testPlan_resultExpected VARCHAR(1000)  
+                                             ,testPlan_resultReal     VARCHAR(1000)
+                                             ,testPlan_IsOK           boolean
+                                             ,MDM_fhCreate            TimeStamp
+                                             ,MDM_ProcessName         VARCHAR(200)
+                                             ,PRIMARY KEY (testPlan_Id) 
+                                            )
+                             
+                    """)
+                    
        //create functions
                     
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""                    
+CREATE OR REPLACE FUNCTION control_TestPlan_add (   p_testPlan_Id              VARCHAR(200)
+                       , p_testPlanGroup_Id          VARCHAR(200)
+                       , p_processExec_id          VARCHAR(200)
+                       , p_process_id    VARCHAR(200)
+                       , p_testPlan_name    VARCHAR(200)
+                       , p_testPlan_description    VARCHAR(1000)
+                       , p_testPlan_resultExpected  VARCHAR(1000)
+                       , p_testPlan_resultReal    varchar(1000)
+                       , p_testPlan_IsOK            boolean    
+                       , p_Executor_Name     			VARCHAR(100))  
+RETURNS VOID AS
+$$
+BEGIN
+	INSERT INTO control_TestPlan ( testPlan_Id             
+                                ,testPlanGroup_Id        
+                                ,processExec_id          
+                                ,process_id              
+                                ,testPlan_name           
+                                ,testPlan_description    
+                                ,testPlan_resultExpected   
+                                ,testPlan_resultReal     
+                                ,testPlan_IsOK           
+                                ,MDM_fhCreate            
+                                ,MDM_ProcessName         
+                              )
+  SELECT p_testPlan_Id
+       , p_testPlanGroup_Id
+       , p_processExec_id
+       , p_process_id
+       , p_testPlan_name
+       , p_testPlan_description
+       , p_testPlan_resultExpected
+       , p_testPlan_resultReal
+       , p_testPlan_IsOK
+       , current_timestamp
+       , p_Executor_Name;
+       
+	RETURN;
+END;
+$$
+LANGUAGE plpgsql;
+""")
+
+
     huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,"""                    
 CREATE OR REPLACE FUNCTION control_process_addOrUpd (   p_process_id              VARCHAR(200)
 										   , p_area_id                 VARCHAR(50)
@@ -1670,6 +1732,31 @@ LANGUAGE plpgsql;
                ,'${Control_ClassName}'  --p_MDM_ProcessName
               )
         """)
+  }
+  
+  def RegisterTestPlan(p_testPlanGroup_Id: String
+                        ,p_testPlan_name: String
+                        ,p_testPlan_description: String
+                        ,p_testPlan_resultExpected: String
+                        ,p_testPlan_resultReal: String
+                        ,p_testPlan_IsOK: Boolean) {
+    //Create New Id
+    val testPlan_Id = huemulLib.huemul_GetUniqueId()
+                       
+     //Insert processExcec
+    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_TestPlan_add (
+                      '${testPlan_Id}'  --as p_testPlan_Id
+                       , '${p_testPlanGroup_Id}'  --as p_testPlanGroup_Id
+                       , '${this.Control_Id}'  --p_processExec_id
+                       , '${this.Control_ClassName}' --as p_process_id
+                       , '${p_testPlan_name.replace("'", "''")}' --p_testPlan_name
+                       , '${p_testPlan_description.replace("'", "''")}' --p_testPlan_description
+                       , '${p_testPlan_resultExpected.replace("'", "''")}' --p_testPlan_resultExpected
+                       , '${p_testPlan_resultReal.replace("'", "''")}' --p_testPlan_resultReal
+                       , ${p_testPlan_IsOK} --p_testPlan_IsOK
+                       , '${Control_ClassName}' --p_Executor_Name
+                       
+                      )""")  
   }
   
   def RegisterDQuality (Table_Name: String
