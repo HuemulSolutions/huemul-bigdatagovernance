@@ -211,9 +211,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     }
     
     //Register TableName and fields
-    if (Control != null){
-      Control.RegisterMASTER_CREATE_Basic(this)
-    }
+    Control.RegisterMASTER_CREATE_Basic(this)    
               
     return true
   }
@@ -897,7 +895,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     return ResultName
   }
   
-  private def DF_ForeingKeyMasterAuto(Control: huemul_Control): huemul_DataQualityResult = {
+  private def DF_ForeingKeyMasterAuto(): huemul_DataQualityResult = {
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayFK = this.GetForeingKey()
     val DataBaseName = this.GetDataBase(this.DataBase)
@@ -946,28 +944,27 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         DF_Left.show()
       }
       
-      if (Control != null) {
-        val NumTotalDistinct = DF_Distinct.count()
-        
-        val Values = new huemul_DQRecord()
-        Values.Table_Name =TableName
-        Values.BBDD_Name =DataBaseName
-        Values.DF_Alias = DataFramehuemul.Alias
-        Values.ColumnName =null
-        Values.DQ_Name =s"FK - ${SQLFields}"
-        Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.GetTable()} "
-        Values.DQ_IsAggregate =false
-        Values.DQ_RaiseError =true
-        Values.DQ_SQLFormula =SQLLeft
-        Values.DQ_Error_MaxNumRows =0
-        Values.DQ_Error_MaxPercent =null
-        Values.DQ_ResultDQ =Result.Description
-        Values.DQ_NumRowsOK =NumTotalDistinct - TotalLeft
-        Values.DQ_NumRowsError =TotalLeft
-        Values.DQ_NumRowsTotal =NumTotalDistinct
-  
-        this.DataFramehuemul.DQ_Register(Values) 
-      }
+      
+      val NumTotalDistinct = DF_Distinct.count()
+      
+      val Values = new huemul_DQRecord()
+      Values.Table_Name =TableName
+      Values.BBDD_Name =DataBaseName
+      Values.DF_Alias = DataFramehuemul.Alias
+      Values.ColumnName =null
+      Values.DQ_Name =s"FK - ${SQLFields}"
+      Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.GetTable()} "
+      Values.DQ_IsAggregate =false
+      Values.DQ_RaiseError =true
+      Values.DQ_SQLFormula =SQLLeft
+      Values.DQ_Error_MaxNumRows =0
+      Values.DQ_Error_MaxPercent =null
+      Values.DQ_ResultDQ =Result.Description
+      Values.DQ_NumRowsOK =NumTotalDistinct - TotalLeft
+      Values.DQ_NumRowsError =TotalLeft
+      Values.DQ_NumRowsTotal =NumTotalDistinct
+
+      this.DataFramehuemul.DQ_Register(Values) 
       
       DF_Distinct.unpersist()
     }
@@ -975,7 +972,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     return Result
   }
   
-  private def DF_DataQualityMasterAuto(Control: huemul_Control): huemul_DataQualityResult = {
+  private def DF_DataQualityMasterAuto(): huemul_DataQualityResult = {
     //TODO: incorporar detalle de registros (muestra de 3 casos) que no cumplen cada condición
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayDQ: ArrayBuffer[huemul_DataQuality] = new ArrayBuffer[huemul_DataQuality]()
@@ -988,8 +985,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       SQL_Missing.foreach { x => Result.Description +=  x }
     }
     
-    
+    //*********************************
     //Primary Key Validation
+    //*********************************
     val SQL_PK: String = SQL_PrimaryKey_FinalTable()
     if (SQL_PK == "" || SQL_PK == null) {
       Result.isError = true
@@ -1003,8 +1001,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       Result.Description += s"error PK: ${DQ_PK.Description} " 
     }
     
-          
-    //Aplicar DQ según definición de campos en DataDefDQ: Unique Values    
+    
+    //*********************************
+    //Aplicar DQ según definición de campos en DataDefDQ: Unique Values   
+    //*********************************
     SQL_Unique_FinalTable().foreach { x => 
       if (huemulLib.DebugMode) println(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
       val DQ_Unique = DataFramehuemul.DQ_DuplicateValues(this, x, null) 
@@ -1094,7 +1094,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    */
   private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean) {
     if (TableType == huemulType_Tables.Transaction) {
-      if (LocalControl != null) LocalControl.NewStep("Transaction: Validating fields ")
+      LocalControl.NewStep("Transaction: Validating fields ")
       //STEP 1: validate name setting
       getALLDeclaredFields(true).filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }
@@ -1109,14 +1109,14 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       }
       
       //STEP 2: Create Hash
-      if (LocalControl != null) LocalControl.NewStep("Transaction: Create Hash Field")
+      LocalControl.NewStep("Transaction: Create Hash Field")
       val SQLFinalTable = SQL_Step0_TXHash(this.DataFramehuemul.Alias, huemulLib.ProcessNameCall)
       if (huemulLib.DebugMode && !huemulLib.HideLibQuery)
         println(SQLFinalTable)
       //STEP 2: Execute final table 
       DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
       
-      if (LocalControl != null) LocalControl.NewStep("Transaction: Get Statistics info")
+      LocalControl.NewStep("Transaction: Get Statistics info")
       this._NumRows_Total = this.DataFramehuemul.getNumRows
       this._NumRows_New = this.DataFramehuemul.getNumRows
       this._NumRows_Update  = 0
@@ -1135,7 +1135,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //**************************************************//
       //STEP 0: Apply distinct to New DataFrame
       //**************************************************//
-      if (LocalControl != null) LocalControl.NewStep("Ref & Master: Select distinct")
+      LocalControl.NewStep("Ref & Master: Select distinct")
       val SQLDistinct_DF = huemulLib.DF_ExecuteQuery("__Distinct"
                                               , SQL_Step0_Distinct(this.DataFramehuemul.Alias)
                                              )
@@ -1143,7 +1143,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //**************************************************//
       //STEP 0.1: CREATE TEMP TABLE IF MASTER TABLE DOES NOT EXIST
       //**************************************************//
-      if (LocalControl != null) LocalControl.NewStep("Ref & Master: Select Old Table")                                             
+      LocalControl.NewStep("Ref & Master: Select Old Table")                                             
       val TempAlias: String = s"__${this.TableName}_old"
       val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)
       if (fs.exists(new org.apache.hadoop.fs.Path(this.GetFullNameWithPath()))){
@@ -1174,12 +1174,12 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //**************************************************//
       //STEP 1: Create Full Join with all fields
       //**************************************************//
-      if (LocalControl != null) LocalControl.NewStep("Ref & Master: Full Join")
+      LocalControl.NewStep("Ref & Master: Full Join")
       val SQLFullJoin_DF = huemulLib.DF_ExecuteQuery("__FullJoin"
                                               , SQL_Step1_FullJoin(TempAlias, "__Distinct", isUpdate)
                                              )
                         
-      if (LocalControl != null) LocalControl.NewStep("Ref & Master: Statistics")
+      LocalControl.NewStep("Ref & Master: Statistics")
       //DQ for Reference and Master Data
       val DQ_ReferenceData: DataFrame = huemulLib.spark.sql(
                         s"""SELECT CAST(SUM(CASE WHEN ___ActionType__ = 'NEW' then 1 else 0 end) as Long) as __New
@@ -1197,7 +1197,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       this._NumRows_Update  = FirstRow.getAs("__Update")
       this._NumRows_Delete = FirstRow.getAs("__Delete")
       
-      if (LocalControl != null) LocalControl.NewStep("Ref & Master: Validating Insert & Update")
+      LocalControl.NewStep("Ref & Master: Validating Insert & Update")
       var DQ_Error: String = ""
       if (this._NumRows_Total == this._NumRows_New)
         DQ_Error = "" //Doesn't have error, first run
@@ -1210,19 +1210,19 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         RaiseError(DQ_Error)
         
       //STEP 2: Create Tabla with Update and Insert result
-      if (LocalControl != null) LocalControl.NewStep("Ref & Master: Update & Insert Logic")
+      LocalControl.NewStep("Ref & Master: Update & Insert Logic")
       val SQLHash_p1_DF = huemulLib.DF_ExecuteQuery("__Hash_p1"
                                           , SQL_Step2_UpdateAndInsert("__FullJoin", huemulLib.ProcessNameCall, isInsert)
                                          )
       
       //STEP 3: Create Hash
-      if (LocalControl != null) LocalControl.NewStep("Ref & Master: Hash Code")                                         
+      LocalControl.NewStep("Ref & Master: Hash Code")                                         
       val SQLHash_p2_DF = huemulLib.DF_ExecuteQuery("__Hash_p2"
                                           , SQL_Step3_Hash_p1("__Hash_p1")
                                          )   
                                          
       
-      if (LocalControl != null) LocalControl.NewStep("Ref & Master: Final Table")
+      LocalControl.NewStep("Ref & Master: Final Table")
       val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulLib.ProcessNameCall)
       if (huemulLib.DebugMode && !huemulLib.HideLibQuery)
         println(SQLFinalTable)
@@ -1256,7 +1256,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(Control, NewAlias, true, true)      
+      Result = this.dohuemul(NewAlias, true, true)      
     else {
       RaiseError(s"Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
@@ -1271,7 +1271,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
 
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(Control, NewAlias, true, false) 
+      Result = this.dohuemul(NewAlias, true, false) 
     else {
       RaiseError(s"Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
@@ -1286,7 +1286,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(Control, NewAlias, false, true)  
+      Result = this.dohuemul(NewAlias, false, true)  
     else {
       RaiseError(s"Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
@@ -1299,36 +1299,31 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    Master & Reference: update and Insert
    Transactional: Delete and Insert new data
    */
-  private def dohuemul(Control: huemul_Control, AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean): Boolean = {
+  private def dohuemul(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean): Boolean = {
    
-    var LocalControl: huemul_Control = null
-    if (Control != null) {
-      LocalControl = new huemul_Control(huemulLib, Control ,false )
-      LocalControl.AddParamInfo("AliasNewData", AliasNewData)
-      LocalControl.AddParamInfo("IsInsert", IsInsert.toString())
-      LocalControl.AddParamInfo("IsUpdate", IsUpdate.toString())
-      
-    }
-          
+    var LocalControl = new huemul_Control(huemulLib, Control ,false )
+    LocalControl.AddParamInfo("AliasNewData", AliasNewData)
+    LocalControl.AddParamInfo("IsInsert", IsInsert.toString())
+    LocalControl.AddParamInfo("IsUpdate", IsUpdate.toString())
+    
     var result : Boolean = true
     val OnlyInsert: Boolean = IsInsert && !IsUpdate
     
     //do work
     DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate)
 
-    if (LocalControl != null) LocalControl.NewStep("Register Master Information ")
-    if (Control != null){
-      Control.RegisterMASTER_CREATE_Use(this)
-    }
+    LocalControl.NewStep("Register Master Information ")
+    Control.RegisterMASTER_CREATE_Use(this)
+    
     
     //DataQuality by Columns
-    if (LocalControl != null) LocalControl.NewStep("Start DataQuality")
-    val DQResult = DF_DataQualityMasterAuto(Control)
+    LocalControl.NewStep("Start DataQuality")
+    val DQResult = DF_DataQualityMasterAuto()
     //Foreing Keys by Columns
-    if (LocalControl != null) LocalControl.NewStep("Start ForeingKey ")
-    val FKResult = DF_ForeingKeyMasterAuto(Control)
+    LocalControl.NewStep("Start ForeingKey ")
+    val FKResult = DF_ForeingKeyMasterAuto()
     
-    if (LocalControl != null) LocalControl.NewStep("Validating errors ")
+    LocalControl.NewStep("Validating errors ")
     if (DQResult.isError || FKResult.isError) {
       result = false
       var ErrorDetail: String = ""
@@ -1351,10 +1346,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       println(s"${GetFullNameWithPath()} path")
     }
     
-    if (LocalControl != null) LocalControl.NewStep("Start Save ")                
+    LocalControl.NewStep("Start Save ")                
     SavePersistent(LocalControl, DataFramehuemul.DataFrame, OnlyInsert)
     
-    if (LocalControl != null) LocalControl.FinishProcessOK
+    LocalControl.FinishProcessOK
+
 
     return result
   }
@@ -1385,7 +1381,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     var DF_Final = DF
     
     if (this.TableType == huemulType_Tables.Reference || this.TableType == huemulType_Tables.Master) {
-      if (LocalControl != null) LocalControl.NewStep("Save: Drop ActionType column")
+      LocalControl.NewStep("Save: Drop ActionType column")
       if (OnlyInsert)
         DF_Final = DF_Final.where("___ActionType__ = 'NEW'") 
      
@@ -1394,7 +1390,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
     val sqlDrop01 = s"drop table if exists ${GetTable()}"
     if (CreateInHive ) {
-      if (LocalControl != null) LocalControl.NewStep("Save: Drop Hive table Def")
+      LocalControl.NewStep("Save: Drop Hive table Def")
       if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(sqlDrop01)
       try {
         huemulLib.spark.sql(sqlDrop01)
@@ -1406,11 +1402,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     
     if (PartitionField == null || PartitionField == ""){
       if (OnlyInsert) {
-        if (LocalControl != null) LocalControl.NewStep("Save: Append Master & Ref Data")
+        LocalControl.NewStep("Save: Append Master & Ref Data")
         DF_Final.write.mode(SaveMode.Append).format(this.StorageType).save(GetFullNameWithPath())
       }
       else {
-        if (LocalControl != null) LocalControl.NewStep("Save: Overwrite Master & Ref Data")
+        LocalControl.NewStep("Save: Overwrite Master & Ref Data")
         DF_Final.write.mode(SaveMode.Overwrite).format(this.StorageType).save(GetFullNameWithPath())
       }
       
@@ -1419,7 +1415,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     }
     else{
       //Get Partition_Id Values
-      if (LocalControl != null) LocalControl.NewStep("Save: Validating N° partitions")
+      LocalControl.NewStep("Save: Validating N° partitions")
       val DFDistinct = DF_Final.select(PartitionField).distinct().withColumn(PartitionField, DF_Final.col(PartitionField).cast(StringType))
       if (DFDistinct.count() != 1){
         Control.RaiseError(s"N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}")
@@ -1427,10 +1423,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         val PartitionValue = DFDistinct.first().getAs[String](PartitionField)
         val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${PartitionField.toLowerCase()}=${PartitionValue}")
         
-        if (LocalControl != null) LocalControl.NewStep("Save: Drop old partition")
+        LocalControl.NewStep("Save: Drop old partition")
         val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
         fs.delete(FullPath, true)
-        if (LocalControl != null) LocalControl.NewStep("Save: OverWrite partition with new data")
+        LocalControl.NewStep("Save: OverWrite partition with new data")
         if (huemulLib.DebugMode) println(s"saving path: ${FullPath} ")        
         DF_Final.write.mode(SaveMode.Append).format(this.StorageType).partitionBy(PartitionField).save(GetFullNameWithPath())
               
@@ -1441,23 +1437,16 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     
     //create table
     if (CreateInHive ) {
-      if (LocalControl != null) LocalControl.NewStep("Save: Create Table in Hive Metadata")
+      LocalControl.NewStep("Save: Create Table in Hive Metadata")
       DF_CreateTableScript() 
       
       huemulLib.spark.sql(CreateTableScript)
-      
-      //val sqlrefresh01 = s"refresh ${GetTable()}"
-      //if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(sqlrefresh01)
-      //if (LocalControl != null) LocalControl.NewStep("Save: Refresh Hive Metadata")
-      //huemulLib.spark.sql(sqlrefresh01)
-      
     }
 
-    
     //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
     if (CreateInHive && (PartitionField != null && PartitionField != "")) {
-      if (LocalControl != null) LocalControl.NewStep("Save: Repair Hive Metadata")
-      println(s"MSCK REPAIR TABLE ${GetTable()}")
+      LocalControl.NewStep("Save: Repair Hive Metadata")
+      if (huemulLib.DebugMode) println(s"MSCK REPAIR TABLE ${GetTable()}")
       huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
     }
     
