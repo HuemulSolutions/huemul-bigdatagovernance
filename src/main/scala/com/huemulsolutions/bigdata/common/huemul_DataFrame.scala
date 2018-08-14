@@ -243,7 +243,6 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       
       //Query Final
       SQL_Compare = s""" ${SQL_Compare} \n FROM ${this.AliasDF} DF FULL JOIN __Compare ON ${SQLWhere} """
-      if (huemulLib.DebugMode) println(SQL_Compare)
       DQResult.dqDF = huemulLib.DF_ExecuteQuery("__DF_CompareResult", SQL_Compare)
       
       if (huemulLib.DebugMode) DQResult.dqDF.show()
@@ -251,7 +250,6 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       
       //Query Resume
       SQL_Resumen = s"${SQL_Resumen} FROM __DF_CompareResult "
-      if (huemulLib.DebugMode) println(SQL_Resumen)
       val DF_FinalResult = huemulLib.DF_ExecuteQuery("__DF_CompareResultRes",SQL_Resumen)
       if (huemulLib.DebugMode) DF_FinalResult.show()
       
@@ -266,7 +264,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
             DQResult.Description = s"Column ${x.name} have different values: Total rows ${totalCount}, N° OK : ${currentColumn} "
             DQResult.isError = true
             println(DQResult.Description)
-            DQResult.dqDF.filter(s"Equal_${x.name} = 0").show()
+            DQResult.dqDF.where(s"Equal_${x.name} = 0").show()
             NumColumnsError += 1
           }
           
