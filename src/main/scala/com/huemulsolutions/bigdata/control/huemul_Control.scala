@@ -1742,6 +1742,10 @@ LANGUAGE plpgsql;
                         ,p_testPlan_IsOK: Boolean) {
     //Create New Id
     val testPlan_Id = huemulLib.huemul_GetUniqueId()
+    
+    //if (!p_testPlan_IsOK) {
+      println(s"TestPlan ${if (p_testPlan_IsOK) "" else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
+    //}
                        
      //Insert processExcec
     huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_TestPlan_add (
