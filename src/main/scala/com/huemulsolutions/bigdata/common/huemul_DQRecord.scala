@@ -1,9 +1,9 @@
 package com.huemulsolutions.bigdata.common
 
 import org.apache.spark.sql.types._
+import scala.collection.mutable.ArrayBuffer
 
-
-class huemul_DQRecord {
+class huemul_DQRecord extends Serializable {
   var Table_Name: String = null
   var BBDD_Name: String= null
   var DF_Alias: String= null
