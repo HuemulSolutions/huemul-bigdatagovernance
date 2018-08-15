@@ -54,6 +54,16 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     case e: Exception => println("SaveTempDF: error values (true or false)")
   }
   
+  /**
+   * Setting Control/PostgreSQL conectivity
+   */
+  var RegisterInControl: Boolean = true
+  try {
+    RegisterInControl = arguments.GetValue("RegisterInControl", "true" ).toBoolean
+  } catch {    
+    case e: Exception => println("RegisterInControl: error values (true or false)")
+  }
+  
    /***
    * True for show all messages
    */
@@ -99,14 +109,16 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   println(s"Port_Id: ${IdSparkPort}")
   
   //Process Registry
-  val Result = ExecuteJDBC(JDBCTXT,s""" SELECT control_executors_add(
-                  '${IdApplication}' -- p_application_Id
-                  ,'${IdSparkPort}'  --as p_IdSparkPort
-                  ,'${IdPortMonitoring}' --as p_IdPortMonitoring
-                  ,'${appName}'  --as p_Executor_Name
-                ) 
-      """)
-              
+  if (RegisterInControl) {
+    val Result = ExecuteJDBC(JDBCTXT,s""" SELECT control_executors_add(
+                    '${IdApplication}' -- p_application_Id
+                    ,'${IdSparkPort}'  --as p_IdSparkPort
+                    ,'${IdPortMonitoring}' --as p_IdPortMonitoring
+                    ,'${appName}'  --as p_Executor_Name
+                  ) 
+        """)
+  }
+                
   
   
   /*********************
@@ -118,13 +130,17 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   def getDay(Date: Calendar): Int = {return Date.get(Calendar.DAY_OF_MONTH)}
   def getYear(Date: Calendar): Int = {return Date.get(Calendar.YEAR)}
   def getHour(Date: Calendar): Int = {return Date.get(Calendar.HOUR)}
-  
+  /*
   def Finish(){
-    val Result = ExecuteJDBC(JDBCTXT,s""" SELECT control_executors_remove(
-                  '${IdApplication}' -- p_application_Id
-                ) 
-      """)
+    if (RegisterInControl) {
+      val Result = ExecuteJDBC(JDBCTXT,s""" SELECT control_executors_remove(
+                    '${IdApplication}' -- p_application_Id
+                  ) 
+        """)
+    }
   }
+  * 
+  */
        
   def Inicializacion () {
     //Crea base de datos huemulLib_Temp para trabajo en DebugMode
