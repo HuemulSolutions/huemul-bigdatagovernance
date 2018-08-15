@@ -27,7 +27,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   
   //Find process name in control_process
   
-  if (RegisterInControlLog)
+  if (RegisterInControlLog && huemulLib.RegisterInControl)
   huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s""" SELECT
   control_process_addOrUpd(
                   '${Control_ClassName}' -- process_id
@@ -42,7 +42,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   
   
   //Insert processExcec
-  if (RegisterInControlLog) {
+  if (RegisterInControlLog && huemulLib.RegisterInControl) {
     println(s"ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
   huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_add (
             '${Control_Id}'  --p_processExec_id
@@ -65,7 +65,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   //*****************************************
   //Start Singleton
   //*****************************************  
-  if (IsSingleton) {
+  if (IsSingleton && huemulLib.RegisterInControl) {
     NewStep("SET SINGLETON MODE")
     var NumCycle: Int = 0
     var ContinueInLoop: Boolean = true
@@ -1656,13 +1656,15 @@ LANGUAGE plpgsql;
     Control_Params += NewParam
           
     //Insert processExcec
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_ProcessExecParams_add (
-                         '${this.Control_Id}'  --processexec_id
-                       , '${NewParam.param_name}' --as processExecParams_Name
-                       , '${NewParam.param_value}' --as processExecParams_Value
-                       ,'${Control_ClassName}'  --process_id
-                      )
-                    """)      
+    if (huemulLib.RegisterInControl) {
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_ProcessExecParams_add (
+                           '${this.Control_Id}'  --processexec_id
+                         , '${NewParam.param_name}' --as processExecParams_Name
+                         , '${NewParam.param_value}' --as processExecParams_Value
+                         ,'${Control_ClassName}'  --process_id
+                        )
+                      """)      
+    }
 
     if (huemulLib.DebugMode){
       println(s"Param num: ${Control_Params.length}, name: $name, value: $value")
@@ -1670,25 +1672,30 @@ LANGUAGE plpgsql;
   }
     
   def FinishProcessOK {
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_Finish (
-                           '${Control_Id}'  --p_processExec_id
-                         , '${this.LocalIdStep}' --as p_processExecStep_id
-                         ,  null --as p_error_id
-                         )
-                      """)   
-                      
-    if (this.IsSingleton) {
-        huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_singleton_remove (
-                           '${Control_ClassName}'  --p_processExec_id
-                         )
-                      """)  
-      }
+    if (Control_IdParent == null) println("FINISH ALL OK")
+    
+    if (huemulLib.RegisterInControl) {
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_Finish (
+                             '${Control_Id}'  --p_processExec_id
+                           , '${this.LocalIdStep}' --as p_processExecStep_id
+                           ,  null --as p_error_id
+                           )
+                        """)   
+                        
+      if (this.IsSingleton) {
+          huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_singleton_remove (
+                             '${Control_ClassName}'  --p_processExec_id
+                           )
+                        """)  
+        }
+    }
   }
   
   def FinishProcessError() {
-    
+    if (Control_IdParent == null) println("FINISH ERROR")
     val Error_Id = huemulLib.huemul_GetUniqueId()
       
+    if (huemulLib.RegisterInControl) {
       //Insert processExcec
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_Error_finish (
                           '${this.Control_Id}'  --p_processExec_id
@@ -1710,6 +1717,7 @@ LANGUAGE plpgsql;
                          )
                       """)  
       }
+    }
         
                                
   }
@@ -1717,21 +1725,24 @@ LANGUAGE plpgsql;
   
   
   def NewStep(StepName: String) {
-    if (huemulLib.DebugMode) println(s"Step: $StepName")
+    println(s"Step: $StepName")
     
    
     //New Step add
     val PreviousLocalIdStep = LocalIdStep
     LocalIdStep = huemulLib.huemul_GetUniqueId()
-    //Insert processExcec
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_processExecStep_add (
-                '${LocalIdStep}'  --p_processExecStep_id
-               ,'${PreviousLocalIdStep}'  --p_processExecStep_idAnt
-               ,'${this.Control_Id}'  --p_processExec_id
-               , '${StepName}' --p_processExecStep_Name
-               ,'${Control_ClassName}'  --p_MDM_ProcessName
-              )
-        """)
+    
+    if (huemulLib.RegisterInControl) {
+      //Insert processExcec
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_processExecStep_add (
+                  '${LocalIdStep}'  --p_processExecStep_id
+                 ,'${PreviousLocalIdStep}'  --p_processExecStep_idAnt
+                 ,'${this.Control_Id}'  --p_processExec_id
+                 , '${StepName}' --p_processExecStep_Name
+                 ,'${Control_ClassName}'  --p_MDM_ProcessName
+                )
+          """)
+    }
   }
   
   def RegisterTestPlan(p_testPlanGroup_Id: String
@@ -1746,21 +1757,23 @@ LANGUAGE plpgsql;
     //if (!p_testPlan_IsOK) {
       println(s"TestPlan ${if (p_testPlan_IsOK) "" else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
     //}
-                       
-     //Insert processExcec
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_TestPlan_add (
-                      '${testPlan_Id}'  --as p_testPlan_Id
-                       , '${p_testPlanGroup_Id}'  --as p_testPlanGroup_Id
-                       , '${this.Control_Id}'  --p_processExec_id
-                       , '${this.Control_ClassName}' --as p_process_id
-                       , '${p_testPlan_name.replace("'", "''")}' --p_testPlan_name
-                       , '${p_testPlan_description.replace("'", "''")}' --p_testPlan_description
-                       , '${p_testPlan_resultExpected.replace("'", "''")}' --p_testPlan_resultExpected
-                       , '${p_testPlan_resultReal.replace("'", "''")}' --p_testPlan_resultReal
-                       , ${p_testPlan_IsOK} --p_testPlan_IsOK
-                       , '${Control_ClassName}' --p_Executor_Name
-                       
-                      )""")  
+                     
+    if (huemulLib.RegisterInControl) {
+       //Insert processExcec
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_TestPlan_add (
+                        '${testPlan_Id}'  --as p_testPlan_Id
+                         , '${p_testPlanGroup_Id}'  --as p_testPlanGroup_Id
+                         , '${this.Control_Id}'  --p_processExec_id
+                         , '${this.Control_ClassName}' --as p_process_id
+                         , '${p_testPlan_name.replace("'", "''")}' --p_testPlan_name
+                         , '${p_testPlan_description.replace("'", "''")}' --p_testPlan_description
+                         , '${p_testPlan_resultExpected.replace("'", "''")}' --p_testPlan_resultExpected
+                         , '${p_testPlan_resultReal.replace("'", "''")}' --p_testPlan_resultReal
+                         , ${p_testPlan_IsOK} --p_testPlan_IsOK
+                         , '${Control_ClassName}' --p_Executor_Name
+                         
+                        )""")
+    }
   }
   
   def RegisterDQuality (Table_Name: String
@@ -1782,133 +1795,138 @@ LANGUAGE plpgsql;
     //Create New Id
     val DQId = huemulLib.huemul_GetUniqueId()
 
-    //Insert processExcec
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_DQ_add (
-                      '${DQId}'  --as p_DQ_Id
-                       , '${Table_Name}'  --as Table_name
-                       , '${BBDD_Name}'  --asp_BBDD_name
-                       , '${this.Control_ClassName}' --as p_Process_Id
-                       , '${this.Control_Id}' -- p_ProcessExec_Id
-                       , '${ColumnName}' --Column_Name
-                       , '${DF_Alias}' --p_Dq_AliasDF
-                       , '${DQ_Name}' --p_DQ_Name
-                       , '${DQ_Description}' --DQ_Description
-                       , ${DQ_IsAggregate} --DQ_IsAggregate
-                       , ${DQ_RaiseError} --DQ_RaiseError
-                       , '${DQ_SQLFormula.replace("'", "''")}' --DQ_SQLFormula
-                       , ${DQ_Error_MaxNumRows} --DQ_Error_MaxNumRows
-                       , ${DQ_Error_MaxPercent} --DQ_Error_MaxPercent
-                       , ${!(DQ_ResultDQ == null || DQ_ResultDQ == "")} --DQ_IsError
-                       , '${if (DQ_ResultDQ == null) "" else DQ_ResultDQ.replace("'", "''")}' --DQ_ResultDQ
-                       , ${DQ_NumRowsOK} --DQ_NumRowsOK
-                       , ${DQ_NumRowsError} --DQ_NumRowsError
-                       , ${DQ_NumRowsTotal} --DQ_NumRowsTotal
-                       ,'${Control_ClassName}'  --process_id
-                      )""")                             
+    if (huemulLib.RegisterInControl) {
+      //Insert processExcec
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_DQ_add (
+                        '${DQId}'  --as p_DQ_Id
+                         , '${Table_Name}'  --as Table_name
+                         , '${BBDD_Name}'  --asp_BBDD_name
+                         , '${this.Control_ClassName}' --as p_Process_Id
+                         , '${this.Control_Id}' -- p_ProcessExec_Id
+                         , '${ColumnName}' --Column_Name
+                         , '${DF_Alias}' --p_Dq_AliasDF
+                         , '${DQ_Name}' --p_DQ_Name
+                         , '${DQ_Description}' --DQ_Description
+                         , ${DQ_IsAggregate} --DQ_IsAggregate
+                         , ${DQ_RaiseError} --DQ_RaiseError
+                         , '${DQ_SQLFormula.replace("'", "''")}' --DQ_SQLFormula
+                         , ${DQ_Error_MaxNumRows} --DQ_Error_MaxNumRows
+                         , ${DQ_Error_MaxPercent} --DQ_Error_MaxPercent
+                         , ${!(DQ_ResultDQ == null || DQ_ResultDQ == "")} --DQ_IsError
+                         , '${if (DQ_ResultDQ == null) "" else DQ_ResultDQ.replace("'", "''")}' --DQ_ResultDQ
+                         , ${DQ_NumRowsOK} --DQ_NumRowsOK
+                         , ${DQ_NumRowsError} --DQ_NumRowsError
+                         , ${DQ_NumRowsTotal} --DQ_NumRowsTotal
+                         ,'${Control_ClassName}'  --process_id
+                        )""")
+    }
     
   }
   
   def RegisterRAW_USE(dapi_raw: huemul_DataLake) {        
     dapi_raw.setrawFiles_id(huemulLib.huemul_GetUniqueId())
     
-    //Insert processExcec
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""
-      select control_rawFiles_add ( '${dapi_raw.getrawFiles_id}'  --p_RAWFiles_id
-                       , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
-                       , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
-                       , '${dapi_raw.Description}' -- p_RAWFiles_Description
-                       , '${dapi_raw.SettingInUse.ContactName}' --p_RAWFiles_Owner
-                       ,''  --p_RAWFiles_Frecuency
-                       ,'${Control_ClassName}'  --MDM_ProcessName
-                    )
-                    """)
-                    
-
-    
-    //Insert Config Details
-    dapi_raw.SettingByDate.foreach { x => 
+    if (huemulLib.RegisterInControl) {
       //Insert processExcec
-      val RAWFilesDet_id = huemulLib.huemul_GetUniqueId()
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_RAWFilesDet_add (
-                             '${RAWFilesDet_id}' --as RAWFilesDet_id
-                           , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
-                           , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
-                           ,'${huemulLib.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
-                           ,'${huemulLib.dateTimeFormat.format(x.EndDate.getTime) }'  --RAWFilesDet_EndDate
-                           ,'${x.FileName }'  --RAWFilesDet_FileName
-                           ,'${x.LocalPath }'  --RAWFilesDet_LocalPath
-                           ,'${x.GlobalPath }'  --RAWFilesDet_GlobalPath
-                           ,'${x.DataSchemaConf.ColSeparatorType }'  --RAWFilesDet_Data_ColSeparatorType
-                           ,'${x.DataSchemaConf.ColSeparator }'  --RAWFilesDet_Data_ColSeparator
-                           ,'${x.DataSchemaConf.HeaderColumnsString }'  --RAWFilesDet_Data_HeaderColumnsString
-                           ,'${x.LogSchemaConf.ColSeparatorType }'  --RAWFilesDet_Log_ColSeparatorType
-                           ,'${x.LogSchemaConf.ColSeparator }'  --RAWFilesDet_Log_ColSeparator
-                           ,'${x.LogSchemaConf.HeaderColumnsString }'  --RAWFilesDet_Log_HeaderColumnsString
-                           ,'${x.LogNumRows_FieldName }'  --RAWFilesDet_Log_NumRowsFieldName
-                           ,'${x.ContactName }'  --RAWFilesDet_ContactName
-                           ,'${Control_ClassName}'  --process_id
-                          )
-                        """)   
-       
-       if (x.DataSchemaConf.ColumnsPosition != null) {
-         var pos: Integer = 0
-         x.DataSchemaConf.ColumnsPosition.foreach { y =>
-               huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_RAWFilesDetFields_add(
-                               '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""
+        select control_rawFiles_add ( '${dapi_raw.getrawFiles_id}'  --p_RAWFiles_id
+                         , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
+                         , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
+                         , '${dapi_raw.Description}' -- p_RAWFiles_Description
+                         , '${dapi_raw.SettingInUse.ContactName}' --p_RAWFiles_Owner
+                         ,''  --p_RAWFiles_Frecuency
+                         ,'${Control_ClassName}'  --MDM_ProcessName
+                      )
+                      """)
+                      
+      //Insert Config Details
+      dapi_raw.SettingByDate.foreach { x => 
+        //Insert processExcec
+        val RAWFilesDet_id = huemulLib.huemul_GetUniqueId()
+        huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_RAWFilesDet_add (
+                               '${RAWFilesDet_id}' --as RAWFilesDet_id
+                             , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                              , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
                              ,'${huemulLib.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
-                             ,'${y(0)}'  --RAWFilesDetFields_name
-                             ,${pos }  --RAWFilesDetFields_Position
-                             ,'${y(1) }'  --RAWFilesDetFields_PosIni
-                             ,'${y(2) }'  --RAWFilesDetFields_PosFin
+                             ,'${huemulLib.dateTimeFormat.format(x.EndDate.getTime) }'  --RAWFilesDet_EndDate
+                             ,'${x.FileName }'  --RAWFilesDet_FileName
+                             ,'${x.LocalPath }'  --RAWFilesDet_LocalPath
+                             ,'${x.GlobalPath }'  --RAWFilesDet_GlobalPath
+                             ,'${x.DataSchemaConf.ColSeparatorType }'  --RAWFilesDet_Data_ColSeparatorType
+                             ,'${x.DataSchemaConf.ColSeparator }'  --RAWFilesDet_Data_ColSeparator
+                             ,'${x.DataSchemaConf.HeaderColumnsString }'  --RAWFilesDet_Data_HeaderColumnsString
+                             ,'${x.LogSchemaConf.ColSeparatorType }'  --RAWFilesDet_Log_ColSeparatorType
+                             ,'${x.LogSchemaConf.ColSeparator }'  --RAWFilesDet_Log_ColSeparator
+                             ,'${x.LogSchemaConf.HeaderColumnsString }'  --RAWFilesDet_Log_HeaderColumnsString
+                             ,'${x.LogNumRows_FieldName }'  --RAWFilesDet_Log_NumRowsFieldName
+                             ,'${x.ContactName }'  --RAWFilesDet_ContactName
                              ,'${Control_ClassName}'  --process_id
-                        )
+                            )
                           """)   
-                          
-               pos += 1
-           }
-       }
-    }
+         
+         if (x.DataSchemaConf.ColumnsPosition != null) {
+           var pos: Integer = 0
+           x.DataSchemaConf.ColumnsPosition.foreach { y =>
+                 huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_RAWFilesDetFields_add(
+                                 '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
+                               , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
+                               ,'${huemulLib.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
+                               ,'${y(0)}'  --RAWFilesDetFields_name
+                               ,${pos }  --RAWFilesDetFields_Position
+                               ,'${y(1) }'  --RAWFilesDetFields_PosIni
+                               ,'${y(2) }'  --RAWFilesDetFields_PosFin
+                               ,'${Control_ClassName}'  --process_id
+                          )
+                            """)   
+                            
+                 pos += 1
+             }
+         }
+      }
     
-    //Insert control_rawFilesUse
-    val rawfilesuse_id = huemulLib.huemul_GetUniqueId()
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_rawFilesUse_add (
-                         '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
-                       , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
-                       ,'${rawfilesuse_id }'  --rawfilesuse_id
-                       ,'${this.Control_ClassName}'  --process_id
-                       ,'${this.Control_Id}'          --processExec_Id
-                       ,'${dapi_raw.FileName}' --RAWFiles_FullName
-                       ,'${dapi_raw.SettingInUse.GetFullNameWithPath()}' --RAWFiles_FullPath
-                       ,'${dapi_raw.DataFramehuemul.getNumRows}' --RAWFiles_NumRows
-                       , '' --RAWFiles_HeaderLine
-                       ,'${Control_ClassName}'  --process_id
-                      )
-                    """)
+      //Insert control_rawFilesUse
+      val rawfilesuse_id = huemulLib.huemul_GetUniqueId()
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_rawFilesUse_add (
+                           '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
+                         , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
+                         ,'${rawfilesuse_id }'  --rawfilesuse_id
+                         ,'${this.Control_ClassName}'  --process_id
+                         ,'${this.Control_Id}'          --processExec_Id
+                         ,'${dapi_raw.FileName}' --RAWFiles_FullName
+                         ,'${dapi_raw.SettingInUse.GetFullNameWithPath()}' --RAWFiles_FullPath
+                         ,'${dapi_raw.DataFramehuemul.getNumRows}' --RAWFiles_NumRows
+                         , '' --RAWFiles_HeaderLine
+                         ,'${Control_ClassName}'  --process_id
+                        )
+                      """)
+    }
   }
   
   def RegisterMASTER_USE(DefMaster: huemul_Table) {
     
     //Insert control_TablesUse
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
-                                  '${DefMaster.TableName}'
-                                 ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  
-                                 , '${Control_ClassName}' --as Process_Id
-                                 , '${Control_Id}' --as ProcessExec_Id
-                                 , true --as TableUse_Read
-                                 , false --as TableUse_Write
-                                 , null --as TableUse_numRowsInsert
-                                 , null --as TableUse_numRowsUpdate
-                                 , null --as TableUse_numRowsMarkDelete
-                                 , null --as TableUse_numRowsTotal
-                                 ,'${Control_ClassName}'  --process_id
-                                )
-                    """)         
+    if (huemulLib.RegisterInControl) {
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
+                                    '${DefMaster.TableName}'
+                                   ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  
+                                   , '${Control_ClassName}' --as Process_Id
+                                   , '${Control_Id}' --as ProcessExec_Id
+                                   , true --as TableUse_Read
+                                   , false --as TableUse_Write
+                                   , null --as TableUse_numRowsInsert
+                                   , null --as TableUse_numRowsUpdate
+                                   , null --as TableUse_numRowsMarkDelete
+                                   , null --as TableUse_numRowsTotal
+                                   ,'${Control_ClassName}'  --process_id
+                                  )
+                      """)     
+    }
   }
 
   def RegisterMASTER_CREATE_Basic(DefMaster: huemul_Table) {
     val LocalNewTable_id = huemulLib.huemul_GetUniqueId()
           
+    if (huemulLib.RegisterInControl) {
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s""" select control_Tables_addOrUpd(
                             '${LocalNewTable_id}'  --Table_id
                            ,null  --Area_Id
@@ -1926,102 +1944,105 @@ LANGUAGE plpgsql;
                            ,'${Control_ClassName}'  --process_id
                           )
       """)
+    
       
-    //Insert control_Columns
-    var i: Integer = 0
-    var localDatabaseName = DefMaster.GetDataBase(DefMaster.DataBase)
-    DefMaster.GetColumns().foreach { x => 
-      val Column_Id = huemulLib.huemul_GetUniqueId()
-
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_Columns_addOrUpd (
-      
-                          '${Column_Id}' --Column_Id
-                         , '${DefMaster.TableName}' --as Table_Name
-                         , '${localDatabaseName}' --as Table_BBDDName
-                         , ${i} --as Column_Position
-                         , '${x.get_MyName()}' --as Column_Name
-                         , '${x.Description}' --as Column_Description
-                         , null --as Column_Formula
-                         , '${x.DataType.sql}' --as Column_DataType
-                         , false --as Column_SensibleData
-                         , ${x.MDM_EnableDTLog} --as Column_EnableDTLog
-                         , ${x.MDM_EnableOldValue} --as Column_EnableOldValue
-                         , ${x.MDM_EnableProcessLog} --as Column_EnableProcessLog
-                         , '${x.DefaultValue.replace("'", "''")}' --as Column_DefaultValue
-                         , '${x.SecurityLevel}' --as Column_SecurityLevel
-                         , '${x.EncryptedType}' --as Column_Encrypted
-                         , '${x.ARCO_Data}' --as Column_ARCO
-                         , ${x.Nullable} --as Column_Nullable
-                         , ${x.IsPK} --as Column_IsPK
-                         , ${x.IsUnique} --as Column_IsUnique
-                         , ${x.DQ_MinLen} --as Column_DQ_MinLen
-                         , ${x.DQ_MaxLen} --as Column_DQ_MaxLen
-                         , ${x.DQ_MinDecimalValue} --as Column_DQ_MinValue
-                         , ${x.DQ_MaxDecimalValue} --as Column_DQ_MaxValue
-                         , '${x.DQ_MinDateTimeValue}' --as Column_DQ_MinDateTimeValue
-                         , '${x.DQ_MaxDateTimeValue}' --as Column_DQ_MaxDateTimeValue
-                         ,'${Control_ClassName}'  --process_id
-                    )""")        
-        i += 1
-      }
+      //Insert control_Columns
+      var i: Integer = 0
+      var localDatabaseName = DefMaster.GetDataBase(DefMaster.DataBase)
+      DefMaster.GetColumns().foreach { x => 
+        val Column_Id = huemulLib.huemul_GetUniqueId()
+  
+        huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_Columns_addOrUpd (
+        
+                            '${Column_Id}' --Column_Id
+                           , '${DefMaster.TableName}' --as Table_Name
+                           , '${localDatabaseName}' --as Table_BBDDName
+                           , ${i} --as Column_Position
+                           , '${x.get_MyName()}' --as Column_Name
+                           , '${x.Description}' --as Column_Description
+                           , null --as Column_Formula
+                           , '${x.DataType.sql}' --as Column_DataType
+                           , false --as Column_SensibleData
+                           , ${x.MDM_EnableDTLog} --as Column_EnableDTLog
+                           , ${x.MDM_EnableOldValue} --as Column_EnableOldValue
+                           , ${x.MDM_EnableProcessLog} --as Column_EnableProcessLog
+                           , '${x.DefaultValue.replace("'", "''")}' --as Column_DefaultValue
+                           , '${x.SecurityLevel}' --as Column_SecurityLevel
+                           , '${x.EncryptedType}' --as Column_Encrypted
+                           , '${x.ARCO_Data}' --as Column_ARCO
+                           , ${x.Nullable} --as Column_Nullable
+                           , ${x.IsPK} --as Column_IsPK
+                           , ${x.IsUnique} --as Column_IsUnique
+                           , ${x.DQ_MinLen} --as Column_DQ_MinLen
+                           , ${x.DQ_MaxLen} --as Column_DQ_MaxLen
+                           , ${x.DQ_MinDecimalValue} --as Column_DQ_MinValue
+                           , ${x.DQ_MaxDecimalValue} --as Column_DQ_MaxValue
+                           , '${x.DQ_MinDateTimeValue}' --as Column_DQ_MinDateTimeValue
+                           , '${x.DQ_MaxDateTimeValue}' --as Column_DQ_MaxDateTimeValue
+                           ,'${Control_ClassName}'  --process_id
+                      )""")        
+          i += 1
+        }
+    }
   }
   
   def RegisterMASTER_CREATE_Use(DefMaster: huemul_Table) {     
       
-    
-    //Insert control_TablesUse
-    huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
-                                '${DefMaster.TableName}'
-                               ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  
-                               , '${Control_ClassName}' --as Process_Id
-                               , '${Control_Id}' --as ProcessExec_Id
-                               , false --as TableUse_Read
-                               , true --as TableUse_Write
-                               , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
-                               , ${DefMaster.NumRows_Update()} -- as TableUse_numRowsUpdate
-                               , ${DefMaster.NumRows_Delete()} -- as TableUse_numRowsMarkDelete
-                               , ${DefMaster.NumRows_Total()} -- as TableUse_numRowsTotal
-                               ,'${Control_ClassName}'  --process_id
-                              )
-                  """)
-                  
-    //Insert control_tablesrel_add
-    DefMaster.GetForeingKey().foreach { x =>       
-      val p_tablerel_id = huemulLib.huemul_GetUniqueId()
-      
-      val localDatabaseName = x._Class_TableName.asInstanceOf[huemul_Table].GetDataBase(x._Class_TableName.asInstanceOf[huemul_Table].DataBase)
-      val Resultado = 
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_tablesrel_add (
-                                  '${p_tablerel_id}'    --p_tablerel_id
-                                 ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
-                                 ,'${localDatabaseName }'  --p_table_BBDDpk
-
-                                 ,'${DefMaster.TableName }'  --p_table_NameFK
-                                 ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  --p_table_BBDDFK
-
-                                 ,'${x.MyName }'  --p_TableFK_NameRelationship
-
+    if (huemulLib.RegisterInControl) {
+      //Insert control_TablesUse
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
+                                  '${DefMaster.TableName}'
+                                 ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  
+                                 , '${Control_ClassName}' --as Process_Id
+                                 , '${Control_Id}' --as ProcessExec_Id
+                                 , false --as TableUse_Read
+                                 , true --as TableUse_Write
+                                 , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
+                                 , ${DefMaster.NumRows_Update()} -- as TableUse_numRowsUpdate
+                                 , ${DefMaster.NumRows_Delete()} -- as TableUse_numRowsMarkDelete
+                                 , ${DefMaster.NumRows_Total()} -- as TableUse_numRowsTotal
                                  ,'${Control_ClassName}'  --process_id
                                 )
                     """)
                     
-       val IdRel = Resultado.ResultSet(0).getString(0)
-
-       x.Relationship.foreach { y => 
-          huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesRelCol_add (
-                                    '${IdRel}'    --p_tablerel_id
+      //Insert control_tablesrel_add
+      DefMaster.GetForeingKey().foreach { x =>       
+        val p_tablerel_id = huemulLib.huemul_GetUniqueId()
+        
+        val localDatabaseName = x._Class_TableName.asInstanceOf[huemul_Table].GetDataBase(x._Class_TableName.asInstanceOf[huemul_Table].DataBase)
+        val Resultado = 
+        huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_tablesrel_add (
+                                    '${p_tablerel_id}'    --p_tablerel_id
                                    ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
                                    ,'${localDatabaseName }'  --p_table_BBDDpk
-                                   ,'${y.PK.get_MyName() }'  --p_ColumnName_PK
-
+  
                                    ,'${DefMaster.TableName }'  --p_table_NameFK
                                    ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  --p_table_BBDDFK
-                                   ,'${y.FK.get_MyName() }'  --p_ColumnName_FK    
-
+  
+                                   ,'${x.MyName }'  --p_TableFK_NameRelationship
+  
                                    ,'${Control_ClassName}'  --process_id
                                   )
                       """)
-        }
+                      
+         val IdRel = Resultado.ResultSet(0).getString(0)
+  
+         x.Relationship.foreach { y => 
+            huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesRelCol_add (
+                                      '${IdRel}'    --p_tablerel_id
+                                     ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
+                                     ,'${localDatabaseName }'  --p_table_BBDDpk
+                                     ,'${y.PK.get_MyName() }'  --p_ColumnName_PK
+  
+                                     ,'${DefMaster.TableName }'  --p_table_NameFK
+                                     ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  --p_table_BBDDFK
+                                     ,'${y.FK.get_MyName() }'  --p_ColumnName_FK    
+  
+                                     ,'${Control_ClassName}'  --process_id
+                                    )
+                        """)
+          }
+      }
     }
                         
   }
