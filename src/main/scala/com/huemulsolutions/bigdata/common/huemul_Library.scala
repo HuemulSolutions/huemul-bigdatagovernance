@@ -252,8 +252,10 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     
     if (AdditionalParams != null) {
       AdditionalParams.split(";").foreach { x =>
+        
         val Pair = x.split("=")
-        textFinal = textFinal.replace(Pair(0), Pair(1))
+        //Ajuste en caso que condición sea solo "{{algo}}=" en vez de "{{algo}}=valor"
+        textFinal = textFinal.replace(Pair(0), if (Pair.length == 1) "" else Pair(1))
       }
     }
     
