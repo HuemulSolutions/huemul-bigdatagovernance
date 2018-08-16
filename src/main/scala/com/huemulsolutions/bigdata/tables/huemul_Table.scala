@@ -62,6 +62,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    */
   var DQ_MaxNewRecords_Perc: Integer = null
   
+  private var autoCast: Boolean = true
+  def setAutoCast(value: Boolean) {autoCast = value}
+  
   private var Table_id: String = ""
   
   /**
@@ -449,7 +452,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
-
+      val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
+      
       if (PartitionField.toUpperCase() == x.getName().toUpperCase() ) {
         _PartitionCreateTable += s"${coma_partition}${PartitionField} ${Field.DataType.sql}"
         coma_partition = ","
@@ -457,7 +461,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
       //New value (from field or compute column )
       if (huemulLib.HasName(Field.get_MappedName()) ){
-        StringSQL += s"${coma}CAST(new.${Field.get_MappedName()} AS ${Field.DataType.sql} ) as ${x.getName} \n"
+        StringSQL += s"${coma}${NewColumnCast} as ${x.getName} \n"
         coma = ","
       } else {
         if (x.getName == "MDM_fhNew") {
@@ -522,11 +526,14 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   }
   
   
+  private def ApplyAutoCast(ColumnName: String, DataType: String): String = {
+    return if (autoCast) s"CAST($ColumnName AS $DataType)" else ColumnName
+  }
   
   /**
   CREATE SQL SCRIPT FULL JOIN MASTER DATA OR REFERENCE DATA
    */
-  private def SQL_Step1_FullJoin(OfficialAlias: String, NewAlias: String, isUpdate: Boolean): String = {
+  private def SQL_Step1_FullJoin(OfficialAlias: String, NewAlias: String, isUpdate: Boolean, isDelete: Boolean): String = {
     //Get fields in old table
     val OfficialColumns = huemulLib.spark.catalog.listColumns(OfficialAlias).collect()
        
@@ -541,15 +548,15 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
-      
+      val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
       //string for key on
       if (Field.IsPK){
         StringSQL_FullJoin += s"${coma}CAST(coalesce(Old.${x.getName}, New.${Field.get_MappedName()}) as ${Field.DataType.sql}) AS ${x.getName} \n"
-        StringSQl_PK += s" $sand Old.${x.getName} = New.${Field.get_MappedName()} " 
+        StringSQl_PK += s" $sand Old.${x.getName} = ${NewColumnCast}  " 
         sand = " and "
 
         if (StringSQL_ActionType == "")
-          StringSQL_ActionType = s" case when Old.${x.getName} is null then 'NEW' when New.${Field.get_MappedName} is null then 'DELETE' else ${if (isUpdate) "'UPDATE'" else "'EQUAL'"} END as ___ActionType__  "
+          StringSQL_ActionType = s" case when Old.${x.getName} is null then 'NEW' when ${NewColumnCast} is null then ${if (isDelete) "'DELETE'" else "'EQUAL'"} else ${if (isUpdate) "'UPDATE'" else "'EQUAL'"} END as ___ActionType__  "
       } else {
         //¿column exist in DataFrame?
         val columnExist = !(OfficialColumns.filter { y => y.name == x.getName}.length == 0)
@@ -562,7 +569,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         
         //New value (from field or compute column )
         if (huemulLib.HasName(Field.get_MappedName()))
-          StringSQL_FullJoin += s",new.${Field.get_MappedName()} as new_${x.getName} \n"
+          StringSQL_FullJoin += s",${NewColumnCast} as new_${x.getName} \n"
         if (huemulLib.HasName(Field.get_SQLForInsert()))
           StringSQL_FullJoin += s",CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} ) as new_insert_${x.getName} \n"
         if (huemulLib.HasName(Field.get_SQLForUpdate()))
@@ -570,8 +577,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
           
         if (Field.MDM_EnableOldValue || Field.MDM_EnableDTLog || Field.MDM_EnableProcessLog) {
           //Change field, take update field if exist, otherwise use get_name()
-          if (huemulLib.HasName(Field.get_MappedName()))
-            StringSQL_FullJoin += s",CAST(CASE WHEN ${if (this.huemulLib.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName())} = ${if (columnExist) "old.".concat(x.getName) else "null"} THEN 0 ELSE 1 END as Integer ) as __Change_${x.getName}  \n"
+          if (huemulLib.HasName(Field.get_MappedName())) {
+            val NewFieldTXT = ApplyAutoCast(if (this.huemulLib.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),Field.DataType.sql)
+            val OldFieldTXT = if (columnExist) "old.".concat(x.getName) else "null"
+            StringSQL_FullJoin += s",CAST(CASE WHEN ${NewFieldTXT} = ${OldFieldTXT} or (${NewFieldTXT} is null and ${OldFieldTXT} is null) THEN 0 ELSE 1 END as Integer ) as __Change_${x.getName}  \n"
+          }
           else {
             StringSQL_FullJoin += s",CAST(0 as Integer ) as __Change_${x.getName}  \n"
             //Cambio aplicado el 8 de agosto, al no tener campo del df mapeado se cae, 
@@ -643,24 +653,22 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
             || x.getName == "MDM_hash")
           StringSQL += s"${coma}old_${x.getName}  \n"
         else {          
-          StringSQL += s""" ${coma}CAST(
-                                   CASE WHEN ___ActionType__ = 'NEW'    THEN ${if (this.huemulLib.HasName(Field.get_SQLForInsert())) s"new_insert_${x.getName}" //si tiene valor en SQL insert, lo usa
-                                                                               else if (this.huemulLib.HasName(Field.get_MappedName())) s"new_${x.getName}"           //si no, si tiene nombre de campo en DataFrame nuevo, lo usa 
-                                                                               else Field.DefaultValue                                                       //si no tiene campo asignado, pone valor por default
+          StringSQL += s""" ${coma}CASE WHEN ___ActionType__ = 'NEW'    THEN ${if (this.huemulLib.HasName(Field.get_SQLForInsert())) s"new_insert_${x.getName}" //si tiene valor en SQL insert, lo usa
+                                                                               else if (this.huemulLib.HasName(Field.get_MappedName())) s"new_${x.getName}"     //si no, si tiene nombre de campo en DataFrame nuevo, lo usa 
+                                                                               else ApplyAutoCast(Field.DefaultValue,Field.DataType.sql)                        //si no tiene campo asignado, pone valor por default
                                                                            }
                                         WHEN ___ActionType__ = 'UPDATE' THEN ${if (this.huemulLib.HasName(Field.get_SQLForUpdate())) s"new_update_${x.getName}"  //si tiene valor en SQL update, lo usa
                                                                                else if (Field.get_ReplaceValueOnUpdate() && this.huemulLib.HasName(Field.get_MappedName())) s"new_${x.getName}"  //Si hay que reemplaar el valor antiguo con uno nuevo, y está seteado un campo en del dataframe, lo usa
                                                                                else s"old_${x.getName}"   //de lo contrario deja el valor antiguo
                                                                            }
-                                        ELSE old_${x.getName} END 
-                                    as ${Field.DataType.sql}) as ${x.getName} \n"""
+                                        ELSE old_${x.getName} END  as ${x.getName} \n"""
                 
            if (Field.MDM_EnableOldValue)
-             StringSQL += s""",CAST(CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN old_${x.getName} ELSE old_${x.getName}_old END as ${Field.DataType.sql} ) as ${x.getName}_old \n"""
+             StringSQL += s""",CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN old_${x.getName} ELSE old_${x.getName}_old END as ${x.getName}_old \n"""
            if (Field.MDM_EnableDTLog)
              StringSQL += s""",CAST(CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN now() ELSE old_${x.getName}_fhChange END AS TimeStamp) as ${x.getName}_fhChange \n"""
            if (Field.MDM_EnableProcessLog)
-             StringSQL += s""",CAST(CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN '${ProcessName}' WHEN ___ActionType__ = 'NEW' THEN '${ProcessName}' ELSE old_${x.getName}_ProcessLog END as STRING) as ${x.getName}_ProcessLog \n"""             
+             StringSQL += s""",CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN '${ProcessName}' WHEN ___ActionType__ = 'NEW' THEN '${ProcessName}' ELSE old_${x.getName}_ProcessLog END as ${x.getName}_ProcessLog \n"""             
         }
       }
                          
@@ -1092,7 +1100,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   /**
    Create final DataFrame with full join New DF with old DF
    */
-  private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean) {
+  private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean, isDelete: Boolean) {
     if (TableType == huemulType_Tables.Transaction) {
       LocalControl.NewStep("Transaction: Validating fields ")
       //STEP 1: validate name setting
@@ -1176,17 +1184,30 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //**************************************************//
       LocalControl.NewStep("Ref & Master: Full Join")
       val SQLFullJoin_DF = huemulLib.DF_ExecuteQuery("__FullJoin"
-                                              , SQL_Step1_FullJoin(TempAlias, "__Distinct", isUpdate)
+                                              , SQL_Step1_FullJoin(TempAlias, "__Distinct", isUpdate, isDelete)
                                              )
                         
+      //STEP 2: Create Tabla with Update and Insert result
+      LocalControl.NewStep("Ref & Master: Update & Insert Logic")
+      val SQLHash_p1_DF = huemulLib.DF_ExecuteQuery("__Hash_p1"
+                                          , SQL_Step2_UpdateAndInsert("__FullJoin", huemulLib.ProcessNameCall, isInsert)
+                                         )
+      
+      //STEP 3: Create Hash
+      LocalControl.NewStep("Ref & Master: Hash Code")                                         
+      val SQLHash_p2_DF = huemulLib.DF_ExecuteQuery("__Hash_p2"
+                                          , SQL_Step3_Hash_p1("__Hash_p1")
+                                         )   
+               
+                                        
       LocalControl.NewStep("Ref & Master: Statistics")
       //DQ for Reference and Master Data
       val DQ_ReferenceData: DataFrame = huemulLib.spark.sql(
                         s"""SELECT CAST(SUM(CASE WHEN ___ActionType__ = 'NEW' then 1 else 0 end) as Long) as __New
-                                  ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' then 1 else 0 end) as Long) as __Update
+                                  ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' and SameHashKey = 0 then 1 else 0 end) as Long) as __Update
                                   ,CAST(SUM(CASE WHEN ___ActionType__ = 'DELETE' then 1 else 0 end) as Long) as __Delete
                                   ,CAST(count(1) AS Long) as __Total
-                            FROM __FullJoin temp 
+                            FROM __Hash_p2 temp 
                          """)
                          
       if (huemulLib.DebugMode) DQ_ReferenceData.show()
@@ -1209,23 +1230,12 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       if (DQ_Error != "")
         RaiseError(DQ_Error)
         
-      //STEP 2: Create Tabla with Update and Insert result
-      LocalControl.NewStep("Ref & Master: Update & Insert Logic")
-      val SQLHash_p1_DF = huemulLib.DF_ExecuteQuery("__Hash_p1"
-                                          , SQL_Step2_UpdateAndInsert("__FullJoin", huemulLib.ProcessNameCall, isInsert)
-                                         )
+      DQ_ReferenceData.unpersist()
       
-      //STEP 3: Create Hash
-      LocalControl.NewStep("Ref & Master: Hash Code")                                         
-      val SQLHash_p2_DF = huemulLib.DF_ExecuteQuery("__Hash_p2"
-                                          , SQL_Step3_Hash_p1("__Hash_p1")
-                                         )   
                                          
-      
       LocalControl.NewStep("Ref & Master: Final Table")
       val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulLib.ProcessNameCall)
-      if (huemulLib.DebugMode && !huemulLib.HideLibQuery)
-        println(SQLFinalTable)
+     
       //STEP 2: Execute final table 
       DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
       if (huemulLib.DebugMode) this.DataFramehuemul.DataFrame.show()
@@ -1256,7 +1266,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(NewAlias, true, true)      
+      Result = this.dohuemul(NewAlias, true, true, true)      
     else {
       RaiseError(s"Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
@@ -1271,7 +1281,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
 
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(NewAlias, true, false) 
+      Result = this.dohuemul(NewAlias, true, false, false) 
     else {
       RaiseError(s"Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
@@ -1286,7 +1296,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(NewAlias, false, true)  
+      Result = this.dohuemul(NewAlias, false, true, false)  
     else {
       RaiseError(s"Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
     }
@@ -1299,7 +1309,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    Master & Reference: update and Insert
    Transactional: Delete and Insert new data
    */
-  private def dohuemul(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean): Boolean = {
+  private def dohuemul(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean): Boolean = {
    
     var LocalControl = new huemul_Control(huemulLib, Control ,false )
     LocalControl.AddParamInfo("AliasNewData", AliasNewData)
@@ -1307,49 +1317,61 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     LocalControl.AddParamInfo("IsUpdate", IsUpdate.toString())
     
     var result : Boolean = true
-    val OnlyInsert: Boolean = IsInsert && !IsUpdate
     
-    //do work
-    DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate)
-
-    LocalControl.NewStep("Register Master Information ")
-    Control.RegisterMASTER_CREATE_Use(this)
+    try {
+      val OnlyInsert: Boolean = IsInsert && !IsUpdate
+      
     
-    
-    //DataQuality by Columns
-    LocalControl.NewStep("Start DataQuality")
-    val DQResult = DF_DataQualityMasterAuto()
-    //Foreing Keys by Columns
-    LocalControl.NewStep("Start ForeingKey ")
-    val FKResult = DF_ForeingKeyMasterAuto()
-    
-    LocalControl.NewStep("Validating errors ")
-    if (DQResult.isError || FKResult.isError) {
-      result = false
-      var ErrorDetail: String = ""
-      if (DQResult.isError) {
-        ErrorDetail = s"DataQuality Error: \n${DQResult.Description}"
+      //do work
+      DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete)
+  
+      LocalControl.NewStep("Register Master Information ")
+      Control.RegisterMASTER_CREATE_Use(this)
+      
+      
+      //DataQuality by Columns
+      LocalControl.NewStep("Start DataQuality")
+      val DQResult = DF_DataQualityMasterAuto()
+      //Foreing Keys by Columns
+      LocalControl.NewStep("Start ForeingKey ")
+      val FKResult = DF_ForeingKeyMasterAuto()
+      
+      LocalControl.NewStep("Validating errors ")
+      if (DQResult.isError || FKResult.isError) {
+        result = false
+        var ErrorDetail: String = ""
+        if (DQResult.isError) {
+          ErrorDetail = s"DataQuality Error: \n${DQResult.Description}"
+        }
+        
+        if (FKResult.isError) {
+          ErrorDetail += s"\nForeing Key Validation Error: \n${FKResult.Description}"
+        }
+              
+        
+        RaiseError(ErrorDetail)
       }
       
-      if (FKResult.isError) {
-        ErrorDetail += s"\nForeing Key Validation Error: \n${FKResult.Description}"
+      
+      //Create parquet
+      if (huemulLib.DebugMode){
+        println(s"Saving ${GetTable()} Table with params: ") 
+        println(s"${PartitionField} field for partitioning table")
+        println(s"${GetFullNameWithPath()} path")
       }
-            
-      RaiseError(ErrorDetail)
+      
+      LocalControl.NewStep("Start Save ")                
+      SavePersistent(LocalControl, DataFramehuemul.DataFrame, OnlyInsert)
+      
+      LocalControl.FinishProcessOK
+      
+    } catch {
+      case e: Exception => 
+        LocalControl.Control_Error.GetError(e, getClass().getSimpleName)
+        LocalControl.FinishProcessError()
     }
     
     
-    //Create parquet
-    if (huemulLib.DebugMode){
-      println(s"Saving ${GetTable()} Table with params: ") 
-      println(s"${PartitionField} field for partitioning table")
-      println(s"${GetFullNameWithPath()} path")
-    }
-    
-    LocalControl.NewStep("Start Save ")                
-    SavePersistent(LocalControl, DataFramehuemul.DataFrame, OnlyInsert)
-    
-    LocalControl.FinishProcessOK
 
 
     return result
@@ -1382,6 +1404,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     
     if (this.TableType == huemulType_Tables.Reference || this.TableType == huemulType_Tables.Master) {
       LocalControl.NewStep("Save: Drop ActionType column")
+      //TODO: Revisar esto, no esoty seguro que la lógica esté correcta
       if (OnlyInsert)
         DF_Final = DF_Final.where("___ActionType__ = 'NEW'") 
      
