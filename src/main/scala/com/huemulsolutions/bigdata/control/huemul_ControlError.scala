@@ -60,19 +60,19 @@ class huemul_ControlError (huemulLib: huemul_Library) extends Serializable  {
     
     ControlError_Message = e.toString()
     
-    if (huemulLib.DebugMode){
-      println("Error Detail DebugMode:")
-      
-      println(s"ControlError_ClassName: $ControlError_ClassName")
-      println(s"ControlError_FileName: $ControlError_FileName")
-      println(s"ControlError_LineNumber: $ControlError_LineNumber")
-      println(s"ControlError_MethodName: $ControlError_MethodName")
-      println(s"ControlError_Message: $ControlError_Message")
-      println(s"ControlError_Trace: $ControlError_Trace")
-      
-      println(s"Detalle")
-      println(e)
-    }
+    
+    println("Error Detail DebugMode:")
+    
+    println(s"ControlError_ClassName: $ControlError_ClassName")
+    println(s"ControlError_FileName: $ControlError_FileName")
+    println(s"ControlError_LineNumber: $ControlError_LineNumber")
+    println(s"ControlError_MethodName: $ControlError_MethodName")
+    println(s"ControlError_Message: $ControlError_Message")
+    println(s"ControlError_Trace: $ControlError_Trace")
+    
+    println(s"Detalle")
+    println(e)
+   
     
   }
 }
