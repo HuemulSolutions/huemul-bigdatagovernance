@@ -285,7 +285,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       }
       
     }
-    println(s"N° Total: ${fieldsStruct.length}")
+    if (huemulLib.DebugMode) println(s"N° Total: ${fieldsStruct.length}")
     return StructType.apply(fieldsStruct)
   }
   
@@ -1304,6 +1304,21 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     return Result
         
   }
+  
+  private def CompareSchema(Columns: ArrayBuffer[huemul_Columns], Schema: StructType): String = {
+    var Errores: String = ""
+    Columns.foreach { x => 
+      if (huemulLib.HasName(x.get_MappedName())) {
+        val dataType = Schema.filter { y => y.name == x.get_MappedName() }(0).dataType
+        if (dataType != x.DataType) {
+          Errores = Errores.concat(s"Error Column ${x.get_MappedName()}, Requiered: ${x.DataType}, actual: ${dataType}  \n")
+        }
+      }
+    }
+    
+    return Errores
+  }
+  
   /**
    Save Full data: <br>
    Master & Reference: update and Insert
@@ -1321,6 +1336,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     try {
       val OnlyInsert: Boolean = IsInsert && !IsUpdate
       
+      //Compare schemas
+      val ResultCompareSchema = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
+      if (ResultCompareSchema != "") {
+        LocalControl.RaiseError(s"User Error: incorrect DataType: \n${ResultCompareSchema}")
+      }
     
       //do work
       DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete)
@@ -1352,6 +1372,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         RaiseError(ErrorDetail)
       }
       
+      //Compare schemas final table
+      val ResultCompareSchemaFinal = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
+      if (ResultCompareSchemaFinal != "") {
+        LocalControl.RaiseError(s"User Error: incorrect DataType: \n${ResultCompareSchemaFinal}")
+      }
       
       //Create parquet
       if (huemulLib.DebugMode){
@@ -1404,7 +1429,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     
     if (this.TableType == huemulType_Tables.Reference || this.TableType == huemulType_Tables.Master) {
       LocalControl.NewStep("Save: Drop ActionType column")
-      //TODO: Revisar esto, no esoty seguro que la lógica esté correcta
+   
       if (OnlyInsert)
         DF_Final = DF_Final.where("___ActionType__ = 'NEW'") 
      
