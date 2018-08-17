@@ -182,6 +182,14 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     if (this.PartitionField == null)
       PartitionField = ""
       
+    if (this.GlobalPaths == null)
+      RaiseError(s"huemul_Table Error: GlobalPaths must be defined")
+      
+    if (this.LocalPath == null)
+      RaiseError(s"huemul_Table Error: LocalPath must be defined")
+      
+    if (this.StorageType == null)
+      RaiseError(s"huemul_Table Error: StorageType must be defined")
       
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
