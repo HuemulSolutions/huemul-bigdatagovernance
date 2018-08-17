@@ -194,7 +194,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         DataField.Set_MyName(x.getName)
         
         if (DataField.DQ_MaxLen != null && DataField.DQ_MaxLen < 0)
-          Control.RaiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive  ")
+          RaiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive  ")
       }
       
       //Nombre de DQ      
@@ -1112,7 +1112,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         
         //New value (from field or compute column )
         if (!huemulLib.HasName(Field.get_MappedName()) ){
-          Control.RaiseError(s"${x.getName()} MUST have an assigned local name")
+          RaiseError(s"${x.getName()} MUST have an assigned local name")
         }                 
       }
       
@@ -1337,9 +1337,13 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       val OnlyInsert: Boolean = IsInsert && !IsUpdate
       
       //Compare schemas
-      val ResultCompareSchema = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
-      if (ResultCompareSchema != "") {
-        LocalControl.RaiseError(s"User Error: incorrect DataType: \n${ResultCompareSchema}")
+      if (!autoCast) {
+        LocalControl.NewStep("Compare Schema")
+        val ResultCompareSchema = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
+        if (ResultCompareSchema != "") {
+          result = false
+          RaiseError(s"User Error: incorrect DataType: \n${ResultCompareSchema}")
+        }
       }
     
       //do work
@@ -1373,9 +1377,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       }
       
       //Compare schemas final table
+      LocalControl.NewStep("Compare Schema Final DF")
       val ResultCompareSchemaFinal = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
       if (ResultCompareSchemaFinal != "") {
-        LocalControl.RaiseError(s"User Error: incorrect DataType: \n${ResultCompareSchemaFinal}")
+        RaiseError(s"User Error: incorrect DataType: \n${ResultCompareSchemaFinal}")
       }
       
       //Create parquet
@@ -1466,7 +1471,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       LocalControl.NewStep("Save: Validating N° partitions")
       val DFDistinct = DF_Final.select(PartitionField).distinct().withColumn(PartitionField, DF_Final.col(PartitionField).cast(StringType))
       if (DFDistinct.count() != 1){
-        Control.RaiseError(s"N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}")
+        RaiseError(s"N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}")
       } else {
         val PartitionValue = DFDistinct.first().getAs[String](PartitionField)
         val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${PartitionField.toLowerCase()}=${PartitionValue}")
@@ -1518,8 +1523,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   def RaiseError(txt: String) {
     Error_Text = txt
     Error_isError = true
+    
     if (huemulLib.DebugMode) println(txt)
-    sys.error(txt)
+    Control.RaiseError(txt)
+    //sys.error(txt)
   }  
   
   
