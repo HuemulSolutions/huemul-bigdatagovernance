@@ -1285,7 +1285,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(NewAlias, true, true, true)      
+      Result = this.ExecuteSave(NewAlias, true, true, true)      
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
       
@@ -1301,7 +1301,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
 
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(NewAlias, true, false, false) 
+      Result = this.ExecuteSave(NewAlias, true, false, false) 
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
     }
@@ -1316,7 +1316,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.dohuemul(NewAlias, false, true, false)  
+      Result = this.ExecuteSave(NewAlias, false, true, false)  
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
@@ -1344,7 +1344,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    Master & Reference: update and Insert
    Transactional: Delete and Insert new data
    */
-  private def dohuemul(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean): Boolean = {
+  private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean): Boolean = {
    
     var LocalControl = new huemul_Control(huemulLib, Control ,false )
     LocalControl.AddParamInfo("AliasNewData", AliasNewData)
@@ -1352,6 +1352,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     LocalControl.AddParamInfo("IsUpdate", IsUpdate.toString())
     
     var result : Boolean = true
+    var ErrorCode: Integer = null
     
     try {
       val OnlyInsert: Boolean = IsInsert && !IsUpdate
@@ -1362,7 +1363,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         val ResultCompareSchema = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
         if (ResultCompareSchema != "") {
           result = false
-          RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchema}", 1013)
+          ErrorCode = 1013
+          RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchema}", ErrorCode)
         }
       }
     
@@ -1403,7 +1405,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       LocalControl.NewStep("Compare Schema Final DF")
       val ResultCompareSchemaFinal = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
       if (ResultCompareSchemaFinal != "") {
-        RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchemaFinal}",1014)
+        ErrorCode = 1014
+        RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchemaFinal}",ErrorCode)
       }
       
       //Create table persistent
@@ -1424,7 +1427,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     } catch {
       case e: Exception => 
         result = false
-        LocalControl.Control_Error.GetError(e, getClass().getSimpleName)
+        if (ErrorCode == null)
+          ErrorCode = 1027
+        LocalControl.Control_Error.GetError(e, getClass().getSimpleName, ErrorCode)
         LocalControl.FinishProcessError()
     }
     
@@ -1517,37 +1522,39 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       case e: Exception => 
         
         this.Error_isError = true
-        this.Error_Text = s"huemul_Table Error: write in disk failed ${e.getMessage}"
+        this.Error_Text = s"huemul_Table Error: write in disk failed. ${e.getMessage}"
         this.Error_Code = 1026
         Result = false
-        LocalControl.Control_Error.GetError(e, getClass.getSimpleName)
+        LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
     }
     
-    try {
-      //create table
-      if (CreateInHive ) {
-        LocalControl.NewStep("Save: Create Table in Hive Metadata")
-        DF_CreateTableScript() 
-       
-        huemulLib.spark.sql(CreateTableScript)
-      }
-  
-      //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
-      if (CreateInHive && (PartitionField != null && PartitionField != "")) {
-        LocalControl.NewStep("Save: Repair Hive Metadata")
-        if (huemulLib.DebugMode) println(s"MSCK REPAIR TABLE ${GetTable()}")
-        huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
-      }
-    } catch {
-      case e: Exception => 
-        
-        this.Error_isError = true
-        this.Error_Text = s"huemul_Table Error: create external table failed ${e.getMessage}"
-        this.Error_Code = 1025
-        Result = false
-        LocalControl.Control_Error.GetError(e, getClass.getSimpleName)
-    }
+    if (Result) {
+      try {
+        //create table
+        if (CreateInHive ) {
+          LocalControl.NewStep("Save: Create Table in Hive Metadata")
+          DF_CreateTableScript() 
+         
+          huemulLib.spark.sql(CreateTableScript)
+        }
     
+        //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
+        if (CreateInHive && (PartitionField != null && PartitionField != "")) {
+          LocalControl.NewStep("Save: Repair Hive Metadata")
+          if (huemulLib.DebugMode) println(s"MSCK REPAIR TABLE ${GetTable()}")
+          huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
+        }
+      } catch {
+        case e: Exception => 
+          
+          this.Error_isError = true
+          this.Error_Text = s"huemul_Table Error: create external table failed. ${e.getMessage}"
+          this.Error_Code = 1025
+          Result = false
+          LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
+      }
+    }
+      
     return Result
     
   }
