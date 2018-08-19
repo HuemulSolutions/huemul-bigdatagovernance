@@ -441,6 +441,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                              ,DQ_Error_MaxPercent     Decimal(30,10)
                                              ,DQ_IsError              Boolean
                                              ,DQ_ResultDQ             VARCHAR(8000)
+                                             ,DQ_ErrorCode            Integer
                                              ,DQ_NumRowsOK            BigInt
                                              ,DQ_NumRowsError         BigInt
                                              ,DQ_NumRowsTotal         BigInt
@@ -482,6 +483,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                 CREATE TABLE IF NOT EXISTS control_Error ( 
                                               Error_Id          VARCHAR(50)
                                              ,Error_Message                text
+                                             ,Error_Code           Integer
                                              ,Error_Trace                text
                                              ,Error_ClassName                text
                                              ,Error_FileName                text
@@ -496,7 +498,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                     """)
                     
                 
-      //control_Error
+      //control_date
     huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,"""
                CREATE TABLE IF NOT EXISTS control_Date ( 
                                       Date_Id		DATE
@@ -879,6 +881,7 @@ CREATE OR REPLACE FUNCTION control_DQ_add (  p_DQ_Id                   VARCHAR(5
 								 ,p_DQ_Error_MaxPercent     Decimal(30,10)
 								 ,p_DQ_IsError              Boolean
 								 ,p_DQ_ResultDQ             VARCHAR(8000)
+                 ,p_DQ_ErrorCode            Integer
 								 ,p_DQ_NumRowsOK            BigInt
 								 ,p_DQ_NumRowsError         BigInt
 								 ,p_DQ_NumRowsTotal         BigInt
@@ -909,6 +912,7 @@ BEGIN
                      ,dq_error_maxpercent
                      ,dq_iserror
                      ,dq_resultdq
+                     ,dq_ErrorCode
                      ,dq_numrowsok
                      ,dq_numrowserror
                      ,dq_numrowstotal
@@ -930,6 +934,7 @@ BEGIN
 			 ,p_dq_error_maxpercent
 			 ,p_dq_iserror
 			 ,p_dq_resultdq
+       ,p_dq_ErrorCode
 			 ,p_dq_numrowsok
 			 ,p_dq_numrowserror
 			 ,p_dq_numrowstotal
@@ -1602,6 +1607,7 @@ CREATE OR REPLACE FUNCTION control_Error_finish (p_processExec_id          VARCH
 										 	 	,p_processExecStep_id		VARCHAR(50)
                                              	,p_Error_Id          VARCHAR(50)
 												 ,p_Error_Message                text
+                         ,p_Error_Code                Integer
 												 ,p_Error_Trace                text
 												 ,p_Error_ClassName                text
 												 ,p_Error_FileName                text
@@ -1614,6 +1620,7 @@ $$
 BEGIN
 	INSERT INTO Control_Error (error_id
                       ,error_message
+                      ,error_code
                       ,error_trace
                       ,error_classname
                       ,error_filename
@@ -1624,6 +1631,7 @@ BEGIN
                       ,mdm_processname)
 	SELECT p_error_id
 		  ,p_error_message
+      ,p_error_code
 		  ,p_error_trace
 		  ,p_error_classname
 		  ,p_error_filename
@@ -1702,6 +1710,7 @@ LANGUAGE plpgsql;
                          , '${this.LocalIdStep}'  --p_processExecStep_id
                          , '${Error_Id}'  --Error_Id
                          , '${Control_Error.ControlError_Message.replace("'", "''")}' --as Error_Message
+                         , ${Control_Error.ControlError_ErrorCode} --as error_code
                          , '${Control_Error.ControlError_Trace.replace("'", "''")}' --as Error_Trace
                          , '${Control_Error.ControlError_ClassName.replace("'", "''")}' --as Error_ClassName
                          , '${Control_Error.ControlError_FileName.replace("'", "''")}' --as Error_FileName
@@ -1788,6 +1797,7 @@ LANGUAGE plpgsql;
                              , DQ_Error_MaxNumRows: Long
                              , DQ_Error_MaxPercent: Decimal
                              , DQ_ResultDQ: String
+                             , DQ_ErrorCode: Integer
                              , DQ_NumRowsOK: Long
                              , DQ_NumRowsError: Long
                              , DQ_NumRowsTotal: Long) {
@@ -1814,6 +1824,7 @@ LANGUAGE plpgsql;
                          , ${DQ_Error_MaxPercent} --DQ_Error_MaxPercent
                          , ${!(DQ_ResultDQ == null || DQ_ResultDQ == "")} --DQ_IsError
                          , '${if (DQ_ResultDQ == null) "" else DQ_ResultDQ.replace("'", "''")}' --DQ_ResultDQ
+                         , ${DQ_ErrorCode} --DQ_ErrorCode
                          , ${DQ_NumRowsOK} --DQ_NumRowsOK
                          , ${DQ_NumRowsError} --DQ_NumRowsError
                          , ${DQ_NumRowsTotal} --DQ_NumRowsTotal
