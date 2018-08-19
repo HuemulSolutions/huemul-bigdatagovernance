@@ -1478,39 +1478,49 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
      
     }
     
-    if (PartitionField == null || PartitionField == ""){
-      if (OnlyInsert) {
-        LocalControl.NewStep("Save: Append Master & Ref Data")
-        DF_Final.write.mode(SaveMode.Append).format(this.StorageType.toString()).save(GetFullNameWithPath())
-      }
-      else {
-        LocalControl.NewStep("Save: Overwrite Master & Ref Data")
-        DF_Final.write.mode(SaveMode.Overwrite).format(this.StorageType.toString()).save(GetFullNameWithPath())
-      }
-      
-      //val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
-      //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
-    }
-    else{
-      //Get Partition_Id Values
-      LocalControl.NewStep("Save: Validating N° partitions")
-      val DFDistinct = DF_Final.select(PartitionField).distinct().withColumn(PartitionField, DF_Final.col(PartitionField).cast(StringType))
-      if (DFDistinct.count() != 1){
-        RaiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}",1015)
-      } else {
-        val PartitionValue = DFDistinct.first().getAs[String](PartitionField)
-        val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${PartitionField.toLowerCase()}=${PartitionValue}")
+    try {
+      if (PartitionField == null || PartitionField == ""){
+        if (OnlyInsert) {
+          LocalControl.NewStep("Save: Append Master & Ref Data")
+          DF_Final.write.mode(SaveMode.Append).format(this.StorageType.toString()).save(GetFullNameWithPath())
+        }
+        else {
+          LocalControl.NewStep("Save: Overwrite Master & Ref Data")
+          DF_Final.write.mode(SaveMode.Overwrite).format(this.StorageType.toString()).save(GetFullNameWithPath())
+        }
         
-        LocalControl.NewStep("Save: Drop old partition")
-        val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
-        fs.delete(FullPath, true)
-        LocalControl.NewStep("Save: OverWrite partition with new data")
-        if (huemulLib.DebugMode) println(s"saving path: ${FullPath} ")        
-        DF_Final.write.mode(SaveMode.Append).format(this.StorageType.toString()).partitionBy(PartitionField).save(GetFullNameWithPath())
-              
+        //val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
         //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
-
-      }                       
+      }
+      else{
+        //Get Partition_Id Values
+        LocalControl.NewStep("Save: Validating N° partitions")
+        val DFDistinct = DF_Final.select(PartitionField).distinct().withColumn(PartitionField, DF_Final.col(PartitionField).cast(StringType))
+        if (DFDistinct.count() != 1){
+          RaiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}",1015)
+        } else {
+          val PartitionValue = DFDistinct.first().getAs[String](PartitionField)
+          val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${PartitionField.toLowerCase()}=${PartitionValue}")
+          
+          LocalControl.NewStep("Save: Drop old partition")
+          val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
+          fs.delete(FullPath, true)
+          LocalControl.NewStep("Save: OverWrite partition with new data")
+          if (huemulLib.DebugMode) println(s"saving path: ${FullPath} ")        
+          DF_Final.write.mode(SaveMode.Append).format(this.StorageType.toString()).partitionBy(PartitionField).save(GetFullNameWithPath())
+                
+          //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
+  
+        }                       
+      }
+    } catch {
+      case e: Exception => 
+        
+        this.Error_isError = true
+        this.Error_Text = s"huemul_Table Error: write in disk failed ${e.getMessage}"
+        this.Error_Code = 1026
+        Result = false
+        LocalControl.Control_Error.GetError(e, getClass.getSimpleName)
     }
     
     try {
@@ -1530,11 +1540,12 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       }
     } catch {
       case e: Exception => 
-        LocalControl.Control_Error.GetError(e, getClass.getSimpleName)
+        
         this.Error_isError = true
         this.Error_Text = s"huemul_Table Error: create external table failed ${e.getMessage}"
         this.Error_Code = 1025
         Result = false
+        LocalControl.Control_Error.GetError(e, getClass.getSimpleName)
     }
     
     return Result
