@@ -11,33 +11,33 @@ class huemul_ControlError (huemulLib: huemul_Library) extends Serializable  {
   var ControlError_MethodName: String = null
   var ControlError_Message: String = null
   var ControlError_IsError: Boolean = false
+  var ControlError_ErrorCode: Integer = null
   
   def IsOK(): Boolean = {
     return !ControlError_IsError
   }
   
   /**
-   * GetError(e: Exception, GetClassName: String, dapi_raw: DAPI_RAW )
-   * get error from exception and set DAPI_RAW error info
+   * GetError(e: Exception, GetClassName: String, DataLakeInstance: huemul_DataLake )
+   * get error from exception and set huemul_DataLake error info
    */
-  def GetError(e: Exception, GetClassName: String, dapi_raw: huemul_DataLake ) {
+  def GetError(e: Exception, GetClassName: String, DataLakeInstance: huemul_DataLake, Error_Code: Integer ) {
     //Get Error Info
-    GetError(e,GetClassName)
+    GetError(e,GetClassName, Error_Code)
     
-    //Set Error in DAPI RAW 
-    if (dapi_raw != null)
-      dapi_raw.Error_isError = true
-//    if (dapi_raw.Error_Text == "") {
-//      dapi_raw.Error_Text = e.toString()
-//    }
+    
+    if (DataLakeInstance != null)
+      DataLakeInstance.Error_isError = true
+
   }
   
   /**
    * GetError(e: Exception, GetClassName: String)
    * get error from exception 
    */
-  def GetError(e: Exception, GetClassName: String) {
+  def GetError(e: Exception, GetClassName: String, Error_Code: Integer) {
     ControlError_IsError = true
+    ControlError_ErrorCode = Error_Code
     ControlError_Trace = ""
     e.getStackTrace().foreach { x => ControlError_Trace = ControlError_Trace + x + "\n" }
     
@@ -60,11 +60,12 @@ class huemul_ControlError (huemulLib: huemul_Library) extends Serializable  {
     
     ControlError_Message = e.toString()
     
-    
-    println("Error Detail DebugMode:")
-    
+    println("***************************************************************")
+    println("huemulLibrary: Error Detail")
+    println("***************************************************************")
     println(s"ControlError_ClassName: $ControlError_ClassName")
     println(s"ControlError_FileName: $ControlError_FileName")
+    println(s"ControlError_ErrorCode: $ControlError_ErrorCode")
     println(s"ControlError_LineNumber: $ControlError_LineNumber")
     println(s"ControlError_MethodName: $ControlError_MethodName")
     println(s"ControlError_Message: $ControlError_Message")
