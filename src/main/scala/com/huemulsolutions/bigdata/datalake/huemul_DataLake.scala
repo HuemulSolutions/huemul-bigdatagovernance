@@ -54,30 +54,30 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
   var DataRDD: RDD[String] = null
   
   
-  def RaiseError_RAW(txt: String) {
+  def RaiseError_RAW(txt: String, Error_Code: Integer) {
     Error.ControlError_Message = txt
-    //Error_Text = txt
+    Error.ControlError_ErrorCode = Error_Code
     Error_isError = true
-    sys.error(txt)
+    Control.RaiseError(txt)
+    
   } 
   
   /**
    * RAW_to_DF: Create DF from RDD, save at Data.DataDF
    */
-  def DF_from_RAW(rowRDD: RDD[Row], Alias: String, Control: huemul_Control) {
+  def DF_from_RAW(rowRDD: RDD[Row], Alias: String) {
     DataFramehuemul.DF_from_RAW(rowRDD, Alias)
     //Register use in control
-    if (Control != null) {
-      Control.RegisterRAW_USE(this)
-    }
+    Control.RegisterRAW_USE(this)
+    
   }
   
   
   /***
-   * DAPI_ConvertSchema: Transforma un string en un objeto ROW
+   * ConvertSchemaLocal: Transforma un string en un objeto RAW
    * SchemaConf: Schema configuration in definition
    * Schema: get from Data or Log (ex: RAW_Exec.Data.DataSchema)
-   * Return: objeto Row
+   * Return: objeto RAW
    */
   
   private def ConvertSchemaLocal(SchemaConf: huemul_DataLakeSchemaConf, Schema: StructType, row : String, ApplyTrim: Boolean = true) : Row = {
@@ -88,7 +88,7 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
       val numCols: Integer = Schema.length
       
       if (numCols == 0 || numCols == null){
-        this.RaiseError_RAW("Schema not defined")
+        this.RaiseError_RAW("huemul_DataLake Error: Schema not defined",3002)
       }
       //declare variables for transform
       DataArray_Dest = new Array[Any](numCols)      
@@ -128,14 +128,16 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
   def OpenFile(ano: Integer, mes: Integer, dia: Integer, hora: Integer, min: Integer, seg: Integer, AdditionalParams: String = null): Boolean = {    
     //Ask for definition in date
     val DateProcess = huemulLib.setDateTime(ano, mes, dia, hora, min, seg)
-    
+    var LocalErrorCode: Integer = null
     if (huemulLib.DebugMode) println("N° array config: " + this.SettingByDate.length.toString())
     val DataResult = this.SettingByDate.filter { x => DateProcess.getTimeInMillis >= x.StartDate.getTimeInMillis && DateProcess.getTimeInMillis <= x.EndDate.getTimeInMillis  }
     
     if (DataResult.length == 0) {
-      RaiseError_RAW("Logical Error: No definition found in " + this.LogicalName + " (" + this.SettingByDate.length.toString() + ")" )
+      LocalErrorCode = 3003 
+      RaiseError_RAW("huemul_DataLake Error: No definition found in " + this.LogicalName + " (" + this.SettingByDate.length.toString() + ")",LocalErrorCode)
     } else if (DataResult.length > 1) {
-      RaiseError_RAW("Logical Error: Multiple definitions found in " + this.LogicalName + " (" + this.SettingByDate.length.toString() + ")" )
+      LocalErrorCode = 3004
+      RaiseError_RAW("huemul_DataLake Error: Multiple definitions found in " + this.LogicalName + " (" + this.SettingByDate.length.toString() + ")", LocalErrorCode )
     } else if (DataResult.length == 1) {
        this.SettingInUse = DataResult(0)
     }         
@@ -149,15 +151,16 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
         this.FileName = huemulLib.ReplaceWithParams(this.SettingInUse.GetFullNameWithPath(), ano, mes, dia, hora, min, seg, AdditionalParams)
         //DQ: Validate name special characters 
         if (this.FileName.contains("{{") || this.FileName.contains("}}")) {
-          sys.error("FileName contains incorrect characters {{ or }}: " + this.FileName)
+          LocalErrorCode = 3005
+          this.RaiseError_RAW("huemul_DataLake Error: FileName contains incorrect characters {{ or }}: " + this.FileName, LocalErrorCode)
         }
         println("Reading File: " + this.FileName)
-        //val a = huemulLib.spark.sparkContext.textFile(this.FileName)
         
         if (this.SettingInUse.FileType == huemulType_FileType.TEXT_FILE) {
           this.DataRDD = huemulLib.spark.sparkContext.textFile(this.FileName)
         } else {
-          sys.error("FileType missing (add this.FileType setting in DataLake definition)")
+          LocalErrorCode = 3006
+          this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)
         }
           
 
@@ -178,9 +181,11 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
           fieldsLog = this.SettingInUse.LogSchemaConf.ColumnsPosition       
               .map(fieldName => StructField(fieldName(0), StringType, nullable = true))  
               
-          if (fieldsLog == null)
-            sys.error("Don't have header information for Detail, see fieldsSeparatorType field ")
-                  
+          if (fieldsLog == null) {
+            LocalErrorCode = 3007
+            this.RaiseError_RAW("huemul_DataLake Error: Don't have header information for Detail, see fieldsSeparatorType field ", LocalErrorCode)
+          }
+          
           this.Log.LogSchema = StructType(fieldsLog)          
           
           this.Log.Log_isRead = true
@@ -228,9 +233,10 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
               .map(fieldName => StructField(fieldName, StringType, nullable = true))                             
         }
         
-        if (fieldsDetail == null)
-          sys.error("Don't have header information for Detail, see fieldsSeparatorType field ")
-          
+        if (fieldsDetail == null) {
+          LocalErrorCode = 3008
+          this.RaiseError_RAW("huemul_DataLake Error: Don't have header information for Detail, see fieldsSeparatorType field ", LocalErrorCode)
+        }
         
         this.DataFramehuemul.SetDataSchema(StructType(fieldsDetail))
         if (this.huemulLib.DebugMode) {
@@ -241,8 +247,10 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
         println("N° Columns: " + this.DataFramehuemul.getNumCols.toString())                        
     } catch {
       case e: Exception => {
+        if (LocalErrorCode == null)
+          LocalErrorCode = 3001
         this.Error_isError = true
-        this.Error.GetError(e, this.getClass.getName)
+        this.Error.GetError(e, this.getClass.getName, this, LocalErrorCode)
         
               
       }
