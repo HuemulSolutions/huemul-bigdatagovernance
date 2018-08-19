@@ -16,6 +16,7 @@ class huemul_DQRecord extends Serializable {
   var DQ_Error_MaxNumRows: Long= 0
   var DQ_Error_MaxPercent: Decimal= null
   var DQ_ResultDQ: String= null
+  var DQ_ErrorCode: Integer = null
   var DQ_NumRowsOK: Long = 0
   var DQ_NumRowsError: Long= 0
   var DQ_NumRowsTotal: Long= 0

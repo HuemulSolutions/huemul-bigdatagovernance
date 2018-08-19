@@ -6,7 +6,8 @@ import com.huemulsolutions.bigdata.tables.huemul_Columns
 class huemul_DataQuality(FieldName: huemul_Columns
             ,IsAggregated: Boolean
             ,RaiseError: Boolean
-            ,Description: String            
+            ,Description: String
+            ,Error_Code: Integer
             ,sqlformula: String
             ) extends Serializable {
   /**% of total for refuse validation. Example: 0.15 = 15% (null to not use)
@@ -27,7 +28,7 @@ class huemul_DataQuality(FieldName: huemul_Columns
   def getIsAggregated(): Boolean  = {return IsAggregated}
   def getDescription(): String  ={return  Description}
   def getRaiseError(): Boolean = {return RaiseError}
-  
+  def getErrorCode(): Integer = {return Error_Code}
   var NumRowsOK: java.lang.Long = null
   var NumRowsTotal: java.lang.Long = null
   

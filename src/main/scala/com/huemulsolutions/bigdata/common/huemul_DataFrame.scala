@@ -647,7 +647,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     var NumTotalErrors: Integer = 0
     var txtTotalErrors: String = ""
     var ErrorLog: huemul_DataQualityResult = new huemul_DataQualityResult()
-      
+    var localErrorCode : Integer = null
+    
     //DataQuality AdHoc
     val SQLDQ = getSQL_DataQualityForRun(OfficialDataQuality, ManualRules, AliasDF)
     if (huemulLib.DebugMode && !huemulLib.HideLibQuery) {
@@ -679,6 +680,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
            
           if (DQWithError > x.Error_MaxNumRows)
             x.ResultDQ = s"Max Rows with error defined: ${x.Error_MaxNumRows}, Real N° rows with error: ${DQWithError}"
+            
         } 
         
         //Validate % rows with error vs definition
@@ -712,13 +714,14 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         Values.DQ_ResultDQ =x.ResultDQ
         Values.DQ_NumRowsOK =x.NumRowsOK
         Values.DQ_NumRowsError =DQWithError
-        Values.DQ_NumRowsTotal =x.NumRowsTotal
+        Values.DQ_NumRowsTotal =x.NumRowsTotal       
   
         this.DQ_Register(Values)
         
         if (x.getRaiseError == true && x.ResultDQ != null) {
           txtTotalErrors += s"DQ Name: ${x.getMyName} with error: ${x.ResultDQ} \n"
           NumTotalErrors += 1
+          localErrorCode = x.getErrorCode()
         }
       }
     }
@@ -726,6 +729,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (NumTotalErrors > 0){
       ErrorLog.isError = true
       ErrorLog.Description = txtTotalErrors
+      ErrorLog.Error_Code = localErrorCode 
     }
     
     return ErrorLog

@@ -4,6 +4,7 @@ import org.apache.spark.sql._
 
 class huemul_DataQualityResult extends Serializable {
   var isError: Boolean = false
+  var Error_Code: Integer = null
   var Description: String = ""
   var dqDF : DataFrame = null
     

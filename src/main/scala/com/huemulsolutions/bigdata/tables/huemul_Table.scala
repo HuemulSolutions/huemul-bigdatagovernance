@@ -176,6 +176,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    
   var Error_isError: Boolean = false
   var Error_Text: String = ""
+  var Error_Code: Integer = null
   
   
   def ApplyTableDefinition(): Boolean = {
@@ -183,13 +184,13 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       PartitionField = ""
       
     if (this.GlobalPaths == null)
-      RaiseError(s"huemul_Table Error: GlobalPaths must be defined")
+      RaiseError(s"huemul_Table Error: GlobalPaths must be defined",1000)
       
     if (this.LocalPath == null)
-      RaiseError(s"huemul_Table Error: LocalPath must be defined")
+      RaiseError(s"huemul_Table Error: LocalPath must be defined",1001)
       
     if (this.StorageType == null)
-      RaiseError(s"huemul_Table Error: StorageType must be defined")
+      RaiseError(s"huemul_Table Error: StorageType must be defined",1002)
       
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
@@ -202,7 +203,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         DataField.Set_MyName(x.getName)
         
         if (DataField.DQ_MaxLen != null && DataField.DQ_MaxLen < 0)
-          RaiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive  ")
+          RaiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive",1003)
       }
       
       //Nombre de DQ      
@@ -954,7 +955,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       val TotalLeft = DF_Left.count()
       if (TotalLeft > 0) {
         Result.isError = true
-        Result.Description = s"API ERROR: Foreing Key DQ Error, ${TotalLeft} records not found"
+        Result.Description = s"huemul_Table Error: Foreing Key DQ Error, ${TotalLeft} records not found"
+        Result.Error_Code = 1024
         Result.dqDF = DF_Left
         Result.profilingResult.count_all_Col = TotalLeft
         DF_Left.show()
@@ -973,6 +975,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       Values.DQ_IsAggregate =false
       Values.DQ_RaiseError =true
       Values.DQ_SQLFormula =SQLLeft
+      Values.DQ_ErrorCode = Result.Error_Code
       Values.DQ_Error_MaxNumRows =0
       Values.DQ_Error_MaxPercent =null
       Values.DQ_ResultDQ =Result.Description
@@ -997,7 +1000,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     val SQL_Missing = MissingRequiredFields()
     if (SQL_Missing.length > 0) {
       Result.isError = true
-      Result.Description += "error: requiered fields missing: "
+      Result.Description += "huemul_Table Error: requiered fields missing"
+      Result.Error_Code = 1016
       SQL_Missing.foreach { x => Result.Description +=  x }
     }
     
@@ -1007,14 +1011,16 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     val SQL_PK: String = SQL_PrimaryKey_FinalTable()
     if (SQL_PK == "" || SQL_PK == null) {
       Result.isError = true
-      Result.Description += "error: PK not defined"
+      Result.Description += "huemul_Table Error: PK not defined"
+      Result.Error_Code = 1017
     }    
     
     if (huemulLib.DebugMode) println("DF_SAVE DQ: VALIDATE PRIMARY KEY")
     val DQ_PK = DataFramehuemul.DQ_DuplicateValues(this, SQL_PK, null, "PK")
     if (DQ_PK.isError) {
       Result.isError = true
-      Result.Description += s"error PK: ${DQ_PK.Description} " 
+      Result.Description += s"huemul_Table Error: PK: ${DQ_PK.Description} " 
+      Result.Error_Code = 1018
     }
     
     
@@ -1026,7 +1032,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       val DQ_Unique = DataFramehuemul.DQ_DuplicateValues(this, x, null) 
       if (DQ_Unique.isError) {
         Result.isError = true
-        Result.Description += s"error Unique for field $x: ${DQ_Unique.Description} "
+        Result.Description += s"huemul_Table Error: error Unique for field $x: ${DQ_Unique.Description} "
+        Result.Error_Code = 1019
       }            
     }
     
@@ -1034,7 +1041,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     SQL_NotNull_FinalTable().foreach { x => 
       if (huemulLib.DebugMode) println(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD $x")
       
-        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(null, false,true,s" Not Null for field $x ", s"$x IS NOT NULL")
+        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(null, false,true,s"huemul_Table Error: Not Null for field $x ",1023, s"$x IS NOT NULL")
         NotNullDQ.Error_MaxNumRows = 0
         ArrayDQ.append(NotNullDQ)
     }
@@ -1053,7 +1060,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         if (x.DQ_MaxLen != null)
           SQLFormula += s" $tand length(coalesce(${x.get_MyName()},'')) <= ${x.DQ_MaxLen}"
                           
-        val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, false, true,s"MinMax length Column ${x.get_MyName()}",SQLFormula )
+        val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, false, true,s"huemul_Table Error: MinMax length Column ${x.get_MyName()}",1020,SQLFormula )
         MinMaxLen.Error_MaxNumRows = 0
         ArrayDQ.append(MinMaxLen)
     }
@@ -1071,7 +1078,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         if (x.DQ_MaxDecimalValue != null)
           SQLFormula += s" $tand ${x.get_MyName()} <= ${x.DQ_MaxDecimalValue}"
         
-        val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, false,true,s"MinMax Number Column ${x.get_MyName()}", SQLFormula)
+        val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, false,true,s"huemul_Table Error: MinMax Number Column ${x.get_MyName()}",1021, SQLFormula)
         MinMaxNumber.Error_MaxNumRows = 0        
         ArrayDQ.append(MinMaxNumber)
     }
@@ -1089,7 +1096,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         if (x.DQ_MaxDateTimeValue != null)
           SQLFormula += s" $tand ${x.get_MyName()} <= '${x.DQ_MaxDateTimeValue}'"
           
-        val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, false,true,s"MinMax DateTime Column ${x.get_MyName()} ", SQLFormula)
+        val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, false,true,s"huemul_Table Error: MinMax DateTime Column ${x.get_MyName()} ",1022, SQLFormula)
         MinMaxDT.Error_MaxNumRows = 0
         ArrayDQ.append(MinMaxDT)
     }
@@ -1098,6 +1105,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     if (ResultDQ.isError){
       Result.isError = true
       Result.Description += ResultDQ.Description
+      Result.Error_Code = ResultDQ.Error_Code
     }
     
     return Result
@@ -1120,7 +1128,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         
         //New value (from field or compute column )
         if (!huemulLib.HasName(Field.get_MappedName()) ){
-          RaiseError(s"${x.getName()} MUST have an assigned local name")
+          RaiseError(s"${x.getName()} MUST have an assigned local name",1004)
         }                 
       }
       
@@ -1228,15 +1236,20 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
       LocalControl.NewStep("Ref & Master: Validating Insert & Update")
       var DQ_Error: String = ""
+      var Error_Number: Integer = null
       if (this._NumRows_Total == this._NumRows_New)
         DQ_Error = "" //Doesn't have error, first run
-      else if (this.DQ_MaxNewRecords_Num != null && this.DQ_MaxNewRecords_Num > 0 && this._NumRows_New > this.DQ_MaxNewRecords_Num)
-        DQ_Error = s"DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this.DQ_MaxNewRecords_Num}) "
-      else if (this.DQ_MaxNewRecords_Perc != null && this.DQ_MaxNewRecords_Perc > 0 && (this._NumRows_New / this._NumRows_Total) > this.DQ_MaxNewRecords_Perc)
-        DQ_Error = s"DQ MDM Error: % New Rows (${(this._NumRows_New / this._NumRows_Total)}) exceeds % max defined (${this.DQ_MaxNewRecords_Perc}) "
+      else if (this.DQ_MaxNewRecords_Num != null && this.DQ_MaxNewRecords_Num > 0 && this._NumRows_New > this.DQ_MaxNewRecords_Num){
+        DQ_Error = s"huemul_Table Error: DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this.DQ_MaxNewRecords_Num}) "
+        Error_Number = 1005
+      }
+      else if (this.DQ_MaxNewRecords_Perc != null && this.DQ_MaxNewRecords_Perc > 0 && (this._NumRows_New / this._NumRows_Total) > this.DQ_MaxNewRecords_Perc) {
+        DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(this._NumRows_New / this._NumRows_Total)}) exceeds % max defined (${this.DQ_MaxNewRecords_Perc}) "
+        Error_Number = 1006
+      }
 
       if (DQ_Error != "")
-        RaiseError(DQ_Error)
+        RaiseError(DQ_Error, Error_Number)
         
       DQ_ReferenceData.unpersist()
       
@@ -1255,7 +1268,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       SQLDistinct_DF.unpersist()
       
     } else
-      RaiseError(s"Error: ${TableType} found, Master o Reference required ")
+      RaiseError(s"huemul_Table Error: ${TableType} found, Master o Reference required ", 1007)
   }
   
   private def GetClassAndPackage(): huemul_AuthorizationPair = {
@@ -1276,7 +1289,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     if (this.WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.dohuemul(NewAlias, true, true, true)      
     else {
-      RaiseError(s"Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
+      RaiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
+      
     }
     
     return Result
@@ -1285,13 +1299,13 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   def executeOnlyInsert(NewAlias: String): Boolean = {
     var Result: Boolean = false
     if (this.TableType == huemulType_Tables.Transaction)
-      RaiseError("DoOnlyInserthuemul is not available for Transaction Tables")
+      RaiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
 
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.dohuemul(NewAlias, true, false, false) 
     else {
-      RaiseError(s"Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
+      RaiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
     }
          
     return Result
@@ -1300,13 +1314,13 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   def executeOnlyUpdate(NewAlias: String): Boolean = {   
     var Result: Boolean = false
     if (this.TableType == huemulType_Tables.Transaction)
-      RaiseError("DoOnlyUpdatehuemul is not available for Transaction Tables")
+      RaiseError("huemul_Table Error: DoOnlyUpdatehuemul is not available for Transaction Tables", 1011)
       
     val whoExecute = GetClassAndPackage()  
     if (this.WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.dohuemul(NewAlias, false, true, false)  
     else {
-      RaiseError(s"Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}")
+      RaiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
     
     return Result
@@ -1350,7 +1364,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         val ResultCompareSchema = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
         if (ResultCompareSchema != "") {
           result = false
-          RaiseError(s"User Error: incorrect DataType: \n${ResultCompareSchema}")
+          RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchema}", 1013)
         }
       }
     
@@ -1369,26 +1383,29 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       val FKResult = DF_ForeingKeyMasterAuto()
       
       LocalControl.NewStep("Validating errors ")
+      var localErrorCode: Integer = null
       if (DQResult.isError || FKResult.isError) {
         result = false
         var ErrorDetail: String = ""
         if (DQResult.isError) {
           ErrorDetail = s"DataQuality Error: \n${DQResult.Description}"
+          localErrorCode = DQResult.Error_Code
         }
         
         if (FKResult.isError) {
           ErrorDetail += s"\nForeing Key Validation Error: \n${FKResult.Description}"
+          localErrorCode = DQResult.Error_Code
         }
               
         
-        RaiseError(ErrorDetail)
+        RaiseError(ErrorDetail, localErrorCode)
       }
       
       //Compare schemas final table
       LocalControl.NewStep("Compare Schema Final DF")
       val ResultCompareSchemaFinal = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
       if (ResultCompareSchemaFinal != "") {
-        RaiseError(s"User Error: incorrect DataType: \n${ResultCompareSchemaFinal}")
+        RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchemaFinal}",1014)
       }
       
       //Create parquet
@@ -1479,7 +1496,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       LocalControl.NewStep("Save: Validating N° partitions")
       val DFDistinct = DF_Final.select(PartitionField).distinct().withColumn(PartitionField, DF_Final.col(PartitionField).cast(StringType))
       if (DFDistinct.count() != 1){
-        RaiseError(s"N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}")
+        RaiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}",1015)
       } else {
         val PartitionValue = DFDistinct.first().getAs[String](PartitionField)
         val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${PartitionField.toLowerCase()}=${PartitionValue}")
@@ -1528,9 +1545,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   /**
    * Raise Error
    */
-  def RaiseError(txt: String) {
+  def RaiseError(txt: String, code: Integer) {
     Error_Text = txt
     Error_isError = true
+    Error_Code = code
     
     if (huemulLib.DebugMode) println(txt)
     Control.RaiseError(txt)
