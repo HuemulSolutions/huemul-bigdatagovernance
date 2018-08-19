@@ -9,6 +9,7 @@ import scala.collection.mutable._
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.permission.FsPermission
 import huemulType_Tables._
+import huemulType_StorageType._
 import com.huemulsolutions.bigdata._
 import com.huemulsolutions.bigdata.dataquality._
 import com.huemulsolutions.bigdata.common._
@@ -39,7 +40,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   /**
    Type of Persistent storage (parquet, csv, json)
    */
-  var StorageType : String= ""
+  var StorageType : huemulType_StorageType = null
   /**
     Table description
    */
@@ -87,10 +88,6 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   var WhoCanRun_executeOnlyUpdate: huemul_Authorization = new huemul_Authorization()
   
   private var CreateInHive: Boolean = true
-  /**
-   CREATE EXTERNAL TABLE IF NOT EXIST ${info.TableName}([FIELDS]) STORED AS PARQUET LOCATION '${info.GetFullNameWithPath()}'
-   get [FIELDS] from result in DESA Environment
-   */
   private var CreateTableScript: String = ""
   
   private var _PartitionCreateTable: String = ""
@@ -874,11 +871,12 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    ******************************************************************************** */
   
   private def DF_CreateTableScript(): String = {
+                                  
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     CreateTableScript = s"""
                                  CREATE EXTERNAL TABLE IF NOT EXISTS ${GetTable()} (${GetColumns_CreateTable(true) })
-                                 ${if (PartitionField.length() > 0) s"PARTITIONED BY (${_PartitionCreateTable})" else "" } 
-                                 STORED AS PARQUET                                  
+                                 ${if (PartitionField.length() > 0) s"PARTITIONED BY (${_PartitionCreateTable})" else "" }
+                                 STORED AS ${StorageType.toString()}                                  
                                  LOCATION '${GetFullNameWithPath()}'"""
                                  
     if (huemulLib.DebugMode)
@@ -1174,7 +1172,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         //Exist, copy for use
         
         //Open actual file
-        val DFTempCopy = huemulLib.spark.read.format(this.StorageType).load(this.GetFullNameWithPath())
+        val DFTempCopy = huemulLib.spark.read.format(this.StorageType.toString()).load(this.GetFullNameWithPath())
         val tempPath = huemulLib.GlobalSettings.GetDebugTempPath(huemulLib, huemulLib.ProcessNameCall, TempAlias)
         if (huemulLib.DebugMode) println(s"copy to temp dir: $tempPath ")
         DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
@@ -1408,7 +1406,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchemaFinal}",1014)
       }
       
-      //Create parquet
+      //Create table persistent
       if (huemulLib.DebugMode){
         println(s"Saving ${GetTable()} Table with params: ") 
         println(s"${PartitionField} field for partitioning table")
@@ -1416,19 +1414,20 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       }
       
       LocalControl.NewStep("Start Save ")                
-      SavePersistent(LocalControl, DataFramehuemul.DataFrame, OnlyInsert)
-      
-      LocalControl.FinishProcessOK
+      if (SavePersistent(LocalControl, DataFramehuemul.DataFrame, OnlyInsert))
+        LocalControl.FinishProcessOK
+      else {
+        result = false
+        LocalControl.FinishProcessError()
+      }
       
     } catch {
       case e: Exception => 
+        result = false
         LocalControl.Control_Error.GetError(e, getClass().getSimpleName)
         LocalControl.FinishProcessError()
     }
     
-    
-
-
     return result
   }
   
@@ -1454,8 +1453,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     
   }
   
-  private def SavePersistent(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean) {
+  private def SavePersistent(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean): Boolean = {
     var DF_Final = DF
+    var Result: Boolean = true
     
     if (this.TableType == huemulType_Tables.Reference || this.TableType == huemulType_Tables.Master) {
       LocalControl.NewStep("Save: Drop ActionType column")
@@ -1481,15 +1481,15 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     if (PartitionField == null || PartitionField == ""){
       if (OnlyInsert) {
         LocalControl.NewStep("Save: Append Master & Ref Data")
-        DF_Final.write.mode(SaveMode.Append).format(this.StorageType).save(GetFullNameWithPath())
+        DF_Final.write.mode(SaveMode.Append).format(this.StorageType.toString()).save(GetFullNameWithPath())
       }
       else {
         LocalControl.NewStep("Save: Overwrite Master & Ref Data")
-        DF_Final.write.mode(SaveMode.Overwrite).format(this.StorageType).save(GetFullNameWithPath())
+        DF_Final.write.mode(SaveMode.Overwrite).format(this.StorageType.toString()).save(GetFullNameWithPath())
       }
       
-      val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
-      fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
+      //val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
+      //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
     }
     else{
       //Get Partition_Id Values
@@ -1506,27 +1506,38 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         fs.delete(FullPath, true)
         LocalControl.NewStep("Save: OverWrite partition with new data")
         if (huemulLib.DebugMode) println(s"saving path: ${FullPath} ")        
-        DF_Final.write.mode(SaveMode.Append).format(this.StorageType).partitionBy(PartitionField).save(GetFullNameWithPath())
+        DF_Final.write.mode(SaveMode.Append).format(this.StorageType.toString()).partitionBy(PartitionField).save(GetFullNameWithPath())
               
-        fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
+        //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
 
       }                       
     }
     
-    //create table
-    if (CreateInHive ) {
-      LocalControl.NewStep("Save: Create Table in Hive Metadata")
-      DF_CreateTableScript() 
-      
-      huemulLib.spark.sql(CreateTableScript)
+    try {
+      //create table
+      if (CreateInHive ) {
+        LocalControl.NewStep("Save: Create Table in Hive Metadata")
+        DF_CreateTableScript() 
+       
+        huemulLib.spark.sql(CreateTableScript)
+      }
+  
+      //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
+      if (CreateInHive && (PartitionField != null && PartitionField != "")) {
+        LocalControl.NewStep("Save: Repair Hive Metadata")
+        if (huemulLib.DebugMode) println(s"MSCK REPAIR TABLE ${GetTable()}")
+        huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
+      }
+    } catch {
+      case e: Exception => 
+        LocalControl.Control_Error.GetError(e, getClass.getSimpleName)
+        this.Error_isError = true
+        this.Error_Text = s"huemul_Table Error: create external table failed ${e.getMessage}"
+        this.Error_Code = 1025
+        Result = false
     }
-
-    //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
-    if (CreateInHive && (PartitionField != null && PartitionField != "")) {
-      LocalControl.NewStep("Save: Repair Hive Metadata")
-      if (huemulLib.DebugMode) println(s"MSCK REPAIR TABLE ${GetTable()}")
-      huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
-    }
+    
+    return Result
     
   }
   
