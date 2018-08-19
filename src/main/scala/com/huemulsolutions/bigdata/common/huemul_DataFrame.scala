@@ -118,10 +118,12 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       DQResult.isError = false
     } else if (NumRows < NumMin) {
       DQResult.isError = true
-      DQResult.Description = s"Rows($NumRows) < MinDef($NumMin)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($NumRows) < MinDef($NumMin)"
+      DQResult.Error_Code = 2001
     } else if (NumRows > NumMax) {
       DQResult.isError = true
-      DQResult.Description = s"Rows($NumRows) > MaxDef($NumMax)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($NumRows) > MaxDef($NumMax)"
+      DQResult.Error_Code = 2002
     }
     
     var TableName: String = null
@@ -145,6 +147,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_Error_MaxNumRows =0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
     Values.DQ_NumRowsTotal =NumRows
@@ -165,10 +168,12 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       DQResult.isError = false
     } else if (NumRows < NumRowsExpected) {
       DQResult.isError = true
-      DQResult.Description = s"Rows($NumRows) < NumExpected($NumRowsExpected)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($NumRows) < NumExpected($NumRowsExpected)"
+      DQResult.Error_Code = 2003
     } else if (NumRows > NumRowsExpected) {
       DQResult.isError = true
-      DQResult.Description = s"Rows($NumRows) > NumExpected($NumRowsExpected)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($NumRows) > NumExpected($NumRowsExpected)"
+      DQResult.Error_Code = 2004
     }
     
     
@@ -193,6 +198,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_Error_MaxNumRows = 0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
     Values.DQ_NumRowsTotal =NumRows
@@ -261,8 +267,9 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
        
           val currentColumn = DF_FinalResultFirst.getAs[Long](s"Total_Equal_${x.name}")
           if (currentColumn != totalCount) {
-            DQResult.Description = s"Column ${x.name} have different values: Total rows ${totalCount}, N° OK : ${currentColumn} "
+            DQResult.Description = s"huemul_DataFrame Error: Column ${x.name} have different values: Total rows ${totalCount}, N° OK : ${currentColumn} "
             DQResult.isError = true
+            DQResult.Error_Code = 2005
             println(DQResult.Description)
             DQResult.dqDF.where(s"Equal_${x.name} = 0").show()
             NumColumnsError += 1
@@ -302,6 +309,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_Error_MaxNumRows =0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =NumColumns - NumColumnsError
     Values.DQ_NumRowsError =NumColumnsError
     Values.DQ_NumRowsTotal =NumColumns
@@ -475,8 +483,9 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       //duplicate rows found
       DQDup = DQResult.dqDF.count()
       if (DQDup > 0) {
-        DQResult.Description = s"N° Rows Duplicate in $ColDuplicate: " + DQDup.toString()
+        DQResult.Description = s"huemul_DataFrame Error: N° Rows Duplicate in $ColDuplicate: " + DQDup.toString()
         DQResult.isError = true
+        DQResult.Error_Code = 2006
         println(DQResult.Description)
         DQResult.dqDF.show()
       }
@@ -507,6 +516,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_Error_MaxNumRows =0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =DQDup
     Values.DQ_NumRowsTotal =NumRows
@@ -544,8 +554,9 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       //null rows found
       DQDup = DQResult.dqDF.count()
       if (DQDup > 0) {
-        DQResult.Description = s"N° Rows Null in $Col: " + DQDup.toString()
+        DQResult.Description = s"huemul_DataFrame Error: N° Rows Null in $Col: " + DQDup.toString()
         DQResult.isError = true
+        DQResult.Error_Code = 2007
         println(DQResult.Description)
         DQResult.dqDF.show()
       }
@@ -577,6 +588,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_Error_MaxNumRows =0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
+    Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =DQDup
     Values.DQ_NumRowsTotal =0
@@ -749,6 +761,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         , DQ.DQ_Error_MaxNumRows
         , DQ.DQ_Error_MaxPercent
         , DQ.DQ_ResultDQ
+        , DQ.DQ_ErrorCode
         , DQ.DQ_NumRowsOK
         , DQ.DQ_NumRowsError
         , DQ.DQ_NumRowsTotal)
