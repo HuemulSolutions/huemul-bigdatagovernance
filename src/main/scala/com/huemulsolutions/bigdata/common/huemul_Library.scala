@@ -130,25 +130,6 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   def getDay(Date: Calendar): Int = {return Date.get(Calendar.DAY_OF_MONTH)}
   def getYear(Date: Calendar): Int = {return Date.get(Calendar.YEAR)}
   def getHour(Date: Calendar): Int = {return Date.get(Calendar.HOUR)}
-  /*
-  def Finish(){
-    if (RegisterInControl) {
-      val Result = ExecuteJDBC(JDBCTXT,s""" SELECT control_executors_remove(
-                    '${IdApplication}' -- p_application_Id
-                  ) 
-        """)
-    }
-  }
-  * 
-  */
-       
-  def Inicializacion () {
-    //Crea base de datos huemulLib_Temp para trabajo en DebugMode
-    spark.sql("create database if not exists huemulLib_Temp")
-    
-    //Crea base de datos huemulLib_Control para almacenar metadata de procesos y ejecuciones
-    spark.sql("create database if not exists huemulLib_Control")
-  }
   
   def isAllDigits(x: String) = x forall Character.isDigit
   
