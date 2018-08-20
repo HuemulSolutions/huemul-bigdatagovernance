@@ -201,6 +201,12 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         
         if (DataField.DQ_MaxLen != null && DataField.DQ_MaxLen < 0)
           RaiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive",1003)
+        else if (DataField.DQ_MaxLen != null && DataField.DQ_MinLen != null && DataField.DQ_MaxLen < DataField.DQ_MinLen)
+          RaiseError(s"Error column ${x.getName}: DQ_MinLen(${DataField.DQ_MinLen}) must be less than DQ_MaxLen(${DataField.DQ_MaxLen})",1028)
+        else if (DataField.DQ_MaxDecimalValue != null && DataField.DQ_MinDecimalValue != null && DataField.DQ_MaxDecimalValue < DataField.DQ_MinDecimalValue)
+          RaiseError(s"Error column ${x.getName}: DQ_MinDecimalValue(${DataField.DQ_MinDecimalValue}) must be less than DQ_MaxDecimalValue(${DataField.DQ_MaxDecimalValue})",1029)
+        else if (DataField.DQ_MaxDateTimeValue != null && DataField.DQ_MinDateTimeValue != null && DataField.DQ_MaxDateTimeValue < DataField.DQ_MinDateTimeValue)
+          RaiseError(s"Error column ${x.getName}: DQ_MinDateTimeValue(${DataField.DQ_MinDateTimeValue}) must be less than DQ_MaxDateTimeValue(${DataField.DQ_MaxDateTimeValue})",1030)
       }
       
       //Nombre de DQ      
