@@ -64,6 +64,10 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     case e: Exception => println("RegisterInControl: error values (true or false)")
   }
   
+  val TestPlanMode = arguments.GetValue("TestPlanMode", "false" ).toBoolean
+  if (TestPlanMode)
+    RegisterInControl = false
+  
    /***
    * True for show all messages
    */
@@ -80,17 +84,19 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
    * START SPARK
    *************************/
   
-  val spark: SparkSession = SparkSession.builder()
-            .appName(appName)
-            //.master("local[*]")
-            .config("spark.sql.warehouse.dir", warehouseLocation)
-            .enableHiveSupport()
-            .getOrCreate()
-            
+  val spark: SparkSession = if (!TestPlanMode) SparkSession.builder().appName(appName)
+                                              //.master("local[*]")
+                                              .config("spark.sql.warehouse.dir", warehouseLocation)
+                                              .enableHiveSupport()
+                                              .getOrCreate()
+                            else null
+
+  if (!TestPlanMode) {
+     //spark.conf.getAll.foreach(println)
+    spark.sparkContext.setLogLevel("ERROR")  
+  }
   
-  //spark.conf.getAll.foreach(println)
-  spark.sparkContext.setLogLevel("ERROR")  
-  val IdPortMonitoring = spark.sparkContext.uiWebUrl.get
+  val IdPortMonitoring = if (!TestPlanMode) spark.sparkContext.uiWebUrl.get else "" 
   
   //spark.sql("set").show(10000, truncate = false)
   //val GetConfigSet = spark.sparkContext.getConf  
@@ -100,12 +106,12 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
    * GET UNIQUE IDENTIFY
    *************************/
   
-  val IdApplication = spark.sparkContext.applicationId
+  val IdApplication = if (!TestPlanMode) spark.sparkContext.applicationId else ""
   println(s"application_Id: ${IdApplication}")  
   println(s"URL Monitoring: ${IdPortMonitoring}")
-  val JDBCTXT = GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting) //"jdbc:postgresql://93.16.237.138:5432/meta_negocios?user=negocios&password=negocios2018&currentSchema=public"
+  val JDBCTXT = GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting) 
   
-  val IdSparkPort = spark.sql("set").filter("key='spark.driver.port'").select("value").first().getAs[String]("value")
+  val IdSparkPort = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").first().getAs[String]("value") else ""
   println(s"Port_Id: ${IdSparkPort}")
   
   //Process Registry
