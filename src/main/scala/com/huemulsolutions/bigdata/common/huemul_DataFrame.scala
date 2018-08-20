@@ -682,24 +682,29 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
         x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId}")
         x.NumRowsTotal = if (x.getIsAggregated) 1 else DQTotalRows
+        x.ResultDQ = ""
         
         val DQWithError = x.NumRowsTotal - x.NumRowsOK
         val DQWithErrorPerc = Decimal.apply(DQWithError) / Decimal.apply(x.NumRowsTotal)
-        
+        var IsError: Boolean = false
         
         //Validate max N° rows with error vs definition 
         if (x.Error_MaxNumRows != null) {
            
-          if (DQWithError > x.Error_MaxNumRows)
+          if (DQWithError > x.Error_MaxNumRows){
             x.ResultDQ = s"Max Rows with error defined: ${x.Error_MaxNumRows}, Real N° rows with error: ${DQWithError}"
+            IsError = true
+          }
             
         } 
         
         //Validate % rows with error vs definition
         if (x.Error_Percent != null) {
            
-          if (DQWithErrorPerc > x.Error_Percent)
+          if (DQWithErrorPerc > x.Error_Percent) {
             x.ResultDQ = s"% Rows with error defined: ${x.Error_Percent}, Real N° rows with error: ${DQWithErrorPerc}"
+            IsError = true
+          }
         }
         
         if (huemulLib.DebugMode) println(s"N° DQ Name: ${x.getMyName} (___DQ_${x.getId}), N° OK: ${x.NumRowsOK}, N° Total: ${x.NumRowsTotal}, Error: ${DQWithError}, Error %: ${DQWithErrorPerc * Decimal.apply(100)}, ${x.ResultDQ}")
@@ -724,9 +729,11 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         Values.DQ_Error_MaxNumRows =x.Error_MaxNumRows
         Values.DQ_Error_MaxPercent =x.Error_Percent
         Values.DQ_ResultDQ =x.ResultDQ
+        Values.DQ_ErrorCode = if (IsError) x.getErrorCode() else null 
         Values.DQ_NumRowsOK =x.NumRowsOK
         Values.DQ_NumRowsError =DQWithError
-        Values.DQ_NumRowsTotal =x.NumRowsTotal       
+        Values.DQ_NumRowsTotal =x.NumRowsTotal    
+        
   
         this.DQ_Register(Values)
         
