@@ -207,6 +207,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
           RaiseError(s"Error column ${x.getName}: DQ_MinDecimalValue(${DataField.DQ_MinDecimalValue}) must be less than DQ_MaxDecimalValue(${DataField.DQ_MaxDecimalValue})",1029)
         else if (DataField.DQ_MaxDateTimeValue != null && DataField.DQ_MinDateTimeValue != null && DataField.DQ_MaxDateTimeValue < DataField.DQ_MinDateTimeValue)
           RaiseError(s"Error column ${x.getName}: DQ_MinDateTimeValue(${DataField.DQ_MinDateTimeValue}) must be less than DQ_MaxDateTimeValue(${DataField.DQ_MaxDateTimeValue})",1030)
+        else if (DataField.DefaultValue != null && DataField.DataType == StringType && DataField.DefaultValue.toUpperCase() != "NULL" && !DataField.DefaultValue.contains("'"))
+          RaiseError(s"Error column ${x.getName}: DefaultValue  must be like this: 'something', not something wihtout ')",1031)
+          
+        
+        
       }
       
       //Nombre de DQ      
@@ -1160,14 +1165,25 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
        */
       
       val OnlyInsert: Boolean = isInsert && !isUpdate
+      
+      //All required fields have been set
+      val SQL_Missing = MissingRequiredFields()
+      if (SQL_Missing.length > 0) {
+        var ColumnsMissing: String = ""
+        SQL_Missing.foreach { x => ColumnsMissing +=  x }
+        this.RaiseError(s"huemul_Table Error: requiered fields missing ${ColumnsMissing}", 1016)
+         
+      }
+   //OJO: ESTE PASO ESTÁ SUSPENDIDO POR EFECTOS DE EFICIENCIA, EL DISTINTO LO DEBE HACER EL USUARIO   
       //**************************************************//
       //STEP 0: Apply distinct to New DataFrame
       //**************************************************//
+      /*
       LocalControl.NewStep("Ref & Master: Select distinct")
       val SQLDistinct_DF = huemulLib.DF_ExecuteQuery("__Distinct"
                                               , SQL_Step0_Distinct(this.DataFramehuemul.Alias)
                                              )
-
+      */
       //**************************************************//
       //STEP 0.1: CREATE TEMP TABLE IF MASTER TABLE DOES NOT EXIST
       //**************************************************//
@@ -1204,7 +1220,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //**************************************************//
       LocalControl.NewStep("Ref & Master: Full Join")
       val SQLFullJoin_DF = huemulLib.DF_ExecuteQuery("__FullJoin"
-                                              , SQL_Step1_FullJoin(TempAlias, "__Distinct", isUpdate, isDelete)
+                                              , SQL_Step1_FullJoin(TempAlias, this.DataFramehuemul.Alias, isUpdate, isDelete)
                                              )
                         
       //STEP 2: Create Tabla with Update and Insert result
@@ -1269,7 +1285,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       SQLHash_p2_DF.unpersist()
       SQLHash_p1_DF.unpersist()
       SQLFullJoin_DF.unpersist()
-      SQLDistinct_DF.unpersist()
+      //SQLDistinct_DF.unpersist()
       
     } else
       RaiseError(s"huemul_Table Error: ${TableType} found, Master o Reference required ", 1007)
