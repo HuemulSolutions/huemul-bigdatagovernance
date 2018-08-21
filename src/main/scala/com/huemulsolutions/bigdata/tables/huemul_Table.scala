@@ -856,18 +856,26 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   private def MissingRequiredFields(): ArrayBuffer[String] = {
     
     var StringSQL: ArrayBuffer[String] = new ArrayBuffer[String]()
-    getALLDeclaredFields().filter { x => x.setAccessible(true)                                         
+    getALLDeclaredFields(true).filter { x => x.setAccessible(true)                                         
                                          x.get(this).isInstanceOf[huemul_Columns] &&
                                          x.get(this).asInstanceOf[huemul_Columns].Required  
                                           }
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
+      //println(s"${Field.get_MyName()} Field.get_MappedName: ${Field.get_MappedName}, Field.get_SQLForUpdate(): ${Field.get_SQLForUpdate()}, Field.get_SQLForInsert(): ${Field.get_SQLForInsert()}")
+      
+      var isOK: Boolean = false
+      if (huemulLib.HasName(Field.get_MappedName))
+        isOK = true
+      else if (!huemulLib.HasName(Field.get_MappedName) && 
+              (huemulLib.HasName(Field.get_SQLForUpdate()) && huemulLib.HasName(Field.get_SQLForInsert())))
+        isOK = true
+      else
+        isOK = false
         
-      if ( !huemulLib.HasName(Field.get_MappedName) || 
-          (!huemulLib.HasName(Field.get_SQLForUpdate()) && !huemulLib.HasName(Field.get_SQLForInsert())) 
-         )
-      StringSQL.append(x.getName)
+      if (!isOK)
+        StringSQL.append(x.getName)
     }
        
     return StringSQL 
@@ -1011,7 +1019,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       Result.isError = true
       Result.Description += "huemul_Table Error: requiered fields missing"
       Result.Error_Code = 1016
-      SQL_Missing.foreach { x => Result.Description +=  x }
+      SQL_Missing.foreach { x => Result.Description +=  s",$x " }
     }
     
     //*********************************
@@ -1062,13 +1070,14 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
 
         var tand = ""
         if (x.DQ_MinLen != null){
-          SQLFormula += s"length(coalesce(${x.get_MyName()},'')) >= ${x.DQ_MinLen}"
+          SQLFormula += s"length(${x.get_MyName()}) >= ${x.DQ_MinLen}"
           tand = " and "
         }
         
         if (x.DQ_MaxLen != null)
-          SQLFormula += s" $tand length(coalesce(${x.get_MyName()},'')) <= ${x.DQ_MaxLen}"
-                          
+          SQLFormula += s" $tand length(${x.get_MyName()}) <= ${x.DQ_MaxLen}"
+                  
+        SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, false, true,s"huemul_Table Error: MinMax length Column ${x.get_MyName()}",1020,SQLFormula )
         MinMaxLen.Error_MaxNumRows = 0
         ArrayDQ.append(MinMaxLen)
@@ -1087,6 +1096,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         if (x.DQ_MaxDecimalValue != null)
           SQLFormula += s" $tand ${x.get_MyName()} <= ${x.DQ_MaxDecimalValue}"
         
+        SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, false,true,s"huemul_Table Error: MinMax Number Column ${x.get_MyName()}",1021, SQLFormula)
         MinMaxNumber.Error_MaxNumRows = 0        
         ArrayDQ.append(MinMaxNumber)
@@ -1105,6 +1115,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         if (x.DQ_MaxDateTimeValue != null)
           SQLFormula += s" $tand ${x.get_MyName()} <= '${x.DQ_MaxDateTimeValue}'"
           
+        SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, false,true,s"huemul_Table Error: MinMax DateTime Column ${x.get_MyName()} ",1022, SQLFormula)
         MinMaxDT.Error_MaxNumRows = 0
         ArrayDQ.append(MinMaxDT)
@@ -1170,7 +1181,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       val SQL_Missing = MissingRequiredFields()
       if (SQL_Missing.length > 0) {
         var ColumnsMissing: String = ""
-        SQL_Missing.foreach { x => ColumnsMissing +=  x }
+        SQL_Missing.foreach { x => ColumnsMissing +=  s",$x " }
         this.RaiseError(s"huemul_Table Error: requiered fields missing ${ColumnsMissing}", 1016)
          
       }
