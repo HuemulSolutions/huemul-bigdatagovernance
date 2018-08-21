@@ -27,6 +27,10 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
    */
   var SettingByDate: ArrayBuffer[huemul_DataLakeSetting] = new ArrayBuffer[huemul_DataLakeSetting]()
   
+  /**when text = null, change to null
+   * 
+   */
+  var StringNull_as_Null: Boolean = true
   /***
    * Information about interfaces
    */
@@ -94,18 +98,41 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
       DataArray_Dest = new Array[Any](numCols)      
       val DataArray_Orig = row.split(separator,numCols)
       
-      if (ApplyTrim)
-        DataArray_Orig.indices.foreach { i => DataArray_Dest(i) = DataArray_Orig(i).trim()  }
-      else
-        DataArray_Orig.indices.foreach { i => DataArray_Dest(i) = DataArray_Orig(i)  }
+      if (ApplyTrim) {
+        DataArray_Orig.indices.foreach { i => 
+          var temp1 = DataArray_Orig(i).trim() 
+          if (StringNull_as_Null && temp1.toLowerCase() == "null") 
+            temp1 = null
+            
+          DataArray_Dest(i) = temp1
+        }
+      } else {
+        DataArray_Orig.indices.foreach { i => 
+          var temp1 = DataArray_Orig(i)
+          if (StringNull_as_Null && temp1.toLowerCase() == "null") 
+            temp1 = null
+            
+          DataArray_Dest(i) =   temp1
+        
+        }
+      }
     }
     else if (SchemaConf.ColSeparatorType == huemulType_Separator.POSITION) {      
       DataArray_Dest = new Array[Any](SchemaConf.ColumnsPosition.length)
       
-      if (ApplyTrim)
-        SchemaConf.ColumnsPosition.indices.foreach { i => DataArray_Dest(i) = row.substring(SchemaConf.ColumnsPosition(i)(1).toInt, SchemaConf.ColumnsPosition(i)(2).toInt).trim() }
-      else 
-        SchemaConf.ColumnsPosition.indices.foreach { i => DataArray_Dest(i) = row.substring(SchemaConf.ColumnsPosition(i)(1).toInt, SchemaConf.ColumnsPosition(i)(2).toInt) }
+     
+      SchemaConf.ColumnsPosition.indices.foreach { i => 
+        var temp1 = row.substring(SchemaConf.ColumnsPosition(i)(1).toInt, SchemaConf.ColumnsPosition(i)(2).toInt) 
+        if (ApplyTrim)
+          temp1 = temp1.trim()
+        
+        if (StringNull_as_Null && temp1.toLowerCase() == "null") {
+          temp1 = null
+        }
+          
+        DataArray_Dest(i) = temp1 
+       }
+      
     }
      
     Row.fromSeq(DataArray_Dest) 
