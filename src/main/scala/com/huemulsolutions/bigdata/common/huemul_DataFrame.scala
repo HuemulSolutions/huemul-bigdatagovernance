@@ -151,6 +151,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
     Values.DQ_NumRowsTotal =NumRows
+    Values.DQ_IsError = DQResult.isError
     
     this.DQ_Register(Values)    
     
@@ -202,6 +203,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
     Values.DQ_NumRowsTotal =NumRows
+    Values.DQ_IsError = DQResult.isError
       
     this.DQ_Register(Values)
     
@@ -313,6 +315,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_NumRowsOK =NumColumns - NumColumnsError
     Values.DQ_NumRowsError =NumColumnsError
     Values.DQ_NumRowsTotal =NumColumns
+    Values.DQ_IsError = DQResult.isError
 
     this.DQ_Register(Values)
       
@@ -471,14 +474,12 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         
         DQResult.dqDF.printSchema()
         DQResult.dqDF.show()
-        
-        /*OJO: Cambiar el nombre del método*/
-      }
       
-      var TempFileName_local = TempFileName
-      if (TempFileName_local == null)
-        TempFileName_local = ColDuplicate
-      huemulLib.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_DupliVal_${TempFileName_local}",huemulLib.DebugMode)
+        var TempFileName_local = TempFileName
+        if (TempFileName_local == null)
+          TempFileName_local = ColDuplicate
+        huemulLib.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_DupliVal_${TempFileName_local}",huemulLib.DebugMode)
+      }
       
       //duplicate rows found
       DQDup = DQResult.dqDF.count()
@@ -520,6 +521,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =DQDup
     Values.DQ_NumRowsTotal =NumRows
+    Values.DQ_IsError = DQResult.isError
 
     this.DQ_Register(Values)
     
@@ -527,7 +529,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
   }
   
    /**
-   * DQ_DuplicateValues: validate duplicate rows for ColDuplicate
+   * DQ_NotNullValues: validate nulls rows
    *  
    */
   def DQ_NotNullValues(ObjectData: Object, Col: String) : huemul_DataQualityResult = {
@@ -592,6 +594,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =DQDup
     Values.DQ_NumRowsTotal =0
+    Values.DQ_IsError = DQResult.isError
 
     this.DQ_Register(Values)
     
@@ -733,12 +736,13 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         Values.DQ_NumRowsOK =x.NumRowsOK
         Values.DQ_NumRowsError =DQWithError
         Values.DQ_NumRowsTotal =x.NumRowsTotal    
+        Values.DQ_IsError = IsError 
         
   
         this.DQ_Register(Values)
         
-        if (x.getRaiseError == true && x.ResultDQ != null) {
-          txtTotalErrors += s"DQ Name: ${x.getMyName} with error: ${x.ResultDQ} \n"
+        if (x.getRaiseError == true && IsError) {
+          txtTotalErrors += s"\nDQ Name: ${x.getMyName} with error: ${x.ResultDQ}"
           NumTotalErrors += 1
           localErrorCode = x.getErrorCode()
         }
@@ -771,7 +775,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         , DQ.DQ_ErrorCode
         , DQ.DQ_NumRowsOK
         , DQ.DQ_NumRowsError
-        , DQ.DQ_NumRowsTotal)
+        , DQ.DQ_NumRowsTotal 
+        , DQ.DQ_IsError)
   }
   
 }
