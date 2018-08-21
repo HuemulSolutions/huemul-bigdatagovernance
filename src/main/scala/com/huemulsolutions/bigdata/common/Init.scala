@@ -10,6 +10,6 @@ object Init {
     val huemulLib  = new huemul_Library(s"BigData API", args, Global)
     
     val Control = new huemul_Control(huemulLib,null, false, false)
-    Control.Init_CreateTables()
+    //Control.Init_CreateTables()
   }
 }
