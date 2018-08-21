@@ -843,8 +843,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   /**
   CREATE SQL SCRIPT FIELDS FOR VALIDATE NOT NULL ATTRIBUTES
    */
-  private def SQL_NotNull_FinalTable(): ArrayBuffer[String] = {
-    var StringSQL: ArrayBuffer[String] = new ArrayBuffer[String]()
+  private def SQL_NotNull_FinalTable(): ArrayBuffer[huemul_Columns] = {
+    var StringSQL: ArrayBuffer[huemul_Columns] = new ArrayBuffer[huemul_Columns]()
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                           x.get(this).isInstanceOf[huemul_Columns] &&
                                          !x.get(this).asInstanceOf[huemul_Columns].Nullable && huemulLib.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
@@ -852,7 +852,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
-      StringSQL.append(x.getName)
+      StringSQL.append(Field)
     }
        
     return StringSQL 
@@ -1008,6 +1008,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       Values.DQ_NumRowsOK =NumTotalDistinct - TotalLeft
       Values.DQ_NumRowsError =TotalLeft
       Values.DQ_NumRowsTotal =NumTotalDistinct
+      Values.DQ_IsError = Result.isError
 
       this.DataFramehuemul.DQ_Register(Values) 
       
@@ -1026,7 +1027,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     val SQL_Missing = MissingRequiredFields()
     if (SQL_Missing.length > 0) {
       Result.isError = true
-      Result.Description += "huemul_Table Error: requiered fields missing"
+      Result.Description += "\nhuemul_Table Error: requiered fields missing "
       Result.Error_Code = 1016
       SQL_Missing.foreach { x => Result.Description +=  s",$x " }
     }
@@ -1037,7 +1038,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     val SQL_PK: String = SQL_PrimaryKey_FinalTable()
     if (SQL_PK == "" || SQL_PK == null) {
       Result.isError = true
-      Result.Description += "huemul_Table Error: PK not defined"
+      Result.Description += "\nhuemul_Table Error: PK not defined"
       Result.Error_Code = 1017
     }    
     
@@ -1045,7 +1046,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     val DQ_PK = DataFramehuemul.DQ_DuplicateValues(this, SQL_PK, null, "PK")
     if (DQ_PK.isError) {
       Result.isError = true
-      Result.Description += s"huemul_Table Error: PK: ${DQ_PK.Description} " 
+      Result.Description += s"\nhuemul_Table Error: PK: ${DQ_PK.Description} " 
       Result.Error_Code = 1018
     }
     
@@ -1058,16 +1059,16 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       val DQ_Unique = DataFramehuemul.DQ_DuplicateValues(this, x, null) 
       if (DQ_Unique.isError) {
         Result.isError = true
-        Result.Description += s"huemul_Table Error: error Unique for field $x: ${DQ_Unique.Description} "
+        Result.Description += s"\nhuemul_Table Error: error Unique for field $x: ${DQ_Unique.Description} "
         Result.Error_Code = 1019
       }            
     }
     
     //Aplicar DQ según definición de campos en DataDefDQ: Acepta nulos (nullable)
     SQL_NotNull_FinalTable().foreach { x => 
-      if (huemulLib.DebugMode) println(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD $x")
+      if (huemulLib.DebugMode) println(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD ${x.get_MyName()}")
       
-        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(null, false,true,s"huemul_Table Error: Not Null for field $x ",1023, s"$x IS NOT NULL")
+        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, false,true,s"huemul_Table Error: Not Null for field ${x.get_MyName()} ",1023, s"${x.get_MyName()} IS NOT NULL")
         NotNullDQ.Error_MaxNumRows = 0
         ArrayDQ.append(NotNullDQ)
     }
@@ -1133,7 +1134,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.GetDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this)
     if (ResultDQ.isError){
       Result.isError = true
-      Result.Description += ResultDQ.Description
+      Result.Description += s"\n${ResultDQ.Description}"
       Result.Error_Code = ResultDQ.Error_Code
     }
     
