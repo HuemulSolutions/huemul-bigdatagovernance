@@ -16,7 +16,7 @@ class huemul_Columns(param_DataType: DataType
                     , param_UsedForCheckSum: Boolean = true) extends Serializable {
   val DataType: DataType = param_DataType
   val Description: String = param_Description
-  val Required: Boolean = false
+  val Required: Boolean = param_Required
   val UsedForCheckSum: Boolean = param_UsedForCheckSum
   
   var IsPK: Boolean = false
