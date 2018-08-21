@@ -14,6 +14,7 @@ import com.huemulsolutions.bigdata._
 import com.huemulsolutions.bigdata.dataquality._
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
+import com.sun.xml.internal.ws.api.pipe.NextAction
 
 
 class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends Serializable {
@@ -65,6 +66,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   private var autoCast: Boolean = true
   def setAutoCast(value: Boolean) {autoCast = value}
+  
+  private var ApplyDistinct: Boolean = true
+  def setApplyDistinct(value: Boolean) {ApplyDistinct = value}
+  
   
   private var Table_id: String = ""
   
@@ -517,17 +522,21 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   private def SQL_Step0_Distinct(NewAlias: String): String = {
     
     var StringSQL: String = ""
-    
+    var Distintos: ArrayBuffer[String] = new ArrayBuffer[String]()
     var coma: String = ""
-    getALLDeclaredFields().filter { x => x.setAccessible(true)
+    getALLDeclaredFields(true).filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns]
                                         }
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
-      if (huemulLib.HasName(Field.get_MappedName())) {        
-        StringSQL += s"${coma}${Field.get_MappedName()}  \n"
-        coma = ","   
+      val MappedField: String = Field.get_MappedName()
+      if (huemulLib.HasName(MappedField)) {        
+        if (Distintos.filter { x => x == MappedField }.length == 0){
+          Distintos.append(MappedField)
+          StringSQL += s"${coma}${MappedField}  \n"
+          coma = "," 
+        }
       }
     }
       
@@ -1185,16 +1194,21 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         this.RaiseError(s"huemul_Table Error: requiered fields missing ${ColumnsMissing}", 1016)
          
       }
-   //OJO: ESTE PASO ESTÁ SUSPENDIDO POR EFECTOS DE EFICIENCIA, EL DISTINTO LO DEBE HACER EL USUARIO   
+    
       //**************************************************//
       //STEP 0: Apply distinct to New DataFrame
       //**************************************************//
-      /*
-      LocalControl.NewStep("Ref & Master: Select distinct")
-      val SQLDistinct_DF = huemulLib.DF_ExecuteQuery("__Distinct"
-                                              , SQL_Step0_Distinct(this.DataFramehuemul.Alias)
-                                             )
-      */
+      var NextAlias = this.DataFramehuemul.Alias
+      
+      if (ApplyDistinct) {
+        LocalControl.NewStep("Ref & Master: Select distinct")
+        val SQLDistinct_DF = huemulLib.DF_ExecuteQuery("__Distinct"
+                                                , SQL_Step0_Distinct(this.DataFramehuemul.Alias)
+                                               )
+        NextAlias = "__Distinct"
+      }
+      
+      
       //**************************************************//
       //STEP 0.1: CREATE TEMP TABLE IF MASTER TABLE DOES NOT EXIST
       //**************************************************//
@@ -1231,7 +1245,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //**************************************************//
       LocalControl.NewStep("Ref & Master: Full Join")
       val SQLFullJoin_DF = huemulLib.DF_ExecuteQuery("__FullJoin"
-                                              , SQL_Step1_FullJoin(TempAlias, this.DataFramehuemul.Alias, isUpdate, isDelete)
+                                              , SQL_Step1_FullJoin(TempAlias, NextAlias, isUpdate, isDelete)
                                              )
                         
       //STEP 2: Create Tabla with Update and Insert result
