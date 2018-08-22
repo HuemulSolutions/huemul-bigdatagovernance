@@ -159,9 +159,12 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   }
     
   def FinishProcessOK {
-    if (huemulLib.HasName(Control_IdParent)) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ALL OK")
     
     if (huemulLib.RegisterInControl) {
+      if (!huemulLib.HasName(Control_IdParent)) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ALL OK")
+      println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
+    
+    
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_Finish (
                              '${Control_Id}'  --p_processExec_id
                            , '${this.LocalIdStep}' --as p_processExecStep_id
@@ -179,10 +182,14 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   }
   
   def FinishProcessError() {
-    if (Control_IdParent == null) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ERROR")
-    val Error_Id = huemulLib.huemul_GetUniqueId()
+    
       
     if (huemulLib.RegisterInControl) {
+      if (Control_IdParent == null) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ERROR")
+      println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
+    
+      val Error_Id = huemulLib.huemul_GetUniqueId()
+    
       //Insert processExcec
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_Error_finish (
                           '${this.Control_Id}'  --p_processExec_id
