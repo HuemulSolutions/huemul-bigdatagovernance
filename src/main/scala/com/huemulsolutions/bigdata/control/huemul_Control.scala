@@ -233,12 +233,30 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     }
   }
   
+  def RegisterTestPlanFeature(p_Feature_Id: String
+                             ,p_TestPlan_Id: String) {
+    if (huemulLib.RegisterInControl) {
+       //Insert processExcec
+      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_TestPlanFeature_add (
+                            '${p_Feature_Id.replace("'", "''")}}'  --as p_Feature_Id
+                         , '${p_TestPlan_Id}'  --as p_testPlan_Id
+                         ,'${Control_ClassName}'  --p_MDM_ProcessName
+                                                  
+                        )""")
+    }
+    
+    
+  }
+  
+  /**
+   * Return TestPlan ID
+   */
   def RegisterTestPlan(p_testPlanGroup_Id: String
                         ,p_testPlan_name: String
                         ,p_testPlan_description: String
                         ,p_testPlan_resultExpected: String
                         ,p_testPlan_resultReal: String
-                        ,p_testPlan_IsOK: Boolean) {
+                        ,p_testPlan_IsOK: Boolean): String = {
     //Create New Id
     val testPlan_Id = huemulLib.huemul_GetUniqueId()
     
@@ -262,6 +280,8 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                          
                         )""")
     }
+    
+    return testPlan_Id
   }
   
   def RegisterDQuality (Table_Name: String
@@ -302,7 +322,6 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                          , '${DQ_SQLFormula.replace("'", "''")}' --DQ_SQLFormula
                          , ${DQ_Error_MaxNumRows} --DQ_Error_MaxNumRows
                          , ${DQ_Error_MaxPercent} --DQ_Error_MaxPercent
-                         , ${!(DQ_ResultDQ == null || DQ_ResultDQ == "")} --DQ_IsError
                          , '${if (DQ_ResultDQ == null) "" else DQ_ResultDQ.replace("'", "''")}' --DQ_ResultDQ
                          , ${DQ_ErrorCode} --DQ_ErrorCode
                          , ${DQ_NumRowsOK} --DQ_NumRowsOK
@@ -403,6 +422,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                    ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  
                                    , '${Control_ClassName}' --as Process_Id
                                    , '${Control_Id}' --as ProcessExec_Id
+                                   , '${LocalIdStep}' --as ProcessExecStep_Id
                                    , true --as TableUse_Read
                                    , false --as TableUse_Write
                                    , null --as TableUse_numRowsInsert
