@@ -43,7 +43,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   
   //Insert processExcec
   if (RegisterInControlLog && huemulLib.RegisterInControl) {
-    println(s"ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
+    println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
   huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_add (
             '${Control_Id}'  --p_processExec_id
            ,'${Control_IdParent}'  --p_processExec_idParent
@@ -87,7 +87,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       if (!Ejec.IsError && ApplicationInUse == null)
         ContinueInLoop = false
       else {      
-        if (huemulLib.DebugMode) println(s"waiting for Singleton... (class: $Control_ClassName, appId: ${huemulLib.IdApplication} )")
+        if (huemulLib.DebugMode) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] waiting for Singleton... (class: $Control_ClassName, appId: ${huemulLib.IdApplication} )")
         //if has error, verify other process still alive
         if (NumCycle == 1) //First cicle don't wait
           Thread.sleep(10000)
@@ -154,12 +154,12 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     }
 
     if (huemulLib.DebugMode){
-      println(s"Param num: ${Control_Params.length}, name: $name, value: $value")
+      println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] Param num: ${Control_Params.length}, name: $name, value: $value")
     }
   }
     
   def FinishProcessOK {
-    if (Control_IdParent == null) println("FINISH ALL OK")
+    if (huemulLib.HasName(Control_IdParent)) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ALL OK")
     
     if (huemulLib.RegisterInControl) {
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_Finish (
@@ -179,7 +179,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   }
   
   def FinishProcessError() {
-    if (Control_IdParent == null) println("FINISH ERROR")
+    if (Control_IdParent == null) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ERROR")
     val Error_Id = huemulLib.huemul_GetUniqueId()
       
     if (huemulLib.RegisterInControl) {
@@ -213,7 +213,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   
   
   def NewStep(StepName: String) {
-    println(s"Step: $StepName")
+    println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] Step: $StepName")
     
    
     //New Step add
@@ -261,7 +261,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     val testPlan_Id = huemulLib.huemul_GetUniqueId()
     
     //if (!p_testPlan_IsOK) {
-      println(s"TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
+      println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
     //}
                      
     if (huemulLib.RegisterInControl) {
