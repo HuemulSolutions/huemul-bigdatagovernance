@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.huemulsolutions.bigdata</groupId>
   <artifactId>datagovernance</artifactId>
-  <version>0.9.1</version>
+  <version>0.9.2</version>
   <packaging>jar</packaging>
   <name>HuemulSolutions - BigData</name>
   <description>Enable full data quality and data linage for BigData Projects</description>
