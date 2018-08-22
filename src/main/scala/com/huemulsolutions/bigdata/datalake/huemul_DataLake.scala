@@ -231,12 +231,13 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
           val rowRDD =  LogRDD.map { x =>  ConvertSchemaLocal(this.SettingInUse.LogSchemaConf, this.Log.LogSchema, x)} 
 
           //Create DataFrame
-          println("Demo DF Log: " + this.FileName)
-          println(rowRDD.take(2).foreach { x => println(x) })
-          
+          if (huemulLib.DebugMode) {
+            println("Demo DF Log: " + this.FileName)
+            println(rowRDD.take(2).foreach { x => println(x) })
+          }
           this.Log.LogDF = huemulLib.spark.createDataFrame(rowRDD, this.Log.LogSchema)
           
-          this.Log.LogDF.show()
+          if (huemulLib.DebugMode) this.Log.LogDF.show()
           if (this.SettingInUse.LogNumRows_FieldName != null) {
             this.Log.DataNumRows = this.Log.LogDF.first().getAs[String](this.SettingInUse.LogNumRows_FieldName).toLong 
             println("N° Rows according Log: " + this.Log.DataNumRows.toString())
@@ -271,7 +272,7 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
           this.DataFramehuemul.getDataSchema().printTreeString()
         }
         
-        println("N° Columns: " + this.DataFramehuemul.getNumCols.toString())                        
+        println("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString())                        
     } catch {
       case e: Exception => {
         if (LocalErrorCode == null)
