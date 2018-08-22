@@ -257,6 +257,15 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     return name != null && name != ""
   }
   
+  def huemul_getDateForLog(): String = {
+    val dateTimeFormat: DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSSS")  
+    val ActualDateTime: Calendar  = Calendar.getInstance()
+        
+    val Fecha: String = dateTimeFormat.format(ActualDateTime.getTime())
+    
+    return Fecha
+  }
+  
   /**
    * Get UniqueId from datetime, random and arbitrary value
    */
