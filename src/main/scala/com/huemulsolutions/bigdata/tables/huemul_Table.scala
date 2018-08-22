@@ -144,6 +144,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     return s"${GetDataBase(DataBase)}.${TableName}"
   }
   
+  def GetCurrentDataBase(): String = {
+    return s"${GetDataBase(DataBase)}"
+  }
+  
   /**
    * Return DataBaseName.TableName
    */
@@ -215,7 +219,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         else if (DataField.DefaultValue != null && DataField.DataType == StringType && DataField.DefaultValue.toUpperCase() != "NULL" && !DataField.DefaultValue.contains("'"))
           RaiseError(s"Error column ${x.getName}: DefaultValue  must be like this: 'something', not something wihtout ')",1031)
           
-        
+        if (DataField.IsPK)
+          DataField.Nullable = false
         
       }
       
@@ -443,6 +448,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
+      //All PK columns shouldn't be null
+      Field.Nullable = false
+      
       if (!huemulLib.HasName(Field.get_MappedName()))
         sys.error(s"field ${x.getName} doesn't have an assigned name in 'name' attribute")
       StringSQL += coma + x.getName
@@ -577,8 +585,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
       //string for key on
       if (Field.IsPK){
-        StringSQL_FullJoin += s"${coma}CAST(coalesce(Old.${x.getName}, New.${Field.get_MappedName()}) as ${Field.DataType.sql}) AS ${x.getName} \n"
-        StringSQl_PK += s" $sand Old.${x.getName} = ${NewColumnCast}  " 
+        val NewPKSentence = if (huemulLib.HasName(Field.get_SQLForInsert())) s"CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} )" else NewColumnCast
+        StringSQL_FullJoin += s"${coma}CAST(coalesce(Old.${x.getName}, ${NewPKSentence}) as ${Field.DataType.sql}) AS ${x.getName} \n"
+        StringSQl_PK += s" $sand Old.${x.getName} = ${NewPKSentence}  " 
         sand = " and "
 
         if (StringSQL_ActionType == "")
@@ -1524,7 +1533,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       LocalControl.NewStep("Save: Drop Hive table Def")
       if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(sqlDrop01)
       try {
-        huemulLib.spark.sql(sqlDrop01)
+        val TablesListFromHive = huemulLib.spark.catalog.listTables(GetCurrentDataBase()).collect()
+        if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase()  }.length > 0) 
+          huemulLib.spark.sql(sqlDrop01)
+          
       } catch {
         case t: Throwable => println(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
       }
