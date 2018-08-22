@@ -21,7 +21,7 @@ class huemul_Columns(param_DataType: DataType
   
   var IsPK: Boolean = false
   var IsUnique: Boolean = false
-  var Nullable: Boolean = true  
+  var Nullable: Boolean = false  
   var DefaultValue: String = "null"
   /** Secret, Restricted, Confidential, Intern, Departamental, Public   
    */
