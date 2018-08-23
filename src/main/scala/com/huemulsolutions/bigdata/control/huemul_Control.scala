@@ -245,7 +245,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     if (huemulLib.RegisterInControl) {
        //Insert processExcec
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_TestPlanFeature_add (
-                            '${p_Feature_Id.replace("'", "''")}}'  --as p_Feature_Id
+                            '${p_Feature_Id.replace("'", "''")}'  --as p_Feature_Id
                          , '${p_TestPlan_Id}'  --as p_testPlan_Id
                          ,'${Control_ClassName}'  --p_MDM_ProcessName
                                                   
