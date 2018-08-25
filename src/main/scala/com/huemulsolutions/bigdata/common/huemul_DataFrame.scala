@@ -131,7 +131,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetDataBase(Data.DataBase)
+      BBDDName = Data.GetCurrentDataBase()
     }
     
     val Values = new huemul_DQRecord()
@@ -183,7 +183,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetDataBase(Data.DataBase)
+      BBDDName = Data.GetCurrentDataBase()
     }
     
     val Values = new huemul_DQRecord()
@@ -295,7 +295,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetDataBase(Data.DataBase)
+      BBDDName = Data.GetCurrentDataBase()
     }
     
     val Values = new huemul_DQRecord()
@@ -501,7 +501,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetDataBase(Data.DataBase)
+      BBDDName = Data.GetCurrentDataBase()
     }
     
     val Values = new huemul_DQRecord()
@@ -574,7 +574,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetDataBase(Data.DataBase)
+      BBDDName = Data.GetCurrentDataBase()
     }
     
     val Values = new huemul_DQRecord()
@@ -716,7 +716,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         var dfDataBaseName: String = null
         if (dMaster != null) {
           dfTableName = dMaster.TableName
-          dfDataBaseName = dMaster.GetDataBase(dMaster.DataBase)
+          dfDataBaseName = dMaster.GetCurrentDataBase()
         }
         
         val Values = new huemul_DQRecord()

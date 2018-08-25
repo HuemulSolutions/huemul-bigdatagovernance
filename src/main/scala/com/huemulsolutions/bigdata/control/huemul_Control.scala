@@ -426,7 +426,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     if (huemulLib.RegisterInControl) {
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
                                     '${DefMaster.TableName}'
-                                   ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  
+                                   ,'${DefMaster.GetCurrentDataBase() }'  
                                    , '${Control_ClassName}' --as Process_Id
                                    , '${Control_Id}' --as ProcessExec_Id
                                    , '${LocalIdStep}' --as ProcessExecStep_Id
@@ -449,16 +449,16 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s""" select control_Tables_addOrUpd(
                             '${LocalNewTable_id}'  --Table_id
                            ,null  --Area_Id
-                           , '${DefMaster.GetDataBase(DefMaster.DataBase)}' --as Table_BBDDName
+                           , '${DefMaster.GetCurrentDataBase()}' --as Table_BBDDName
                            , '${DefMaster.TableName}' --as Table_Name
-                           , '${DefMaster.Description}' --as Table_Description
-                           , '${DefMaster.Business_ResponsibleName}' --as Table_BusinessOwner
-                           , '${DefMaster.IT_ResponsibleName}' --as Table_ITOwner
-                           , '${DefMaster.PartitionField}' --as Table_PartitionField
-                           , '${DefMaster.TableType}' --as Table_TableType
-                           , '${DefMaster.StorageType}' --as Table_StorageType
-                           , '${DefMaster.LocalPath}' --as Table_LocalPath
-                           , '${DefMaster.GlobalPath}' --as Table_GlobalPath
+                           , '${DefMaster.getDescription}' --as Table_Description
+                           , '${DefMaster.getBusiness_ResponsibleName}' --as Table_BusinessOwner
+                           , '${DefMaster.getIT_ResponsibleName}' --as Table_ITOwner
+                           , '${DefMaster.getPartitionField}' --as Table_PartitionField
+                           , '${DefMaster.getTableType}' --as Table_TableType
+                           , '${DefMaster.getStorageType}' --as Table_StorageType
+                           , '${DefMaster.getLocalPath}' --as Table_LocalPath
+                           , '${DefMaster.getGlobalPaths}' --as Table_GlobalPath
                            , '' --as Table_SQLCreate
                            ,'${Control_ClassName}'  --process_id
                           )
@@ -467,7 +467,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       
       //Insert control_Columns
       var i: Integer = 0
-      var localDatabaseName = DefMaster.GetDataBase(DefMaster.DataBase)
+      var localDatabaseName = DefMaster.GetCurrentDataBase()
       DefMaster.GetColumns().foreach { x => 
         val Column_Id = huemulLib.huemul_GetUniqueId()
   
@@ -511,7 +511,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       //Insert control_TablesUse
       huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
                                   '${DefMaster.TableName}'
-                                 ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  
+                                 ,'${DefMaster.GetCurrentDataBase() }'  
                                  , '${Control_ClassName}' --as Process_Id
                                  , '${Control_Id}' --as ProcessExec_Id
                                  , false --as TableUse_Read
@@ -528,7 +528,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       DefMaster.GetForeingKey().foreach { x =>       
         val p_tablerel_id = huemulLib.huemul_GetUniqueId()
         
-        val localDatabaseName = x._Class_TableName.asInstanceOf[huemul_Table].GetDataBase(x._Class_TableName.asInstanceOf[huemul_Table].DataBase)
+        val localDatabaseName = x._Class_TableName.asInstanceOf[huemul_Table].GetCurrentDataBase()
         val Resultado = 
         huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_tablesrel_add (
                                     '${p_tablerel_id}'    --p_tablerel_id
@@ -536,7 +536,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                    ,'${localDatabaseName }'  --p_table_BBDDpk
   
                                    ,'${DefMaster.TableName }'  --p_table_NameFK
-                                   ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  --p_table_BBDDFK
+                                   ,'${DefMaster.GetCurrentDataBase() }'  --p_table_BBDDFK
   
                                    ,'${x.MyName }'  --p_TableFK_NameRelationship
   
@@ -554,7 +554,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                      ,'${y.PK.get_MyName() }'  --p_ColumnName_PK
   
                                      ,'${DefMaster.TableName }'  --p_table_NameFK
-                                     ,'${DefMaster.GetDataBase(DefMaster.DataBase) }'  --p_table_BBDDFK
+                                     ,'${DefMaster.GetCurrentDataBase() }'  --p_table_BBDDFK
                                      ,'${y.FK.get_MyName() }'  --p_ColumnName_FK    
   
                                      ,'${Control_ClassName}'  --process_id

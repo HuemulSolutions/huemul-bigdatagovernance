@@ -32,37 +32,163 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   println(s"NOMBRE TABLA: ${TableName}")
   println("**********************************************************")
   
-  var DataBase: ArrayBuffer[huemul_KeyValuePath] = null
+  def setDataBase(value: ArrayBuffer[huemul_KeyValuePath]) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of DataBase, definition is close", 1033)
+    else
+      _DataBase = value
+  }
+  private var _DataBase: ArrayBuffer[huemul_KeyValuePath] = null
     
   /**
    Type of Table (Reference; Master; Transaction
    */
-  var TableType : huemulType_Tables = huemulType_Tables.Transaction
+  def setTableType(value: huemulType_Tables) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of TableType, definition is close", 1033)
+    else
+      _TableType = value
+  }
+  def getTableType: huemulType_Tables = {return _TableType}
+  private var _TableType : huemulType_Tables = huemulType_Tables.Transaction
+  
   /**
    Type of Persistent storage (parquet, csv, json)
    */
-  var StorageType : huemulType_StorageType = null
+  def setStorageType(value: huemulType_StorageType) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of StorageType, definition is close", 1033)
+    else
+      _StorageType = value
+  }
+  def getStorageType: huemulType_StorageType = {return _StorageType}
+  private var _StorageType : huemulType_StorageType = null
+  
   /**
     Table description
    */
-  var Description   : String= ""
+  def setDescription(value: String) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of Description, definition is close", 1033)
+    else
+      _Description = value
+  }
+  def getDescription: String = {return _Description}
+  private var _Description   : String= ""
+  
   /**
     Responsible contact in IT
    */
-  var IT_ResponsibleName   : String= ""
+  def setIT_ResponsibleName(value: String) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of IT_ResponsibleName, definition is close", 1033)
+    else
+      _IT_ResponsibleName = value
+  }
+  def getIT_ResponsibleName: String = {return _IT_ResponsibleName}
+  private var _IT_ResponsibleName   : String= ""
+  
   /**
     Responsible contact in Business (Name & Area)
    */
-  var Business_ResponsibleName   : String= ""
+  def setBusiness_ResponsibleName(value: String) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of Business_ResponsibleName, definition is close", 1033)
+    else
+      _Business_ResponsibleName = value
+  }
+  def getBusiness_ResponsibleName: String = {return _Business_ResponsibleName}
+  private var _Business_ResponsibleName   : String= ""
+  
+  /**
+    Fields used to partition table 
+   */
+  def setPartitionField(value: String) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of PartitionField, definition is close", 1033)
+    else
+      _PartitionField = value
+  }
+  def getPartitionField: String = {return _PartitionField}
+  private var _PartitionField   : String= null
+  
+  /**
+    Local name (example "SBIF\\{{YYYY}}{{MM}}\\"
+   */
+  def setLocalPath(value: String) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of LocalPath, definition is close", 1033)
+    else
+      _LocalPath = value
+  }
+  def getLocalPath: String = {return _LocalPath}
+  private var _LocalPath   : String= ""
+  
+  def setGlobalPaths(value: ArrayBuffer[huemul_KeyValuePath]) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of GlobalPaths, definition is close", 1033)
+    else
+      _GlobalPaths = value
+  }
+  def getGlobalPaths: ArrayBuffer[huemul_KeyValuePath] = {return _GlobalPaths}
+  private var _GlobalPaths: ArrayBuffer[huemul_KeyValuePath] = null
+  
+  def setWhoCanRun_executeFull(value: huemul_Authorization) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of WhoCanRun_executeFull, definition is close", 1033)
+    else
+      _WhoCanRun_executeFull = value
+  }
+  def getWhoCanRun_executeFull: huemul_Authorization = {return _WhoCanRun_executeFull}
+  private var _WhoCanRun_executeFull: huemul_Authorization = new huemul_Authorization()
+  
+  def setWhoCanRun_executeOnlyInsert(value: huemul_Authorization) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of WhoCanRun_executeOnlyInsert, definition is close", 1033)
+    else
+      _WhoCanRun_executeOnlyInsert = value
+  }
+  def getWhoCanRun_executeOnlyInsert: huemul_Authorization = {return _WhoCanRun_executeOnlyInsert}
+  private var _WhoCanRun_executeOnlyInsert: huemul_Authorization = new huemul_Authorization()
+  
+  def setWhoCanRun_executeOnlyUpdate(value: huemul_Authorization) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of WhoCanRun_executeOnlyUpdate, definition is close", 1033)
+    else
+      _WhoCanRun_executeOnlyUpdate = value
+  }
+  def getWhoCanRun_executeOnlyUpdate: huemul_Authorization = {return _WhoCanRun_executeOnlyUpdate}
+  private var _WhoCanRun_executeOnlyUpdate: huemul_Authorization = new huemul_Authorization()
+  
 
   /**
    DataQuality: max N° records, null does'nt apply  DQ , 0 value doesn't accept new records (raiseError if new record found)
+   If table is empty, DQ doesn't apply
    */
-  var DQ_MaxNewRecords_Num: Long = null
+  def setDQ_MaxNewRecords_Num(value: Long) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of DQ_MaxNewRecords_Num, definition is close", 1033)
+    else
+      _DQ_MaxNewRecords_Num = value
+  }
+  def getDQ_MaxNewRecords_Num: Long = {return _DQ_MaxNewRecords_Num}
+  private var _DQ_MaxNewRecords_Num: Long = null
   /**
    DataQuality: Max % new records vs old records, null does'n apply DQ, 0% doesn't accept new records (raiseError if new record found), 100% accept double old records)
    */
-  var DQ_MaxNewRecords_Perc: Integer = null
+  def setDQ_MaxNewRecords_Perc(value: Integer) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of DQ_MaxNewRecords_Perc, definition is close", 1033)
+    else
+      _DQ_MaxNewRecords_Perc = value
+  }
+  def getDQ_MaxNewRecords_Perc: Integer = {return _DQ_MaxNewRecords_Perc}
+  private var _DQ_MaxNewRecords_Perc: Integer = null
+  
+  
+  
+  
+  /****** METODOS DEL LADO DEL "USUARIO" **************************/
   
   private var autoCast: Boolean = true
   def setAutoCast(value: Boolean) {autoCast = value}
@@ -73,24 +199,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   private var Table_id: String = ""
   
-  /**
-    Directory's data is managed by Hive (automatically) or manually.
-   */
-  //var ManagedByHive   : Boolean= false
-  /**
-    Fields used to partition table in parquet
-   */
-  var PartitionField   : String= null
-  /**
-    Local name (example "SBIF\\{{YYYY}}{{MM}}\\"
-   */
-  var LocalPath   : String= ""
   
-  var GlobalPaths: ArrayBuffer[huemul_KeyValuePath] = null
-  
-  var WhoCanRun_executeFull: huemul_Authorization = new huemul_Authorization()
-  var WhoCanRun_executeOnlyInsert: huemul_Authorization = new huemul_Authorization()
-  var WhoCanRun_executeOnlyUpdate: huemul_Authorization = new huemul_Authorization()
   
   private var CreateInHive: Boolean = true
   private var CreateTableScript: String = ""
@@ -109,31 +218,31 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false)
       
   var AdditionalRowsForDistint: String = ""
-  
+  private var DefinitionIsClose: Boolean = false
   
   /***
    * from Global path (small files, large files, DataBase, etc)
    */
   def GlobalPath()  : String= {
-    return GetPath(GlobalPaths)
+    return GetPath(_GlobalPaths)
   }
   
   def GlobalPath(ManualEnvironment: String)  : String= {
-    return GetPath(GlobalPaths, ManualEnvironment)
+    return GetPath(_GlobalPaths, ManualEnvironment)
   }
   
   
     
   def GetFullNameWithPath() : String = {
-    return GlobalPath + LocalPath + TableName
+    return GlobalPath + _LocalPath + TableName
   }
   
   def GetFullNameWithPath2(ManualEnvironment: String) : String = {
-    return GlobalPath(ManualEnvironment) + LocalPath + TableName
+    return GlobalPath(ManualEnvironment) + _LocalPath + TableName
   }
     
   def GetFullPath() : String = {
-    return GlobalPath + LocalPath 
+    return GlobalPath + _LocalPath 
   }
   
   
@@ -141,18 +250,18 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    * Return DataBaseName.TableName
    */
   def GetTable(): String = {
-    return s"${GetDataBase(DataBase)}.${TableName}"
+    return s"${GetDataBase(_DataBase)}.${TableName}"
   }
   
   def GetCurrentDataBase(): String = {
-    return s"${GetDataBase(DataBase)}"
+    return s"${GetDataBase(_DataBase)}"
   }
   
   /**
    * Return DataBaseName.TableName
    */
   def GetTable(ManualEnvironment: String): String = {
-    return s"${GetDataBase(this.DataBase, ManualEnvironment)}.${TableName}"
+    return s"${GetDataBase(this._DataBase, ManualEnvironment)}.${TableName}"
   }
   
   
@@ -186,16 +295,16 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   
   def ApplyTableDefinition(): Boolean = {
-    if (this.PartitionField == null)
-      PartitionField = ""
+    if (this._PartitionField == null)
+      _PartitionField = ""
       
-    if (this.GlobalPaths == null)
+    if (this._GlobalPaths == null)
       RaiseError(s"huemul_Table Error: GlobalPaths must be defined",1000)
       
-    if (this.LocalPath == null)
+    if (this._LocalPath == null)
       RaiseError(s"huemul_Table Error: LocalPath must be defined",1001)
       
-    if (this.StorageType == null)
+    if (this._StorageType == null)
       RaiseError(s"huemul_Table Error: StorageType must be defined",1002)
       
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
@@ -242,7 +351,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     
     //Register TableName and fields
     Control.RegisterMASTER_CREATE_Basic(this)    
-              
+    DefinitionIsClose = true
     return true
   }
   
@@ -255,7 +364,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     if (!OnlyUserDefined){
       var b = pClass.getSuperclass().getDeclaredFields()
       
-      if (this.TableType == huemulType_Tables.Transaction) 
+      if (this._TableType == huemulType_Tables.Transaction) 
         b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }       
       
       c = a.union(b)  
@@ -417,7 +526,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       */
           
       //create StructType
-      if (PartitionField != null && PartitionField.toUpperCase() != x.getName.toUpperCase()) {
+      if (_PartitionField != null && _PartitionField.toUpperCase() != x.getName.toUpperCase()) {
         ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
         coma = ","
       }
@@ -484,8 +593,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
       
-      if (PartitionField.toUpperCase() == x.getName().toUpperCase() ) {
-        _PartitionCreateTable += s"${coma_partition}${PartitionField} ${Field.DataType.sql}"
+      if (_PartitionField.toUpperCase() == x.getName().toUpperCase() ) {
+        _PartitionCreateTable += s"${coma_partition}${_PartitionField} ${Field.DataType.sql}"
         coma_partition = ","
       }
       
@@ -772,7 +881,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     //Include HashFields to SQL
     StringSQL += s""",${StringSQL_hash} as MDM_hash \n"""
     
-    if (this.TableType == huemulType_Tables.Reference || this.TableType == huemulType_Tables.Master) {
+    if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master) {
       StringSQL += s""",case when old_MDM_hash = ${StringSQL_hash} THEN 1 ELSE 0 END AS SameHashKey  \n ,___ActionType__ \n"""
     }
     
@@ -912,8 +1021,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     CreateTableScript = s"""
                                  CREATE EXTERNAL TABLE IF NOT EXISTS ${GetTable()} (${GetColumns_CreateTable(true) })
-                                 ${if (PartitionField.length() > 0) s"PARTITIONED BY (${_PartitionCreateTable})" else "" }
-                                 STORED AS ${StorageType.toString()}                                  
+                                 ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${_PartitionCreateTable})" else "" }
+                                 STORED AS ${_StorageType.toString()}                                  
                                  LOCATION '${GetFullNameWithPath()}'"""
                                  
     if (huemulLib.DebugMode)
@@ -950,7 +1059,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   private def DF_ForeingKeyMasterAuto(): huemul_DataQualityResult = {
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayFK = this.GetForeingKey()
-    val DataBaseName = this.GetDataBase(this.DataBase)
+    val DataBaseName = this.GetDataBase(this._DataBase)
     //For Each Foreing Key Declared
     ArrayFK.foreach { x =>
       
@@ -1036,7 +1145,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     val SQL_Missing = MissingRequiredFields()
     if (SQL_Missing.length > 0) {
       Result.isError = true
-      Result.Description += "\nhuemul_Table Error: requiered fields missing "
+      Result.Description += "\nhuemul_Table Error: requiered columns missing "
       Result.Error_Code = 1016
       SQL_Missing.foreach { x => Result.Description +=  s",$x " }
     }
@@ -1156,7 +1265,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    Create final DataFrame with full join New DF with old DF
    */
   private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean, isDelete: Boolean) {
-    if (TableType == huemulType_Tables.Transaction) {
+    if (_TableType == huemulType_Tables.Transaction) {
       LocalControl.NewStep("Transaction: Validating fields ")
       //STEP 1: validate name setting
       getALLDeclaredFields(true).filter { x => x.setAccessible(true)
@@ -1187,7 +1296,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
       if (huemulLib.DebugMode) this.DataFramehuemul.DataFrame.show()
     } 
-    else if (TableType == huemulType_Tables.Reference || TableType == huemulType_Tables.Master)
+    else if (_TableType == huemulType_Tables.Reference || _TableType == huemulType_Tables.Master)
     {
       /*
        * isInsert: se aplica en SQL_Step2_UpdateAndInsert, si no permite insertar, filtra esos registros y no los inserta
@@ -1229,7 +1338,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         //Exist, copy for use
         
         //Open actual file
-        val DFTempCopy = huemulLib.spark.read.format(this.StorageType.toString()).load(this.GetFullNameWithPath())
+        val DFTempCopy = huemulLib.spark.read.format(this._StorageType.toString()).load(this.GetFullNameWithPath())
         val tempPath = huemulLib.GlobalSettings.GetDebugTempPath(huemulLib, huemulLib.ProcessNameCall, TempAlias)
         if (huemulLib.DebugMode) println(s"copy to temp dir: $tempPath ")
         DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
@@ -1294,12 +1403,12 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       var Error_Number: Integer = null
       if (this._NumRows_Total == this._NumRows_New)
         DQ_Error = "" //Doesn't have error, first run
-      else if (this.DQ_MaxNewRecords_Num != null && this.DQ_MaxNewRecords_Num > 0 && this._NumRows_New > this.DQ_MaxNewRecords_Num){
-        DQ_Error = s"huemul_Table Error: DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this.DQ_MaxNewRecords_Num}) "
+      else if (this._DQ_MaxNewRecords_Num != null && this._DQ_MaxNewRecords_Num > 0 && this._NumRows_New > this._DQ_MaxNewRecords_Num){
+        DQ_Error = s"huemul_Table Error: DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this._DQ_MaxNewRecords_Num}) "
         Error_Number = 1005
       }
-      else if (this.DQ_MaxNewRecords_Perc != null && this.DQ_MaxNewRecords_Perc > 0 && (this._NumRows_New / this._NumRows_Total) > this.DQ_MaxNewRecords_Perc) {
-        DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(this._NumRows_New / this._NumRows_Total)}) exceeds % max defined (${this.DQ_MaxNewRecords_Perc}) "
+      else if (this._DQ_MaxNewRecords_Perc != null && this._DQ_MaxNewRecords_Perc > 0 && (this._NumRows_New / this._NumRows_Total) > this._DQ_MaxNewRecords_Perc) {
+        DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(this._NumRows_New / this._NumRows_Total)}) exceeds % max defined (${this._DQ_MaxNewRecords_Perc}) "
         Error_Number = 1006
       }
 
@@ -1323,7 +1432,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //SQLDistinct_DF.unpersist()
       
     } else
-      RaiseError(s"huemul_Table Error: ${TableType} found, Master o Reference required ", 1007)
+      RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
   }
   
   private def GetClassAndPackage(): huemul_AuthorizationPair = {
@@ -1341,7 +1450,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   def executeFull(NewAlias: String): Boolean = {
     var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
-    if (this.WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.ExecuteSave(NewAlias, true, true, true)      
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
@@ -1353,11 +1462,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   def executeOnlyInsert(NewAlias: String): Boolean = {
     var Result: Boolean = false
-    if (this.TableType == huemulType_Tables.Transaction)
+    if (this._TableType == huemulType_Tables.Transaction)
       RaiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
 
     val whoExecute = GetClassAndPackage()  
-    if (this.WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.ExecuteSave(NewAlias, true, false, false) 
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
@@ -1368,11 +1477,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   def executeOnlyUpdate(NewAlias: String): Boolean = {   
     var Result: Boolean = false
-    if (this.TableType == huemulType_Tables.Transaction)
+    if (this._TableType == huemulType_Tables.Transaction)
       RaiseError("huemul_Table Error: DoOnlyUpdatehuemul is not available for Transaction Tables", 1011)
       
     val whoExecute = GetClassAndPackage()  
-    if (this.WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
       Result = this.ExecuteSave(NewAlias, false, true, false)  
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
@@ -1469,7 +1578,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       //Create table persistent
       if (huemulLib.DebugMode){
         println(s"Saving ${GetTable()} Table with params: ") 
-        println(s"${PartitionField} field for partitioning table")
+        println(s"${_PartitionField} field for partitioning table")
         println(s"${GetFullNameWithPath()} path")
       }
       
@@ -1494,9 +1603,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   }
   
   def CopyToDest(PartitionValue: String, DestEnvironment: String) {
-    if (huemulLib.HasName(PartitionField)) {
-       val ProdFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${PartitionField.toLowerCase()}=${PartitionValue}")
-       val ManualFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath2(DestEnvironment)}/${PartitionField.toLowerCase()}=${PartitionValue}")
+    if (huemulLib.HasName(_PartitionField)) {
+       val ProdFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValue}")
+       val ManualFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}=${PartitionValue}")
        
        val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)
        org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulLib.spark.sparkContext.hadoopConfiguration)
@@ -1506,8 +1615,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
        huemulLib.spark.sql(s"MSCK REPAIR TABLE ${DestTableName}")
               
     } else {
-       val ProdFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${PartitionField.toLowerCase()}")
-       val ManualFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath2(DestEnvironment)}/${PartitionField.toLowerCase()}")
+       val ProdFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}")
+       val ManualFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}")
        
        val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)
        org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulLib.spark.sparkContext.hadoopConfiguration)
@@ -1519,7 +1628,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     var DF_Final = DF
     var Result: Boolean = true
     
-    if (this.TableType == huemulType_Tables.Reference || this.TableType == huemulType_Tables.Master) {
+    if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master) {
       LocalControl.NewStep("Save: Drop ActionType column")
    
       if (OnlyInsert)
@@ -1544,14 +1653,14 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     }
     
     try {
-      if (PartitionField == null || PartitionField == ""){
+      if (_PartitionField == null || _PartitionField == ""){
         if (OnlyInsert) {
           LocalControl.NewStep("Save: Append Master & Ref Data")
-          DF_Final.write.mode(SaveMode.Append).format(this.StorageType.toString()).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
         }
         else {
           LocalControl.NewStep("Save: Overwrite Master & Ref Data")
-          DF_Final.write.mode(SaveMode.Overwrite).format(this.StorageType.toString()).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(GetFullNameWithPath())
         }
         
         //val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
@@ -1560,19 +1669,19 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       else{
         //Get Partition_Id Values
         LocalControl.NewStep("Save: Validating N° partitions")
-        val DFDistinct = DF_Final.select(PartitionField).distinct().withColumn(PartitionField, DF_Final.col(PartitionField).cast(StringType))
+        val DFDistinct = DF_Final.select(_PartitionField).distinct().withColumn(_PartitionField, DF_Final.col(_PartitionField).cast(StringType))
         if (DFDistinct.count() != 1){
           RaiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}",1015)
         } else {
-          val PartitionValue = DFDistinct.first().getAs[String](PartitionField)
-          val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${PartitionField.toLowerCase()}=${PartitionValue}")
+          val PartitionValue = DFDistinct.first().getAs[String](_PartitionField)
+          val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValue}")
           
           LocalControl.NewStep("Save: Drop old partition")
           val fs = FileSystem.get(huemulLib.spark.sparkContext.hadoopConfiguration)       
           fs.delete(FullPath, true)
           LocalControl.NewStep("Save: OverWrite partition with new data")
           if (huemulLib.DebugMode) println(s"saving path: ${FullPath} ")        
-          DF_Final.write.mode(SaveMode.Append).format(this.StorageType.toString()).partitionBy(PartitionField).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
                 
           //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
   
@@ -1599,7 +1708,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         }
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
-        if (CreateInHive && (PartitionField != null && PartitionField != "")) {
+        if (CreateInHive && (_PartitionField != null && _PartitionField != "")) {
           LocalControl.NewStep("Save: Repair Hive Metadata")
           if (huemulLib.DebugMode) println(s"MSCK REPAIR TABLE ${GetTable()}")
           huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
