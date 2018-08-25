@@ -87,6 +87,7 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   val spark: SparkSession = if (!TestPlanMode) SparkSession.builder().appName(appName)
                                               //.master("local[*]")
                                               .config("spark.sql.warehouse.dir", warehouseLocation)
+                                              .config("spark.sql.parquet.writeLegacyFormat",true)
                                               .enableHiveSupport()
                                               .getOrCreate()
                             else null
