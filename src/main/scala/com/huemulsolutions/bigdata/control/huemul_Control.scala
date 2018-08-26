@@ -28,7 +28,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   //Find process name in control_process
   
   if (RegisterInControlLog && huemulLib.RegisterInControl)
-  huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s""" SELECT
+  huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s""" SELECT
   control_process_addOrUpd(
                   '${Control_ClassName}' -- process_id
                   ,''  --as area_id
@@ -44,7 +44,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   //Insert processExcec
   if (RegisterInControlLog && huemulLib.RegisterInControl) {
     println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
-  huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_add (
+  huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_processExec_add (
             '${Control_Id}'  --p_processExec_id
            ,'${Control_IdParent}'  --p_processExec_idParent
            ,'${Control_ClassName}'  --p_process_id
@@ -73,7 +73,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
     while (ContinueInLoop) {
       //Try to add Singleton Mode      
-      val Ejec =  huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_singleton_Add (
+      val Ejec =  huemulLib.ExecuteJDBC_WithResult(huemulLib.JDBCTXT,s"""select control_singleton_Add (
                         '${Control_ClassName}'  --p_singleton_id
                        ,'${huemulLib.IdApplication}'  --p_application_Id
                        ,'${Control_ClassName}'  --p_singleton_name
@@ -94,13 +94,13 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
         
         NumCycle = 1
         // Obtiene procesos pendientes
-        val CurrentProcess = huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"select * from control_executors where application_Id = '${ApplicationInUse}'")
+        val CurrentProcess = huemulLib.ExecuteJDBC_WithResult(huemulLib.JDBCTXT,s"select * from control_executors where application_Id = '${ApplicationInUse}'")
         var IdAppFromDataFrame : String = ""
         var IdAppFromAPI: String = ""
         var URLMonitor: String = ""
         var StillAlive: Boolean = true
         
-        if (CurrentProcess.ResultSet.length == 0) { //dosn't have records, was eliminted by other process (rarely)
+        if (CurrentProcess.ResultSet == null || CurrentProcess.ResultSet.length == 0) { //dosn't have records, was eliminted by other process (rarely)
           StillAlive = false            
         } else {
           IdAppFromDataFrame = CurrentProcess.ResultSet(0).getAs[String]("application_id")
@@ -122,7 +122,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                     
         //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
         if (!StillAlive) {
-          val a = huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
+          val a = huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
         }
       }              
     }
@@ -144,7 +144,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
           
     //Insert processExcec
     if (huemulLib.RegisterInControl) {
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_ProcessExecParams_add (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_ProcessExecParams_add (
                            '${this.Control_Id}'  --processexec_id
                          , '${NewParam.param_name}' --as processExecParams_Name
                          , '${NewParam.param_value}' --as processExecParams_Value
@@ -165,7 +165,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
     
     
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_processExec_Finish (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_processExec_Finish (
                              '${Control_Id}'  --p_processExec_id
                            , '${this.LocalIdStep}' --as p_processExecStep_id
                            ,  null --as p_error_id
@@ -173,7 +173,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                         """)   
                         
       if (this.IsSingleton) {
-          huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_singleton_remove (
+          huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_singleton_remove (
                              '${Control_ClassName}'  --p_processExec_id
                            )
                         """)  
@@ -191,7 +191,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       val Error_Id = huemulLib.huemul_GetUniqueId()
     
       //Insert processExcec
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_Error_finish (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_Error_finish (
                           '${this.Control_Id}'  --p_processExec_id
                          , '${this.LocalIdStep}'  --p_processExecStep_id
                          , '${Error_Id}'  --Error_Id
@@ -207,7 +207,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                     )
                       """)            
       if (this.IsSingleton) {
-        huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_singleton_remove (
+        huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_singleton_remove (
                            '${Control_ClassName}'  --p_processExec_id
                          )
                       """)  
@@ -229,7 +229,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
     if (huemulLib.RegisterInControl) {
       //Insert processExcec
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_processExecStep_add (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_processExecStep_add (
                   '${LocalIdStep}'  --p_processExecStep_id
                  ,'${PreviousLocalIdStep}'  --p_processExecStep_idAnt
                  ,'${this.Control_Id}'  --p_processExec_id
@@ -244,7 +244,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                              ,p_TestPlan_Id: String) {
     if (huemulLib.RegisterInControl) {
        //Insert processExcec
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_TestPlanFeature_add (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_TestPlanFeature_add (
                             '${p_Feature_Id.replace("'", "''")}'  --as p_Feature_Id
                          , '${p_TestPlan_Id}'  --as p_testPlan_Id
                          ,'${Control_ClassName}'  --p_MDM_ProcessName
@@ -273,7 +273,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                      
     if (huemulLib.RegisterInControl) {
        //Insert processExcec
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_TestPlan_add (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_TestPlan_add (
                         '${testPlan_Id}'  --as p_testPlan_Id
                          , '${p_testPlanGroup_Id}'  --as p_testPlanGroup_Id
                          , '${this.Control_Id}'  --p_processExec_id
@@ -314,7 +314,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
 
     if (huemulLib.RegisterInControl) {
       //Insert processExcec
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_DQ_add (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_DQ_add (
                         '${DQId}'  --as p_DQ_Id
                          , '${Table_Name}'  --as Table_name
                          , '${BBDD_Name}'  --asp_BBDD_name
@@ -346,7 +346,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
     if (huemulLib.RegisterInControl) {
       //Insert processExcec
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""
         select control_rawFiles_add ( '${dapi_raw.getrawFiles_id}'  --p_RAWFiles_id
                          , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                          , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
@@ -361,7 +361,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       dapi_raw.SettingByDate.foreach { x => 
         //Insert processExcec
         val RAWFilesDet_id = huemulLib.huemul_GetUniqueId()
-        huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_RAWFilesDet_add (
+        huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_RAWFilesDet_add (
                                '${RAWFilesDet_id}' --as RAWFilesDet_id
                              , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                              , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
@@ -385,7 +385,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
          if (x.DataSchemaConf.ColumnsPosition != null) {
            var pos: Integer = 0
            x.DataSchemaConf.ColumnsPosition.foreach { y =>
-                 huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_RAWFilesDetFields_add(
+                 huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_RAWFilesDetFields_add(
                                  '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                                , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
                                ,'${huemulLib.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
@@ -404,7 +404,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
       //Insert control_rawFilesUse
       val rawfilesuse_id = huemulLib.huemul_GetUniqueId()
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_rawFilesUse_add (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_rawFilesUse_add (
                            '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                          , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
                          ,'${rawfilesuse_id }'  --rawfilesuse_id
@@ -424,7 +424,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
     //Insert control_TablesUse
     if (huemulLib.RegisterInControl) {
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
                                     '${DefMaster.TableName}'
                                    ,'${DefMaster.GetCurrentDataBase() }'  
                                    , '${Control_ClassName}' --as Process_Id
@@ -444,9 +444,9 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
 
   def RegisterMASTER_CREATE_Basic(DefMaster: huemul_Table) {
     val LocalNewTable_id = huemulLib.huemul_GetUniqueId()
-          
+          println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] register metadata cab")
     if (huemulLib.RegisterInControl) {
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s""" select control_Tables_addOrUpd(
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s""" select control_Tables_addOrUpd(
                             '${LocalNewTable_id}'  --Table_id
                            ,null  --Area_Id
                            , '${DefMaster.GetCurrentDataBase()}' --as Table_BBDDName
@@ -469,9 +469,11 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       var i: Integer = 0
       var localDatabaseName = DefMaster.GetCurrentDataBase()
       DefMaster.GetColumns().foreach { x => 
+        println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] register metadata det 1")
         val Column_Id = huemulLib.huemul_GetUniqueId()
-  
-        huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""SELECT control_Columns_addOrUpd (
+        println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] register metadata det 2")
+    
+        huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_Columns_addOrUpd (
         
                             '${Column_Id}' --Column_Id
                            , '${DefMaster.TableName}' --as Table_Name
@@ -509,11 +511,12 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       
     if (huemulLib.RegisterInControl) {
       //Insert control_TablesUse
-      huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
+      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_TablesUse_add (
                                   '${DefMaster.TableName}'
                                  ,'${DefMaster.GetCurrentDataBase() }'  
                                  , '${Control_ClassName}' --as Process_Id
                                  , '${Control_Id}' --as ProcessExec_Id
+                                 , '${LocalIdStep}' --as ProcessExecStep_Id
                                  , false --as TableUse_Read
                                  , true --as TableUse_Write
                                  , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
@@ -530,7 +533,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
         
         val localDatabaseName = x._Class_TableName.asInstanceOf[huemul_Table].GetCurrentDataBase()
         val Resultado = 
-        huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_tablesrel_add (
+        huemulLib.ExecuteJDBC_WithResult(huemulLib.JDBCTXT,s"""select control_tablesrel_add (
                                     '${p_tablerel_id}'    --p_tablerel_id
                                    ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
                                    ,'${localDatabaseName }'  --p_table_BBDDpk
@@ -547,7 +550,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
          val IdRel = Resultado.ResultSet(0).getString(0)
   
          x.Relationship.foreach { y => 
-            huemulLib.ExecuteJDBC(huemulLib.JDBCTXT,s"""select control_TablesRelCol_add (
+            huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""select control_TablesRelCol_add (
                                       '${IdRel}'    --p_tablerel_id
                                      ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
                                      ,'${localDatabaseName }'  --p_table_BBDDpk
