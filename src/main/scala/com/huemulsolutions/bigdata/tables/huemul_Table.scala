@@ -29,7 +29,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
    */
   val TableName : String= this.getClass.getSimpleName.replace("$", "") // ""
   println("**********************************************************")
-  println(s"NOMBRE TABLA: ${TableName}")
+  println(s"INSTANCIA TABLE NAME: ${TableName}")
   println("**********************************************************")
   
   def setDataBase(value: ArrayBuffer[huemul_KeyValuePath]) {
@@ -295,6 +295,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   
   
   def ApplyTableDefinition(): Boolean = {
+    if (huemulLib.DebugMode) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] starting ApplyTableDefinition")
     if (this._PartitionField == null)
       _PartitionField = ""
       
@@ -348,9 +349,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         
       }
     }
-    
+    if (huemulLib.DebugMode) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] register metadata")
     //Register TableName and fields
-    Control.RegisterMASTER_CREATE_Basic(this)    
+    Control.RegisterMASTER_CREATE_Basic(this)
+    if (huemulLib.DebugMode) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] end ApplyTableDefinition")
     DefinitionIsClose = true
     return true
   }
