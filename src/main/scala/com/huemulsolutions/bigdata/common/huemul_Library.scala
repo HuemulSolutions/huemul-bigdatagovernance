@@ -101,7 +101,8 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
    * START SPARK AND POSGRES CONNECTION
    *************************/
   @transient private var postgres_connection: Connection = null
-  this.postgres_StartConnection()
+  if (!TestPlanMode)
+    this.postgres_StartConnection()
   
   val spark: SparkSession = if (!TestPlanMode) SparkSession.builder().appName(appName)
                                               //.master("local[*]")
