@@ -37,7 +37,7 @@ class huemul_ControlError (huemulLib: huemul_Library) extends Serializable  {
    */
   def GetError(e: Exception, GetClassName: String, Error_Code: Integer) {
     ControlError_IsError = true
-    ControlError_ErrorCode = Error_Code
+    ControlError_ErrorCode = if (Error_Code == null) ControlError_ErrorCode else Error_Code
     ControlError_Trace = ""
     e.getStackTrace().foreach { x => ControlError_Trace = ControlError_Trace + x + "\n" }
     
