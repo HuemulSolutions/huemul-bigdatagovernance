@@ -174,16 +174,16 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   def getDQ_MaxNewRecords_Num: Long = {return _DQ_MaxNewRecords_Num}
   private var _DQ_MaxNewRecords_Num: Long = null
   /**
-   DataQuality: Max % new records vs old records, null does'n apply DQ, 0% doesn't accept new records (raiseError if new record found), 100% accept double old records)
+   DataQuality: Max % new records vs old records, null does'n apply DQ, 0% doesn't accept new records (raiseError if new record found), 100%-> 0.1 accept double old records)
    */
-  def setDQ_MaxNewRecords_Perc(value: Integer) {
+  def setDQ_MaxNewRecords_Perc(value: Decimal) {
     if (DefinitionIsClose)
       this.RaiseError("You can't change value of DQ_MaxNewRecords_Perc, definition is close", 1033)
     else
       _DQ_MaxNewRecords_Perc = value
   }
-  def getDQ_MaxNewRecords_Perc: Integer = {return _DQ_MaxNewRecords_Perc}
-  private var _DQ_MaxNewRecords_Perc: Integer = null
+  def getDQ_MaxNewRecords_Perc: Decimal = {return _DQ_MaxNewRecords_Perc}
+  private var _DQ_MaxNewRecords_Perc: Decimal = null
   
   
   
@@ -1090,7 +1090,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       
       //val FKRuleName: String = GetFieldName[DAPI_MASTER_FK](this, x)
       val AliasDistinct: String = s"___${x.MyName}_FKRuleDist__"
-      val DF_Distinct = huemulLib.DF_ExecuteQuery(AliasDistinct, s"SELECT DISTINCT ${SQLFields} FROM ${this.DataFramehuemul.Alias} ${if (x.AllowNull) s"${FirstRowFK} is not null " else "" }")
+      val DF_Distinct = huemulLib.DF_ExecuteQuery(AliasDistinct, s"SELECT DISTINCT ${SQLFields} FROM ${this.DataFramehuemul.Alias} ${if (x.AllowNull) s" WHERE ${FirstRowFK} is not null " else "" }")
            
       //Step2: left join with TABLE MASTER DATA
       val AliasLeft: String = s"___${x.MyName}_FKRuleLeft__"
@@ -1415,7 +1415,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         DQ_Error = s"huemul_Table Error: DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this._DQ_MaxNewRecords_Num}) "
         Error_Number = 1005
       }
-      else if (this._DQ_MaxNewRecords_Perc != null && this._DQ_MaxNewRecords_Perc > 0 && (this._NumRows_New / this._NumRows_Total) > this._DQ_MaxNewRecords_Perc) {
+      else if (this._DQ_MaxNewRecords_Perc != null && this._DQ_MaxNewRecords_Perc > Decimal.apply(0) && (Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total)) > this._DQ_MaxNewRecords_Perc) {
         DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(this._NumRows_New / this._NumRows_Total)}) exceeds % max defined (${this._DQ_MaxNewRecords_Perc}) "
         Error_Number = 1006
       }
