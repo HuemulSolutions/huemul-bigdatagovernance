@@ -19,7 +19,7 @@ class tbl_demo_test_padre(huemulLib: huemul_Library, Control: huemul_Control) ex
   this.setDataBase(huemulLib.GlobalSettings.DIM_DataBase)
   this.setDescription("descripcion")
   this.setDQ_MaxNewRecords_Num(10)
-  this.setDQ_MaxNewRecords_Perc(20)
+  this.setDQ_MaxNewRecords_Perc(Decimal.apply(0.20))
   this.setGlobalPaths(huemulLib.GlobalSettings.DIM_BigFiles_Path)
   this.setIT_ResponsibleName("IT Responsible")
   this.setLocalPath("demo/")
