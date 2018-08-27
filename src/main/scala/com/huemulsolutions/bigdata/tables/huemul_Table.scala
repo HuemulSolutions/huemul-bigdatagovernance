@@ -1755,7 +1755,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     Error_Text = txt
     Error_isError = true
     Error_Code = code
-    
+    Control.Control_Error.ControlError_ErrorCode = code
     if (huemulLib.DebugMode) println(txt)
     Control.RaiseError(txt)
     //sys.error(txt)
