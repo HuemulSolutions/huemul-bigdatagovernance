@@ -98,14 +98,10 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   val ProcessNameCall: String = Invoker(1).getClassName().replace(".", "_").replace("$", "")
 
   /*********************
-   * START SPARK
+   * START SPARK AND POSGRES CONNECTION
    *************************/
-  
-  val lConnectionString = GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting)
-  val driver = "org.postgresql.Driver"
-  Class.forName(driver)
-  @transient val connection: Connection = if (TestPlanMode) null else DriverManager.getConnection(lConnectionString)                
-  
+  @transient private var postgres_connection: Connection = null
+  this.postgres_StartConnection()
   
   val spark: SparkSession = if (!TestPlanMode) SparkSession.builder().appName(appName)
                                               //.master("local[*]")
@@ -156,6 +152,16 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
    * START METHOD
    *************************/
   
+  private def postgres_StartConnection() {
+    val postgres_ConnectionString = GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting)
+    val driver = "org.postgresql.Driver"
+    Class.forName(driver)
+  
+    if (!TestPlanMode) {
+     this.postgres_connection = DriverManager.getConnection(postgres_ConnectionString)
+    }
+  
+  }
   //var sc: org.apache.spark.SparkContext = spark.sparkContext
   def getMonth(Date: Calendar): Int = {return Date.get(Calendar.MONTH)+1}
   def getDay(Date: Calendar): Int = {return Date.get(Calendar.DAY_OF_MONTH)}
@@ -338,12 +344,21 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     val driver = "org.postgresql.Driver"
     val url = ""
         
+    
+    var i = 0
+    while (i<=2 && postgres_connection.isClosed()) {
+      println("postgres connection closed, trying to establish new connection")
+      this.postgres_StartConnection()
+      i+=1
+    }
+    
+    if (i == 3) {
+      sys.error("error while trying to establish new connection")
+    }
+      
+        
       try {
-                
-  //      Class.forName(driver)
-    //    val connection = DriverManager.getConnection(ConnectionString)                
-  
-        val statement = connection.createStatement()
+        val statement = postgres_connection.createStatement()
         val Resultado = statement.executeQuery(SQL)
         var fieldsStruct = new Array[StructField](0);
  
@@ -351,99 +366,96 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
         val Metadata = Resultado.getMetaData
         val NumColumns = Metadata.getColumnCount
         
-        
-        
         while (i <= NumColumns) {
           val DataTypeInt = Metadata.getColumnType(i)
-             // println(s"estadisticas: Nombre  ${Metadata.getColumnName(i)}, ${DataTypeInt}: ${Metadata.getColumnTypeName(i)} (${Metadata.getPrecision(i)},${Metadata.getScale(i)}) ")
-    
-          val DataType: DataType =      if (DataTypeInt == -7) DataTypes.BooleanType
-                                   else if (DataTypeInt == -6) DataTypes.ShortType
-                                   else if (DataTypeInt == -5) DataTypes.LongType
-                                   else if (DataTypeInt == -4) DataTypes.BinaryType
-                                   else if (DataTypeInt == -3) DataTypes.BinaryType
-                                   else if (DataTypeInt == -2) DataTypes.BinaryType
-                                   else if (DataTypeInt == -1) DataTypes.StringType
-                                   else if (DataTypeInt == 0) DataTypes.NullType
-                                   else if (DataTypeInt == 1) DataTypes.StringType
-                                   else if (DataTypeInt == 2) DecimalType(Metadata.getPrecision(i), Metadata.getScale(i)) //DataTypes.DoubleType
-                                   else if (DataTypeInt == 3) DecimalType(Metadata.getPrecision(i), Metadata.getScale(i))
-                                   else if (DataTypeInt == 4) DataTypes.IntegerType
-                                   else if (DataTypeInt == 5) DataTypes.ShortType
-                                   else if (DataTypeInt == 6) DataTypes.FloatType
-                                   else if (DataTypeInt == 7) DataTypes.DoubleType
-                                   else if (DataTypeInt == 8) DataTypes.DoubleType
-                                   else if (DataTypeInt == 12) DataTypes.StringType
-                                   else if (DataTypeInt == 91) DataTypes.DateType
-                                   else if (DataTypeInt == 92) DataTypes.TimestampType
-                                   else if (DataTypeInt == 93) DataTypes.TimestampType
-                                   else if (DataTypeInt == 1111) DataTypes.StringType
-                                   else DataTypes.StringType
-                                   
-          
-          fieldsStruct = fieldsStruct:+ ( StructField(Metadata.getColumnName(i) , DataType  , false , null))
-         i+=1
-        }
+  
+        val DataType: DataType =      if (DataTypeInt == -7) DataTypes.BooleanType
+                                 else if (DataTypeInt == -6) DataTypes.ShortType
+                                 else if (DataTypeInt == -5) DataTypes.LongType
+                                 else if (DataTypeInt == -4) DataTypes.BinaryType
+                                 else if (DataTypeInt == -3) DataTypes.BinaryType
+                                 else if (DataTypeInt == -2) DataTypes.BinaryType
+                                 else if (DataTypeInt == -1) DataTypes.StringType
+                                 else if (DataTypeInt == 0) DataTypes.NullType
+                                 else if (DataTypeInt == 1) DataTypes.StringType
+                                 else if (DataTypeInt == 2) DecimalType(Metadata.getPrecision(i), Metadata.getScale(i)) //DataTypes.DoubleType
+                                 else if (DataTypeInt == 3) DecimalType(Metadata.getPrecision(i), Metadata.getScale(i))
+                                 else if (DataTypeInt == 4) DataTypes.IntegerType
+                                 else if (DataTypeInt == 5) DataTypes.ShortType
+                                 else if (DataTypeInt == 6) DataTypes.FloatType
+                                 else if (DataTypeInt == 7) DataTypes.DoubleType
+                                 else if (DataTypeInt == 8) DataTypes.DoubleType
+                                 else if (DataTypeInt == 12) DataTypes.StringType
+                                 else if (DataTypeInt == 91) DataTypes.DateType
+                                 else if (DataTypeInt == 92) DataTypes.TimestampType
+                                 else if (DataTypeInt == 93) DataTypes.TimestampType
+                                 else if (DataTypeInt == 1111) DataTypes.StringType
+                                 else DataTypes.StringType
+                                 
         
-        var ListaDatos: Array[Row] = new Array[Row](0)
-        
-        
-        //Ciclo para cargar el dataframe
-   
-        
-        while (Resultado.next()) {
-          val Fila = new Array[Any](NumColumns)
-          var i = 1
-          
-          //Ciclo para cada columna
-          while (i <= NumColumns) {
-            val DataTypeInt = Metadata.getColumnType(i)
-            
-            Fila(i-1) = if (DataTypeInt == -7) Resultado.getBoolean(i)
-                 else if (DataTypeInt == -6) Resultado.getShort(i)
-                 else if (DataTypeInt == -5) Resultado.getLong(i)
-                 else if (DataTypeInt == -4) Resultado.getBlob((i))
-                 else if (DataTypeInt == -3) Resultado.getBlob((i))
-                 else if (DataTypeInt == -2) Resultado.getBlob((i))
-                 else if (DataTypeInt == -1) Resultado.getString(i)
-                 else if (DataTypeInt == 0) Resultado.getString(i)
-                 else if (DataTypeInt == 1) Resultado.getString(i)
-                 else if (DataTypeInt == 2) Resultado.getBigDecimal(i)
-                 else if (DataTypeInt == 3) Resultado.getBigDecimal(i)
-                 else if (DataTypeInt == 4) Resultado.getInt(i)
-                 else if (DataTypeInt == 5) Resultado.getShort(i)
-                 else if (DataTypeInt == 6) Resultado.getFloat(i)
-                 else if (DataTypeInt == 7) Resultado.getDouble(i)
-                 else if (DataTypeInt == 8) Resultado.getDouble(i)
-                 else if (DataTypeInt == 12) Resultado.getString(i)
-                 else if (DataTypeInt == 91) Resultado.getDate(i)
-                 else if (DataTypeInt == 92) Resultado.getTimestamp(i)
-                 else if (DataTypeInt == 93) Resultado.getTimestamp(i)
-                 else if (DataTypeInt == 1111) Resultado.getString(i)
-                 else DataTypes.StringType
-            i+= 1
-          }
-          
-          val b = new GenericRowWithSchema(Fila,StructType.apply(fieldsStruct)) 
-          
-          ListaDatos = ListaDatos:+ (b)
-          
-        }
-                
-        
-        Result.ResultSet = ListaDatos
-        //Crea arreglo
-    
-      //  connection.close()
-       
-      } catch {
-        case e: Exception  =>  
-          if (DebugMode) println(SQL)
-          if (DebugMode) println(s"JDBC Error: $e")
-          if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
-          Result.ErrorDescription = s"JDBC Error: ${e}"
-          Result.IsError = true
+        fieldsStruct = fieldsStruct:+ ( StructField(Metadata.getColumnName(i) , DataType  , false , null))
+       i+=1
       }
+      
+      var ListaDatos: Array[Row] = new Array[Row](0)
+      
+      
+      //Ciclo para cargar el dataframe
+ 
+      
+      while (Resultado.next()) {
+        val Fila = new Array[Any](NumColumns)
+        var i = 1
+        
+        //Ciclo para cada columna
+        while (i <= NumColumns) {
+          val DataTypeInt = Metadata.getColumnType(i)
+          
+          Fila(i-1) = if (DataTypeInt == -7) Resultado.getBoolean(i)
+               else if (DataTypeInt == -6) Resultado.getShort(i)
+               else if (DataTypeInt == -5) Resultado.getLong(i)
+               else if (DataTypeInt == -4) Resultado.getBlob((i))
+               else if (DataTypeInt == -3) Resultado.getBlob((i))
+               else if (DataTypeInt == -2) Resultado.getBlob((i))
+               else if (DataTypeInt == -1) Resultado.getString(i)
+               else if (DataTypeInt == 0) Resultado.getString(i)
+               else if (DataTypeInt == 1) Resultado.getString(i)
+               else if (DataTypeInt == 2) Resultado.getBigDecimal(i)
+               else if (DataTypeInt == 3) Resultado.getBigDecimal(i)
+               else if (DataTypeInt == 4) Resultado.getInt(i)
+               else if (DataTypeInt == 5) Resultado.getShort(i)
+               else if (DataTypeInt == 6) Resultado.getFloat(i)
+               else if (DataTypeInt == 7) Resultado.getDouble(i)
+               else if (DataTypeInt == 8) Resultado.getDouble(i)
+               else if (DataTypeInt == 12) Resultado.getString(i)
+               else if (DataTypeInt == 91) Resultado.getDate(i)
+               else if (DataTypeInt == 92) Resultado.getTimestamp(i)
+               else if (DataTypeInt == 93) Resultado.getTimestamp(i)
+               else if (DataTypeInt == 1111) Resultado.getString(i)
+               else DataTypes.StringType
+          i+= 1
+        }
+        
+        val b = new GenericRowWithSchema(Fila,StructType.apply(fieldsStruct)) 
+        
+        ListaDatos = ListaDatos:+ (b)
+        
+      }
+              
+      
+      Result.ResultSet = ListaDatos
+      //Crea arreglo
+  
+    //  connection.close()
+     
+    } catch {
+      case e: Exception  =>  
+        if (DebugMode) println(SQL)
+        if (DebugMode) println(s"JDBC Error: $e")
+        if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
+        Result.ErrorDescription = s"JDBC Error: ${e}"
+        Result.IsError = true
+    }
       
     return Result
   }
@@ -453,25 +465,33 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     
     val driver = "org.postgresql.Driver"
     val url = ""
-        
-      try {
-        //Class.forName(driver)
-        //val connection = DriverManager.getConnection(ConnectionString)                
+   
+    var i = 0
+    while (i<=2 && postgres_connection.isClosed()) {
+      println("postgres connection closed, trying to establish new connection")
+      this.postgres_StartConnection()
+      i+=1
+    }
+    
+    if (i == 3) {
+      sys.error("error while trying to establish new connection")
+    }
   
-        val statement = connection.createStatement()
-        val Resultado = statement.executeQuery(SQL)
-      
-        //connection.close()
-       
-      } catch {
-        case e: Exception  =>  
-          if (DebugMode) println(SQL)
-          if (DebugMode) println(s"JDBC Error: $e")
-          if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
-          Result.ErrorDescription = s"JDBC Error: ${e}"
-          Result.IsError = true
-      }
-      
+    try {
+      val statement = postgres_connection.createStatement()
+      val Resultado = statement.executeQuery(SQL)
+    
+      //connection.close()
+     
+    } catch {
+      case e: Exception  =>  
+        if (DebugMode) println(SQL)
+        if (DebugMode) println(s"JDBC Error: $e")
+        if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
+        Result.ErrorDescription = s"JDBC Error: ${e}"
+        Result.IsError = true
+    }
+    
     return Result
   }
   
