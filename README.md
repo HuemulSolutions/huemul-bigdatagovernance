@@ -1,4 +1,4 @@
-# HuemulBigData
+# HuemulBigData (Versión 1.0 estará disponible durante el mes de septiembre del 2018)
 Esta librer�a permite simplificar y optimizar el trabajo de DataEngineering para la creaci�n
 de cargas de informaci�n en ambientes complejos de datos.
 
