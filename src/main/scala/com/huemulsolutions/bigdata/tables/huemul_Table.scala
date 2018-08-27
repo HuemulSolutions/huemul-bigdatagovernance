@@ -133,29 +133,29 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   def getGlobalPaths: ArrayBuffer[huemul_KeyValuePath] = {return _GlobalPaths}
   private var _GlobalPaths: ArrayBuffer[huemul_KeyValuePath] = null
   
-  def setWhoCanRun_executeFull(value: huemul_Authorization) {
+  def WhoCanRun_executeFull_addAccess(ClassName: String, PackageName: String) {
     if (DefinitionIsClose)
       this.RaiseError("You can't change value of WhoCanRun_executeFull, definition is close", 1033)
     else
-      _WhoCanRun_executeFull = value
+      _WhoCanRun_executeFull.AddAccess(ClassName, PackageName)
   }
   def getWhoCanRun_executeFull: huemul_Authorization = {return _WhoCanRun_executeFull}
   private var _WhoCanRun_executeFull: huemul_Authorization = new huemul_Authorization()
   
-  def setWhoCanRun_executeOnlyInsert(value: huemul_Authorization) {
+  def WhoCanRun_executeOnlyInsert_addAccess(ClassName: String, PackageName: String) {
     if (DefinitionIsClose)
       this.RaiseError("You can't change value of WhoCanRun_executeOnlyInsert, definition is close", 1033)
     else
-      _WhoCanRun_executeOnlyInsert = value
+      _WhoCanRun_executeOnlyInsert.AddAccess(ClassName, PackageName)
   }
   def getWhoCanRun_executeOnlyInsert: huemul_Authorization = {return _WhoCanRun_executeOnlyInsert}
   private var _WhoCanRun_executeOnlyInsert: huemul_Authorization = new huemul_Authorization()
   
-  def setWhoCanRun_executeOnlyUpdate(value: huemul_Authorization) {
+  def WhoCanRun_executeOnlyUpdate_addAccess(ClassName: String, PackageName: String) {
     if (DefinitionIsClose)
       this.RaiseError("You can't change value of WhoCanRun_executeOnlyUpdate, definition is close", 1033)
     else
-      _WhoCanRun_executeOnlyUpdate = value
+      _WhoCanRun_executeOnlyUpdate.AddAccess(ClassName, PackageName)
   }
   def getWhoCanRun_executeOnlyUpdate: huemul_Authorization = {return _WhoCanRun_executeOnlyUpdate}
   private var _WhoCanRun_executeOnlyUpdate: huemul_Authorization = new huemul_Authorization()
@@ -292,7 +292,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   var Error_isError: Boolean = false
   var Error_Text: String = ""
   var Error_Code: Integer = null
-  
+  //var HasColumns: Boolean = false
+  var HasPK: Boolean = false
   
   def ApplyTableDefinition(): Boolean = {
     if (huemulLib.DebugMode) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] starting ApplyTableDefinition")
@@ -329,8 +330,10 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         else if (DataField.DefaultValue != null && DataField.DataType == StringType && DataField.DefaultValue.toUpperCase() != "NULL" && !DataField.DefaultValue.contains("'"))
           RaiseError(s"Error column ${x.getName}: DefaultValue  must be like this: 'something', not something wihtout ')",1031)
           
-        if (DataField.IsPK)
+        if (DataField.IsPK) {
           DataField.Nullable = false
+          HasPK = true
+        }
         
       }
       
@@ -353,6 +356,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     //Register TableName and fields
     Control.RegisterMASTER_CREATE_Basic(this)
     if (huemulLib.DebugMode) println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] end ApplyTableDefinition")
+    if (!HasPK) this.RaiseError("huemul_Table Error: PK not defined", 1017)
     DefinitionIsClose = true
     return true
   }
@@ -1033,6 +1037,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     return CreateTableScript    
   }
   
+  /* //este metodo retorna el nombre de un objeto
   def GetFieldName[T0](ClassInstance: Object, Field: Object): String = {
     var ResultName: String = null
     
@@ -1057,6 +1062,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     
     return ResultName
   }
+  */
   
   private def DF_ForeingKeyMasterAuto(): huemul_DataQualityResult = {
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
