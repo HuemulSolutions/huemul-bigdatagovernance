@@ -36,6 +36,12 @@ import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
  * SaveTempDF: (optional) default true. if DebuMode is true, save all DF to persistent HDFS
  */
 
+/** huemul_Library es la clase inicial de la librería huemul-bigdata
+ *
+ *  @constructor create a new person with a name and age.
+ *  @param appName nombre de la aplicación
+ *  @param args argumentos de la aplicación
+ */
 class huemul_Library (appName: String, args: Array[String], globalSettings: huemul_GlobalPath) extends Serializable  {
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
