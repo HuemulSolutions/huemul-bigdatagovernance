@@ -444,7 +444,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
 
   def RegisterMASTER_CREATE_Basic(DefMaster: huemul_Table) {
     val LocalNewTable_id = huemulLib.huemul_GetUniqueId()
-          println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] register metadata cab")
+
     if (huemulLib.RegisterInControl) {
       huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s""" select control_Tables_addOrUpd(
                             '${LocalNewTable_id}'  --Table_id
@@ -469,9 +469,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       var i: Integer = 0
       var localDatabaseName = DefMaster.GetCurrentDataBase()
       DefMaster.GetColumns().foreach { x => 
-        println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] register metadata det 1")
         val Column_Id = huemulLib.huemul_GetUniqueId()
-        println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] register metadata det 2")
     
         huemulLib.ExecuteJDBC_NoResulSet(huemulLib.JDBCTXT,s"""SELECT control_Columns_addOrUpd (
         
