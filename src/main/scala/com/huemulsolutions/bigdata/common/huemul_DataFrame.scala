@@ -7,7 +7,9 @@ import scala.collection.mutable._
 import com.huemulsolutions.bigdata.dataquality._
 import com.huemulsolutions.bigdata.tables._
 import com.huemulsolutions.bigdata.control._
-
+import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
+import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
+import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
 
 /**
  * Def_Fabric_DataInfo: Define method to improve DQ over DF
@@ -141,8 +143,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.ColumnName =null
     Values.DQ_Name ="DQ_NumRowsInterval"
     Values.DQ_Description =s"N° rows between ${NumMin} and ${NumMax}"
-    Values.DQ_IsAggregate =true
-    Values.DQ_RaiseError =true
+    Values.DQ_QueryLevel = huemulType_DQQueryLevel.Aggregate 
+    Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
     Values.DQ_Error_MaxNumRows =0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
@@ -193,8 +195,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.ColumnName =null
     Values.DQ_Name ="DQ_NumRows"
     Values.DQ_Description =s"N° rows = ${NumRowsExpected} "
-    Values.DQ_IsAggregate =true
-    Values.DQ_RaiseError =true
+    Values.DQ_QueryLevel = huemulType_DQQueryLevel.Aggregate 
+    Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
     Values.DQ_Error_MaxNumRows = 0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
@@ -305,8 +307,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.ColumnName =null
     Values.DQ_Name ="COMPARE"
     Values.DQ_Description ="COMPARE TWO DATAFRAMES"
-    Values.DQ_IsAggregate =true
-    Values.DQ_RaiseError =true
+    Values.DQ_QueryLevel = huemulType_DQQueryLevel.Aggregate 
+    Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
     Values.DQ_Error_MaxNumRows =0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
@@ -511,8 +513,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.ColumnName = if (TempFileName == "PK") null else ColDuplicate
     Values.DQ_Name = if (TempFileName == "PK") "PK" else "UNIQUE"
     Values.DQ_Description =s"UNIQUE VALUES FOR FIELD $ColDuplicate"
-    Values.DQ_IsAggregate =true
-    Values.DQ_RaiseError =true
+    Values.DQ_QueryLevel = huemulType_DQQueryLevel.Aggregate 
+    Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
     Values.DQ_Error_MaxNumRows =0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
@@ -584,8 +586,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.ColumnName =Col
     Values.DQ_Name ="NOT NULL"
     Values.DQ_Description =s"NOT NULL VALUES FOR FIELD $Col"
-    Values.DQ_IsAggregate =false
-    Values.DQ_RaiseError =true
+    Values.DQ_QueryLevel = huemulType_DQQueryLevel.Row
+    Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
     Values.DQ_Error_MaxNumRows =0
     Values.DQ_Error_MaxPercent =Decimal.apply(0)
@@ -639,7 +641,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     var SQLResult: String = ""
  
     getDataQualitySentences(OfficialDataQuality, RulesDQ).foreach { x =>  
-        SQLResult += s",CAST(${if (x.getIsAggregated) "" else "SUM"}(CASE WHEN ${x.getSQLFormula} THEN 1 ELSE 0 END) AS LONG) AS ___DQ_${x.getId} \n"        
+        SQLResult += s",CAST(${if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) "" else "SUM"}(CASE WHEN ${x.getSQLFormula} THEN 1 ELSE 0 END) AS LONG) AS ___DQ_${x.getId} \n"        
     }
     
         
@@ -684,7 +686,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       
       getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
         x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId}")
-        x.NumRowsTotal = if (x.getIsAggregated) 1 else DQTotalRows
+        x.NumRowsTotal = if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) 1 else DQTotalRows
         x.ResultDQ = ""
         
         val DQWithError = x.NumRowsTotal - x.NumRowsOK
@@ -726,8 +728,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         Values.ColumnName =if (x.getFieldName == null) null else x.getFieldName.get_MyName()
         Values.DQ_Name =x.getMyName()
         Values.DQ_Description =s"(Id ${x.getId}) ${x.getDescription}"
-        Values.DQ_IsAggregate =x.getIsAggregated
-        Values.DQ_RaiseError =x.getRaiseError
+        Values.DQ_QueryLevel =x.getQueryLevel() // .getDQ_QueryLevel
+        Values.DQ_Notification =x.getNotification()
         Values.DQ_SQLFormula =x.getSQLFormula
         Values.DQ_Error_MaxNumRows =x.Error_MaxNumRows
         Values.DQ_Error_MaxPercent =x.Error_Percent
@@ -737,11 +739,11 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         Values.DQ_NumRowsError =DQWithError
         Values.DQ_NumRowsTotal =x.NumRowsTotal    
         Values.DQ_IsError = IsError 
-        
+       
   
         this.DQ_Register(Values)
         
-        if (x.getRaiseError == true && IsError) {
+        if (x.getNotification() == huemulType_DQNotification.ERROR && IsError) {
           txtTotalErrors += s"\nDQ Name: ${x.getMyName} with error: ${x.ResultDQ}"
           NumTotalErrors += 1
           localErrorCode = x.getErrorCode()
@@ -766,8 +768,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         , DQ.ColumnName
         , DQ.DQ_Name
         , DQ.DQ_Description
-        , DQ.DQ_IsAggregate
-        , DQ.DQ_RaiseError
+        , DQ.DQ_QueryLevel
+        , DQ.DQ_Notification// _RaiseError
         , DQ.DQ_SQLFormula
         , DQ.DQ_Error_MaxNumRows
         , DQ.DQ_Error_MaxPercent

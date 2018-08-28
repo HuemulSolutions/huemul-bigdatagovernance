@@ -6,6 +6,9 @@ import java.util.Calendar;
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.tables._
+import com.huemulsolutions.bigdata.dataquality._
+import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
+import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 
 class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulLib = phuemulLib
@@ -297,8 +300,8 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                              , ColumnName: String
                              , DQ_Name: String
                              , DQ_Description: String
-                             , DQ_IsAggregate: Boolean
-                             , DQ_RaiseError: Boolean
+                             , DQ_QueryLevel: huemulType_DQQueryLevel //DQ_IsAggregate: Boolean
+                             , DQ_Notification: huemulType_DQNotification ////DQ_RaiseError: Boolean
                              , DQ_SQLFormula: String
                              , DQ_Error_MaxNumRows: Long
                              , DQ_Error_MaxPercent: Decimal
@@ -324,8 +327,8 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                          , '${DF_Alias}' --p_Dq_AliasDF
                          , '${DQ_Name}' --p_DQ_Name
                          , '${DQ_Description}' --DQ_Description
-                         , ${DQ_IsAggregate} --DQ_IsAggregate
-                         , ${DQ_RaiseError} --DQ_RaiseError
+                         , '${DQ_QueryLevel}' --DQ_IsAggregate
+                         , '${DQ_Notification}' --DQ_RaiseError
                          , '${DQ_SQLFormula.replace("'", "''")}' --DQ_SQLFormula
                          , ${DQ_Error_MaxNumRows} --DQ_Error_MaxNumRows
                          , ${DQ_Error_MaxPercent} --DQ_Error_MaxPercent
