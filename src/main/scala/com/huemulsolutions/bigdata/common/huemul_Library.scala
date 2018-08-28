@@ -49,7 +49,7 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   /*********************
    * ARGUMENTS
    *************************/
-  
+  println("huemul_Library version 0.9.2 - sv01")
    
       
         
