@@ -708,7 +708,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         if (x.getToleranceError_Rows != null) {
            
           if (DQWithError > x.getToleranceError_Rows){
-            x.ResultDQ = s"defined rows with error: ${x.getToleranceError_Rows}, Real rows with error: ${DQWithError}"
+            x.ResultDQ = s"DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
             IsError = true
           }
             
@@ -718,12 +718,12 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         if (x.getToleranceError_Percent != null) {
            
           if (DQWithErrorPerc > x.getToleranceError_Percent) {
-            x.ResultDQ = s"defined rows with error(%): ${x.getToleranceError_Percent}, Real rows with error(5): ${DQWithErrorPerc}"
+            x.ResultDQ = s"DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
             IsError = true
           }
         }
         
-        if (huemulLib.DebugMode || IsError) println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tol:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tol:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)")
+        if (huemulLib.DebugMode || IsError) println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)")
                        
         var dfTableName: String = null
         var dfDataBaseName: String = null
