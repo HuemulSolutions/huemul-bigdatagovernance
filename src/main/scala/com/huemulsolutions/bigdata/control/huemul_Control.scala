@@ -303,8 +303,8 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                              , DQ_QueryLevel: huemulType_DQQueryLevel //DQ_IsAggregate: Boolean
                              , DQ_Notification: huemulType_DQNotification ////DQ_RaiseError: Boolean
                              , DQ_SQLFormula: String
-                             , DQ_Error_MaxNumRows: java.lang.Long
-                             , DQ_Error_MaxPercent: Decimal
+                             , DQ_toleranceError_Rows: java.lang.Long
+                             , DQ_toleranceError_Percent: Decimal
                              , DQ_ResultDQ: String
                              , DQ_ErrorCode: Integer
                              , DQ_NumRowsOK: Long
@@ -330,8 +330,8 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                          , '${DQ_QueryLevel}' --DQ_IsAggregate
                          , '${DQ_Notification}' --DQ_RaiseError
                          , '${DQ_SQLFormula.replace("'", "''")}' --DQ_SQLFormula
-                         , ${DQ_Error_MaxNumRows} --DQ_Error_MaxNumRows
-                         , ${DQ_Error_MaxPercent} --DQ_Error_MaxPercent
+                         , ${DQ_toleranceError_Rows} --DQ_Error_MaxNumRows
+                         , ${DQ_toleranceError_Percent} --DQ_Error_MaxPercent
                          , '${if (DQ_ResultDQ == null) "" else DQ_ResultDQ.replace("'", "''")}' --DQ_ResultDQ
                          , ${DQ_ErrorCode} --DQ_ErrorCode
                          , ${DQ_NumRowsOK} --DQ_NumRowsOK
@@ -392,7 +392,10 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                  '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                                , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
                                ,'${huemulLib.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
-                               ,'${y(0)}'  --RAWFilesDetFields_name
+                               ,'${y(0)}'  --RAWFilesDetFields_ITName
+                               , '' as RAWFilesDetFields_LogicalName
+                               , '' as RAWFilesDetFields_description
+                               , '' as RAWFilesDetFields_DataType
                                ,${pos }  --RAWFilesDetFields_Position
                                ,'${y(1) }'  --RAWFilesDetFields_PosIni
                                ,'${y(2) }'  --RAWFilesDetFields_PosFin
@@ -413,6 +416,13 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                          ,'${rawfilesuse_id }'  --rawfilesuse_id
                          ,'${this.Control_ClassName}'  --process_id
                          ,'${this.Control_Id}'          --processExec_Id
+                         , ${dapi_raw.SettingInUse.getuse_year} -- RAWFilesUse_Year
+                         , ${dapi_raw.SettingInUse.getuse_month} -- ,RAWFilesUse_Month
+                         , ${dapi_raw.SettingInUse.getuse_day} -- RAWFilesUse_Day 
+                         , ${dapi_raw.SettingInUse.getuse_hour} -- RAWFilesUse_Hour
+                         , ${dapi_raw.SettingInUse.getuse_minute} -- RAWFilesUse_Miute
+                         , ${dapi_raw.SettingInUse.getuse_second} -- RAWFilesUse_Second
+                         , '${dapi_raw.SettingInUse.getuse_params}' -- RAWFilesUse_params
                          ,'${dapi_raw.FileName}' --RAWFiles_FullName
                          ,'${dapi_raw.SettingInUse.GetFullNameWithPath()}' --RAWFiles_FullPath
                          ,'${dapi_raw.DataFramehuemul.getNumRows}' --RAWFiles_NumRows
@@ -433,6 +443,13 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                    , '${Control_ClassName}' --as Process_Id
                                    , '${Control_Id}' --as ProcessExec_Id
                                    , '${LocalIdStep}' --as ProcessExecStep_Id
+                                   , null -- TableUse_Year
+                                   , null -- TableUse_Month
+                                   , null -- TableUse_Day  
+                                   , null -- TableUse_Hour 
+                                   , null -- TableUse_Miute
+                                   , null -- TableUse_Second
+                                   , null -- TableUse_params
                                    , true --as TableUse_Read
                                    , false --as TableUse_Write
                                    , null --as TableUse_numRowsInsert
@@ -518,6 +535,13 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                  , '${Control_ClassName}' --as Process_Id
                                  , '${Control_Id}' --as ProcessExec_Id
                                  , '${LocalIdStep}' --as ProcessExecStep_Id
+                                   , null -- TableUse_Year
+                                   , null -- TableUse_Month
+                                   , null -- TableUse_Day  
+                                   , null -- TableUse_Hour 
+                                   , null -- TableUse_Miute
+                                   , null -- TableUse_Second
+                                   , null -- TableUse_params
                                  , false --as TableUse_Read
                                  , true --as TableUse_Write
                                  , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
