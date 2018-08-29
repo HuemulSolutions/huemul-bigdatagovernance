@@ -1,6 +1,7 @@
 package com.huemulsolutions.bigdata.dataquality
 
 import org.apache.spark.sql._
+import scala.collection.mutable._
 
 class huemul_DataQualityResult extends Serializable {
   var isError: Boolean = false
@@ -9,7 +10,13 @@ class huemul_DataQualityResult extends Serializable {
   var dqDF : DataFrame = null
     
   var profilingResult: huemul_Profiling = new huemul_Profiling()
+  private var DQ_Result: ArrayBuffer[huemul_DQRecord] = new ArrayBuffer[huemul_DQRecord]()
+  def getDQResult(): ArrayBuffer[huemul_DQRecord] = {return DQ_Result} 
   
+  
+  def appendDQResult(value: huemul_DQRecord) {
+    DQ_Result.append(value)
+  }
   def GetError(e: Exception, DebugMode: Boolean) {
     isError = true
     Description = e.toString()
