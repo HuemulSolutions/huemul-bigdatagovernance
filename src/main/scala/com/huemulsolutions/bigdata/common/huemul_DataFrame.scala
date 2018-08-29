@@ -10,6 +10,7 @@ import com.huemulsolutions.bigdata.control._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
+import org.apache.spark.sql.catalyst.expressions.Coalesce
 
 /**
  * Def_Fabric_DataInfo: Define method to improve DQ over DF
@@ -39,13 +40,13 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
   def getDataSchema(): StructType = {return DataSchema  }
   
   /**
-   * N° Rows info
+   * No Rows info
    */
   private var NumRows: Long = -1
   def getNumRows(): Long = {return NumRows}
   
   /**
-   * N° cols Info
+   * num cols Info
    */
   private var NumCols: Integer = null
   def getNumCols(): Integer = {return NumCols}
@@ -110,7 +111,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
   }
   
   /**
-   * DQ_NumRowsInterval: Test DQ for N° Rows in DF
+   * DQ_NumRowsInterval: Test DQ for num Rows in DF
    */
   def DQ_NumRowsInterval(ObjectData: Object, NumMin: Long, NumMax: Long): huemul_DataQualityResult = {
 
@@ -142,12 +143,12 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DF_Alias =AliasDF
     Values.ColumnName =null
     Values.DQ_Name ="DQ_NumRowsInterval"
-    Values.DQ_Description =s"N° rows between ${NumMin} and ${NumMax}"
+    Values.DQ_Description =s"num rows between ${NumMin} and ${NumMax}"
     Values.DQ_QueryLevel = huemulType_DQQueryLevel.Aggregate 
     Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
-    Values.DQ_Error_MaxNumRows =0
-    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_toleranceError_Rows =0
+    Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
@@ -162,7 +163,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
   }
   
   /****
-   * DQ_NumRowsInterval: Test DQ for N° Rows in DF
+   * DQ_NumRowsInterval: Test DQ for num Rows in DF
    */
   def DQ_NumRows(ObjectData: Object, NumRowsExpected: Long): huemul_DataQualityResult = {
     val DQResult = new huemul_DataQualityResult()
@@ -194,12 +195,12 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DF_Alias =AliasDF
     Values.ColumnName =null
     Values.DQ_Name ="DQ_NumRows"
-    Values.DQ_Description =s"N° rows = ${NumRowsExpected} "
+    Values.DQ_Description =s"num rows = ${NumRowsExpected} "
     Values.DQ_QueryLevel = huemulType_DQQueryLevel.Aggregate 
     Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
-    Values.DQ_Error_MaxNumRows = 0
-    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_toleranceError_Rows = 0
+    Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
@@ -271,10 +272,10 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
        
           val currentColumn = DF_FinalResultFirst.getAs[Long](s"Total_Equal_${x.name}")
           if (currentColumn != totalCount) {
-            DQResult.Description = s"huemul_DataFrame Error: Column ${x.name} have different values: Total rows ${totalCount}, N° OK : ${currentColumn} "
+            DQResult.Description = s"huemul_DataFrame Error: Column ${x.name} have different values: Total rows ${totalCount}, num OK : ${currentColumn} "
             DQResult.isError = true
             DQResult.Error_Code = 2005
-            println(DQResult.Description)
+            println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ${DQResult.Description}")
             DQResult.dqDF.where(s"Equal_${x.name} = 0").show()
             NumColumnsError += 1
           }
@@ -310,8 +311,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_QueryLevel = huemulType_DQQueryLevel.Aggregate 
     Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
-    Values.DQ_Error_MaxNumRows =0
-    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_toleranceError_Rows =0
+    Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =NumColumns - NumColumnsError
@@ -336,8 +337,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       val Res = DQ_StatsByCol(ObjectData, x.name)
       
       if (Res.isError) {
-        println("ERROR DQ")
-        println(Res.Description)
+        println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ERROR DQ")
+        println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ${Res.Description}")
       }
       
       if (DQResult.dqDF != null)
@@ -365,7 +366,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (Colfield != null) {
       DataType = Colfield(0).dataType
     }
-    if (huemulLib.DebugMode) println(DataType)
+    if (huemulLib.DebugMode) println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ${DataType}")
     var SQL : String = s""" SELECT "$Col"            as ColName
                                   ,cast(Min($Col) as String)        as min_Col
                                   ,cast(Max($Col) as String)         as max_Col
@@ -486,7 +487,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       //duplicate rows found
       DQDup = DQResult.dqDF.count()
       if (DQDup > 0) {
-        DQResult.Description = s"huemul_DataFrame Error: N° Rows Duplicate in $ColDuplicate: " + DQDup.toString()
+        DQResult.Description = s"huemul_DataFrame Error: num Rows Duplicate in $ColDuplicate: " + DQDup.toString()
         DQResult.isError = true
         DQResult.Error_Code = 2006
         println(DQResult.Description)
@@ -516,8 +517,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_QueryLevel = huemulType_DQQueryLevel.Aggregate 
     Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
-    Values.DQ_Error_MaxNumRows =0
-    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_toleranceError_Rows =0
+    Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
@@ -558,10 +559,10 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       //null rows found
       DQDup = DQResult.dqDF.count()
       if (DQDup > 0) {
-        DQResult.Description = s"huemul_DataFrame Error: N° Rows Null in $Col: " + DQDup.toString()
+        DQResult.Description = s"huemul_DataFrame Error: num Rows Null in $Col: " + DQDup.toString()
         DQResult.isError = true
         DQResult.Error_Code = 2007
-        println(DQResult.Description)
+        println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ${DQResult.Description}")
         DQResult.dqDF.show()
       }
     } catch {
@@ -589,8 +590,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     Values.DQ_QueryLevel = huemulType_DQQueryLevel.Row
     Values.DQ_Notification = huemulType_DQNotification.ERROR
     Values.DQ_SQLFormula =""
-    Values.DQ_Error_MaxNumRows =0
-    Values.DQ_Error_MaxPercent =Decimal.apply(0)
+    Values.DQ_toleranceError_Rows =0
+    Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
@@ -652,11 +653,21 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     return SQLResult
   }
   
+  
   /**
    Run DataQuality defined in Master
    */
-  def DF_RunDataQuality(OfficialDataQuality: ArrayBuffer[huemul_DataQuality], ManualRules: ArrayBuffer[huemul_DataQuality], AliasDF: String, dMaster: huemul_Table): huemul_DataQualityResult = {
-    
+  def DF_RunDataQuality(ManualRules: ArrayBuffer[huemul_DataQuality], DF_to_Query: String, dMaster: huemul_Table): huemul_DataQualityResult = {
+    return DF_RunDataQuality(null, ManualRules, DF_to_Query, dMaster)
+  }
+   
+  
+  /**
+   Run DataQuality defined in Master
+   */
+  def DF_RunDataQuality(OfficialDataQuality: ArrayBuffer[huemul_DataQuality], ManualRules: ArrayBuffer[huemul_DataQuality], DF_to_Query: String, dMaster: huemul_Table): huemul_DataQualityResult = {
+    val AliasToQuery = if (DF_to_Query == null) this.AliasDF else DF_to_Query
+     
     /*****************************************************************/
     /********** S Q L   F O R M U L A   F O R   D Q    ***************/
     /*****************************************************************/
@@ -667,15 +678,15 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     var localErrorCode : Integer = null
     
     //DataQuality AdHoc
-    val SQLDQ = getSQL_DataQualityForRun(OfficialDataQuality, ManualRules, AliasDF)
+    val SQLDQ = getSQL_DataQualityForRun(OfficialDataQuality, ManualRules, AliasToQuery)
     if (huemulLib.DebugMode && !huemulLib.HideLibQuery) {
-      println("DATA QUALITY ADHOC QUERY")
+      println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] DATA QUALITY ADHOC QUERY")
       println(SQLDQ)
     }
     
     if (SQLDQ != ""){
       //Execute DQ
-      val AliasDQ = s"${AliasDF}__DQ_p0"
+      val AliasDQ = s"${AliasToQuery}__DQ_p0"
       ErrorLog.dqDF = huemulLib.DF_ExecuteQuery(AliasDQ
                                         , SQLDQ)
       
@@ -693,26 +704,26 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         val DQWithErrorPerc = Decimal.apply(DQWithError) / Decimal.apply(x.NumRowsTotal)
         var IsError: Boolean = false
         
-        //Validate max N° rows with error vs definition 
-        if (x.Error_MaxNumRows != null) {
+        //Validate max num rows with error vs definition 
+        if (x.getToleranceError_Rows != null) {
            
-          if (DQWithError > x.Error_MaxNumRows){
-            x.ResultDQ = s"Max Rows with error defined: ${x.Error_MaxNumRows}, Real N° rows with error: ${DQWithError}"
+          if (DQWithError > x.getToleranceError_Rows){
+            x.ResultDQ = s"defined rows with error: ${x.getToleranceError_Rows}, Real rows with error: ${DQWithError}"
             IsError = true
           }
             
         } 
         
         //Validate % rows with error vs definition
-        if (x.Error_Percent != null) {
+        if (x.getToleranceError_Percent != null) {
            
-          if (DQWithErrorPerc > x.Error_Percent) {
-            x.ResultDQ = s"% Rows with error defined: ${x.Error_Percent}, Real N° rows with error: ${DQWithErrorPerc}"
+          if (DQWithErrorPerc > x.getToleranceError_Percent) {
+            x.ResultDQ = s"defined rows with error(%): ${x.getToleranceError_Percent}, Real rows with error(5): ${DQWithErrorPerc}"
             IsError = true
           }
         }
         
-        if (huemulLib.DebugMode) println(s"N° DQ Name: ${x.getMyName} (___DQ_${x.getId}), N° OK: ${x.NumRowsOK}, N° Total: ${x.NumRowsTotal}, Error: ${DQWithError}, Error %: ${DQWithErrorPerc * Decimal.apply(100)}, ${x.ResultDQ}")
+        if (huemulLib.DebugMode || IsError) println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tol:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tol:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)")
                        
         var dfTableName: String = null
         var dfDataBaseName: String = null
@@ -724,15 +735,15 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         val Values = new huemul_DQRecord()
         Values.Table_Name =dfTableName
         Values.BBDD_Name =dfDataBaseName
-        Values.DF_Alias =AliasDF
+        Values.DF_Alias =AliasToQuery
         Values.ColumnName =if (x.getFieldName == null) null else x.getFieldName.get_MyName()
         Values.DQ_Name =x.getMyName()
         Values.DQ_Description =s"(Id ${x.getId}) ${x.getDescription}"
         Values.DQ_QueryLevel =x.getQueryLevel() // .getDQ_QueryLevel
         Values.DQ_Notification =x.getNotification()
         Values.DQ_SQLFormula =x.getSQLFormula
-        Values.DQ_Error_MaxNumRows =x.Error_MaxNumRows
-        Values.DQ_Error_MaxPercent =x.Error_Percent
+        Values.DQ_toleranceError_Rows =x.getToleranceError_Rows
+        Values.DQ_toleranceError_Percent =x.getToleranceError_Percent
         Values.DQ_ResultDQ =x.ResultDQ
         Values.DQ_ErrorCode = if (IsError) x.getErrorCode() else null 
         Values.DQ_NumRowsOK =x.NumRowsOK
@@ -740,11 +751,11 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         Values.DQ_NumRowsTotal =x.NumRowsTotal    
         Values.DQ_IsError = IsError 
        
-  
+        ErrorLog.appendDQResult(Values)
         this.DQ_Register(Values)
         
         if (x.getNotification() == huemulType_DQNotification.ERROR && IsError) {
-          txtTotalErrors += s"\nDQ Name: ${x.getMyName} with error: ${x.ResultDQ}"
+          txtTotalErrors += s"\nHuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] DQ Name (${x.getErrorCode()}): ${x.getMyName} with error: ${x.ResultDQ}"
           NumTotalErrors += 1
           localErrorCode = x.getErrorCode()
         }
@@ -752,6 +763,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     }
     
     if (NumTotalErrors > 0){
+      println (s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] num with errors: ${NumTotalErrors} ")
       ErrorLog.isError = true
       ErrorLog.Description = txtTotalErrors
       ErrorLog.Error_Code = localErrorCode 
@@ -771,8 +783,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         , DQ.DQ_QueryLevel
         , DQ.DQ_Notification// _RaiseError
         , DQ.DQ_SQLFormula
-        , DQ.DQ_Error_MaxNumRows
-        , DQ.DQ_Error_MaxPercent
+        , DQ.DQ_toleranceError_Rows
+        , DQ.DQ_toleranceError_Percent
         , DQ.DQ_ResultDQ
         , DQ.DQ_ErrorCode
         , DQ.DQ_NumRowsOK
