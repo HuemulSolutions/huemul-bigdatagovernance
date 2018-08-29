@@ -14,8 +14,8 @@ class huemul_DQRecord extends Serializable {
   var DQ_QueryLevel: huemulType_DQQueryLevel = null
   var DQ_Notification: huemulType_DQNotification = null
   var DQ_SQLFormula: String= null
-  var DQ_Error_MaxNumRows: Long= 0
-  var DQ_Error_MaxPercent: Decimal= null
+  var DQ_toleranceError_Rows: java.lang.Long = 0
+  var DQ_toleranceError_Percent: Decimal= null
   var DQ_ResultDQ: String= null
   var DQ_ErrorCode: Integer = null
   var DQ_NumRowsOK: Long = 0
