@@ -53,6 +53,31 @@ class huemul_DataLakeSetting(huemulLib: huemul_Library) extends Serializable {
   var LogNumRows_FieldName: String = ""
   
   
+  private var use_year: Integer = null
+  def getuse_year: Integer = {return use_year}
+  private var use_month: Integer = null
+  def getuse_month: Integer = {return use_month}
+  private var use_day: Integer = null
+  def getuse_day: Integer = {return use_day}
+  private var use_hour: Integer = null
+  def getuse_hour: Integer = {return use_hour}
+  private var use_minute: Integer = null
+  def getuse_minute: Integer = {return use_minute}
+  private var use_second: Integer = null
+  def getuse_second: Integer = {return use_second}
+  private var use_params: String = null
+  def getuse_params: String = {return use_params}
+  
+  def SetParamsInUse(ano: Integer, mes: Integer, dia: Integer, hora: Integer, min: Integer, seg: Integer, AdditionalParams: String){
+    use_year = ano
+    use_month = mes
+    use_day = dia
+    use_hour = hora
+    use_minute = min
+    use_second = seg
+    use_params = AdditionalParams
+  }
+  
   
   def GetFullNameWithPath() : String = {
     return GetPath(GlobalPath) + LocalPath + FileName
