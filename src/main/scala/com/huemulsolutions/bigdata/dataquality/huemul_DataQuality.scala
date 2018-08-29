@@ -23,12 +23,17 @@ class huemul_DataQuality(FieldName: huemul_Columns
             ,QueryLevel: huemulType_DQQueryLevel = huemulType_DQQueryLevel.Row //,IsAggregated: Boolean
             ,Notification: huemulType_DQNotification = huemulType_DQNotification.ERROR //RaiseError: Boolean
             ) extends Serializable {
+  
+  private var ToleranceError_Percent: Decimal = null
   /**% of total for refuse validation. Example: 0.15 = 15% (null to not use)
    */
-  var Error_Percent: Decimal = null
+  def getToleranceError_Percent: Decimal = {return ToleranceError_Percent}
+  
+  private var ToleranceError_Rows: java.lang.Long = 0
   /**N° of records for refuse validation. Example: 1000 = 1000 rows with error  (null to not use)
    */
-  var Error_MaxNumRows: Long = 0
+  def getToleranceError_Rows: java.lang.Long = {return ToleranceError_Rows}
+  
   /**SQL for validation, expressed in a positive way (boolean) . Example: Field1 < Field2 (field oK)
    */
   def getSQLFormula(): String = {return sqlformula} //= null
@@ -56,5 +61,10 @@ class huemul_DataQuality(FieldName: huemul_Columns
     MyName = name
   }
   def getMyName(): String = {return MyName}
+  
+  def setTolerance(toleranceRows: java.lang.Long, tolerancePercent: Decimal) {
+    ToleranceError_Rows = toleranceRows
+    ToleranceError_Percent = tolerancePercent
+  }
  
 }
