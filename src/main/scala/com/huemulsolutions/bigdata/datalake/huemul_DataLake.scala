@@ -169,6 +169,8 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
        this.SettingInUse = DataResult(0)
     }         
     
+    this.SettingInUse.SetParamsInUse(ano, mes, dia, hora, min, seg, AdditionalParams)
+    
     try {
         this.StartRead_dt = Calendar.getInstance()
         /************************************************************************/
