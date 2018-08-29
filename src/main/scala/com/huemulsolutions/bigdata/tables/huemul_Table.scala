@@ -313,6 +313,19 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     if (this._StorageType == null)
       RaiseError(s"huemul_Table Error: StorageType must be defined",1002)
       
+    if (this._TableType == null)
+      RaiseError(s"huemul_Table Error: TableType must be defined",1034)
+    else if (this._TableType == huemulType_Tables.Transaction && _PartitionField == "")
+      RaiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional",1035)
+    else if (this._TableType != huemulType_Tables.Transaction && _PartitionField != "")
+      RaiseError(s"huemul_Table Error: PartitionField shouldn't be defined if TableType is ${this._TableType}",1036)
+      
+    if (this._DataBase == null)
+      RaiseError(s"huemul_Table Error: DataBase must be defined",1037)
+    
+      
+    
+      
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
     } foreach { x =>
