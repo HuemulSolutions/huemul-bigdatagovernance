@@ -303,7 +303,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                              , DQ_QueryLevel: huemulType_DQQueryLevel //DQ_IsAggregate: Boolean
                              , DQ_Notification: huemulType_DQNotification ////DQ_RaiseError: Boolean
                              , DQ_SQLFormula: String
-                             , DQ_Error_MaxNumRows: Long
+                             , DQ_Error_MaxNumRows: java.lang.Long
                              , DQ_Error_MaxPercent: Decimal
                              , DQ_ResultDQ: String
                              , DQ_ErrorCode: Integer
