@@ -18,7 +18,7 @@ import com.sun.xml.internal.ws.api.pipe.NextAction
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
-import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
+//import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
 
 
 class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends Serializable {
@@ -1132,8 +1132,8 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       Values.DQ_Notification = huemulType_DQNotification.ERROR// RaiseError =true
       Values.DQ_SQLFormula =SQLLeft
       Values.DQ_ErrorCode = Result.Error_Code
-      Values.DQ_Error_MaxNumRows =0
-      Values.DQ_Error_MaxPercent =null
+      Values.DQ_toleranceError_Rows =0
+      Values.DQ_toleranceError_Percent =null
       Values.DQ_ResultDQ =Result.Description
       Values.DQ_NumRowsOK =NumTotalDistinct - TotalLeft
       Values.DQ_NumRowsError =TotalLeft
@@ -1199,7 +1199,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       if (huemulLib.DebugMode) println(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD ${x.get_MyName()}")
       
         val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: Not Null for field ${x.get_MyName()} ", s"${x.get_MyName()} IS NOT NULL",1023)
-        NotNullDQ.Error_MaxNumRows = 0
+        NotNullDQ.setTolerance(0, null)
         ArrayDQ.append(NotNullDQ)
     }
 
@@ -1219,7 +1219,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
                   
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax length Column ${x.get_MyName()}",SQLFormula, 1020 )
-        MinMaxLen.Error_MaxNumRows = 0
+        MinMaxLen.setTolerance(0, null)
         ArrayDQ.append(MinMaxLen)
     }
     
@@ -1238,7 +1238,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
         
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax Number Column ${x.get_MyName()}", SQLFormula,1021)
-        MinMaxNumber.Error_MaxNumRows = 0        
+        MinMaxNumber.setTolerance(0, null)         
         ArrayDQ.append(MinMaxNumber)
     }
     
@@ -1257,7 +1257,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
           
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax DateTime Column ${x.get_MyName()} ", SQLFormula, 1022)
-        MinMaxDT.Error_MaxNumRows = 0
+        MinMaxDT.setTolerance(0, null)
         ArrayDQ.append(MinMaxDT)
     }
     
