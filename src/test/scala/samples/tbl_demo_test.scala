@@ -21,7 +21,7 @@ class tbl_demo_test(huemulLib: huemul_Library, Control: huemul_Control) extends 
   this.setGlobalPaths(huemulLib.GlobalSettings.DIM_BigFiles_Path)
   this.setIT_ResponsibleName("IT Responsible")
   this.setLocalPath("demo/")
-  this.setPartitionField("periodo_id")
+  //this.setPartitionField("periodo_id")
   this.setStorageType(huemulType_StorageType.ORC)
   this.setTableType(huemulType_Tables.Reference)
   this.WhoCanRun_executeFull_addAccess("classname","package") 
