@@ -17,12 +17,14 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.permission.FsPermission
 import com.huemulsolutions.bigdata.control.huemul_JDBCResult
 import scala.math.BigInt.int2bigInt
-import java.sql.DriverManager
-import java.sql.Connection
+
 import scala.collection.mutable.ArrayBuffer
 import java.sql.Types
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
+import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
+import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
         
       
 /*
@@ -71,6 +73,14 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     case e: Exception => println("SaveTempDF: error values (true or false)")
   }
   
+  var ImpalaEnabled: Boolean = GlobalSettings.ImpalaEnabled
+  try {
+    ImpalaEnabled = arguments.GetValue("ImpalaEnabled", "false" ).toBoolean
+  } catch {    
+    case e: Exception => println("ImpalaEnabled: error values (true or false)")
+  }
+  
+  
   /**
    * Setting Control/PostgreSQL conectivity
    */
@@ -100,9 +110,14 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   /*********************
    * START SPARK AND POSGRES CONNECTION
    *************************/
-  @transient private var postgres_connection: Connection = null
-  if (!TestPlanMode)
-    this.postgres_StartConnection()
+  @transient val postgres_connection= new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting),"org.postgresql.Driver") // Connection = null
+  @transient val impala_connection = new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"org.postgresql.Driver") //Connection = null
+  
+  if (!TestPlanMode) {
+    postgres_connection.StartConnection()
+    if (ImpalaEnabled)
+      impala_connection.StartConnection()
+  }
   
   val spark: SparkSession = if (!TestPlanMode) SparkSession.builder().appName(appName)
                                               //.master("local[*]")
@@ -131,13 +146,14 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   println(s"application_Id: ${IdApplication}")  
   println(s"URL Monitoring: ${IdPortMonitoring}")
   val JDBCTXT = GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting) 
+  val IMPALATXT = GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting)
   
   val IdSparkPort = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").first().getAs[String]("value") else ""
   println(s"Port_Id: ${IdSparkPort}")
   
   //Process Registry
   if (RegisterInControl) {
-    val Result = ExecuteJDBC_WithResult(JDBCTXT,s""" SELECT control_executors_add(
+    val Result = ExecuteJDBC_WithResult(postgres_connection,s""" SELECT control_executors_add(
                     '${IdApplication}' -- p_application_Id
                     ,'${IdSparkPort}'  --as p_IdSparkPort
                     ,'${IdPortMonitoring}' --as p_IdPortMonitoring
@@ -153,16 +169,7 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
    * START METHOD
    *************************/
   
-  private def postgres_StartConnection() {
-    val postgres_ConnectionString = GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting)
-    val driver = "org.postgresql.Driver"
-    Class.forName(driver)
   
-    if (!TestPlanMode) {
-     this.postgres_connection = DriverManager.getConnection(postgres_ConnectionString)
-    }
-  
-  }
   //var sc: org.apache.spark.SparkContext = spark.sparkContext
   def getMonth(Date: Calendar): Int = {return Date.get(Calendar.MONTH)+1}
   def getDay(Date: Calendar): Int = {return Date.get(Calendar.DAY_OF_MONTH)}
@@ -339,17 +346,13 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     return spark.read.json(vals).select($"id").first().getString(0)
   }
   
-  def ExecuteJDBC_WithResult(ConnectionString: String, SQL: String): huemul_JDBCResult = {   
+  def ExecuteJDBC_WithResult(JDBCConnection: huemul_JDBCProperties, SQL: String): huemul_JDBCResult = {   
     var Result: huemul_JDBCResult = new huemul_JDBCResult()
     
-    val driver = "org.postgresql.Driver"
-    val url = ""
-        
-    
     var i = 0
-    while (i<=2 && postgres_connection.isClosed()) {
+    while (i<=2 && JDBCConnection.connection.isClosed()) {
       println("postgres connection closed, trying to establish new connection")
-      this.postgres_StartConnection()
+      JDBCConnection.StartConnection()
       i+=1
     }
     
@@ -359,7 +362,7 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
       
         
       try {
-        val statement = postgres_connection.createStatement()
+        val statement = JDBCConnection.connection.createStatement()
         val Resultado = statement.executeQuery(SQL)
         var fieldsStruct = new Array[StructField](0);
  
@@ -461,16 +464,16 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     return Result
   }
   
-  def ExecuteJDBC_NoResulSet(ConnectionString: String, SQL: String): huemul_JDBCResult = {   
+  def ExecuteJDBC_NoResulSet(JDBCConnection: huemul_JDBCProperties, SQL: String): huemul_JDBCResult = {   
     var Result: huemul_JDBCResult = new huemul_JDBCResult()
     
     val driver = "org.postgresql.Driver"
     val url = ""
    
     var i = 0
-    while (i<=2 && postgres_connection.isClosed()) {
+    while (i<=2 && JDBCConnection.connection.isClosed()) {
       println("postgres connection closed, trying to establish new connection")
-      this.postgres_StartConnection()
+      JDBCConnection.StartConnection()
       i+=1
     }
     
@@ -479,7 +482,7 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     }
   
     try {
-      val statement = postgres_connection.createStatement()
+      val statement = JDBCConnection.connection.createStatement()
       val Resultado = statement.executeQuery(SQL)
     
       //connection.close()
@@ -617,3 +620,5 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   
   
 }
+
+
