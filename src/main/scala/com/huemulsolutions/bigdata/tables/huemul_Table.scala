@@ -164,6 +164,21 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
   def getWhoCanRun_executeOnlyUpdate: huemul_Authorization = {return _WhoCanRun_executeOnlyUpdate}
   private var _WhoCanRun_executeOnlyUpdate: huemul_Authorization = new huemul_Authorization()
   
+  /**
+   * Automatically map query names
+   */
+  def setMappingAuto() {
+    getALLDeclaredFields(true).foreach { x =>  
+      x.setAccessible(true)
+          
+      //Nombre de campos
+      if (x.get(this).isInstanceOf[huemul_Columns]) {
+        val DataField = x.get(this).asInstanceOf[huemul_Columns]
+        DataField.SetMapping(DataField.get_MyName())
+      }
+    }
+  }
+    
 
   /**
    DataQuality: max N° records, null does'nt apply  DQ , 0 value doesn't accept new records (raiseError if new record found)
