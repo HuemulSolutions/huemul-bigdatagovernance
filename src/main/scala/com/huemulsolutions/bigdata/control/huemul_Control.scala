@@ -399,6 +399,8 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                                ,${pos }  --RAWFilesDetFields_Position
                                ,'${y(1) }'  --RAWFilesDetFields_PosIni
                                ,'${y(2) }'  --RAWFilesDetFields_PosFin
+                               , -1 --,RAWFilesDetFields_ApplyTrim     
+                               , -1 --,RAWFilesDetFields_ConvertNull   
                                ,'${Control_ClassName}'  --process_id
                           )
                             """)   
