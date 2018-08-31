@@ -1406,18 +1406,26 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       val SQLFullJoin_DF = huemulLib.DF_ExecuteQuery("__FullJoin"
                                               , SQL_Step1_FullJoin(TempAlias, NextAlias, isUpdate, isDelete)
                                              )
+      var toMemory: Boolean = false
+      //if (SQLFullJoin_DF.count() <= 1000000)
+      //  toMemory = true
                         
       //STEP 2: Create Tabla with Update and Insert result
       LocalControl.NewStep("Ref & Master: Update & Insert Logic")
       val SQLHash_p1_DF = huemulLib.DF_ExecuteQuery("__Hash_p1"
                                           , SQL_Step2_UpdateAndInsert("__FullJoin", huemulLib.ProcessNameCall, isInsert)
                                          )
+      if (toMemory)
+        SQLHash_p1_DF.cache()
       
       //STEP 3: Create Hash
       LocalControl.NewStep("Ref & Master: Hash Code")                                         
       val SQLHash_p2_DF = huemulLib.DF_ExecuteQuery("__Hash_p2"
                                           , SQL_Step3_Hash_p1("__Hash_p1")
-                                         )   
+                                         )
+                                         
+      if (toMemory)
+        SQLHash_p2_DF.cache()
                
                                         
       LocalControl.NewStep("Ref & Master: Statistics")
@@ -1429,7 +1437,9 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
                                   ,CAST(count(1) AS Long) as __Total
                             FROM __Hash_p2 temp 
                          """)
-                         
+      if (toMemory)
+        DQ_ReferenceData.cache()
+        
       if (huemulLib.DebugMode) DQ_ReferenceData.show()
       
       val FirstRow = DQ_ReferenceData.first()
@@ -1460,6 +1470,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
                                          
       LocalControl.NewStep("Ref & Master: Final Table")
       val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulLib.ProcessNameCall)
+
      
       //STEP 2: Execute final table 
       DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
@@ -1469,7 +1480,7 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
       SQLHash_p2_DF.unpersist()
       SQLHash_p1_DF.unpersist()
       SQLFullJoin_DF.unpersist()
-      //SQLDistinct_DF.unpersist()
+      
       
     } else
       RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
