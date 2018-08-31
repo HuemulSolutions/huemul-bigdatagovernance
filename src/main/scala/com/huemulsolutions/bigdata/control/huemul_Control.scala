@@ -31,7 +31,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   //Find process name in control_process
   
   if (RegisterInControlLog && huemulLib.RegisterInControl)
-  huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s""" SELECT
+  huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s""" SELECT
   control_process_addOrUpd(
                   '${Control_ClassName}' -- process_id
                   ,''  --as area_id
@@ -47,7 +47,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
   //Insert processExcec
   if (RegisterInControlLog && huemulLib.RegisterInControl) {
     println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
-  huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_processExec_add (
+  huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_add (
             '${Control_Id}'  --p_processExec_id
            ,'${Control_IdParent}'  --p_processExec_idParent
            ,'${Control_ClassName}'  --p_process_id
@@ -76,7 +76,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
     while (ContinueInLoop) {
       //Try to add Singleton Mode      
-      val Ejec =  huemulLib.ExecuteJDBC_WithResult(huemulLib.postgres_connection,s"""select control_singleton_Add (
+      val Ejec =  huemulLib.postgres_connection.ExecuteJDBC_WithResult(s"""select control_singleton_Add (
                         '${Control_ClassName}'  --p_singleton_id
                        ,'${huemulLib.IdApplication}'  --p_application_Id
                        ,'${Control_ClassName}'  --p_singleton_name
@@ -97,7 +97,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
         
         NumCycle = 1
         // Obtiene procesos pendientes
-        val CurrentProcess = huemulLib.ExecuteJDBC_WithResult(huemulLib.postgres_connection,s"select * from control_executors where application_Id = '${ApplicationInUse}'")
+        val CurrentProcess = huemulLib.postgres_connection.ExecuteJDBC_WithResult(s"select * from control_executors where application_Id = '${ApplicationInUse}'")
         var IdAppFromDataFrame : String = ""
         var IdAppFromAPI: String = ""
         var URLMonitor: String = ""
@@ -125,7 +125,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                     
         //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
         if (!StillAlive) {
-          val a = huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
+          val a = huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
         }
       }              
     }
@@ -147,7 +147,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
           
     //Insert processExcec
     if (huemulLib.RegisterInControl) {
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_ProcessExecParams_add (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_ProcessExecParams_add (
                            '${this.Control_Id}'  --processexec_id
                          , '${NewParam.param_name}' --as processExecParams_Name
                          , '${NewParam.param_value}' --as processExecParams_Value
@@ -168,7 +168,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       println(s"HuemulControlLog: [${huemulLib.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
     
     
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_processExec_Finish (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_Finish (
                              '${Control_Id}'  --p_processExec_id
                            , '${this.LocalIdStep}' --as p_processExecStep_id
                            ,  null --as p_error_id
@@ -176,7 +176,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                         """)   
                         
       if (this.IsSingleton) {
-          huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_singleton_remove (
+          huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_singleton_remove (
                              '${Control_ClassName}'  --p_processExec_id
                            )
                         """)  
@@ -194,7 +194,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       val Error_Id = huemulLib.huemul_GetUniqueId()
     
       //Insert processExcec
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_Error_finish (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_Error_finish (
                           '${this.Control_Id}'  --p_processExec_id
                          , '${this.LocalIdStep}'  --p_processExecStep_id
                          , '${Error_Id}'  --Error_Id
@@ -210,7 +210,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                     )
                       """)            
       if (this.IsSingleton) {
-        huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_singleton_remove (
+        huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_singleton_remove (
                            '${Control_ClassName}'  --p_processExec_id
                          )
                       """)  
@@ -232,7 +232,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
     if (huemulLib.RegisterInControl) {
       //Insert processExcec
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""SELECT control_processExecStep_add (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_processExecStep_add (
                   '${LocalIdStep}'  --p_processExecStep_id
                  ,'${PreviousLocalIdStep}'  --p_processExecStep_idAnt
                  ,'${this.Control_Id}'  --p_processExec_id
@@ -247,7 +247,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                              ,p_TestPlan_Id: String) {
     if (huemulLib.RegisterInControl) {
        //Insert processExcec
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""SELECT control_TestPlanFeature_add (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_TestPlanFeature_add (
                             '${p_Feature_Id.replace("'", "''")}'  --as p_Feature_Id
                          , '${p_TestPlan_Id}'  --as p_testPlan_Id
                          ,'${Control_ClassName}'  --p_MDM_ProcessName
@@ -276,7 +276,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
                      
     if (huemulLib.RegisterInControl) {
        //Insert processExcec
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""SELECT control_TestPlan_add (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_TestPlan_add (
                         '${testPlan_Id}'  --as p_testPlan_Id
                          , '${p_testPlanGroup_Id}'  --as p_testPlanGroup_Id
                          , '${this.Control_Id}'  --p_processExec_id
@@ -317,7 +317,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
 
     if (huemulLib.RegisterInControl) {
       //Insert processExcec
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""SELECT control_DQ_add (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_DQ_add (
                         '${DQId}'  --as p_DQ_Id
                          , '${Table_Name}'  --as Table_name
                          , '${BBDD_Name}'  --asp_BBDD_name
@@ -349,7 +349,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
     if (huemulLib.RegisterInControl) {
       //Insert processExcec
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""
         select control_rawFiles_add ( '${dapi_raw.getrawFiles_id}'  --p_RAWFiles_id
                          , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                          , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
@@ -364,7 +364,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       dapi_raw.SettingByDate.foreach { x => 
         //Insert processExcec
         val RAWFilesDet_id = huemulLib.huemul_GetUniqueId()
-        huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""SELECT control_RAWFilesDet_add (
+        huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_RAWFilesDet_add (
                                '${RAWFilesDet_id}' --as RAWFilesDet_id
                              , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                              , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
@@ -388,7 +388,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
          if (x.DataSchemaConf.ColumnsPosition != null) {
            var pos: Integer = 0
            x.DataSchemaConf.ColumnsPosition.foreach { y =>
-                 huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""SELECT control_RAWFilesDetFields_add(
+                 huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_RAWFilesDetFields_add(
                                  '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                                , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
                                ,'${huemulLib.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
@@ -410,7 +410,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
       //Insert control_rawFilesUse
       val rawfilesuse_id = huemulLib.huemul_GetUniqueId()
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_rawFilesUse_add (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_rawFilesUse_add (
                            '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                          , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
                          ,'${rawfilesuse_id }'  --rawfilesuse_id
@@ -437,7 +437,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     
     //Insert control_TablesUse
     if (huemulLib.RegisterInControl) {
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_TablesUse_add (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesUse_add (
                                     '${DefMaster.TableName}'
                                    ,'${DefMaster.GetCurrentDataBase() }'  
                                    , '${Control_ClassName}' --as Process_Id
@@ -466,7 +466,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
     val LocalNewTable_id = huemulLib.huemul_GetUniqueId()
 
     if (huemulLib.RegisterInControl) {
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s""" select control_Tables_addOrUpd(
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s""" select control_Tables_addOrUpd(
                             '${LocalNewTable_id}'  --Table_id
                            ,null  --Area_Id
                            , '${DefMaster.GetCurrentDataBase()}' --as Table_BBDDName
@@ -491,7 +491,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       DefMaster.GetColumns().foreach { x => 
         val Column_Id = huemulLib.huemul_GetUniqueId()
     
-        huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""SELECT control_Columns_addOrUpd (
+        huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_Columns_addOrUpd (
         
                             '${Column_Id}' --Column_Id
                            , '${DefMaster.TableName}' --as Table_Name
@@ -529,7 +529,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
       
     if (huemulLib.RegisterInControl) {
       //Insert control_TablesUse
-      huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_TablesUse_add (
+      huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesUse_add (
                                   '${DefMaster.TableName}'
                                  ,'${DefMaster.GetCurrentDataBase() }'  
                                  , '${Control_ClassName}' --as Process_Id
@@ -558,7 +558,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
         
         val localDatabaseName = x._Class_TableName.asInstanceOf[huemul_Table].GetCurrentDataBase()
         val Resultado = 
-        huemulLib.ExecuteJDBC_WithResult(huemulLib.postgres_connection,s"""select control_tablesrel_add (
+        huemulLib.postgres_connection.ExecuteJDBC_WithResult(s"""select control_tablesrel_add (
                                     '${p_tablerel_id}'    --p_tablerel_id
                                    ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
                                    ,'${localDatabaseName }'  --p_table_BBDDpk
@@ -575,7 +575,7 @@ class huemul_Control (phuemulLib: huemul_Library, ControlParent: huemul_Control,
          val IdRel = Resultado.ResultSet(0).getString(0)
   
          x.Relationship.foreach { y => 
-            huemulLib.ExecuteJDBC_NoResulSet(huemulLib.postgres_connection,s"""select control_TablesRelCol_add (
+            huemulLib.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesRelCol_add (
                                       '${IdRel}'    --p_tablerel_id
                                      ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
                                      ,'${localDatabaseName }'  --p_table_BBDDpk
