@@ -1753,6 +1753,11 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
           if (huemulLib.DebugMode) println(s"MSCK REPAIR TABLE ${GetTable()}")
           huemulLib.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
         }
+        
+        if (huemulLib.ImpalaEnabled) {
+          LocalControl.NewStep("Save: refresh Impala Metadata")
+          huemulLib.impala_connection.ExecuteJDBC_NoResulSet(s"refresh table ${GetTable()}")
+        }
       } catch {
         case e: Exception => 
           

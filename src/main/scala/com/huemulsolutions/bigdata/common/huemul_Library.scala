@@ -16,15 +16,14 @@ import scala.io.Source
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.permission.FsPermission
 import com.huemulsolutions.bigdata.control.huemul_JDBCResult
-import scala.math.BigInt.int2bigInt
+//import scala.math.BigInt.int2bigInt
 
 import scala.collection.mutable.ArrayBuffer
 import java.sql.Types
 import org.apache.spark.sql.types.DecimalType
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+
 import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
-import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
-import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
+
         
       
 /*
@@ -110,8 +109,8 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   /*********************
    * START SPARK AND POSGRES CONNECTION
    *************************/
-  @transient val postgres_connection= new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting),"org.postgresql.Driver") // Connection = null
-  @transient val impala_connection = new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"org.postgresql.Driver") //Connection = null
+  @transient val postgres_connection= new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting),"org.postgresql.Driver", DebugMode) // Connection = null
+  @transient val impala_connection = new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"org.postgresql.Driver", DebugMode) //Connection = null
   
   if (!TestPlanMode) {
     postgres_connection.StartConnection()
@@ -145,15 +144,13 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   val IdApplication = if (!TestPlanMode) spark.sparkContext.applicationId else ""
   println(s"application_Id: ${IdApplication}")  
   println(s"URL Monitoring: ${IdPortMonitoring}")
-  val JDBCTXT = GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting) 
-  val IMPALATXT = GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting)
   
   val IdSparkPort = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").first().getAs[String]("value") else ""
   println(s"Port_Id: ${IdSparkPort}")
   
   //Process Registry
   if (RegisterInControl) {
-    val Result = ExecuteJDBC_WithResult(postgres_connection,s""" SELECT control_executors_add(
+    val Result = postgres_connection.ExecuteJDBC_WithResult(s""" SELECT control_executors_add(
                     '${IdApplication}' -- p_application_Id
                     ,'${IdSparkPort}'  --as p_IdSparkPort
                     ,'${IdPortMonitoring}' --as p_IdPortMonitoring
@@ -346,158 +343,6 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
     return spark.read.json(vals).select($"id").first().getString(0)
   }
   
-  def ExecuteJDBC_WithResult(JDBCConnection: huemul_JDBCProperties, SQL: String): huemul_JDBCResult = {   
-    var Result: huemul_JDBCResult = new huemul_JDBCResult()
-    
-    var i = 0
-    while (i<=2 && JDBCConnection.connection.isClosed()) {
-      println("postgres connection closed, trying to establish new connection")
-      JDBCConnection.StartConnection()
-      i+=1
-    }
-    
-    if (i == 3) {
-      sys.error("error while trying to establish new connection")
-    }
-      
-        
-      try {
-        val statement = JDBCConnection.connection.createStatement()
-        val Resultado = statement.executeQuery(SQL)
-        var fieldsStruct = new Array[StructField](0);
- 
-        var i:Integer = 1
-        val Metadata = Resultado.getMetaData
-        val NumColumns = Metadata.getColumnCount
-        
-        while (i <= NumColumns) {
-          val DataTypeInt = Metadata.getColumnType(i)
-  
-        val DataType: DataType =      if (DataTypeInt == -7) DataTypes.BooleanType
-                                 else if (DataTypeInt == -6) DataTypes.ShortType
-                                 else if (DataTypeInt == -5) DataTypes.LongType
-                                 else if (DataTypeInt == -4) DataTypes.BinaryType
-                                 else if (DataTypeInt == -3) DataTypes.BinaryType
-                                 else if (DataTypeInt == -2) DataTypes.BinaryType
-                                 else if (DataTypeInt == -1) DataTypes.StringType
-                                 else if (DataTypeInt == 0) DataTypes.NullType
-                                 else if (DataTypeInt == 1) DataTypes.StringType
-                                 else if (DataTypeInt == 2) DecimalType(Metadata.getPrecision(i), Metadata.getScale(i)) //DataTypes.DoubleType
-                                 else if (DataTypeInt == 3) DecimalType(Metadata.getPrecision(i), Metadata.getScale(i))
-                                 else if (DataTypeInt == 4) DataTypes.IntegerType
-                                 else if (DataTypeInt == 5) DataTypes.ShortType
-                                 else if (DataTypeInt == 6) DataTypes.FloatType
-                                 else if (DataTypeInt == 7) DataTypes.DoubleType
-                                 else if (DataTypeInt == 8) DataTypes.DoubleType
-                                 else if (DataTypeInt == 12) DataTypes.StringType
-                                 else if (DataTypeInt == 91) DataTypes.DateType
-                                 else if (DataTypeInt == 92) DataTypes.TimestampType
-                                 else if (DataTypeInt == 93) DataTypes.TimestampType
-                                 else if (DataTypeInt == 1111) DataTypes.StringType
-                                 else DataTypes.StringType
-                                 
-        
-        fieldsStruct = fieldsStruct:+ ( StructField(Metadata.getColumnName(i) , DataType  , false , null))
-       i+=1
-      }
-      
-      var ListaDatos: Array[Row] = new Array[Row](0)
-      
-      
-      //Ciclo para cargar el dataframe
- 
-      
-      while (Resultado.next()) {
-        val Fila = new Array[Any](NumColumns)
-        var i = 1
-        
-        //Ciclo para cada columna
-        while (i <= NumColumns) {
-          val DataTypeInt = Metadata.getColumnType(i)
-          
-          Fila(i-1) = if (DataTypeInt == -7) Resultado.getBoolean(i)
-               else if (DataTypeInt == -6) Resultado.getShort(i)
-               else if (DataTypeInt == -5) Resultado.getLong(i)
-               else if (DataTypeInt == -4) Resultado.getBlob((i))
-               else if (DataTypeInt == -3) Resultado.getBlob((i))
-               else if (DataTypeInt == -2) Resultado.getBlob((i))
-               else if (DataTypeInt == -1) Resultado.getString(i)
-               else if (DataTypeInt == 0) Resultado.getString(i)
-               else if (DataTypeInt == 1) Resultado.getString(i)
-               else if (DataTypeInt == 2) Resultado.getBigDecimal(i)
-               else if (DataTypeInt == 3) Resultado.getBigDecimal(i)
-               else if (DataTypeInt == 4) Resultado.getInt(i)
-               else if (DataTypeInt == 5) Resultado.getShort(i)
-               else if (DataTypeInt == 6) Resultado.getFloat(i)
-               else if (DataTypeInt == 7) Resultado.getDouble(i)
-               else if (DataTypeInt == 8) Resultado.getDouble(i)
-               else if (DataTypeInt == 12) Resultado.getString(i)
-               else if (DataTypeInt == 91) Resultado.getDate(i)
-               else if (DataTypeInt == 92) Resultado.getTimestamp(i)
-               else if (DataTypeInt == 93) Resultado.getTimestamp(i)
-               else if (DataTypeInt == 1111) Resultado.getString(i)
-               else DataTypes.StringType
-          i+= 1
-        }
-        
-        val b = new GenericRowWithSchema(Fila,StructType.apply(fieldsStruct)) 
-        
-        ListaDatos = ListaDatos:+ (b)
-        
-      }
-              
-      
-      Result.ResultSet = ListaDatos
-      //Crea arreglo
-  
-    //  connection.close()
-     
-    } catch {
-      case e: Exception  =>  
-        if (DebugMode) println(SQL)
-        if (DebugMode) println(s"JDBC Error: $e")
-        if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
-        Result.ErrorDescription = s"JDBC Error: ${e}"
-        Result.IsError = true
-    }
-      
-    return Result
-  }
-  
-  def ExecuteJDBC_NoResulSet(JDBCConnection: huemul_JDBCProperties, SQL: String): huemul_JDBCResult = {   
-    var Result: huemul_JDBCResult = new huemul_JDBCResult()
-    
-    val driver = "org.postgresql.Driver"
-    val url = ""
-   
-    var i = 0
-    while (i<=2 && JDBCConnection.connection.isClosed()) {
-      println("postgres connection closed, trying to establish new connection")
-      JDBCConnection.StartConnection()
-      i+=1
-    }
-    
-    if (i == 3) {
-      sys.error("error while trying to establish new connection")
-    }
-  
-    try {
-      val statement = JDBCConnection.connection.createStatement()
-      val Resultado = statement.executeQuery(SQL)
-    
-      //connection.close()
-     
-    } catch {
-      case e: Exception  =>  
-        if (DebugMode) println(SQL)
-        if (DebugMode) println(s"JDBC Error: $e")
-        if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
-        Result.ErrorDescription = s"JDBC Error: ${e}"
-        Result.IsError = true
-    }
-    
-    return Result
-  }
   
   def ExecuteJDBC_onSpark2(ConnectionString: String, SQL: String,valor: Boolean = true): huemul_JDBCResult = {
     //OJO: este proceso ejecuta con spark.read.jdbc y devuelve los datos en un arreglo porque el comportamiento 
