@@ -1535,15 +1535,17 @@ class huemul_Table(huemulLib: huemul_Library, Control: huemul_Control) extends S
     var Errores: String = ""
     Columns.foreach { x => 
       if (huemulLib.HasName(x.get_MappedName())) {
-        val ColumnInSchema = Schema.filter { y => y.name == x.get_MappedName() }
+        //val ColumnNames = if (UseAliasColumnName) x.get_MappedName() else x.get_MyName()
+        val ColumnNames = x.get_MyName()
+        val ColumnInSchema = Schema.filter { y => y.name == ColumnNames }
         if (ColumnInSchema == null || ColumnInSchema.length == 0)
-          RaiseError(s"huemul_Table Error: column missing in Schema ${x.get_MappedName()}", 1038)
+          RaiseError(s"huemul_Table Error: column missing in Schema ${ColumnNames}", 1038)
         if (ColumnInSchema.length != 1)
-          RaiseError(s"huemul_Table Error: multiples columns found in Schema with name ${x.get_MappedName()}", 1039)
+          RaiseError(s"huemul_Table Error: multiples columns found in Schema with name ${ColumnNames}", 1039)
         
           val dataType = ColumnInSchema(0).dataType
         if (dataType != x.DataType) {
-          Errores = Errores.concat(s"Error Column ${x.get_MappedName()}, Requiered: ${x.DataType}, actual: ${dataType}  \n")
+          Errores = Errores.concat(s"Error Column ${ColumnNames}, Requiered: ${x.DataType}, actual: ${dataType}  \n")
         }
       }
     }
