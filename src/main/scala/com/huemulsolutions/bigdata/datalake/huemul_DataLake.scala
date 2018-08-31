@@ -8,6 +8,8 @@ import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import huemulType_FileType._
 import scala.collection.mutable._
+import com.huemulsolutions.bigdata.tables._
+import com.huemulsolutions.bigdata.tables.huemulType_Tables._
 
 class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   /***
@@ -289,30 +291,45 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     return !this.Error_isError
   }
    
-  //TODO: Terminar el generador de código
-def GenerateInitialCode(Param_ClassName: String, TableName: String, DataBase: String, Param_PackageBase: String) {
+/** Genera el codigo inicial para una tabla y el proceso que masteriza dicha tabla
+ *
+ *  @param Param_PackageBase es el package base (ejemplo: your.application)
+ *  @param Param_ObjectName es el nombre de objeto que tendra tu masterizacion "[[modulo]]_[[entidad]]_procesa" (ejemplo comun_institucion_procesa )
+ *  @param TableName es el nombre de la tabla "tbl_[[modulo]]_[[entidad]]" (ejemplo tbl_comun_institucion)
+ *  @param LocalPath es la ruta donde se guardara el archivo HDFS en el cluster (ejemplo "comun/"), recurda que la ruta base se identifica en globalPath
+ *  @param TableType es el tipo de tabla (master y reference para tablas maestras, Transaction para tablas particionadas por periodo con informacion transaccional)
+ *  @param EsMes indica si la tabla transaccional tiene particion mensual o diaria
+ *  @param AutoMapping true para indicar que los nombres de columnas en raw son iguales a la tabla, indicar false si los nombres de columnas en raw son distintos a tabla 
+ */
+def GenerateInitialCode(PackageBase: String, NewObjectName: String, NewTableName: String, LocalPath: String, TableType: huemulType_Tables , EsMes: Boolean, AutoMapping: Boolean = true) {
     val Symbol: String = "$"
     val Comas: String = "\"\"\""
     val Coma: String = "\""
-    val Param_PackageModule: String = getClass.getPackage.getName.replace("$", "").replace(Param_PackageBase.concat("."), "")
+    
+    //reemplaza caracteres no deseados a nombre de la clase.
+    val param_ObjectName = NewObjectName.replace("$", "")
+    val param_PackageBase = PackageBase.replace("$", "")
+     
+    
+    //val Param_PackageModule: String = getClass.getPackage.getName.replace("$", "").replace(Param_PackageBase.concat("."), "")
     var LocalFields: String = ""
     var LocalMapping: String = ""
     var LocalColumns: String = ""
-    //excluye raw_ del texto para obtener el nombre de la clase.
-    val param_ClassName = Param_ClassName.substring(4,Param_ClassName.length()).replace("$", "")
-      
+    
     this.DataFramehuemul.getDataSchema.foreach { x => 
       LocalFields += s"                                     ,${x.name}\n"
-      LocalMapping += s"      huemulTable.${x.name}.SetMapping(${Coma}${x.name}${Coma})\n"
+      LocalMapping += s"    huemulTable.${x.name}.SetMapping(${Coma}${x.name}${Coma})\n"
        
       LocalColumns += s"    val ${x.name} = new huemul_Columns (StringType, true, ${Coma}[[DESCRIPCION]]${Coma}) \n"
-      LocalColumns += s"    ${x.name}.IsPK = false \n"
-      LocalColumns += s"    ${x.name}.Nullable = false \n"
-      LocalColumns += s"    ${x.name}.IsUnique = false \n"
       LocalColumns += s"    ${x.name}.ARCO_Data = false  \n"
       LocalColumns += s"    ${x.name}.SecurityLevel = huemulType_SecurityLevel.Public  \n"
-      LocalColumns += s"    ${x.name}.DQ_MinLen = 7 \n"
-      LocalColumns += s"    ${x.name}.DQ_MaxLen = 7 \n\n"
+
+      if (TableType == huemulType_Tables.Master || TableType == huemulType_Tables.Reference) {
+        LocalColumns += s"    ${x.name}.MDM_EnableOldValue = true  \n"
+        LocalColumns += s"    ${x.name}.MDM_EnableDTLog = true  \n"
+        LocalColumns += s"    ${x.name}.MDM_EnableProcessLog = true  \n"
+      }
+      
     }
     
     
@@ -324,12 +341,10 @@ def GenerateInitialCode(Param_ClassName: String, TableName: String, DataBase: St
 
 /*
 instrucciones (parte a):
-   1. Crear una clase en el packete you.package.tables con el nombre "${TableName}"
-   2. copiar el código desde estas instrucciones hasta ***    M A S T E R   P R O C E S S     ***
-   3. Revisar detalladamente la configuración de la tabla
-      2.1 this.DataBase 
-      2.2 busque el texto "[[LLENAR ESTE CAMPO]]" y reemplace la descripción según corresponda 
-      2.3 revise si el seteo por default del campo TableType es correcto
+   1. Crear una clase en el packete que contiene las tablas (${param_PackageBase}.tables.master) con el nombre "${NewTableName}"
+   2. copiar el codigo desde estas instrucciones hasta ***    M A S T E R   P R O C E S S     ***
+   3. Revisar detalladamente la configuracion de la tabla
+      3.1 busque el texto "[[LLENAR ESTE CAMPO]]" y reemplace la descripcion segun corresponda 
    4. seguir las instrucciones "parte b"
 */
 
@@ -337,64 +352,98 @@ import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import com.huemulsolutions.bigdata.tables._
 import com.huemulsolutions.bigdata.dataquality._
+import org.apache.spark.sql.types.DataTypes._
 import org.apache.spark.sql.types._
 
 
-class ${TableName}(huemulBigDataGov: huemul_Library, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
-    /********************************/
-    /**** DEFINICION DE TABLA *******/
-    /********************************/
+class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
+  /**********   C O N F I G U R A C I O N   D E   L A   T A B L A   ****************************************/
+  //Tipo de tabla, Master y Reference son catalogos sin particiones de periodo
+  this.setTableType(huemulType_Tables.${TableType})
+  //Base de Datos en HIVE donde sera creada la tabla
+  this.setDataBase(huemulBigDataGov.GlobalSettings.MASTER_DataBase)
+  //Tipo de archivo que sera almacenado en HDFS
+  this.setStorageType(huemulType_StorageType.PARQUET)
+  //Ruta en HDFS donde se guardara el archivo PARQUET
+  this.setGlobalPaths(huemulBigDataGov.GlobalSettings.MASTER_SmallFiles_Path)
+  //Ruta en HDFS especifica para esta tabla (Globalpaths / localPath)
+  this.setLocalPath("${LocalPath}/")
+  ${
+  if (TableType == huemulType_Tables.Transaction)
+  s"""  //columna de particion
+  this.setPartitionField("periodo_${if (EsMes) "mes" else "dia"}")"""
+  }
+  /**********   S E T E O   I N F O R M A T I V O   ****************************************/
+  //Nombre del contacto de TI
+  this.setDescription(" [[LLENAR ESTE CAMPO]]")
+  //Nombre del contacto de negocio
+  this.setBusiness_ResponsibleName(" [[LLENAR ESTE CAMPO]]")
+  //Nombre del contacto de TI
+  this.setIT_ResponsibleName(" [[LLENAR ESTE CAMPO]]")
+   
+  /**********   D A T A   Q U A L I T Y   ****************************************/
+  //DataQuality: maximo numero de filas o porcentaje permitido, dejar comentado o null en caso de no aplicar
+  //this.setDQ_MaxNewRecords_Num(null)  //ej: 1000 para permitir maximo 1.000 registros nuevos cada vez que se intenta insertar
+  //this.setDQ_MaxNewRecords_Perc(null) //ej: 0.2 para limitar al 20% de filas nuevas
     
-    this.DataBase = huemulBigDataGov.GlobalSettings.MASTER_DataBase
-    this.Description = "[[LLENAR ESTE CAMPO]]"
-    this.IT_ResponsibleName = "[[LLENAR ESTE CAMPO]]"
-    this.Business_ResponsibleName = "[[LLENAR ESTE CAMPO]]"
-        
-    this.PartitionField = "periodo_mes" //(example value: periodo_mes
-    this.TableType  = huemulType_Tables.Transaction
-    
-    this.StorageType = "parquet" //example value: com.databricks.spark.csv 
-    this.GlobalPaths = huemulBigDataGov.GlobalSettings.MASTER_BigFiles_Path
-    this.LocalPath = "${Param_PackageModule.replace(".", "/")}/"  //example value: sbif/)
-    
-    //DAtaQuality for insert
-    this.DQ_MaxNewRecords_Num = null
-    this.DQ_MaxNewRecords_Perc = null
-    
-    //Security to execute huemul (not defined = all clasess can execute the command)
-    this.WhoCanRun_executeFull.AddAccess("master_${param_ClassName}","${Param_PackageBase.concat(".").concat(Param_PackageModule)}")
-    //this.WhoCanRun_executeOnlyInsert.AddAccess([[changeclassname]],[[my.package.path]])
-    //this.WhoCanRun_executeOnlyUpdate.AddAccess([[changeclassname]],[[my.package.path]])
+  /**********   S E G U R I D A D   ****************************************/
+  //Solo estos package y clases pueden ejecutar en modo full, si no se especifica todos pueden invocar
+  //this.WhoCanRun_executeFull_addAccess("[[MyclassName]]", "[[my.package.path]]")
+  //Solo estos package y clases pueden ejecutar en modo solo Insert, si no se especifica todos pueden invocar
+  //this.WhoCanRun_executeOnlyInsert_addAccess("[[MyclassName]]", "[[my.package.path]]")
+  //Solo estos package y clases pueden ejecutar en modo solo Update, si no se especifica todos pueden invocar
+  //this.WhoCanRun_executeOnlyUpdate_addAccess("[[MyclassName]]", "[[my.package.path]]")
+  
 
-    /********************************/
-    /**** DEFINICION DE COLUMNAS ****/
-    /********************************/
+  /**********   C O L U M N A S   ****************************************/
 
-    val periodo_mes = new huemul_Columns (StringType, true,"periodo de los datos")
-    periodo_mes.IsPK = true
+  ${
+  if (TableType == huemulType_Tables.Transaction) {
+  """  //Columna de periodo
+  val periodo_${if (EsMes) "mes" else "dia"}" = new huemul_Columns (StringType, true,"periodo de los datos")
+  periodo_${if (EsMes) "mes" else "dia"}".IsPK = true
+  """
+  }}  
     
 ${LocalColumns}
 
-    //[[FIELDS]].DQ_MinDecimalValue = Decimal.apply(0)
-    //[[FIELDS]].DQ_MaxDecimalValue = Decimal.apply(200)
-
-   
+  //**********Atributos adicionales de DataQuality
+  //yourColumn.IsPK = false //valor por default en cada campo es false
+  //yourColumn.IsUnique = false //valor por default en cada campo es false
+  //yourColumn.Nullable = false //valor por default en cada campo es false
+  //yourColumn.IsUnique = false //valor por default en cada campo es false
+  //yourColumn.DQ_MinDecimalValue = Decimal.apply(0)
+  //yourColumn.DQ_MaxDecimalValue = Decimal.apply(200.34)
+  //yourColumn.DQ_MinDateTimeValue = "2018-01-01"
+  //yourColumn.DQ_MaxDateTimeValue = "2018-12-31"
+  //yourColumn.DQ_MinLen = 5
+  //yourColumn.DQ_MaxLen = 100
+  //**********Otros atributos
+  //yourColumn.DefaultValue = "'string'" // "10" // "'2018-01-01'"
+  //yourColumn.EncryptedType = "tipo"
     
-    //FK EXAMPLE
-    //var tbl_[[PK]] = new master_[[PK]]_Def(huemulBigDataGov,Control)
-    //var fk_[[LocalField]] = new huemul_Table_Relationship(huemulBigDataGov,tbl_[[PK]], false)
-    //fk_[[LocalField]].AddRelationship(tbl_[[PK]].[[PK_Id]], [[LocalField]_Id)
+  //**********Ejemplo para aplicar DataQuality de Integridad Referencial
+  //var tbl_[[PK]] = new tbl_[[PK]](huemulBigDataGov,Control)
+  //var fk_[[LocalField]] = new huemul_Table_Relationship(huemulBigDataGov,tbl_[[PK]], false)
+  //fk_[[LocalField]].AddRelationship(tbl_[[PK]].[[PK_Id]], [[LocalField]_Id)
     
-    /********************************/
-    /**** DEF DATA QUALITY Y MDM ****/
-    /********************************/
+  //**********Ejemplo para agregar reglas de DataQuality Avanzadas  -->ColumnXX puede ser null si la validacion es a nivel de tabla
+  //**************Parametros
+  //********************  ColumnXXColumna a la cual se aplica la validacion, si es a nivel de tabla poner null
+  //********************  Descripcion de la validacion, ejemplo: "Consistencia: Campo1 debe ser mayor que campo 2"
+  //********************  Formula SQL En Positivo, ejemplo1: campo1 > campo2  ;ejemplo2: sum(campo1) > sum(campo2)  
+  //********************  CodigoError: Puedes especificar un codigo para la captura posterior de errores, es un numero entre 1 y 999
+  //********************  QueryLevel es opcional, por default es "row" y se aplica al ejemplo1 de la formula, para el ejmplo2 se debe indicar "Aggregate"
+  //********************  Notification es opcional, por default es "error", y ante la aparicion del error el programa falla, si lo cambias a "warning" y la validacion falla, el programa sigue y solo sera notificado
+  //val DQ_NombreRegla: huemul_DataQuality = new huemul_DataQuality(ColumnXX,"Descripcion de la validacion", "Campo_1 > Campo_2",1)
+  //**************Adicionalmeente, puedes agregar "tolerancia" a la validacion, es decir, puedes especiicar 
+  //************** numFilas = 10 para permitir 10 errores (al 11 se cae)
+  //************** porcentaje = 0.2 para permitir una tolerancia del 20% de errores
+  //************** ambos parametros son independientes (condicion o), cualquiera de las dos tolerancias que no se cumpla se gatilla el error o warning
+  //DQ_NombreRegla.setTolerance(numfilas, porcentaje)
     
-    //val DQ_ColumnXX: huemul_DataQuality = new huemul_DataQuality(ColumnXX,false,true,"Fecha solicitud debe ser anterior a fecha aprobacion", "to_date(ColumnXX) <= to_date(ColumnYY)")
-    //DQ_ColumnXX.Error_Percent = Decimal.apply("0.15") //> 15% of rows with error, process fail
-    //DQ_ColumnXX.Error_MaxNumRows = 100 //> 100 rows with error, process fail
-    
-    this.ApplyTableDefinition()
-  }
+  this.ApplyTableDefinition()
+}
 
 
 
@@ -405,128 +454,129 @@ ${LocalColumns}
 
 /*
 instrucciones (parte b):
-   1. Crear un objeto en el packete ${Param_PackageBase.concat(".").concat(Param_PackageModule)} con el nombre master_${Param_ClassName}
-   2. Copie el código desde MASTER PROCESS hasta el final
+   1. Crear un objeto en el packete de su aplicacion (ejemplo ${param_PackageBase}.${LocalPath.replace("/", ".")}) con un nombre segun su nomenclatura (ejemplo ${param_ObjectName})
+   2. Copie el codigo desde MASTER PROCESS hasta el final
    3. agregar import del package que contiene GlobalSettings
-   4. cambiar el import you.package.tables._ por el nombre del paquete que contiene la definición de la tabla.
-   5. seguir las instrucciones del código Class que viene a continuación.
+   4. cambiar el import you.package.tables._ por el nombre del paquete que contiene la definicion de la tabla.
+   5. seguir las instrucciones del codigo Class que viene a continuacion.
 */
 
-package ${Param_PackageBase.concat(".").concat(Param_PackageModule) }
+package ${param_PackageBase}.[[${LocalPath.replace("/", ".")}]]
 
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
-import com.huemulsolutions.bigdata.tables._
-import com.huemulsolutions.bigdata.dataquality._
-import huemulType_Tables._
 import java.util.Calendar;
 import org.apache.spark.sql.types._
-import ${Param_PackageBase.concat(".").concat(Param_PackageModule)}.tables._
-import ${Param_PackageBase}._
+import ${param_PackageBase}.tables.master._
+import ${param_PackageBase}.[[${LocalPath.replace("/", ".")}]].raw._
 
-object master_${param_ClassName} {
+//import com.huemulsolutions.bigdata.tables._
+//import com.huemulsolutions.bigdata.dataquality._
+
+
+object ${param_ObjectName} {
   
   /**
-   * Este código se ejecuta cuando se llama el JAR desde spark2-submit. el código está preparado para hacer reprocesamiento masivo.
+   * Este codigo se ejecuta cuando se llama el JAR desde spark2-submit. el codigo esta preparado para hacer reprocesamiento masivo.
   */
   def main(args : Array[String]) {
-    //Creación API
-    val huemulBigDataGov  = new huemul_Library(s"BigData Fabrics - ${Symbol}{this.getClass.getSimpleName}", args, GlobalSettings.Global)
+    //Creacion API
+    val huemulBigDataGov  = new huemul_BigDataGovernance(s"Masterizacion tabla ${NewTableName} - ${Symbol}{this.getClass.getSimpleName}", args, globalSettings.Global)
     
     /*************** PARAMETROS **********************/
-    var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parámetro año, ej: ano=2017").toInt
-    var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parámetro mes, ej: mes=12").toInt
+    var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parametro año, ej: ano=2017").toInt
+    var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parametro mes, ej: mes=12").toInt
+    ${if (EsMes)""" 
+    var param_dia = 1
     val param_numMeses = huemulBigDataGov.arguments.GetValue("num_meses", "1").toInt
-    
-    
+
     /*************** CICLO REPROCESO MASIVO **********************/
     var i: Int = 1
     var FinOK: Boolean = true
-    var Fecha = huemulBigDataGov.setDateTime(param_ano, param_mes, 1, 0, 0, 0)
+    var Fecha = huemulBigDataGov.setDateTime(param_ano, param_mes, param_dia, 0, 0, 0)
     
     while (i <= param_numMeses) {
       param_ano = huemulBigDataGov.getYear(Fecha)
       param_mes = huemulBigDataGov.getMonth(Fecha)
       println(s"Procesando Año ${Symbol}param_ano, Mes ${Symbol}param_mes (${Symbol}i de ${Symbol}param_numMeses)")
       
-      //Ejecuta código
-      var FinOK = master_${param_ClassName}(huemulBigDataGov, null, param_ano, param_mes)
+      //Ejecuta codigo
+      var FinOK = procesa_master(huemulBigDataGov, null, param_ano, param_mes)
       
       if (FinOK)
         i+=1
-      else
+      else {
+        println(s"ERROR Procesando Año ${Symbol}param_ano, Mes ${Symbol}param_mes (${Symbol}i de ${Symbol}param_numMeses)")
         i = param_numMeses + 1
+      }
         
       Fecha.add(Calendar.MONTH, 1)      
     }
+    """
+    else"""
+    var param_dia = huemulBigDataGov.arguments.GetValue("dia", null, "Debe especificar el parametro dia, ej: dia=31").toInt    
+    val param_numDias = huemulBigDataGov.arguments.GetValue("num_dias", "1").toInt
 
+    procesa_master(huemulBigDataGov, null, param_ano, param_mes, param_dia)
+    """
+    }
   }
   
   /**
-    masterización de archivo [[CAMBIAR]] <br>
+    masterizacion de archivo [[CAMBIAR]] <br>
     param_ano: año de los datos  <br>
     param_mes: mes de los datos  <br>
    */
-  def master_${param_ClassName}(huemulBigDataGov: huemul_Library, ControlParent: huemul_Control, param_ano: Integer, param_mes: Integer): Boolean = {
+  def procesa_master(huemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, param_ano: Integer, param_mes: Integer${if (EsMes) "" else ",param_dia: Integer" }): Boolean = {
     val Control = new huemul_Control(huemulBigDataGov, ControlParent)    
     
     try {             
       /*************** AGREGAR PARAMETROS A CONTROL **********************/
       Control.AddParamInfo("param_ano", param_ano.toString())
       Control.AddParamInfo("param_mes", param_mes.toString())
+      ${if (EsMes) "" else s"""Control.AddParamInfo("param_dia", param_dia.toString())"""}
       
-      
-      /*********************************************************/
-      /*************** ABRIR RAW Y MASTER **********************/
-      /*********************************************************/      
-      Control.NewStep("Abre RAW")
-      
-      //Inicializa clase RAW  
-      var DF_RAW =  new raw_${param_ClassName}(huemulBigDataGov)
-      DF_RAW.open("DF_RAW", Control, param_ano, param_mes, 0, 0, 0, 0)       
-      
-      if (DF_RAW.Error_isError) Control.RaiseError(s"error encontrado, abortar: ${Symbol}{DF_RAW.Error.ControlError_Message}")
+      /*************** ABRE RAW DESDE DATALAKE **********************/
+      Control.NewStep("Abre DataLake")  
+      var DF_RAW =  new ${this.getClass.getSimpleName.replace("_test", "")}(huemulBigDataGov)
+      if (DF_RAW.open("DF_RAW", Control, param_ano, param_mes, ${if (EsMes) "1" else "param_dia"}, 0, 0, 0))       
+        Control.RaiseError(s"error encontrado, abortar: ${Symbol}{DF_RAW.Error.ControlError_Message}")
       
       
       /*********************************************************/
       /*************** LOGICAS DE NEGOCIO **********************/
       /*********************************************************/
-      //instancia de clase ${param_ClassName} 
-      val huemulTable = new ${TableName}(huemulBigDataGov, Control)
+      //instancia de clase ${NewTableName} 
+      val huemulTable = new ${NewTableName}(huemulBigDataGov, Control)
       
-      Control.NewStep("Generar Lógica de Negocio")
+      Control.NewStep("Generar Logica de Negocio")
       huemulTable.DF_from_SQL("FinalRAW"
-                          , s${Comas}SELECT TO_DATE(cast(unix_timestamp(concat(${Symbol}{param_ano},'-',${Symbol}{param_mes},'-',1), 'yyyy-MM-dd') as TimeStamp)) as periodo_mes
+                          , s${Comas}SELECT TO_DATE("${Symbol}{param_ano}-${Symbol}{param_mes}-${if (EsMes) "1" else s"${Symbol}{param_dia}"}) as periodo_${if (EsMes) "mes" else "dia"}
 ${LocalFields}
                                FROM DF_RAW${Comas})
       
-      //Quita persistencia de RAW Data
       DF_RAW.DataFramehuemul.DataFrame.unpersist()
       
-      //muestra estadistica de todas las columnas
-      if(huemulBigDataGov.DebugMode) {
-        Control.NewStep("Generar Estadísticas de las columnas")
-        huemulTable.DataFramehuemul.DQ_StatsAllCols(Control, huemulTable)        
-        //comentar este código cuando ya no sea necesario generar estadísticas de las columnas.
-      }
+      //comentar este codigo cuando ya no sea necesario generar estadisticas de las columnas.
+      Control.NewStep("QUITAR!!! Generar Estadisticas de las columnas SOLO PARA PRIMERA EJECUCION")
+      huemulTable.DataFramehuemul.DQ_StatsAllCols(Control, huemulTable)        
       
-      /*********************************************************/
-      /*************** SETEAR CAMPOS Y GUARDA MDM **************/
-      /*********************************************************/
-
-      huemulTable.periodo_mes.SetMapping("periodo_mes")
+      Control.NewStep("Asocia columnas de la tabla con nombres de campos de SQL")
+      ${if (AutoMapping) s"""huemulTable.setMappingAuto()"""
+      else { s"""
+      huemulTable.periodo_${if (EsMes) "mes" else "dia"}.SetMapping("periodo_${if (EsMes) "mes" else "dia"}")
 ${LocalMapping}
-            
-      /*********************************************************/
-      /*************** FIN PROCESO *****************************/
-      /*********************************************************/
-      Control.NewStep("Crear Tabla")      
-      huemulTable.executeFull("FinalSaved")
-            
+      """
+      }}
+      
+      Control.NewStep("Ejecuta Proceso")    
+      if (!huemulTable.executeFull("FinalSaved"))
+        Control.RaiseError(s"User: Error al intentar masterizar instituciones (${Symbol}{huemulTable.Error_Code}): ${Symbol}{huemulTable.Error_Text}")
+      
       Control.FinishProcessOK
     } catch {
       case e: Exception => {
-        Control.Control_Error.GetError(e, this.getClass.getName)
+        Control.Control_Error.GetError(e, this.getClass.getName, null)
         Control.FinishProcessError()
       }
     }
@@ -536,21 +586,24 @@ ${LocalMapping}
   
 }
 
-object master_${param_ClassName}_Migrar {
+/**
+* Objeto permite mover archivos HDFS desde ambiente origen (ejemplo producción) a ambientes destino (ejemplo ambiente experimental)
+*/
+object ${param_ObjectName}_Migrar {
  
  def main(args : Array[String]) {
-   //Creación API
-    val huemulBigDataGov  = new huemul_Library(s"BigData Fabrics - ${Symbol}{this.getClass.getSimpleName}", args, GlobalSettings.Global)
+   //Creacion API
+    val huemulBigDataGov  = new huemul_BigDataGovernance(s"Migración de datos tabla ${NewTableName}  - ${Symbol}{this.getClass.getSimpleName}", args, globalSettings.Global)
     
     /*************** PARAMETROS **********************/
-    var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parámetro año, ej: ano=2017").toInt
-    var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parámetro mes, ej: mes=12").toInt
-    var param_dia = 1
+    var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parametro año, ej: ano=2017").toInt
+    var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parametro mes, ej: mes=12").toInt
+    var param_dia = ${if (EsMes) "1" else s"""huemulBigDataGov.arguments.GetValue("dia", null, "Debe especificar el parametro dia, ej: dia=31").toInt"""}
    
     var param = huemulBigDataGov.ReplaceWithParams("{{YYYY}}-{{MM}}-{{DD}}", param_ano, param_mes, param_dia, 0, 0, 0)
     
-   val clase = new ${TableName}(huemulBigDataGov, null)
-   clase.CopyToDest(param, "desa")
+   val clase = new ${NewTableName}(huemulBigDataGov, null)
+   clase.CopyToDest(param, "[[environment]]")
    
  }
  
