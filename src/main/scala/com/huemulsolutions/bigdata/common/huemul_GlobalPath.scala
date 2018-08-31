@@ -52,10 +52,10 @@ class huemul_GlobalPath() extends Serializable {
     //TEMPORAL
     val TEMPORAL_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
-    def GetPath(huemulLib: huemul_Library, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-      val Result = Division.filter { x => x.environment == huemulLib.Environment }
+    def GetPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
+      val Result = Division.filter { x => x.environment == huemulBigDataGov.Environment }
       if (Result == null || Result.length == 0)
-        sys.error(s"DAPI Error: environment '${huemulLib.Environment}' must be set")
+        sys.error(s"DAPI Error: environment '${huemulBigDataGov.Environment}' must be set")
         
       return Result(0).Value
     }
@@ -63,7 +63,7 @@ class huemul_GlobalPath() extends Serializable {
     /**
      Get Path with manual environment setting
      */
-    def GetPath(huemulLib: huemul_Library, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
+    def GetPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
       val Result = Division.filter { x => x.environment == ManualEnvironment }
       if (Result == null || Result.length == 0)
         sys.error(s"DAPI Error: environment '${ManualEnvironment}' must be set")
@@ -71,21 +71,21 @@ class huemul_GlobalPath() extends Serializable {
       return Result(0).Value
     }
     
-    def GetDataBase(huemulLib: huemul_Library, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-      return GetPath(huemulLib, Division)
+    def GetDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
+      return GetPath(huemulBigDataGov, Division)
     }
     
     /**
      Get DataBase Name with manual environment setting
      */
-    def GetDataBase(huemulLib: huemul_Library, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-      return GetPath(huemulLib, Division, ManualEnvironment)
+    def GetDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
+      return GetPath(huemulBigDataGov, Division, ManualEnvironment)
     }
     
     
     //TEMP
-    def GetDebugTempPath(huemulLib: huemul_Library, function_name: String, table_name: String): String = {        
-      return s"${GetPath(huemulLib, TEMPORAL_Path)}$function_name/$table_name"
+    def GetDebugTempPath(huemulBigDataGov: huemul_BigDataGovernance, function_name: String, table_name: String): String = {        
+      return s"${GetPath(huemulBigDataGov, TEMPORAL_Path)}$function_name/$table_name"
     }
     
     

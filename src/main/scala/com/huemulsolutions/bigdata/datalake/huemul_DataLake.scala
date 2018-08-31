@@ -9,7 +9,7 @@ import com.huemulsolutions.bigdata.control._
 import huemulType_FileType._
 import scala.collection.mutable._
 
-class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extends Serializable {
+class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   /***
    * Id of data (example: PlanCuentas)
    */
@@ -39,7 +39,7 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
   /***
    * get execution's info about rows and DF
    */
-  var DataFramehuemul: huemul_DataFrame = new huemul_DataFrame(huemulLib, Control)
+  var DataFramehuemul: huemul_DataFrame = new huemul_DataFrame(huemulBigDataGov, Control)
   var Log: huemul_DataLakeLogInfo = new huemul_DataLakeLogInfo()
   
    
@@ -47,7 +47,7 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
   var StartRead_dt: Calendar = null
   var StopRead_dt: Calendar = null
 
-  var Error: huemul_ControlError = new huemul_ControlError(huemulLib)
+  var Error: huemul_ControlError = new huemul_ControlError(huemulBigDataGov)
   var Error_isError: Boolean = false
   //var Error_Text: String = ""  
   private var rawFiles_id: String = ""
@@ -149,14 +149,14 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
   }
   
   /***
-   * Open the file with huemulLib.spark.sparkContext.textFile <br>
+   * Open the file with huemulBigDataGov.spark.sparkContext.textFile <br>
    * and set de DataRDD attribute
    */
   def OpenFile(ano: Integer, mes: Integer, dia: Integer, hora: Integer, min: Integer, seg: Integer, AdditionalParams: String = null): Boolean = {    
     //Ask for definition in date
-    val DateProcess = huemulLib.setDateTime(ano, mes, dia, hora, min, seg)
+    val DateProcess = huemulBigDataGov.setDateTime(ano, mes, dia, hora, min, seg)
     var LocalErrorCode: Integer = null
-    if (huemulLib.DebugMode) println("N° array config: " + this.SettingByDate.length.toString())
+    if (huemulBigDataGov.DebugMode) println("N° array config: " + this.SettingByDate.length.toString())
     val DataResult = this.SettingByDate.filter { x => DateProcess.getTimeInMillis >= x.StartDate.getTimeInMillis && DateProcess.getTimeInMillis <= x.EndDate.getTimeInMillis  }
     
     if (DataResult.length == 0) {
@@ -177,7 +177,7 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
         /********   OPEN FILE   *********************************/
         /************************************************************************/
         //Open File 
-        this.FileName = huemulLib.ReplaceWithParams(this.SettingInUse.GetFullNameWithPath(), ano, mes, dia, hora, min, seg, AdditionalParams)
+        this.FileName = huemulBigDataGov.ReplaceWithParams(this.SettingInUse.GetFullNameWithPath(), ano, mes, dia, hora, min, seg, AdditionalParams)
         //DQ: Validate name special characters 
         if (this.FileName.contains("{{") || this.FileName.contains("}}")) {
           LocalErrorCode = 3005
@@ -186,7 +186,7 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
         println("Reading File: " + this.FileName)
         
         if (this.SettingInUse.FileType == huemulType_FileType.TEXT_FILE) {
-          this.DataRDD = huemulLib.spark.sparkContext.textFile(this.FileName)
+          this.DataRDD = huemulBigDataGov.spark.sparkContext.textFile(this.FileName)
         } else {
           LocalErrorCode = 3006
           this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)
@@ -229,17 +229,17 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
         }
         
         if (this.Log.LogSchema != null) {
-          val LogRDD =  huemulLib.spark.sparkContext.parallelize(List(this.Log.DataFirstRow))
+          val LogRDD =  huemulBigDataGov.spark.sparkContext.parallelize(List(this.Log.DataFirstRow))
           val rowRDD =  LogRDD.map { x =>  ConvertSchemaLocal(this.SettingInUse.LogSchemaConf, this.Log.LogSchema, x)} 
 
           //Create DataFrame
-          if (huemulLib.DebugMode) {
+          if (huemulBigDataGov.DebugMode) {
             println("Demo DF Log: " + this.FileName)
             println(rowRDD.take(2).foreach { x => println(x) })
           }
-          this.Log.LogDF = huemulLib.spark.createDataFrame(rowRDD, this.Log.LogSchema)
+          this.Log.LogDF = huemulBigDataGov.spark.createDataFrame(rowRDD, this.Log.LogSchema)
           
-          if (huemulLib.DebugMode) this.Log.LogDF.show()
+          if (huemulBigDataGov.DebugMode) this.Log.LogDF.show()
           if (this.SettingInUse.LogNumRows_FieldName != null) {
             this.Log.DataNumRows = this.Log.LogDF.first().getAs[String](this.SettingInUse.LogNumRows_FieldName).toLong 
             println("N° Rows according Log: " + this.Log.DataNumRows.toString())
@@ -269,7 +269,7 @@ class huemul_DataLake(huemulLib: huemul_Library, Control: huemul_Control) extend
         }
         
         this.DataFramehuemul.SetDataSchema(StructType(fieldsDetail))
-        if (this.huemulLib.DebugMode) {
+        if (this.huemulBigDataGov.DebugMode) {
           println("printing DataSchema from settings: ")
           this.DataFramehuemul.getDataSchema().printTreeString()
         }
@@ -340,12 +340,12 @@ import com.huemulsolutions.bigdata.dataquality._
 import org.apache.spark.sql.types._
 
 
-class ${TableName}(huemulLib: huemul_Library, Control: huemul_Control) extends huemul_Table(huemulLib, Control) with Serializable {
+class ${TableName}(huemulBigDataGov: huemul_Library, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
     /********************************/
     /**** DEFINICION DE TABLA *******/
     /********************************/
     
-    this.DataBase = huemulLib.GlobalSettings.MASTER_DataBase
+    this.DataBase = huemulBigDataGov.GlobalSettings.MASTER_DataBase
     this.Description = "[[LLENAR ESTE CAMPO]]"
     this.IT_ResponsibleName = "[[LLENAR ESTE CAMPO]]"
     this.Business_ResponsibleName = "[[LLENAR ESTE CAMPO]]"
@@ -354,7 +354,7 @@ class ${TableName}(huemulLib: huemul_Library, Control: huemul_Control) extends h
     this.TableType  = huemulType_Tables.Transaction
     
     this.StorageType = "parquet" //example value: com.databricks.spark.csv 
-    this.GlobalPaths = huemulLib.GlobalSettings.MASTER_BigFiles_Path
+    this.GlobalPaths = huemulBigDataGov.GlobalSettings.MASTER_BigFiles_Path
     this.LocalPath = "${Param_PackageModule.replace(".", "/")}/"  //example value: sbif/)
     
     //DAtaQuality for insert
@@ -381,8 +381,8 @@ ${LocalColumns}
    
     
     //FK EXAMPLE
-    //var tbl_[[PK]] = new master_[[PK]]_Def(huemulLib,Control)
-    //var fk_[[LocalField]] = new huemul_Table_Relationship(huemulLib,tbl_[[PK]], false)
+    //var tbl_[[PK]] = new master_[[PK]]_Def(huemulBigDataGov,Control)
+    //var fk_[[LocalField]] = new huemul_Table_Relationship(huemulBigDataGov,tbl_[[PK]], false)
     //fk_[[LocalField]].AddRelationship(tbl_[[PK]].[[PK_Id]], [[LocalField]_Id)
     
     /********************************/
@@ -431,26 +431,26 @@ object master_${param_ClassName} {
   */
   def main(args : Array[String]) {
     //Creación API
-    val huemulLib  = new huemul_Library(s"BigData Fabrics - ${Symbol}{this.getClass.getSimpleName}", args, GlobalSettings.Global)
+    val huemulBigDataGov  = new huemul_Library(s"BigData Fabrics - ${Symbol}{this.getClass.getSimpleName}", args, GlobalSettings.Global)
     
     /*************** PARAMETROS **********************/
-    var param_ano = huemulLib.arguments.GetValue("ano", null, "Debe especificar el parámetro año, ej: ano=2017").toInt
-    var param_mes = huemulLib.arguments.GetValue("mes", null, "Debe especificar el parámetro mes, ej: mes=12").toInt
-    val param_numMeses = huemulLib.arguments.GetValue("num_meses", "1").toInt
+    var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parámetro año, ej: ano=2017").toInt
+    var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parámetro mes, ej: mes=12").toInt
+    val param_numMeses = huemulBigDataGov.arguments.GetValue("num_meses", "1").toInt
     
     
     /*************** CICLO REPROCESO MASIVO **********************/
     var i: Int = 1
     var FinOK: Boolean = true
-    var Fecha = huemulLib.setDateTime(param_ano, param_mes, 1, 0, 0, 0)
+    var Fecha = huemulBigDataGov.setDateTime(param_ano, param_mes, 1, 0, 0, 0)
     
     while (i <= param_numMeses) {
-      param_ano = huemulLib.getYear(Fecha)
-      param_mes = huemulLib.getMonth(Fecha)
+      param_ano = huemulBigDataGov.getYear(Fecha)
+      param_mes = huemulBigDataGov.getMonth(Fecha)
       println(s"Procesando Año ${Symbol}param_ano, Mes ${Symbol}param_mes (${Symbol}i de ${Symbol}param_numMeses)")
       
       //Ejecuta código
-      var FinOK = master_${param_ClassName}(huemulLib, null, param_ano, param_mes)
+      var FinOK = master_${param_ClassName}(huemulBigDataGov, null, param_ano, param_mes)
       
       if (FinOK)
         i+=1
@@ -467,8 +467,8 @@ object master_${param_ClassName} {
     param_ano: año de los datos  <br>
     param_mes: mes de los datos  <br>
    */
-  def master_${param_ClassName}(huemulLib: huemul_Library, ControlParent: huemul_Control, param_ano: Integer, param_mes: Integer): Boolean = {
-    val Control = new huemul_Control(huemulLib, ControlParent)    
+  def master_${param_ClassName}(huemulBigDataGov: huemul_Library, ControlParent: huemul_Control, param_ano: Integer, param_mes: Integer): Boolean = {
+    val Control = new huemul_Control(huemulBigDataGov, ControlParent)    
     
     try {             
       /*************** AGREGAR PARAMETROS A CONTROL **********************/
@@ -482,7 +482,7 @@ object master_${param_ClassName} {
       Control.NewStep("Abre RAW")
       
       //Inicializa clase RAW  
-      var DF_RAW =  new raw_${param_ClassName}(huemulLib)
+      var DF_RAW =  new raw_${param_ClassName}(huemulBigDataGov)
       DF_RAW.open("DF_RAW", Control, param_ano, param_mes, 0, 0, 0, 0)       
       
       if (DF_RAW.Error_isError) Control.RaiseError(s"error encontrado, abortar: ${Symbol}{DF_RAW.Error.ControlError_Message}")
@@ -492,7 +492,7 @@ object master_${param_ClassName} {
       /*************** LOGICAS DE NEGOCIO **********************/
       /*********************************************************/
       //instancia de clase ${param_ClassName} 
-      val huemulTable = new ${TableName}(huemulLib, Control)
+      val huemulTable = new ${TableName}(huemulBigDataGov, Control)
       
       Control.NewStep("Generar Lógica de Negocio")
       huemulTable.DF_from_SQL("FinalRAW"
@@ -504,7 +504,7 @@ ${LocalFields}
       DF_RAW.DataFramehuemul.DataFrame.unpersist()
       
       //muestra estadistica de todas las columnas
-      if(huemulLib.DebugMode) {
+      if(huemulBigDataGov.DebugMode) {
         Control.NewStep("Generar Estadísticas de las columnas")
         huemulTable.DataFramehuemul.DQ_StatsAllCols(Control, huemulTable)        
         //comentar este código cuando ya no sea necesario generar estadísticas de las columnas.
@@ -540,16 +540,16 @@ object master_${param_ClassName}_Migrar {
  
  def main(args : Array[String]) {
    //Creación API
-    val huemulLib  = new huemul_Library(s"BigData Fabrics - ${Symbol}{this.getClass.getSimpleName}", args, GlobalSettings.Global)
+    val huemulBigDataGov  = new huemul_Library(s"BigData Fabrics - ${Symbol}{this.getClass.getSimpleName}", args, GlobalSettings.Global)
     
     /*************** PARAMETROS **********************/
-    var param_ano = huemulLib.arguments.GetValue("ano", null, "Debe especificar el parámetro año, ej: ano=2017").toInt
-    var param_mes = huemulLib.arguments.GetValue("mes", null, "Debe especificar el parámetro mes, ej: mes=12").toInt
+    var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parámetro año, ej: ano=2017").toInt
+    var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parámetro mes, ej: mes=12").toInt
     var param_dia = 1
    
-    var param = huemulLib.ReplaceWithParams("{{YYYY}}-{{MM}}-{{DD}}", param_ano, param_mes, param_dia, 0, 0, 0)
+    var param = huemulBigDataGov.ReplaceWithParams("{{YYYY}}-{{MM}}-{{DD}}", param_ano, param_mes, param_dia, 0, 0, 0)
     
-   val clase = new ${TableName}(huemulLib, null)
+   val clase = new ${TableName}(huemulBigDataGov, null)
    clase.CopyToDest(param, "desa")
    
  }

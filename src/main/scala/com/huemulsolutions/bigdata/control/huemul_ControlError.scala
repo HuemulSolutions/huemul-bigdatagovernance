@@ -1,9 +1,9 @@
 package com.huemulsolutions.bigdata.control
 
-import com.huemulsolutions.bigdata.common.huemul_Library
+import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
 
-class huemul_ControlError (huemulLib: huemul_Library) extends Serializable  {
+class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends Serializable  {
   var ControlError_Trace: String = null
   var ControlError_ClassName: String = null
   var ControlError_FileName: String = null
@@ -61,7 +61,7 @@ class huemul_ControlError (huemulLib: huemul_Library) extends Serializable  {
     ControlError_Message = e.toString()
     
     println("***************************************************************")
-    println("huemulLibrary: Error Detail")
+    println("huemulBigDataGov: Error Detail")
     println("***************************************************************")
     println(s"ControlError_ClassName: $ControlError_ClassName")
     println(s"ControlError_FileName: $ControlError_FileName")

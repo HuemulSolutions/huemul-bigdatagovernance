@@ -13,14 +13,14 @@ import org.apache.spark.sql.types.Decimal
 import com.huemulsolutions.bigdata.tables.huemul_Table_Relationship
 import javax.naming.ldap.Control
 
-class tbl_demo_test_padre(huemulLib: huemul_Library, Control: huemul_Control) extends huemul_Table(huemulLib, Control) with Serializable {
+class tbl_demo_test_padre(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
   this.setAutoCast(true)
   this.setBusiness_ResponsibleName("Nombre 1")
-  this.setDataBase(huemulLib.GlobalSettings.DIM_DataBase)
+  this.setDataBase(huemulBigDataGov.GlobalSettings.DIM_DataBase)
   this.setDescription("descripcion")
   this.setDQ_MaxNewRecords_Num(10)
   this.setDQ_MaxNewRecords_Perc(Decimal.apply(0.20))
-  this.setGlobalPaths(huemulLib.GlobalSettings.DIM_BigFiles_Path)
+  this.setGlobalPaths(huemulBigDataGov.GlobalSettings.DIM_BigFiles_Path)
   this.setIT_ResponsibleName("IT Responsible")
   this.setLocalPath("demo/")
   //this.setPartitionField("periodo_id")
@@ -52,7 +52,7 @@ class tbl_demo_test_padre(huemulLib: huemul_Library, Control: huemul_Control) ex
   
   val codigo_id_aca: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo fk")
   
-  val instancia_tbl_demo_test = new tbl_demo_test(huemulLib, Control)
+  val instancia_tbl_demo_test = new tbl_demo_test(huemulBigDataGov, Control)
   val FK_Rel = new huemul_Table_Relationship(instancia_tbl_demo_test, false)
   FK_Rel.AddRelationship(instancia_tbl_demo_test.codigo_id, this.codigo_id_aca)
   

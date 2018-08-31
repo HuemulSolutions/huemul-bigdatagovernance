@@ -15,14 +15,14 @@ import org.apache.spark.sql.catalyst.expressions.Coalesce
 /**
  * Def_Fabric_DataInfo: Define method to improve DQ over DF
  */
-class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) extends Serializable {
+class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   
   if (Control == null) 
     sys.error("Control is null in huemul_DataFrame")
     
   
-  if (huemulLib == null) 
-    sys.error("huemulLib is null in huemul_DataFrame")
+  if (huemulBigDataGov == null) 
+    sys.error("huemulBigDataGov is null in huemul_DataFrame")
   /**
    * Get and Set DataFrame
    */
@@ -74,15 +74,15 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     //TODO: ver como poner la fecha de término de lectura StopRead_dt = Calendar.getInstance()
         
     if (SaveInTemp)
-      huemulLib.CreateTempTable(DataDF, AliasDF, huemulLib.DebugMode)
+      huemulBigDataGov.CreateTempTable(DataDF, AliasDF, huemulBigDataGov.DebugMode)
   }
   
   /**   
    Create DF from SQL (equivalent to spark.sql method)
    */
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true) {
-    if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(sql)
-    val DFTemp = huemulLib.spark.sql(sql)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sql)
+    val DFTemp = huemulBigDataGov.spark.sql(sql)
     
     setDataFrame(DFTemp, Alias, SaveInTemp)
         
@@ -93,8 +93,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
    */
   def DF_from_RAW(rowRDD: RDD[Row], Alias: String) {
     //Create DataFrame 
-    if (huemulLib.DebugMode) { println(rowRDD.take(2).foreach { x => println(x) }) }
-    val DF = huemulLib.spark.createDataFrame(rowRDD, DataSchema)
+    if (huemulBigDataGov.DebugMode) { println(rowRDD.take(2).foreach { x => println(x) }) }
+    val DF = huemulBigDataGov.spark.createDataFrame(rowRDD, DataSchema)
     
     //Assign DataFrame to LocalDataFrame
     setDataFrame(DF, Alias)
@@ -103,7 +103,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     rowRDD.unpersist(false)
     
     //Show sample data and structure
-    if (huemulLib.DebugMode) { 
+    if (huemulBigDataGov.DebugMode) { 
       DataDF.printSchema()
       DataDF.show()
     }
@@ -219,7 +219,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
    * Compare actual DF with other DF (only columns exist in Actual DF and other DF)
    */
   def DQ_CompareDF(ObjectData: Object, DF_to_Compare: DataFrame, PKFields: String) : huemul_DataQualityResult = {
-    if (!huemulLib.HasName(PKFields)) {
+    if (!huemulBigDataGov.HasName(PKFields)) {
       sys.error("HuemulError: PKFields must be set ")
     }
     DF_to_Compare.createOrReplaceTempView("__Compare")
@@ -254,15 +254,15 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       
       //Query Final
       SQL_Compare = s""" ${SQL_Compare} \n FROM ${this.AliasDF} DF FULL JOIN __Compare ON ${SQLWhere} """
-      DQResult.dqDF = huemulLib.DF_ExecuteQuery("__DF_CompareResult", SQL_Compare)
+      DQResult.dqDF = huemulBigDataGov.DF_ExecuteQuery("__DF_CompareResult", SQL_Compare)
       
-      if (huemulLib.DebugMode) DQResult.dqDF.show()
+      if (huemulBigDataGov.DebugMode) DQResult.dqDF.show()
       
       
       //Query Resume
       SQL_Resumen = s"${SQL_Resumen} FROM __DF_CompareResult "
-      val DF_FinalResult = huemulLib.DF_ExecuteQuery("__DF_CompareResultRes",SQL_Resumen)
-      if (huemulLib.DebugMode) DF_FinalResult.show()
+      val DF_FinalResult = huemulBigDataGov.DF_ExecuteQuery("__DF_CompareResultRes",SQL_Resumen)
+      if (huemulBigDataGov.DebugMode) DF_FinalResult.show()
       
       
       val  DF_FinalResultFirst = DF_FinalResult.first()
@@ -275,7 +275,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
             DQResult.Description = s"huemul_DataFrame Error: Column ${x.name} have different values: Total rows ${totalCount}, num OK : ${currentColumn} "
             DQResult.isError = true
             DQResult.Error_Code = 2005
-            println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ${DQResult.Description}")
+            println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DQResult.Description}")
             DQResult.dqDF.where(s"Equal_${x.name} = 0").show()
             NumColumnsError += 1
           }
@@ -287,7 +287,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       }
     } catch {
       case e: Exception => {
-        DQResult.GetError(e,huemulLib.DebugMode)
+        DQResult.GetError(e,huemulBigDataGov.DebugMode)
       }
     }
     
@@ -337,8 +337,8 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       val Res = DQ_StatsByCol(ObjectData, x.name)
       
       if (Res.isError) {
-        println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ERROR DQ")
-        println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ${Res.Description}")
+        println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ERROR DQ")
+        println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${Res.Description}")
       }
       
       if (DQResult.dqDF != null)
@@ -347,7 +347,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         DQResult.dqDF =  Res.dqDF
     }
     
-    if (huemulLib.DebugMode) DQResult.dqDF.show()
+    if (huemulBigDataGov.DebugMode) DQResult.dqDF.show()
     
     return DQResult
   }
@@ -366,7 +366,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     if (Colfield != null) {
       DataType = Colfield(0).dataType
     }
-    if (huemulLib.DebugMode) println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ${DataType}")
+    if (huemulBigDataGov.DebugMode) println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DataType}")
     var SQL : String = s""" SELECT "$Col"            as ColName
                                   ,cast(Min($Col) as String)        as min_Col
                                   ,cast(Max($Col) as String)         as max_Col
@@ -381,12 +381,12 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
                                   ,${if (DataType == DoubleType || DataType == FloatType || DataType == IntegerType
                                       || DataType == LongType  || DataType == DataTypes.ShortType ) s"cast(sum(CASE WHEN $Col = 0 then 1 else 0 end) as long)" else "cast(-1 as long)" }  as count_cero
                             FROM """ + AliasDF   
-    if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(SQL)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
     try {
-      DQResult.dqDF = huemulLib.spark.sql(SQL)
+      DQResult.dqDF = huemulBigDataGov.spark.sql(SQL)
             
-      if (huemulLib.DebugMode) DQResult.dqDF.show()        
-      huemulLib.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByCol_${Col}",huemulLib.DebugMode)
+      if (huemulBigDataGov.DebugMode) DQResult.dqDF.show()        
+      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByCol_${Col}",huemulBigDataGov.DebugMode)
       
       val FirstRow = DQResult.dqDF.first()
       DQResult.profilingResult.max_Col = FirstRow.getAs[String]("max_Col")   
@@ -403,7 +403,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       
     } catch {
       case e: Exception => {
-        DQResult.GetError(e,huemulLib.DebugMode)
+        DQResult.GetError(e,huemulBigDataGov.DebugMode)
       }
     }
     
@@ -427,19 +427,19 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     
     SQL = SQL + " FROM " + AliasDF   
 
-    if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(SQL)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
     try {
-      DQResult.dqDF = huemulLib.spark.sql(SQL)
+      DQResult.dqDF = huemulBigDataGov.spark.sql(SQL)
       
-      if (huemulLib.DebugMode) {
+      if (huemulBigDataGov.DebugMode) {
         DQResult.dqDF.printSchema()
         DQResult.dqDF.show()
       }
-      huemulLib.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByFunction_${function}",huemulLib.DebugMode)
+      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByFunction_${function}",huemulBigDataGov.DebugMode)
       
     } catch {
       case e: Exception => {
-        DQResult.GetError(e,huemulLib.DebugMode)
+        DQResult.GetError(e,huemulBigDataGov.DebugMode)
       }
     }
     
@@ -470,10 +470,10 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
                         """   
 
     var DQDup: Long = 0
-    if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(SQL)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
     try {
-      DQResult.dqDF = huemulLib.spark.sql(SQL) 
-      if (huemulLib.DebugMode) {
+      DQResult.dqDF = huemulBigDataGov.spark.sql(SQL) 
+      if (huemulBigDataGov.DebugMode) {
         
         DQResult.dqDF.printSchema()
         DQResult.dqDF.show()
@@ -481,7 +481,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         var TempFileName_local = TempFileName
         if (TempFileName_local == null)
           TempFileName_local = ColDuplicate
-        huemulLib.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_DupliVal_${TempFileName_local}",huemulLib.DebugMode)
+        huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_DupliVal_${TempFileName_local}",huemulBigDataGov.DebugMode)
       }
       
       //duplicate rows found
@@ -495,7 +495,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
       }
     } catch {
       case e: Exception => {
-        DQResult.GetError(e,huemulLib.DebugMode)
+        DQResult.GetError(e,huemulBigDataGov.DebugMode)
       }
     }
     
@@ -545,16 +545,16 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
                         """   
 
     var DQDup: Long = 0
-    if (huemulLib.DebugMode && !huemulLib.HideLibQuery) println(SQL)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
     try {
-      DQResult.dqDF = huemulLib.spark.sql(SQL) 
-      if (huemulLib.DebugMode) {
+      DQResult.dqDF = huemulBigDataGov.spark.sql(SQL) 
+      if (huemulBigDataGov.DebugMode) {
         
         DQResult.dqDF.printSchema()
         DQResult.dqDF.show()
         
       }
-      huemulLib.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_NotNullValues_${Col}",huemulLib.DebugMode)
+      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_NotNullValues_${Col}",huemulBigDataGov.DebugMode)
       
       //null rows found
       DQDup = DQResult.dqDF.count()
@@ -562,12 +562,12 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         DQResult.Description = s"huemul_DataFrame Error: num Rows Null in $Col: " + DQDup.toString()
         DQResult.isError = true
         DQResult.Error_Code = 2007
-        println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] ${DQResult.Description}")
+        println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DQResult.Description}")
         DQResult.dqDF.show()
       }
     } catch {
       case e: Exception => {
-        DQResult.GetError(e,huemulLib.DebugMode)
+        DQResult.GetError(e,huemulBigDataGov.DebugMode)
       }
     }
     
@@ -679,15 +679,15 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     
     //DataQuality AdHoc
     val SQLDQ = getSQL_DataQualityForRun(OfficialDataQuality, ManualRules, AliasToQuery)
-    if (huemulLib.DebugMode && !huemulLib.HideLibQuery) {
-      println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] DATA QUALITY ADHOC QUERY")
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) {
+      println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DATA QUALITY ADHOC QUERY")
       println(SQLDQ)
     }
     
     if (SQLDQ != ""){
       //Execute DQ
       val AliasDQ = s"${AliasToQuery}__DQ_p0"
-      ErrorLog.dqDF = huemulLib.DF_ExecuteQuery(AliasDQ
+      ErrorLog.dqDF = huemulBigDataGov.DF_ExecuteQuery(AliasDQ
                                         , SQLDQ)
       
       val FirstReg = ErrorLog.dqDF.first()
@@ -723,7 +723,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
           }
         }
         
-        if (huemulLib.DebugMode || IsError) println(s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)")
+        if (huemulBigDataGov.DebugMode || IsError) println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)")
                        
         var dfTableName: String = null
         var dfDataBaseName: String = null
@@ -755,7 +755,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
         this.DQ_Register(Values)
         
         if (x.getNotification() == huemulType_DQNotification.ERROR && IsError) {
-          txtTotalErrors += s"\nHuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] DQ Name (${x.getErrorCode()}): ${x.getMyName} with error: ${x.ResultDQ}"
+          txtTotalErrors += s"\nHuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DQ Name (${x.getErrorCode()}): ${x.getMyName} with error: ${x.ResultDQ}"
           NumTotalErrors += 1
           localErrorCode = x.getErrorCode()
         }
@@ -763,7 +763,7 @@ class huemul_DataFrame(huemulLib: huemul_Library, Control: huemul_Control) exten
     }
     
     if (NumTotalErrors > 0){
-      println (s"HuemulDataFrameLog: [${huemulLib.huemul_getDateForLog()}] num with errors: ${NumTotalErrors} ")
+      println (s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] num with errors: ${NumTotalErrors} ")
       ErrorLog.isError = true
       ErrorLog.Description = txtTotalErrors
       ErrorLog.Error_Code = localErrorCode 

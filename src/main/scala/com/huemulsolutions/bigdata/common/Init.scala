@@ -7,9 +7,9 @@ object Init {
     val Global: huemul_GlobalPath = new huemul_GlobalPath()
     Global.GlobalEnvironments = "prod, desa, qa"
  
-    val huemulLib  = new huemul_Library(s"BigData API", args, Global)
+    val huemulBigDataGov  = new huemul_BigDataGovernance(s"BigData API", args, Global)
     
-    val Control = new huemul_Control(huemulLib,null, false, false)
+    val Control = new huemul_Control(huemulBigDataGov,null, false, false)
     //Control.Init_CreateTables()
   }
 }

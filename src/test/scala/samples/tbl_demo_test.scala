@@ -11,14 +11,14 @@ import org.apache.spark.sql.types.DataTypes._
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.Decimal
 
-class tbl_demo_test(huemulLib: huemul_Library, Control: huemul_Control) extends huemul_Table(huemulLib, Control) with Serializable {
+class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
   this.setAutoCast(true)
   this.setBusiness_ResponsibleName("Nombre 1")
-  this.setDataBase(huemulLib.GlobalSettings.DIM_DataBase)
+  this.setDataBase(huemulBigDataGov.GlobalSettings.DIM_DataBase)
   this.setDescription("descripcion")
   this.setDQ_MaxNewRecords_Num(10)
   this.setDQ_MaxNewRecords_Perc(Decimal.apply(0.30))
-  this.setGlobalPaths(huemulLib.GlobalSettings.DIM_BigFiles_Path)
+  this.setGlobalPaths(huemulBigDataGov.GlobalSettings.DIM_BigFiles_Path)
   this.setIT_ResponsibleName("IT Responsible")
   this.setLocalPath("demo/")
   //this.setPartitionField("periodo_id")

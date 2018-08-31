@@ -1,7 +1,7 @@
 package com.huemulsolutions.bigdata.tables
 
 import scala.collection.mutable.ArrayBuffer
-import com.huemulsolutions.bigdata.common.huemul_Library
+import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 
 class huemul_Table_RelationshipColumns (pk: huemul_Columns, fk: huemul_Columns) {
   var PK: huemul_Columns = pk

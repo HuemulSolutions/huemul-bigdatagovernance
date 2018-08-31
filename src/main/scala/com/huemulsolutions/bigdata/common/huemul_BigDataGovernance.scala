@@ -27,7 +27,7 @@ import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
         
       
 /*
- * huemul_Library es la clase inicial de la librería huemul-bigdata
+ * huemul_BigDataGovernance es la clase inicial de la librería huemul-bigdata
  * recibe los parámetros enviados por consola, y los traduce en parámetros de la librería y de cada módulo en particular
  * expone el método .spark
  * Environment: select path and databases to save data
@@ -37,20 +37,20 @@ import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
  * SaveTempDF: (optional) default true. if DebuMode is true, save all DF to persistent HDFS
  */
 
-/** huemul_Library es la clase inicial de la librería huemul-bigdata
+/** huemul_BigDataGovernance es la clase inicial de la librería huemul-bigdata
  *
  *  @constructor create a new person with a name and age.
  *  @param appName nombre de la aplicación
  *  @param args argumentos de la aplicación
  */
-class huemul_Library (appName: String, args: Array[String], globalSettings: huemul_GlobalPath) extends Serializable  {
+class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath) extends Serializable  {
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   
   /*********************
    * ARGUMENTS
    *************************/
-  println("huemul_Library version 0.9.2 - sv01")
+  println("huemul_BigDataGovernance version 1.0.0 - sv01")
    
       
         
@@ -215,7 +215,7 @@ class huemul_Library (appName: String, args: Array[String], globalSettings: huem
   
   
   /***
-   Create a temp table in huemulLib_Temp (Hive), and persist on HDFS Temp folder
+   Create a temp table in huemulBigDataGov_Temp (Hive), and persist on HDFS Temp folder
    */
   def CreateTempTable(DF: DataFrame, Alias: String, CreateTable: Boolean) {
     //Create parquet in temp folder

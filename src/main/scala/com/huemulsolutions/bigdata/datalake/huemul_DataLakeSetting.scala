@@ -2,11 +2,11 @@ package com.huemulsolutions.bigdata.datalake
 
 import java.util.Calendar
 import scala.collection.mutable.ArrayBuffer
-import com.huemulsolutions.bigdata.common.huemul_Library
+import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 import com.huemulsolutions.bigdata.common.huemul_KeyValuePath
 import huemulType_FileType._
 
-class huemul_DataLakeSetting(huemulLib: huemul_Library) extends Serializable {
+class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends Serializable {
   /***
    * Start date for this configuration
    */
@@ -85,19 +85,19 @@ class huemul_DataLakeSetting(huemulLib: huemul_Library) extends Serializable {
   
   
   def GetDataBase(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    return huemulLib.GlobalSettings.GetDataBase(huemulLib, Division)  
+    return huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)  
   }
   
   def GetDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    return huemulLib.GlobalSettings.GetDataBase(huemulLib, Division, ManualEnvironment)  
+    return huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)  
   }
   
   def GetPath(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    return huemulLib.GlobalSettings.GetPath(huemulLib, Division)  
+    return huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)  
   }
   
   def GetPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    return huemulLib.GlobalSettings.GetPath(huemulLib, Division, ManualEnvironment)  
+    return huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)  
   }
   
 }
