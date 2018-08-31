@@ -1,10 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.huemulsolutions.bigdata</groupId>
-  <artifactId>datagovernance</artifactId>
-  <version>0.9.2</version>
-  <name>HuemulSolutions - BigData</name>
-  <description>Enable full data quality and data linage for BigData Projects</description>
+  <artifactId>huemul-bigdatagovernance</artifactId>
+  <version>1.0</version>
+  <name>HuemulSolutions - BigDataGovernance</name>
+  <description>Enable full data quality and data linage for BigData Projects.
+  Acelera la puesta en producción de tus proyectos BigData. 
+  Implementa Calidad de datos y trazabilidad en forma simple y sencilla.
+  </description>
   <url>http://www.HuemulSolutions.com</url>
   <inceptionYear>2018</inceptionYear>
   <licenses>
