@@ -97,36 +97,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         
         NumCycle = 1
         // Obtiene procesos pendientes
-        val CurrentProcess = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"select * from control_executors where application_Id = '${ApplicationInUse}'")
-        var IdAppFromDataFrame : String = ""
-        var IdAppFromAPI: String = ""
-        var URLMonitor: String = ""
-        var StillAlive: Boolean = true
         
-        if (CurrentProcess.ResultSet == null || CurrentProcess.ResultSet.length == 0) { //dosn't have records, was eliminted by other process (rarely)
-          StillAlive = false            
-        } else {
-          IdAppFromDataFrame = CurrentProcess.ResultSet(0).getAs[String]("application_id")
-          URLMonitor = s"${CurrentProcess.ResultSet(0).getAs[String]("idportmonitoring")}/api/v1/applications/"            
-        
-          //Get Id App from Spark URL Monitoring          
-          try {
-            IdAppFromAPI = huemulBigDataGov.GetIdFromExecution(URLMonitor)    
-          } catch {
-            case f: Exception => {
-              StillAlive = false
-            }                
-          }
-        }
-                            
-        //if URL Monitoring is for another execution
-        if (StillAlive && IdAppFromAPI != IdAppFromDataFrame)
-            StillAlive = false
-                    
-        //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
-        if (!StillAlive) {
-          val a = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
-        }
+        huemulBigDataGov.application_StillAlive(ApplicationInUse)
       }              
     }
   }
@@ -136,6 +108,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   //*****************************************  
 
   
+ 
   
   
  def AddParamInfo(name: String, value: String) {
@@ -375,32 +348,32 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,'${x.GlobalPath }'  --RAWFilesDet_GlobalPath
                              ,'${x.DataSchemaConf.ColSeparatorType }'  --RAWFilesDet_Data_ColSeparatorType
                              ,'${x.DataSchemaConf.ColSeparator }'  --RAWFilesDet_Data_ColSeparator
-                             ,'${x.DataSchemaConf.HeaderColumnsString }'  --RAWFilesDet_Data_HeaderColumnsString
+                             ,''  --RAWFilesDet_Data_HeaderColumnsString
                              ,'${x.LogSchemaConf.ColSeparatorType }'  --RAWFilesDet_Log_ColSeparatorType
                              ,'${x.LogSchemaConf.ColSeparator }'  --RAWFilesDet_Log_ColSeparator
-                             ,'${x.LogSchemaConf.HeaderColumnsString }'  --RAWFilesDet_Log_HeaderColumnsString
+                             ,''  --RAWFilesDet_Log_HeaderColumnsString
                              ,'${x.LogNumRows_FieldName }'  --RAWFilesDet_Log_NumRowsFieldName
                              ,'${x.ContactName }'  --RAWFilesDet_ContactName
                              ,'${Control_ClassName}'  --process_id
                             )
                           """)   
          
-         if (x.DataSchemaConf.ColumnsPosition != null) {
+         if (x.DataSchemaConf.ColumnsDef != null) {
            var pos: Integer = 0
-           x.DataSchemaConf.ColumnsPosition.foreach { y =>
+           x.DataSchemaConf.ColumnsDef.foreach { y =>
                  huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_RAWFilesDetFields_add(
                                  '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
                                , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
                                ,'${huemulBigDataGov.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
-                               ,'${y(0)}'  --RAWFilesDetFields_ITName
-                               , '' as RAWFilesDetFields_LogicalName
-                               , '' as RAWFilesDetFields_description
-                               , '' as RAWFilesDetFields_DataType
+                               ,'${y.getcolumnName_TI}'  --RAWFilesDetFields_ITName
+                               ,'${y.getcolumnName_Business}' --as RAWFilesDetFields_LogicalName
+                               ,'${y.getDescription.replace("'", "''")}' --as RAWFilesDetFields_description
+                               ,'${y.getDataType}' --as RAWFilesDetFields_DataType
                                ,${pos }  --RAWFilesDetFields_Position
-                               ,'${y(1) }'  --RAWFilesDetFields_PosIni
-                               ,'${y(2) }'  --RAWFilesDetFields_PosFin
-                               , -1 --,RAWFilesDetFields_ApplyTrim     
-                               , -1 --,RAWFilesDetFields_ConvertNull   
+                               ,'${y.getPosIni}'  --RAWFilesDetFields_PosIni
+                               ,'${y.getPosFin}'  --RAWFilesDetFields_PosFin
+                               , ${y.getApplyTrim} --,RAWFilesDetFields_ApplyTrim     
+                               , ${y.getConvertToNull} --,RAWFilesDetFields_ConvertNull   
                                ,'${Control_ClassName}'  --process_id
                           )
                             """)   
