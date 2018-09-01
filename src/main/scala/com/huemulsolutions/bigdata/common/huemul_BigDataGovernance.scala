@@ -274,6 +274,20 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     }
   }
   
+  def IsNumericType(Type: DataType): Boolean = {
+    return (Type == ByteType || 
+            Type == ShortType ||
+            Type == IntegerType ||
+            Type == LongType ||
+            Type == FloatType ||
+            Type == DoubleType ||
+            Type == DecimalType )
+  }
+  
+  def IsDateType(Type: DataType): Boolean = {
+    return (Type == TimestampType || 
+            Type == DateType )
+  }
   
   /***
    * Reemplaza un texto con los datos de fecha y hora, según formato requerido
