@@ -1,6 +1,9 @@
 package com.huemulsolutions.bigdata.datalake
 
 import huemulType_Separator._
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types._
+import scala.collection.mutable.ArrayBuffer
 
 class huemul_DataLakeSchemaConf extends Serializable {
   /***
@@ -18,11 +21,60 @@ class huemul_DataLakeSchemaConf extends Serializable {
    * Array("FieldsName","StartPosition","EndPosition")
    * Example: Array("ClientName","010","015")
    */
-  var ColumnsPosition: Array[Array[String]] = null
+  //var ColumnsPosition: Array[Array[String]] = null
   
   /***
    * List of fields header, ";" for Type CHARACTER
    */
-  var HeaderColumnsString: String = ""
+  def setHeaderColumnsString(List: String) {
+    List.split(";").foreach { x => 
+        AddColumns(x)
+    }
+  }
+  //var HeaderColumnsString: String = ""
+  
+  
+  var ColumnsDef: ArrayBuffer[huemul_DataLakeColumns] = new  ArrayBuffer[huemul_DataLakeColumns]()
+  
+  /**
+   * Add DataLake Columns information
+   */
+  def AddColumns(columnName_Business: String
+                , columnName_TI: String = null
+                , DataType: DataType = StringType
+                , Description: String = "[[missing description]]"
+                , PosIni: Integer = null
+                , PosFin: Integer = null
+                //, ApplyTrim: Integer = -1
+                //, ConvertToNull: Integer = -1
+                ) {
+    ColumnsDef.append(new huemul_DataLakeColumns( columnName_Business
+                                                , if (columnName_TI == null) columnName_Business else columnName_TI
+                                                , if (DataType == null) StringType else DataType
+                                                , if (Description == null) "[[missing description]]" else Description
+                                                , PosIni
+                                                , PosFin
+                                                , -1 //ApplyTrim
+                                                , -1 //ConvertToNull
+                                                ))
+  }
+}
+
+class huemul_DataLakeColumns(columnName_Business: String
+                          , columnName_TI: String 
+                          , DataType: DataType = StringType
+                          , Description: String = null
+                          , PosIni: Integer = null
+                          , PosFin: Integer = null
+                          , ApplyTrim: Integer = -1
+                          , ConvertToNull: Integer = -1) extends Serializable {
+  def getcolumnName_Business: String = {return columnName_Business}
+  def getcolumnName_TI: String  = {return columnName_TI}
+  def getDataType: DataType = {return DataType}
+  def getDescription: String = {return Description}
+  def getPosIni: Integer  = {return PosIni}
+  def getPosFin: Integer  = {return PosFin}
+  def getApplyTrim: Integer = {return ApplyTrim}
+  def getConvertToNull: Integer  = {return ConvertToNull}
   
 }

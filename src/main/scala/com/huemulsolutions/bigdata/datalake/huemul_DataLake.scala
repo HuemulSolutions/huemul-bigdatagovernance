@@ -59,6 +59,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   
   var DataRDD: RDD[String] = null
   
+  private var _allColumnsAsString: Boolean = true 
+  def allColumnsAsString(value: Boolean) {_allColumnsAsString = value}
   
   def RaiseError_RAW(txt: String, Error_Code: Integer) {
     Error.ControlError_Message = txt
@@ -86,7 +88,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * Return: objeto RAW
    */
   
-  private def ConvertSchemaLocal(SchemaConf: huemul_DataLakeSchemaConf, Schema: StructType, row : String, ApplyTrim: Boolean = true) : Row = {
+  private def ConvertSchemaLocal(SchemaConf: huemul_DataLakeSchemaConf, row : String, ApplyTrim: Boolean, local_allColumnsAsString: Boolean) : Row = { 
+    val Schema: StructType = CreateSchema(SchemaConf, local_allColumnsAsString)
     var DataArray_Dest : Array[Any] = null
     if (SchemaConf.ColSeparatorType == huemulType_Separator.CHARACTER) {
       //Get separator and numCols from params
@@ -120,11 +123,12 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
       }
     }
     else if (SchemaConf.ColSeparatorType == huemulType_Separator.POSITION) {      
-      DataArray_Dest = new Array[Any](SchemaConf.ColumnsPosition.length)
+      DataArray_Dest = new Array[Any](SchemaConf.ColumnsDef.length)
       
      
-      SchemaConf.ColumnsPosition.indices.foreach { i => 
-        var temp1 = row.substring(SchemaConf.ColumnsPosition(i)(1).toInt, SchemaConf.ColumnsPosition(i)(2).toInt) 
+      SchemaConf.ColumnsDef.indices.foreach { i => 
+        val dataInfo = SchemaConf.ColumnsDef(i)
+        var temp1 = row.substring(dataInfo.getPosIni.toInt, dataInfo.getPosFin.toInt) 
         if (ApplyTrim)
           temp1 = temp1.trim()
         
@@ -146,7 +150,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    */
   
   def ConvertSchema(row : String, ApplyTrim: Boolean = true) : Row = {
-    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, this.DataFramehuemul.getDataSchema(), row, ApplyTrim)
+    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, ApplyTrim, _allColumnsAsString)
     //SchemaConf: huemul_DataLakeSchemaConf, Schema: StructType,
   }
   
@@ -204,35 +208,24 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           this.Log.Log_isRead = false
           this.Log.Log_isInfoRows = false
         }
-        else if (this.SettingInUse.LogSchemaConf.ColSeparatorType == huemulType_Separator.POSITION) {
+        else if (this.SettingInUse.LogSchemaConf.ColSeparatorType == huemulType_Separator.POSITION ||
+                 this.SettingInUse.LogSchemaConf.ColSeparatorType == huemulType_Separator.CHARACTER    
+                ) {
           this.Log.DataFirstRow = this.DataRDD.first()
           
-          //Create schema
-          var fieldsLog : Array[StructField] = null
-          fieldsLog = this.SettingInUse.LogSchemaConf.ColumnsPosition       
-              .map(fieldName => StructField(fieldName(0), StringType, nullable = true))  
-              
-          if (fieldsLog == null) {
+          val fieldsLogSchema = CreateSchema(this.SettingInUse.LogSchemaConf)
+          if (fieldsLogSchema == null || fieldsLogSchema.length == 0) {
             LocalErrorCode = 3007
             this.RaiseError_RAW("huemul_DataLake Error: Don't have header information for Detail, see fieldsSeparatorType field ", LocalErrorCode)
           }
           
-          this.Log.LogSchema = StructType(fieldsLog)          
+          this.Log.LogSchema = fieldsLogSchema         
           
           this.Log.Log_isRead = true
           this.Log.Log_isInfoRows = true
-        }
-        else if (this.SettingInUse.LogSchemaConf.ColSeparatorType == huemulType_Separator.CHARACTER) {
-          this.Log.DataFirstRow = this.DataRDD.first()
-          //detail fields
-          val fieldsLog = this.SettingInUse.LogSchemaConf.HeaderColumnsString.split(";")       
-              .map(fieldName => StructField(fieldName, StringType, nullable = true))
-          this.Log.LogSchema = StructType(fieldsLog)
-        }
-        
-        if (this.Log.LogSchema != null) {
+       
           val LogRDD =  huemulBigDataGov.spark.sparkContext.parallelize(List(this.Log.DataFirstRow))
-          val rowRDD =  LogRDD.map { x =>  ConvertSchemaLocal(this.SettingInUse.LogSchemaConf, this.Log.LogSchema, x)} 
+          val rowRDD =  LogRDD.map { x =>  ConvertSchemaLocal(this.SettingInUse.LogSchemaConf, x, true, true)} 
 
           //Create DataFrame
           if (huemulBigDataGov.DebugMode) {
@@ -254,23 +247,9 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         /********   GET  FIELDS   ********************************/
         /************************************************************************/ 
         //Fields
-        var fieldsDetail : Array[StructField] = null
-        if (this.SettingInUse.DataSchemaConf.ColSeparatorType == huemulType_Separator.POSITION) {
-          fieldsDetail = this.SettingInUse.DataSchemaConf.ColumnsPosition       
-              .map(fieldName => StructField(fieldName(0), StringType, nullable = true))  
-        }
-        else if (this.SettingInUse.DataSchemaConf.ColSeparatorType == huemulType_Separator.CHARACTER) {
-          //detail fields
-          fieldsDetail = this.SettingInUse.DataSchemaConf.HeaderColumnsString.split(";")       
-              .map(fieldName => StructField(fieldName, StringType, nullable = true))                             
-        }
-        
-        if (fieldsDetail == null) {
-          LocalErrorCode = 3008
-          this.RaiseError_RAW("huemul_DataLake Error: Don't have header information for Detail, see fieldsSeparatorType field ", LocalErrorCode)
-        }
-        
-        this.DataFramehuemul.SetDataSchema(StructType(fieldsDetail))
+        var fieldsDetail : StructType = CreateSchema(this.SettingInUse.DataSchemaConf, _allColumnsAsString)
+           
+        this.DataFramehuemul.SetDataSchema(fieldsDetail)
         if (this.huemulBigDataGov.DebugMode) {
           println("printing DataSchema from settings: ")
           this.DataFramehuemul.getDataSchema().printTreeString()
@@ -290,6 +269,18 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     
     return !this.Error_isError
   }
+  
+  def CreateSchema(SchemaConf: huemul_DataLakeSchemaConf, allColumnsAsString: Boolean = false): StructType = {
+    //Fields
+    var fieldsDetail : ArrayBuffer[StructField] = null
+    fieldsDetail = SchemaConf.ColumnsDef.map ( fieldName => StructField(fieldName.getcolumnName_Business, if (allColumnsAsString) StringType else fieldName.getDataType, nullable = true) )
+    
+    if (fieldsDetail == null) {
+      this.RaiseError_RAW("huemul_DataLake Error: Don't have header information for Detail, see fieldsSeparatorType field ", 3008)
+    }
+    
+    return StructType(fieldsDetail)
+  }
    
 /** Genera el codigo inicial para una tabla y el proceso que masteriza dicha tabla
  *
@@ -301,11 +292,11 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
  *  @param EsMes indica si la tabla transaccional tiene particion mensual o diaria
  *  @param AutoMapping true para indicar que los nombres de columnas en raw son iguales a la tabla, indicar false si los nombres de columnas en raw son distintos a tabla 
  */
-def GenerateInitialCode(PackageBase: String, NewObjectName: String, NewTableName: String, LocalPath: String, TableType: huemulType_Tables , EsMes: Boolean, AutoMapping: Boolean = true) {
+def GenerateInitialCode(PackageBase: String, NewObjectName: String, NewTableName: String, localPath: String, TableType: huemulType_Tables , EsMes: Boolean, AutoMapping: Boolean = true) {
     val Symbol: String = "$"
     val Comas: String = "\"\"\""
     val Coma: String = "\""
-    
+    val LocalPath: String = if (localPath.reverse.substring(0, 1) == "/") localPath.substring(0, localPath.length()-1) else localPath
     //reemplaza caracteres no deseados a nombre de la clase.
     val param_ObjectName = NewObjectName.replace("$", "")
     val param_PackageBase = PackageBase.replace("$", "")
@@ -315,20 +306,33 @@ def GenerateInitialCode(PackageBase: String, NewObjectName: String, NewTableName
     var LocalFields: String = ""
     var LocalMapping: String = ""
     var LocalColumns: String = ""
-    
-    this.DataFramehuemul.getDataSchema.foreach { x => 
-      LocalFields += s"                                     ,${x.name}\n"
-      LocalMapping += s"    huemulTable.${x.name}.SetMapping(${Coma}${x.name}${Coma})\n"
+   
+    this.SettingByDate(0).DataSchemaConf.ColumnsDef.foreach { x => 
+      LocalFields += s"                                     ,${x.getcolumnName_Business}\n"
+      LocalMapping += s"  huemulTable.${x.getcolumnName_Business}.SetMapping(${Coma}${x.getcolumnName_Business}${Coma})\n"
        
-      LocalColumns += s"    val ${x.name} = new huemul_Columns (StringType, true, ${Coma}[[DESCRIPCION]]${Coma}) \n"
-      LocalColumns += s"    ${x.name}.ARCO_Data = false  \n"
-      LocalColumns += s"    ${x.name}.SecurityLevel = huemulType_SecurityLevel.Public  \n"
+      LocalColumns += s"  val ${x.getcolumnName_Business} = new huemul_Columns (${x.getDataType}, true, ${Coma}${x.getDescription}${Coma}) \n"
+      LocalColumns += s"  ${x.getcolumnName_Business}.ARCO_Data = false  \n"
+      LocalColumns += s"  ${x.getcolumnName_Business}.SecurityLevel = huemulType_SecurityLevel.Public  \n"
 
       if (TableType == huemulType_Tables.Master || TableType == huemulType_Tables.Reference) {
-        LocalColumns += s"    ${x.name}.MDM_EnableOldValue = true  \n"
-        LocalColumns += s"    ${x.name}.MDM_EnableDTLog = true  \n"
-        LocalColumns += s"    ${x.name}.MDM_EnableProcessLog = true  \n"
+        LocalColumns += s"  ${x.getcolumnName_Business}.MDM_EnableOldValue = true  \n"
+        LocalColumns += s"  ${x.getcolumnName_Business}.MDM_EnableDTLog = true  \n"
+        LocalColumns += s"  ${x.getcolumnName_Business}.MDM_EnableProcessLog = true  \n"
       }
+      
+      if (x.getDataType == ShortType || x.getDataType == IntegerType || x.getDataType == DecimalType || x.getDataType == FloatType || x.getDataType == DoubleType || x.getDataType == LongType) {
+        LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MinDecimalValue = Decimal.apply(0)  \n"
+        LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MaxDecimalValue = Decimal.apply(200.34)  \n"
+      } else if (x.getDataType == DateType || x.getDataType == TimestampType) {
+        LocalColumns += s"""  //${x.getcolumnName_Business}.DQ_MinDateTimeValue = "2018-01-01"  \n"""
+        LocalColumns += s"""  //${x.getcolumnName_Business}.DQ_MaxDateTimeValue = "2018-12-31"  \n"""
+      } else {
+        LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MinLen = 5 \n"
+        LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MaxLen = 100  \n"
+      }
+      
+      LocalColumns += s"\n"
       
     }
     
@@ -369,10 +373,10 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   //Ruta en HDFS especifica para esta tabla (Globalpaths / localPath)
   this.setLocalPath("${LocalPath}/")
   ${
-  if (TableType == huemulType_Tables.Transaction)
+  if (TableType == huemulType_Tables.Transaction) {
   s"""  //columna de particion
   this.setPartitionField("periodo_${if (EsMes) "mes" else "dia"}")"""
-  }
+  } else ""}
   /**********   S E T E O   I N F O R M A T I V O   ****************************************/
   //Nombre del contacto de TI
   this.setDescription(" [[LLENAR ESTE CAMPO]]")
@@ -399,11 +403,11 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
 
   ${
   if (TableType == huemulType_Tables.Transaction) {
-  """  //Columna de periodo
+  s"""  //Columna de periodo
   val periodo_${if (EsMes) "mes" else "dia"}" = new huemul_Columns (StringType, true,"periodo de los datos")
   periodo_${if (EsMes) "mes" else "dia"}".IsPK = true
   """
-  }}  
+  } else ""}  
     
 ${LocalColumns}
 
