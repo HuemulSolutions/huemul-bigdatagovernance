@@ -45,8 +45,8 @@ class huemul_DataLakeSchemaConf extends Serializable {
                 , Description: String = "[[missing description]]"
                 , PosIni: Integer = null
                 , PosFin: Integer = null
-                //, ApplyTrim: Integer = -1
-                //, ConvertToNull: Integer = -1
+                , ApplyTrim: Boolean = false
+                , ConvertToNull: Boolean = false
                 ) {
     ColumnsDef.append(new huemul_DataLakeColumns( columnName_Business
                                                 , if (columnName_TI == null) columnName_Business else columnName_TI
@@ -54,8 +54,8 @@ class huemul_DataLakeSchemaConf extends Serializable {
                                                 , if (Description == null) "[[missing description]]" else Description
                                                 , PosIni
                                                 , PosFin
-                                                , -1 //ApplyTrim
-                                                , -1 //ConvertToNull
+                                                , ApplyTrim
+                                                , ConvertToNull
                                                 ))
   }
 }
@@ -66,15 +66,15 @@ class huemul_DataLakeColumns(columnName_Business: String
                           , Description: String = null
                           , PosIni: Integer = null
                           , PosFin: Integer = null
-                          , ApplyTrim: Integer = -1
-                          , ConvertToNull: Integer = -1) extends Serializable {
+                          , ApplyTrim: Boolean = false
+                          , ConvertToNull: Boolean = false) extends Serializable {
   def getcolumnName_Business: String = {return columnName_Business}
   def getcolumnName_TI: String  = {return columnName_TI}
   def getDataType: DataType = {return DataType}
   def getDescription: String = {return Description}
   def getPosIni: Integer  = {return PosIni}
   def getPosFin: Integer  = {return PosFin}
-  def getApplyTrim: Integer = {return ApplyTrim}
-  def getConvertToNull: Integer  = {return ConvertToNull}
+  def getApplyTrim: Boolean = {return ApplyTrim}
+  def getConvertToNull: Boolean  = {return ConvertToNull}
   
 }

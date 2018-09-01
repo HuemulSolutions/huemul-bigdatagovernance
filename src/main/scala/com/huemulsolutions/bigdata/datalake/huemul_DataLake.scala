@@ -11,6 +11,7 @@ import scala.collection.mutable._
 import com.huemulsolutions.bigdata.tables._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables._
 
+
 class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   /***
    * Id of data (example: PlanCuentas)
@@ -33,6 +34,9 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * 
    */
   var StringNull_as_Null: Boolean = true
+  
+  var ApplyTrim: Boolean = true
+  
   /***
    * Information about interfaces
    */
@@ -60,7 +64,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   var DataRDD: RDD[String] = null
   
   private var _allColumnsAsString: Boolean = true 
-  def allColumnsAsString(value: Boolean) {_allColumnsAsString = value}
+  //def allColumnsAsString(value: Boolean) {_allColumnsAsString = value}
   
   def RaiseError_RAW(txt: String, Error_Code: Integer) {
     Error.ControlError_Message = txt
@@ -88,7 +92,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * Return: objeto RAW
    */
   
-  private def ConvertSchemaLocal(SchemaConf: huemul_DataLakeSchemaConf, row : String, ApplyTrim: Boolean, local_allColumnsAsString: Boolean) : Row = { 
+  private def ConvertSchemaLocal(SchemaConf: huemul_DataLakeSchemaConf, row : String, local_allColumnsAsString: Boolean) : Row = { 
     val Schema: StructType = CreateSchema(SchemaConf, local_allColumnsAsString)
     var DataArray_Dest : Array[Any] = null
     if (SchemaConf.ColSeparatorType == huemulType_Separator.CHARACTER) {
@@ -101,25 +105,38 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
       }
       //declare variables for transform
       DataArray_Dest = new Array[Any](numCols)      
-      val DataArray_Orig = row.split(separator,numCols)
-      
-      if (ApplyTrim) {
-        DataArray_Orig.indices.foreach { i => 
-          var temp1 = DataArray_Orig(i).trim() 
-          if (StringNull_as_Null && temp1.toLowerCase() == "null") 
+      val DataArray_Orig = row.split(separator,numCols)       
+          
+      DataArray_Orig.indices.foreach { i => 
+          var temp1 = DataArray_Orig(i) 
+          val FieldSchema = SchemaConf.ColumnsDef(i)
+          
+          if (ApplyTrim || FieldSchema.getApplyTrim  )
+          temp1 = temp1.trim()
+            
+          if ((StringNull_as_Null || FieldSchema.getConvertToNull) && temp1.toLowerCase() == "null") 
             temp1 = null
             
-          DataArray_Dest(i) = temp1
-        }
-      } else {
-        DataArray_Orig.indices.foreach { i => 
-          var temp1 = DataArray_Orig(i)
-          if (StringNull_as_Null && temp1.toLowerCase() == "null") 
-            temp1 = null
-            
-          DataArray_Dest(i) =   temp1
-        
-        }
+          DataArray_Dest(i) = if (_allColumnsAsString) temp1
+                              else if (FieldSchema.getDataType == StringType) temp1
+                              else if (FieldSchema.getDataType == IntegerType) temp1.toInt
+                              else if (FieldSchema.getDataType == DecimalType) Decimal.apply(temp1)
+                              else if (FieldSchema.getDataType == LongType) temp1.toLong
+                              else if (FieldSchema.getDataType == DoubleType) temp1.toDouble
+                              else if (FieldSchema.getDataType == ShortType) temp1.toShort
+                              else if (FieldSchema.getDataType == ByteType) temp1.toByte
+                              else if (FieldSchema.getDataType == FloatType) temp1.toFloat
+                              
+                              else if (FieldSchema.getDataType == BooleanType) temp1.toBoolean
+                              
+                              else if (FieldSchema.getDataType == DateType) temp1
+                              else if (FieldSchema.getDataType == TimestampType) temp1
+                              
+                              else if (FieldSchema.getDataType == ArrayType) temp1.toArray
+                              
+                              //else if (FieldSchema.getDataType == BinaryType) temp1.to
+                              else temp1  
+    
       }
     }
     else if (SchemaConf.ColSeparatorType == huemulType_Separator.POSITION) {      
@@ -129,14 +146,33 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
       SchemaConf.ColumnsDef.indices.foreach { i => 
         val dataInfo = SchemaConf.ColumnsDef(i)
         var temp1 = row.substring(dataInfo.getPosIni.toInt, dataInfo.getPosFin.toInt) 
-        if (ApplyTrim)
+        val FieldSchema = SchemaConf.ColumnsDef(i)
+        if (ApplyTrim || FieldSchema.getApplyTrim  )
           temp1 = temp1.trim()
         
-        if (StringNull_as_Null && temp1.toLowerCase() == "null") {
+        if ((StringNull_as_Null || FieldSchema.getConvertToNull) && temp1.toLowerCase() == "null") 
           temp1 = null
-        }
+        
           
-        DataArray_Dest(i) = temp1 
+        DataArray_Dest(i) =   if (_allColumnsAsString) temp1
+                              else if (FieldSchema.getDataType == StringType) temp1
+                              else if (FieldSchema.getDataType == IntegerType) temp1.toInt
+                              else if (FieldSchema.getDataType == DecimalType) Decimal.apply(temp1)
+                              else if (FieldSchema.getDataType == LongType) temp1.toLong
+                              else if (FieldSchema.getDataType == DoubleType) temp1.toDouble
+                              else if (FieldSchema.getDataType == ShortType) temp1.toShort
+                              else if (FieldSchema.getDataType == ByteType) temp1.toByte
+                              else if (FieldSchema.getDataType == FloatType) temp1.toFloat
+                              
+                              else if (FieldSchema.getDataType == BooleanType) temp1.toBoolean
+                              
+                              else if (FieldSchema.getDataType == DateType) temp1
+                              else if (FieldSchema.getDataType == TimestampType) temp1
+                              
+                              else if (FieldSchema.getDataType == ArrayType) temp1.toArray
+                              
+                              //else if (FieldSchema.getDataType == BinaryType) temp1.to
+                              else temp1  
        }
       
     }
@@ -149,8 +185,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * Return: objeto Row
    */
   
-  def ConvertSchema(row : String, ApplyTrim: Boolean = true) : Row = {
-    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, ApplyTrim, _allColumnsAsString)
+  def ConvertSchema(row : String) : Row = {
+    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, _allColumnsAsString)
     //SchemaConf: huemul_DataLakeSchemaConf, Schema: StructType,
   }
   
@@ -213,7 +249,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
                 ) {
           this.Log.DataFirstRow = this.DataRDD.first()
           
-          val fieldsLogSchema = CreateSchema(this.SettingInUse.LogSchemaConf)
+          val fieldsLogSchema = CreateSchema(this.SettingInUse.LogSchemaConf, true)
           if (fieldsLogSchema == null || fieldsLogSchema.length == 0) {
             LocalErrorCode = 3007
             this.RaiseError_RAW("huemul_DataLake Error: Don't have header information for Detail, see fieldsSeparatorType field ", LocalErrorCode)
@@ -225,7 +261,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           this.Log.Log_isInfoRows = true
        
           val LogRDD =  huemulBigDataGov.spark.sparkContext.parallelize(List(this.Log.DataFirstRow))
-          val rowRDD =  LogRDD.map { x =>  ConvertSchemaLocal(this.SettingInUse.LogSchemaConf, x, true, true)} 
+          val rowRDD =  LogRDD.map { x =>  ConvertSchemaLocal(this.SettingInUse.LogSchemaConf, x, true)} 
 
           //Create DataFrame
           if (huemulBigDataGov.DebugMode) {
@@ -321,13 +357,13 @@ def GenerateInitialCode(PackageBase: String, NewObjectName: String, NewTableName
         LocalColumns += s"  ${x.getcolumnName_Business}.MDM_EnableProcessLog = true  \n"
       }
       
-      if (x.getDataType == ShortType || x.getDataType == IntegerType || x.getDataType == DecimalType || x.getDataType == FloatType || x.getDataType == DoubleType || x.getDataType == LongType) {
+      if (huemulBigDataGov.IsNumericType(x.getDataType)) {
         LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MinDecimalValue = Decimal.apply(0)  \n"
         LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MaxDecimalValue = Decimal.apply(200.34)  \n"
-      } else if (x.getDataType == DateType || x.getDataType == TimestampType) {
+      } else if (huemulBigDataGov.IsDateType(x.getDataType)) {
         LocalColumns += s"""  //${x.getcolumnName_Business}.DQ_MinDateTimeValue = "2018-01-01"  \n"""
         LocalColumns += s"""  //${x.getcolumnName_Business}.DQ_MaxDateTimeValue = "2018-12-31"  \n"""
-      } else {
+      } else if (x.getDataType == StringType) {
         LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MinLen = 5 \n"
         LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MaxLen = 100  \n"
       }
