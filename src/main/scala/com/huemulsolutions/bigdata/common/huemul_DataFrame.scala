@@ -378,8 +378,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                                   ,max(length($Col))  as maxlen_Col
                                   ,sum(CASE WHEN length($Col) = 0 and $Col is not null then 1 else 0 end)  as count_empty
                                   ,sum(CASE WHEN $Col is null then 1 else 0 end)  as count_null
-                                  ,${if (DataType == DoubleType || DataType == FloatType || DataType == IntegerType
-                                      || DataType == LongType  || DataType == DataTypes.ShortType ) s"cast(sum(CASE WHEN $Col = 0 then 1 else 0 end) as long)" else "cast(-1 as long)" }  as count_cero
+                                  ,${if (huemulBigDataGov.IsNumericType(DataType)) s"cast(sum(CASE WHEN $Col = 0 then 1 else 0 end) as long)" else "cast(-1 as long)" }  as count_cero
                             FROM """ + AliasDF   
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
     try {
