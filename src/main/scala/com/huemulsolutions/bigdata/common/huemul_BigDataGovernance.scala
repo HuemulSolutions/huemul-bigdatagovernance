@@ -150,6 +150,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   //Process Registry
   if (RegisterInControl) {
+    while (application_StillAlive(IdApplication)) {
+      println(s"waiting for singleton Application Id in use: ${IdApplication}, maybe you're creating two times a spark connection")
+      Thread.sleep(10000)
+    }
     val Result = postgres_connection.ExecuteJDBC_WithResult(s""" SELECT control_executors_add(
                     '${IdApplication}' -- p_application_Id
                     ,'${IdSparkPort}'  --as p_IdSparkPort
@@ -166,6 +170,47 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * START METHOD
    *************************/
   
+  def close() {
+    this.spark.close()
+    if (RegisterInControl) this.postgres_connection.connection.close()
+    if (ImpalaEnabled) this.impala_connection.connection.close()
+    application_StillAlive(this.IdApplication)
+  }
+  
+  def application_StillAlive(ApplicationInUse: String): Boolean = {
+    val CurrentProcess = this.postgres_connection.ExecuteJDBC_WithResult(s"select * from control_executors where application_Id = '${ApplicationInUse}'")
+    var IdAppFromDataFrame : String = ""
+    var IdAppFromAPI: String = ""
+    var URLMonitor: String = ""
+    var StillAlive: Boolean = true
+    
+    if (CurrentProcess.ResultSet == null || CurrentProcess.ResultSet.length == 0) { //dosn't have records, was eliminted by other process (rarely)
+      StillAlive = false            
+    } else {
+      IdAppFromDataFrame = CurrentProcess.ResultSet(0).getAs[String]("application_id")
+      URLMonitor = s"${CurrentProcess.ResultSet(0).getAs[String]("idportmonitoring")}/api/v1/applications/"            
+    
+      //Get Id App from Spark URL Monitoring          
+      try {
+        IdAppFromAPI = this.GetIdFromExecution(URLMonitor)    
+      } catch {
+        case f: Exception => {
+          StillAlive = false
+        }                
+      }
+    }
+                        
+    //if URL Monitoring is for another execution
+    if (StillAlive && IdAppFromAPI != IdAppFromDataFrame)
+        StillAlive = false
+                
+    //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
+    if (!StillAlive) {
+      val a = this.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
+    }
+    
+    return StillAlive
+  }
   
   //var sc: org.apache.spark.SparkContext = spark.sparkContext
   def getMonth(Date: Calendar): Int = {return Date.get(Calendar.MONTH)+1}
