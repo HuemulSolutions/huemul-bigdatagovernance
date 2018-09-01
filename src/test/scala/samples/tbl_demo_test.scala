@@ -30,23 +30,23 @@ class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_
   
   
   val codigo_id: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo")
-  codigo_id.IsPK = true
-  codigo_id.IsUnique = true
-  codigo_id.DQ_MaxDateTimeValue = ""
-  codigo_id.DQ_MinDateTimeValue = ""
-  codigo_id.DQ_MaxDecimalValue = Decimal.apply(10)
-  codigo_id.DQ_MinDecimalValue = Decimal.apply(10)
-  codigo_id.DQ_MaxLen = 10
-  codigo_id.DQ_MinLen = 9
-  codigo_id.Nullable = true
-  codigo_id.DefaultValue = "'nada'"
+  codigo_id.setIsPK (true)
+  codigo_id.setIsUnique ( true)
+  codigo_id.setDQ_MaxDateTimeValue ( "")
+  codigo_id.setDQ_MinDateTimeValue ( "")
+  codigo_id.setDQ_MaxDecimalValue ( Decimal.apply(10))
+  codigo_id.setDQ_MinDecimalValue ( Decimal.apply(10))
+  codigo_id.setDQ_MaxLen ( 10)
+  codigo_id.setDQ_MinLen ( 9)
+  codigo_id.setNullable ( true)
+  codigo_id.setDefaultValue ( "'nada'")
   
-  codigo_id.SecurityLevel = huemulType_SecurityLevel.Public
-  codigo_id.EncryptedType = "sin encriptar"
+  codigo_id.setSecurityLevel ( huemulType_SecurityLevel.Public)
+  codigo_id.setEncryptedType ( "sin encriptar")
   
-  codigo_id.MDM_EnableOldValue = false
-  codigo_id.MDM_EnableDTLog= false
-  codigo_id.MDM_EnableProcessLog= true
+  codigo_id.setMDM_EnableOldValue ( false)
+  codigo_id.setMDM_EnableDTLog( false)
+  codigo_id.setMDM_EnableProcessLog( true)
   
   
   

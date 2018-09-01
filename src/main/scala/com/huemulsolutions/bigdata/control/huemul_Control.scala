@@ -477,22 +477,22 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                            , null --as Column_Formula
                            , '${x.DataType.sql}' --as Column_DataType
                            , false --as Column_SensibleData
-                           , ${x.MDM_EnableDTLog} --as Column_EnableDTLog
-                           , ${x.MDM_EnableOldValue} --as Column_EnableOldValue
-                           , ${x.MDM_EnableProcessLog} --as Column_EnableProcessLog
-                           , '${x.DefaultValue.replace("'", "''")}' --as Column_DefaultValue
-                           , '${x.SecurityLevel}' --as Column_SecurityLevel
-                           , '${x.EncryptedType}' --as Column_Encrypted
-                           , '${x.ARCO_Data}' --as Column_ARCO
-                           , ${x.Nullable} --as Column_Nullable
-                           , ${x.IsPK} --as Column_IsPK
-                           , ${x.IsUnique} --as Column_IsUnique
-                           , ${x.DQ_MinLen} --as Column_DQ_MinLen
-                           , ${x.DQ_MaxLen} --as Column_DQ_MaxLen
-                           , ${x.DQ_MinDecimalValue} --as Column_DQ_MinValue
-                           , ${x.DQ_MaxDecimalValue} --as Column_DQ_MaxValue
-                           , '${x.DQ_MinDateTimeValue}' --as Column_DQ_MinDateTimeValue
-                           , '${x.DQ_MaxDateTimeValue}' --as Column_DQ_MaxDateTimeValue
+                           , ${x.getMDM_EnableDTLog} --as Column_EnableDTLog
+                           , ${x.getMDM_EnableOldValue} --as Column_EnableOldValue
+                           , ${x.getMDM_EnableProcessLog} --as Column_EnableProcessLog
+                           , '${x.getDefaultValue.replace("'", "''")}' --as Column_DefaultValue
+                           , '${x.getSecurityLevel}' --as Column_SecurityLevel
+                           , '${x.getEncryptedType}' --as Column_Encrypted
+                           , '${x.getARCO_Data}' --as Column_ARCO
+                           , ${x.getNullable} --as Column_Nullable
+                           , ${x.getIsPK} --as Column_IsPK
+                           , ${x.getIsUnique} --as Column_IsUnique
+                           , ${x.getDQ_MinLen} --as Column_DQ_MinLen
+                           , ${x.getDQ_MaxLen} --as Column_DQ_MaxLen
+                           , ${x.getDQ_MinDecimalValue} --as Column_DQ_MinValue
+                           , ${x.getDQ_MaxDecimalValue} --as Column_DQ_MaxValue
+                           , '${x.getDQ_MinDateTimeValue}' --as Column_DQ_MinDateTimeValue
+                           , '${x.getDQ_MaxDateTimeValue}' --as Column_DQ_MaxDateTimeValue
                            ,'${Control_ClassName}'  --process_id
                       )""")        
           i += 1

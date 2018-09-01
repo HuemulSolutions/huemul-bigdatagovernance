@@ -32,23 +32,23 @@ class tbl_demo_test_padre(huemulBigDataGov: huemul_BigDataGovernance, Control: h
   
   
   val miClave_id: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo")
-  miClave_id.IsPK = true
-  miClave_id.IsUnique = true
-  miClave_id.DQ_MaxDateTimeValue = ""
-  miClave_id.DQ_MinDateTimeValue = ""
-  miClave_id.DQ_MaxDecimalValue = Decimal.apply(10)
-  miClave_id.DQ_MinDecimalValue = Decimal.apply(10)
-  miClave_id.DQ_MaxLen = 10
-  miClave_id.DQ_MinLen = 9
-  miClave_id.Nullable = true
-  miClave_id.DefaultValue = "'nada'"
+  miClave_id.setIsPK(true)
+  miClave_id.setIsUnique(true)
+  miClave_id.setDQ_MaxDateTimeValue ("")
+  miClave_id.setDQ_MinDateTimeValue ("")
+  miClave_id.setDQ_MaxDecimalValue ( Decimal.apply(10))
+  miClave_id.setDQ_MinDecimalValue ( Decimal.apply(10))
+  miClave_id.setDQ_MaxLen ( 10)
+  miClave_id.setDQ_MinLen ( 9)
+  miClave_id.setNullable ( true)
+  miClave_id.setDefaultValue ( "'nada'")
   
-  miClave_id.SecurityLevel = huemulType_SecurityLevel.Public
-  miClave_id.EncryptedType = "nada"
+  miClave_id.setSecurityLevel ( huemulType_SecurityLevel.Public)
+  miClave_id.setEncryptedType ( "nada")
   
-  miClave_id.MDM_EnableOldValue = false
-  miClave_id.MDM_EnableDTLog= false
-  miClave_id.MDM_EnableProcessLog= true
+  miClave_id.setMDM_EnableOldValue ( false)
+  miClave_id.setMDM_EnableDTLog( false)
+  miClave_id.setMDM_EnableProcessLog( true)
   
   val codigo_id_aca: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo fk")
   

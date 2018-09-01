@@ -19,47 +19,169 @@ class huemul_Columns(param_DataType: DataType
   val Required: Boolean = param_Required
   val UsedForCheckSum: Boolean = param_UsedForCheckSum
   
-  var IsPK: Boolean = false
-  var IsUnique: Boolean = false
-  var Nullable: Boolean = false  
-  var DefaultValue: String = "null"
+  private var DefinitionIsClose: Boolean = false
+  def SetDefinitionIsClose() {DefinitionIsClose = true}
+  
+  
+  private var IsPK: Boolean = false
+  def getIsPK: Boolean = {return IsPK}
+  def setIsPK(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setIsPK, definition is close")
+    else
+      IsPK = value
+  }
+  
+  private var IsUnique: Boolean = false
+  def getIsUnique: Boolean = {return IsUnique}
+  def setIsUnique(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setIsUnique, definition is close")
+    else
+      IsUnique = value
+  }
+  
+  private var Nullable: Boolean = false
+  def getNullable: Boolean = {return Nullable}
+  def setNullable(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setNullable, definition is close")
+    else
+      Nullable = value
+  }
+  
+  private var DefaultValue: String = "null"
+  def getDefaultValue: String = {return DefaultValue}
+  def setDefaultValue(value: String) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setDefaultValue, definition is close")
+    else
+      DefaultValue = value
+  }
   /** Secret, Restricted, Confidential, Intern, Departamental, Public   
    */
-  var SecurityLevel: huemulType_SecurityLevel = huemulType_SecurityLevel.Public //Secret, Restricted, Confidential, Intern, Departamental, Public
+  private var SecurityLevel: huemulType_SecurityLevel = huemulType_SecurityLevel.Public //Secret, Restricted, Confidential, Intern, Departamental, Public
+  def getSecurityLevel: huemulType_SecurityLevel = {return SecurityLevel}
+  def setSecurityLevel(value: huemulType_SecurityLevel) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setSecurityLevel, definition is close")
+    else
+      SecurityLevel = value
+  }
   /** none, sha2   
    */
-  var EncryptedType: String = "none" //none, sha2,
+  private var EncryptedType: String = "none" //none, sha2,
+  def getEncryptedType: String = {return EncryptedType}
+  def setEncryptedType(value: String) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setEncryptedType, definition is close")
+    else
+      EncryptedType = value
+  }
+  
   /** set true for customers data that can be used for identify a unique customer (name, address, phone number)   
    */
-  var ARCO_Data: Boolean = false
+  private var ARCO_Data: Boolean = false
+  def getARCO_Data: Boolean = {return ARCO_Data}
+  def setARCO_Data(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setARCO_Data, definition is close")
+    else
+      ARCO_Data = value
+  }
   
-  var DQ_MinLen: Integer = null
-  var DQ_MaxLen: Integer = null
+  private var DQ_MinLen: Integer = null
+  def getDQ_MinLen: Integer = {return DQ_MinLen}
+  def setDQ_MinLen(value: Integer) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setDQ_MinLen, definition is close")
+    else
+      DQ_MinLen = value
+  }
   
-  var DQ_MinDecimalValue: Decimal = null
-  var DQ_MaxDecimalValue: Decimal = null
+  private var DQ_MaxLen: Integer = null
+  def getDQ_MaxLen: Integer = {return DQ_MaxLen}
+  def setDQ_MaxLen(value: Integer) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setDQ_MaxLen, definition is close")
+    else
+      DQ_MaxLen = value
+  }
+  
+  private var DQ_MinDecimalValue: Decimal = null
+  def getDQ_MinDecimalValue: Decimal = {return DQ_MinDecimalValue}
+  def setDQ_MinDecimalValue(value: Decimal) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setDQ_MinDecimalValue, definition is close")
+    else
+      DQ_MinDecimalValue = value
+  }
+  
+  private var DQ_MaxDecimalValue: Decimal = null
+  def getDQ_MaxDecimalValue: Decimal = {return DQ_MaxDecimalValue}
+  def setDQ_MaxDecimalValue(value: Decimal) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setDQ_MaxDecimalValue, definition is close")
+    else
+      DQ_MaxDecimalValue = value
+  }
   
   /**Format: YYYY-MM-DD HH:mm:ss or fieldName   
    */
-  var DQ_MinDateTimeValue: String = null
+  private var DQ_MinDateTimeValue: String = null
+  def getDQ_MinDateTimeValue: String = {return DQ_MinDateTimeValue}
+  def setDQ_MinDateTimeValue(value: String) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setDQ_MinDateTimeValue, definition is close")
+    else
+      DQ_MinDateTimeValue = value
+  }
+  
   /**Format: YYYY-MM-DD HH:mm:ss or fieldName   
    */
-  var DQ_MaxDateTimeValue: String = null
+  private var DQ_MaxDateTimeValue: String = null
+  def getDQ_MaxDateTimeValue: String = {return DQ_MaxDateTimeValue}
+  def setDQ_MaxDateTimeValue(value: String) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setDQ_MaxDateTimeValue, definition is close")
+    else
+      DQ_MaxDateTimeValue = value
+  }
   
   /**
    save old value when new value arrive 
    */
-  var MDM_EnableOldValue: Boolean = false
+  private var MDM_EnableOldValue: Boolean = false
+  def getMDM_EnableOldValue: Boolean = {return MDM_EnableOldValue}
+  def setMDM_EnableOldValue(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setMDM_EnableOldValue, definition is close")
+    else
+      MDM_EnableOldValue = value
+  }
   /**
    create a new field with datetime log for change value
    */
-  var MDM_EnableDTLog: Boolean = false
+  private var MDM_EnableDTLog: Boolean = false
+  def getMDM_EnableDTLog: Boolean = {return MDM_EnableDTLog}
+  def setMDM_EnableDTLog(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setMDM_EnableDTLog, definition is close")
+    else
+      MDM_EnableDTLog = value
+  }
+  
   /**
    create a new field with Process Log for change value
    */
-  var MDM_EnableProcessLog: Boolean = false
-  
-  
+  private var MDM_EnableProcessLog: Boolean = false
+  def getMDM_EnableProcessLog: Boolean = {return MDM_EnableProcessLog}
+  def setMDM_EnableProcessLog(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setMDM_EnableProcessLog, definition is close")
+    else
+      MDM_EnableProcessLog = value
+  }  
    
   
   //user mapping attributes

@@ -351,21 +351,23 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val DataField = x.get(this).asInstanceOf[huemul_Columns]
         DataField.Set_MyName(x.getName)
         
-        if (DataField.DQ_MaxLen != null && DataField.DQ_MaxLen < 0)
+        if (DataField.getDQ_MaxLen != null && DataField.getDQ_MaxLen < 0)
           RaiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive",1003)
-        else if (DataField.DQ_MaxLen != null && DataField.DQ_MinLen != null && DataField.DQ_MaxLen < DataField.DQ_MinLen)
-          RaiseError(s"Error column ${x.getName}: DQ_MinLen(${DataField.DQ_MinLen}) must be less than DQ_MaxLen(${DataField.DQ_MaxLen})",1028)
-        else if (DataField.DQ_MaxDecimalValue != null && DataField.DQ_MinDecimalValue != null && DataField.DQ_MaxDecimalValue < DataField.DQ_MinDecimalValue)
-          RaiseError(s"Error column ${x.getName}: DQ_MinDecimalValue(${DataField.DQ_MinDecimalValue}) must be less than DQ_MaxDecimalValue(${DataField.DQ_MaxDecimalValue})",1029)
-        else if (DataField.DQ_MaxDateTimeValue != null && DataField.DQ_MinDateTimeValue != null && DataField.DQ_MaxDateTimeValue < DataField.DQ_MinDateTimeValue)
-          RaiseError(s"Error column ${x.getName}: DQ_MinDateTimeValue(${DataField.DQ_MinDateTimeValue}) must be less than DQ_MaxDateTimeValue(${DataField.DQ_MaxDateTimeValue})",1030)
-        else if (DataField.DefaultValue != null && DataField.DataType == StringType && DataField.DefaultValue.toUpperCase() != "NULL" && !DataField.DefaultValue.contains("'"))
+        else if (DataField.getDQ_MaxLen != null && DataField.getDQ_MinLen != null && DataField.getDQ_MaxLen < DataField.getDQ_MinLen)
+          RaiseError(s"Error column ${x.getName}: DQ_MinLen(${DataField.getDQ_MinLen}) must be less than DQ_MaxLen(${DataField.getDQ_MaxLen})",1028)
+        else if (DataField.getDQ_MaxDecimalValue != null && DataField.getDQ_MinDecimalValue != null && DataField.getDQ_MaxDecimalValue < DataField.getDQ_MinDecimalValue)
+          RaiseError(s"Error column ${x.getName}: DQ_MinDecimalValue(${DataField.getDQ_MinDecimalValue}) must be less than DQ_MaxDecimalValue(${DataField.getDQ_MaxDecimalValue})",1029)
+        else if (DataField.getDQ_MaxDateTimeValue != null && DataField.getDQ_MinDateTimeValue != null && DataField.getDQ_MaxDateTimeValue < DataField.getDQ_MinDateTimeValue)
+          RaiseError(s"Error column ${x.getName}: DQ_MinDateTimeValue(${DataField.getDQ_MinDateTimeValue}) must be less than DQ_MaxDateTimeValue(${DataField.getDQ_MaxDateTimeValue})",1030)
+        else if (DataField.getDefaultValue != null && DataField.DataType == StringType && DataField.getDefaultValue.toUpperCase() != "NULL" && !DataField.getDefaultValue.contains("'"))
           RaiseError(s"Error column ${x.getName}: DefaultValue  must be like this: 'something', not something wihtout ')",1031)
           
-        if (DataField.IsPK) {
-          DataField.Nullable = false
+        if (DataField.getIsPK) {
+          DataField.setNullable(false)
           HasPK = true
         }
+        
+        DataField.SetDefinitionIsClose()
         
       }
       
@@ -446,15 +448,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
       //create StructType
-      fieldsStruct.append( StructField(x.getName, Field.DataType , nullable = Field.Nullable , null))
+      fieldsStruct.append( StructField(x.getName, Field.DataType , nullable = Field.getNullable , null))
 
-      if (Field.MDM_EnableOldValue) {
+      if (Field.getMDM_EnableOldValue) {
         fieldsStruct.append( StructField(x.getName + "_old", Field.DataType , nullable = true , null))
       }
-      if (Field.MDM_EnableDTLog) {
+      if (Field.getMDM_EnableDTLog) {
         fieldsStruct.append( StructField(x.getName + "_fhChange", TimestampType , nullable = true , null))
       }
-      if (Field.MDM_EnableProcessLog) {
+      if (Field.getMDM_EnableProcessLog) {
         fieldsStruct.append( StructField(x.getName + "_ProcessLog", StringType , nullable = true , null))
       }
       
@@ -517,17 +519,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Result.append(Field)
                       
       
-      if (Field.MDM_EnableOldValue) {
+      if (Field.getMDM_EnableOldValue) {
         val MDM_EnableOldValue = new huemul_Columns(Field.DataType, false, s"Old value for ${x.getName}")
         MDM_EnableOldValue.Set_MyName(s"${x.getName}_Old")
         Result.append(MDM_EnableOldValue)        
       } 
-      if (Field.MDM_EnableDTLog){
+      if (Field.getMDM_EnableDTLog){
         val MDM_EnableDTLog = new huemul_Columns(TimestampType, false, s"Last change DT for ${x.getName}")
         MDM_EnableDTLog.Set_MyName(s"${x.getName}_fhChange")
         Result.append(MDM_EnableDTLog)                
       } 
-      if (Field.MDM_EnableProcessLog) {
+      if (Field.getMDM_EnableProcessLog) {
         val MDM_EnableProcessLog = new huemul_Columns(StringType, false, s"System Name change for ${x.getName}")
         MDM_EnableProcessLog.Set_MyName(s"${x.getName}_ProcessLog")
         Result.append(MDM_EnableProcessLog) 
@@ -569,11 +571,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         coma = ","
       }
       
-      if (Field.MDM_EnableOldValue)
+      if (Field.getMDM_EnableOldValue)
         ColumnsCreateTable += s"$coma${x.getName}_old ${DataTypeLocal} \n"  
-      if (Field.MDM_EnableDTLog) 
+      if (Field.getMDM_EnableDTLog) 
         ColumnsCreateTable += s"$coma${x.getName}_fhChange ${TimestampType.sql} \n"  
-      if (Field.MDM_EnableProcessLog) 
+      if (Field.getMDM_EnableProcessLog) 
         ColumnsCreateTable += s"$coma${x.getName}_ProcessLog ${StringType.sql} \n"      
     }
     
@@ -590,13 +592,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var coma: String = ""
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] &&
-                                      x.get(this).asInstanceOf[huemul_Columns].IsPK }
+                                      x.get(this).asInstanceOf[huemul_Columns].getIsPK }
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
       //All PK columns shouldn't be null
-      Field.Nullable = false
+      Field.setNullable(false)
       
       if (!huemulBigDataGov.HasName(Field.get_MappedName()))
         sys.error(s"field ${x.getName} doesn't have an assigned name in 'name' attribute")
@@ -652,7 +654,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           
        
       if (Field.UsedForCheckSum) {
-        StringSQL_hash += s"""${coma_hash}${if (Field.Nullable) s"coalesce(${Field.get_MappedName()},'null')" else Field.get_MappedName()}"""
+        StringSQL_hash += s"""${coma_hash}${if (Field.getNullable) s"coalesce(${Field.get_MappedName()},'null')" else Field.get_MappedName()}"""
         coma_hash = ","
       }
       
@@ -731,7 +733,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
       //string for key on
-      if (Field.IsPK){
+      if (Field.getIsPK){
         val NewPKSentence = if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} )" else NewColumnCast
         StringSQL_FullJoin += s"${coma}CAST(coalesce(Old.${x.getName}, ${NewPKSentence}) as ${Field.DataType.sql}) AS ${x.getName} \n"
         StringSQl_PK += s" $sand Old.${x.getName} = ${NewPKSentence}  " 
@@ -757,7 +759,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (huemulBigDataGov.HasName(Field.get_SQLForUpdate()))
           StringSQL_FullJoin += s",CAST(${Field.get_SQLForUpdate()} as ${Field.DataType.sql} ) as new_update_${x.getName} \n"
           
-        if (Field.MDM_EnableOldValue || Field.MDM_EnableDTLog || Field.MDM_EnableProcessLog) {
+        if (Field.getMDM_EnableOldValue || Field.getMDM_EnableDTLog || Field.getMDM_EnableProcessLog) {
           //Change field, take update field if exist, otherwise use get_name()
           if (huemulBigDataGov.HasName(Field.get_MappedName())) {
             val NewFieldTXT = ApplyAutoCast(if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),Field.DataType.sql)
@@ -772,19 +774,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
               
         }
       
-        if (Field.MDM_EnableOldValue){
+        if (Field.getMDM_EnableOldValue){
           if (OfficialColumns.filter { y => y.name == s"${x.getName}_old"}.length == 0) //no existe columna en dataframe
             StringSQL_FullJoin += s",CAST(null AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
           else //existe columna en dataframe
             StringSQL_FullJoin += s",CAST(old.${x.getName}_old AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
         }
-        if (Field.MDM_EnableDTLog){
+        if (Field.getMDM_EnableDTLog){
           if (OfficialColumns.filter { y => y.name == s"${x.getName}_fhChange"}.length == 0) //no existe columna en dataframe
             StringSQL_FullJoin += s",CAST(null AS TimeStamp) as old_${x.getName}_fhChange \n"
           else //existe columna en dataframe
             StringSQL_FullJoin += s",CAST(old.${x.getName}_fhChange AS TimeStamp) as old_${x.getName}_fhChange \n"
         }
-        if (Field.MDM_EnableProcessLog){
+        if (Field.getMDM_EnableProcessLog){
           if (OfficialColumns.filter { y => y.name == s"${x.getName}_ProcessLog"}.length == 0) //no existe columna en dataframe
             StringSQL_FullJoin += s",CAST(null AS STRING) as old_${x.getName}_ProcessLog \n"
           else //existe columna en dataframe
@@ -826,7 +828,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
       //string for key on
-      if (Field.IsPK){
+      if (Field.getIsPK){
         StringSQL += s" ${coma}${x.getName} as ${x.getName} \n"
         
       } else {
@@ -837,7 +839,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         else {          
           StringSQL += s""" ${coma}CASE WHEN ___ActionType__ = 'NEW'    THEN ${if (this.huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"new_insert_${x.getName}" //si tiene valor en SQL insert, lo usa
                                                                                else if (this.huemulBigDataGov.HasName(Field.get_MappedName())) s"new_${x.getName}"     //si no, si tiene nombre de campo en DataFrame nuevo, lo usa 
-                                                                               else ApplyAutoCast(Field.DefaultValue,Field.DataType.sql)                        //si no tiene campo asignado, pone valor por default
+                                                                               else ApplyAutoCast(Field.getDefaultValue,Field.DataType.sql)                        //si no tiene campo asignado, pone valor por default
                                                                            }
                                         WHEN ___ActionType__ = 'UPDATE' THEN ${if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) s"new_update_${x.getName}"  //si tiene valor en SQL update, lo usa
                                                                                else if (Field.get_ReplaceValueOnUpdate() && this.huemulBigDataGov.HasName(Field.get_MappedName())) s"new_${x.getName}"  //Si hay que reemplaar el valor antiguo con uno nuevo, y está seteado un campo en del dataframe, lo usa
@@ -845,11 +847,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                                            }
                                         ELSE old_${x.getName} END  as ${x.getName} \n"""
                 
-           if (Field.MDM_EnableOldValue)
+           if (Field.getMDM_EnableOldValue)
              StringSQL += s""",CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN old_${x.getName} ELSE old_${x.getName}_old END as ${x.getName}_old \n"""
-           if (Field.MDM_EnableDTLog)
+           if (Field.getMDM_EnableDTLog)
              StringSQL += s""",CAST(CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN now() ELSE old_${x.getName}_fhChange END AS TimeStamp) as ${x.getName}_fhChange \n"""
-           if (Field.MDM_EnableProcessLog)
+           if (Field.getMDM_EnableProcessLog)
              StringSQL += s""",CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN '${ProcessName}' WHEN ___ActionType__ = 'NEW' THEN '${ProcessName}' ELSE old_${x.getName}_ProcessLog END as ${x.getName}_ProcessLog \n"""             
         }
       }
@@ -895,15 +897,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       else 
         StringSQL += s" ${coma}${x.getName}  \n"
         
-      if (Field.MDM_EnableOldValue)
+      if (Field.getMDM_EnableOldValue)
         StringSQL += s""",${x.getName}_old \n"""
-      if (Field.MDM_EnableDTLog)
+      if (Field.getMDM_EnableDTLog)
         StringSQL += s""",${x.getName}_fhChange \n"""
-      if (Field.MDM_EnableProcessLog)
+      if (Field.getMDM_EnableProcessLog)
         StringSQL += s""",${x.getName}_ProcessLog \n"""
        
       if (Field.UsedForCheckSum) {
-        StringSQL_hash += s"""${coma_hash}${if (Field.Nullable) s"coalesce(${x.getName},'null')" else x.getName}"""
+        StringSQL_hash += s"""${coma_hash}${if (Field.getNullable) s"coalesce(${x.getName},'null')" else x.getName}"""
         coma_hash = ","
       }
         
@@ -959,11 +961,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       else 
         StringSQL += s" ${coma}${x.getName}  \n"
         
-      if (Field.MDM_EnableOldValue)
+      if (Field.getMDM_EnableOldValue)
         StringSQL += s""",${x.getName}_old \n"""
-      if (Field.MDM_EnableDTLog)
+      if (Field.getMDM_EnableDTLog)
         StringSQL += s""",${x.getName}_fhChange \n"""
-      if (Field.MDM_EnableProcessLog)
+      if (Field.getMDM_EnableProcessLog)
         StringSQL += s""",${x.getName}_ProcessLog \n"""
        
        
@@ -985,7 +987,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var StringSQL: ArrayBuffer[String] = new ArrayBuffer[String]()
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                          x.get(this).isInstanceOf[huemul_Columns] &&
-                                         x.get(this).asInstanceOf[huemul_Columns].IsUnique && huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
+                                         x.get(this).asInstanceOf[huemul_Columns].getIsUnique && huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
@@ -1003,7 +1005,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var StringSQL: ArrayBuffer[huemul_Columns] = new ArrayBuffer[huemul_Columns]()
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                           x.get(this).isInstanceOf[huemul_Columns] &&
-                                         !x.get(this).asInstanceOf[huemul_Columns].Nullable && huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
+                                         !x.get(this).asInstanceOf[huemul_Columns].getNullable && huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
@@ -1233,17 +1235,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
 
   
     //VAlidación DQ máximo y mínimo largo de texto
-    GetColumns().filter { x => x.DQ_MinLen != null || x.DQ_MaxLen != null  }.foreach { x => 
+    GetColumns().filter { x => x.getDQ_MinLen != null || x.getDQ_MaxLen != null  }.foreach { x => 
         var SQLFormula : String = ""
 
         var tand = ""
-        if (x.DQ_MinLen != null){
-          SQLFormula += s"length(${x.get_MyName()}) >= ${x.DQ_MinLen}"
+        if (x.getDQ_MinLen != null){
+          SQLFormula += s"length(${x.get_MyName()}) >= ${x.getDQ_MinLen}"
           tand = " and "
         }
         
-        if (x.DQ_MaxLen != null)
-          SQLFormula += s" $tand length(${x.get_MyName()}) <= ${x.DQ_MaxLen}"
+        if (x.getDQ_MaxLen != null)
+          SQLFormula += s" $tand length(${x.get_MyName()}) <= ${x.getDQ_MaxLen}"
                   
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax length Column ${x.get_MyName()}",SQLFormula, 1020 )
@@ -1252,17 +1254,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //VAlidación DQ máximo y mínimo de números
-    GetColumns().filter { x => x.DQ_MinDecimalValue != null || x.DQ_MaxDecimalValue != null  }.foreach { x => 
+    GetColumns().filter { x => x.getDQ_MinDecimalValue != null || x.getDQ_MaxDecimalValue != null  }.foreach { x => 
         
         var SQLFormula : String = ""
         var tand = ""
-        if (x.DQ_MinDecimalValue != null){
-          SQLFormula += s"${x.get_MyName()} >= ${x.DQ_MinDecimalValue}"
+        if (x.getDQ_MinDecimalValue != null){
+          SQLFormula += s"${x.get_MyName()} >= ${x.getDQ_MinDecimalValue}"
           tand = " and "
         }
         
-        if (x.DQ_MaxDecimalValue != null)
-          SQLFormula += s" $tand ${x.get_MyName()} <= ${x.DQ_MaxDecimalValue}"
+        if (x.getDQ_MaxDecimalValue != null)
+          SQLFormula += s" $tand ${x.get_MyName()} <= ${x.getDQ_MaxDecimalValue}"
         
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax Number Column ${x.get_MyName()}", SQLFormula,1021)
@@ -1271,17 +1273,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //VAlidación DQ máximo y mínimo de fechas
-    GetColumns().filter { x => x.DQ_MinDateTimeValue != null || x.DQ_MaxDateTimeValue != null  }.foreach { x => 
+    GetColumns().filter { x => x.getDQ_MinDateTimeValue != null || x.getDQ_MaxDateTimeValue != null  }.foreach { x => 
         
         var SQLFormula : String = ""
         var tand = ""
-        if (x.DQ_MinDateTimeValue != null){
-          SQLFormula += s"${x.get_MyName()} >= '${x.DQ_MinDateTimeValue}'"
+        if (x.getDQ_MinDateTimeValue != null){
+          SQLFormula += s"${x.get_MyName()} >= '${x.getDQ_MinDateTimeValue}'"
           tand = " and "
         }
         
-        if (x.DQ_MaxDateTimeValue != null)
-          SQLFormula += s" $tand ${x.get_MyName()} <= '${x.DQ_MaxDateTimeValue}'"
+        if (x.getDQ_MaxDateTimeValue != null)
+          SQLFormula += s" $tand ${x.get_MyName()} <= '${x.getDQ_MaxDateTimeValue}'"
           
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
         val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax DateTime Column ${x.get_MyName()} ", SQLFormula, 1022)
