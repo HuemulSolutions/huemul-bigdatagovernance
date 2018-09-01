@@ -44,7 +44,7 @@ class huemul_Columns(param_DataType: DataType
   private var Nullable: Boolean = false
   def getNullable: Boolean = {return Nullable}
   def setNullable(value: Boolean) {
-    if (DefinitionIsClose)
+    if (DefinitionIsClose && value)
       sys.error("You can't change value of setNullable, definition is close")
     else
       Nullable = value
