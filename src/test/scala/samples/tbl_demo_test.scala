@@ -46,7 +46,7 @@ class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_
   
   codigo_id.setMDM_EnableOldValue ( false)
   codigo_id.setMDM_EnableDTLog( false)
-  codigo_id.setMDM_EnableProcessLog( true)
+  codigo_id.setMDM_EnableProcessLog( false)
   
   
   

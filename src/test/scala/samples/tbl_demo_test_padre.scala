@@ -48,7 +48,7 @@ class tbl_demo_test_padre(huemulBigDataGov: huemul_BigDataGovernance, Control: h
   
   miClave_id.setMDM_EnableOldValue ( false)
   miClave_id.setMDM_EnableDTLog( false)
-  miClave_id.setMDM_EnableProcessLog( true)
+  miClave_id.setMDM_EnableProcessLog( false)
   
   val codigo_id_aca: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo fk")
   
