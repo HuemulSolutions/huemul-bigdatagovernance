@@ -439,8 +439,8 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   ${
   if (TableType == huemulType_Tables.Transaction) {
   s"""  //Columna de periodo
-  val periodo_${if (EsMes) "mes" else "dia"}" = new huemul_Columns (StringType, true,"periodo de los datos")
-  periodo_${if (EsMes) "mes" else "dia"}".IsPK = true
+  val periodo_${if (EsMes) "mes" else "dia"} = new huemul_Columns (StringType, true,"periodo de los datos")
+  periodo_${if (EsMes) "mes" else "dia"}".setIsPK(true)
   """
   } else ""}  
     
@@ -462,9 +462,9 @@ ${LocalColumns}
   //yourColumn.setEncryptedType("tipo")
     
   //**********Ejemplo para aplicar DataQuality de Integridad Referencial
-  //var tbl_[[PK]] = new tbl_[[PK]](huemulBigDataGov,Control)
-  //var fk_[[LocalField]] = new huemul_Table_Relationship(huemulBigDataGov,tbl_[[PK]], false)
-  //fk_[[LocalField]].AddRelationship(tbl_[[PK]].[[PK_Id]], [[LocalField]_Id)
+  //var i[[tbl_PK]] = new [[tbl_PK]](huemulBigDataGov,Control)
+  //var fk_[[LocalField]] = new huemul_Table_Relationship(i[[tbl_PK]], false)
+  //fk_[[LocalField]].AddRelationship(i[[tbl_PK]].[[PK_Id]], [[LocalField]_Id)
     
   //**********Ejemplo para agregar reglas de DataQuality Avanzadas  -->ColumnXX puede ser null si la validacion es a nivel de tabla
   //**************Parametros
