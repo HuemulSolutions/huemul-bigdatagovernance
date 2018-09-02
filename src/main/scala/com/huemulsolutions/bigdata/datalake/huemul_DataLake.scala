@@ -321,18 +321,18 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
 /** Genera el codigo inicial para una tabla y el proceso que masteriza dicha tabla
  *
  *  @param Param_PackageBase es el package base (ejemplo: your.application)
+ *  @param PackageProject es la ruta del package del proyecto (ejemplo "sbif")
  *  @param Param_ObjectName es el nombre de objeto que tendra tu masterizacion "[[modulo]]_[[entidad]]_procesa" (ejemplo comun_institucion_procesa )
  *  @param TableName es el nombre de la tabla "tbl_[[modulo]]_[[entidad]]" (ejemplo tbl_comun_institucion)
- *  @param LocalPath es la ruta donde se guardara el archivo HDFS en el cluster (ejemplo "comun/"), recurda que la ruta base se identifica en globalPath
  *  @param TableType es el tipo de tabla (master y reference para tablas maestras, Transaction para tablas particionadas por periodo con informacion transaccional)
  *  @param EsMes indica si la tabla transaccional tiene particion mensual o diaria
  *  @param AutoMapping true para indicar que los nombres de columnas en raw son iguales a la tabla, indicar false si los nombres de columnas en raw son distintos a tabla 
  */
-def GenerateInitialCode(PackageBase: String, NewObjectName: String, NewTableName: String, localPath: String, TableType: huemulType_Tables , EsMes: Boolean, AutoMapping: Boolean = true) {
+def GenerateInitialCode(PackageBase: String, PackageProject: String, NewObjectName: String, NewTableName: String, TableType: huemulType_Tables , EsMes: Boolean, AutoMapping: Boolean = true) {
     val Symbol: String = "$"
     val Comas: String = "\"\"\""
     val Coma: String = "\""
-    val LocalPath: String = if (localPath.reverse.substring(0, 1) == "/") localPath.substring(0, localPath.length()-1) else localPath
+    val LocalPath: String = PackageProject.replace(".", "/").concat("/")
     //reemplaza caracteres no deseados a nombre de la clase.
     val param_ObjectName = NewObjectName.replace("$", "")
     val param_PackageBase = PackageBase.replace("$", "")
@@ -348,24 +348,24 @@ def GenerateInitialCode(PackageBase: String, NewObjectName: String, NewTableName
       LocalMapping += s"  huemulTable.${x.getcolumnName_Business}.SetMapping(${Coma}${x.getcolumnName_Business}${Coma})\n"
        
       LocalColumns += s"  val ${x.getcolumnName_Business} = new huemul_Columns (${x.getDataType}, true, ${Coma}${x.getDescription}${Coma}) \n"
-      LocalColumns += s"  ${x.getcolumnName_Business}.ARCO_Data = false  \n"
-      LocalColumns += s"  ${x.getcolumnName_Business}.SecurityLevel = huemulType_SecurityLevel.Public  \n"
+      LocalColumns += s"  ${x.getcolumnName_Business}.setARCO_Data(false)  \n"
+      LocalColumns += s"  ${x.getcolumnName_Business}.setSecurityLevel(huemulType_SecurityLevel.Public)  \n"
 
       if (TableType == huemulType_Tables.Master || TableType == huemulType_Tables.Reference) {
-        LocalColumns += s"  ${x.getcolumnName_Business}.MDM_EnableOldValue = true  \n"
-        LocalColumns += s"  ${x.getcolumnName_Business}.MDM_EnableDTLog = true  \n"
-        LocalColumns += s"  ${x.getcolumnName_Business}.MDM_EnableProcessLog = true  \n"
+        LocalColumns += s"  ${x.getcolumnName_Business}.setMDM_EnableOldValue(true)  \n"
+        LocalColumns += s"  ${x.getcolumnName_Business}.setMDM_EnableDTLog(true)  \n"
+        LocalColumns += s"  ${x.getcolumnName_Business}.setMDM_EnableProcessLog(true)  \n"
       }
       
       if (huemulBigDataGov.IsNumericType(x.getDataType)) {
-        LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MinDecimalValue = Decimal.apply(0)  \n"
-        LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MaxDecimalValue = Decimal.apply(200.34)  \n"
+        LocalColumns += s"  //${x.getcolumnName_Business}.setDQ_MinDecimalValue(Decimal.apply(0))  \n"
+        LocalColumns += s"  //${x.getcolumnName_Business}.setDQ_MaxDecimalValue(Decimal.apply(200.34))  \n"
       } else if (huemulBigDataGov.IsDateType(x.getDataType)) {
-        LocalColumns += s"""  //${x.getcolumnName_Business}.DQ_MinDateTimeValue = "2018-01-01"  \n"""
-        LocalColumns += s"""  //${x.getcolumnName_Business}.DQ_MaxDateTimeValue = "2018-12-31"  \n"""
+        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MinDateTimeValue("2018-01-01")  \n"""
+        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MaxDateTimeValue("2018-12-31")  \n"""
       } else if (x.getDataType == StringType) {
-        LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MinLen = 5 \n"
-        LocalColumns += s"  //${x.getcolumnName_Business}.DQ_MaxLen = 100  \n"
+        LocalColumns += s"  //${x.getcolumnName_Business}.setDQ_MinLen(5) \n"
+        LocalColumns += s"  //${x.getcolumnName_Business}.setDQ_MaxLen(100)  \n"
       }
       
       LocalColumns += s"\n"
@@ -382,7 +382,7 @@ def GenerateInitialCode(PackageBase: String, NewObjectName: String, NewTableName
 /*
 instrucciones (parte a):
    1. Crear una clase en el packete que contiene las tablas (${param_PackageBase}.tables.master) con el nombre "${NewTableName}"
-   2. copiar el codigo desde estas instrucciones hasta ***    M A S T E R   P R O C E S S     ***
+   2. copiar el codigo desde estas instrucciones hasta ***    M A S T E R   P R O C E S S     *** y pegarlo en "${NewTableName}"
    3. Revisar detalladamente la configuracion de la tabla
       3.1 busque el texto "[[LLENAR ESTE CAMPO]]" y reemplace la descripcion segun corresponda 
    4. seguir las instrucciones "parte b"
@@ -392,7 +392,6 @@ import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import com.huemulsolutions.bigdata.tables._
 import com.huemulsolutions.bigdata.dataquality._
-import org.apache.spark.sql.types.DataTypes._
 import org.apache.spark.sql.types._
 
 
@@ -428,7 +427,7 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     
   /**********   S E G U R I D A D   ****************************************/
   //Solo estos package y clases pueden ejecutar en modo full, si no se especifica todos pueden invocar
-  //this.WhoCanRun_executeFull_addAccess("[[MyclassName]]", "[[my.package.path]]")
+  //this.WhoCanRun_executeFull_addAccess("${param_ObjectName}", "${PackageBase}.${PackageProject}")
   //Solo estos package y clases pueden ejecutar en modo solo Insert, si no se especifica todos pueden invocar
   //this.WhoCanRun_executeOnlyInsert_addAccess("[[MyclassName]]", "[[my.package.path]]")
   //Solo estos package y clases pueden ejecutar en modo solo Update, si no se especifica todos pueden invocar
@@ -448,19 +447,19 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
 ${LocalColumns}
 
   //**********Atributos adicionales de DataQuality
-  //yourColumn.IsPK = false //valor por default en cada campo es false
-  //yourColumn.IsUnique = false //valor por default en cada campo es false
-  //yourColumn.Nullable = false //valor por default en cada campo es false
-  //yourColumn.IsUnique = false //valor por default en cada campo es false
-  //yourColumn.DQ_MinDecimalValue = Decimal.apply(0)
-  //yourColumn.DQ_MaxDecimalValue = Decimal.apply(200.34)
-  //yourColumn.DQ_MinDateTimeValue = "2018-01-01"
-  //yourColumn.DQ_MaxDateTimeValue = "2018-12-31"
-  //yourColumn.DQ_MinLen = 5
-  //yourColumn.DQ_MaxLen = 100
+  //yourColumn.setsetIsPK(true) //valor por default en cada campo es false
+  //yourColumn.setIsUnique(true) //valor por default en cada campo es false
+  //yourColumn.setNullable(true) //valor por default en cada campo es false
+  //yourColumn.setIsUnique(true) //valor por default en cada campo es false
+  //yourColumn.setDQ_MinDecimalValue(Decimal.apply(0))
+  //yourColumn.setDQ_MaxDecimalValue(Decimal.apply(200.0))
+  //yourColumn.setDQ_MinDateTimeValue("2018-01-01")
+  //yourColumn.setDQ_MaxDateTimeValue("2018-12-31")
+  //yourColumn.setDQ_MinLen(5)
+  //yourColumn.setDQ_MaxLen(100)
   //**********Otros atributos
-  //yourColumn.DefaultValue = "'string'" // "10" // "'2018-01-01'"
-  //yourColumn.EncryptedType = "tipo"
+  //yourColumn.setDefaultValue("'string'") // "10" // "'2018-01-01'"
+  //yourColumn.setEncryptedType("tipo")
     
   //**********Ejemplo para aplicar DataQuality de Integridad Referencial
   //var tbl_[[PK]] = new tbl_[[PK]](huemulBigDataGov,Control)
@@ -495,20 +494,19 @@ ${LocalColumns}
 /*
 instrucciones (parte b):
    1. Crear un objeto en el packete de su aplicacion (ejemplo ${param_PackageBase}.${LocalPath.replace("/", ".")}) con un nombre segun su nomenclatura (ejemplo ${param_ObjectName})
-   2. Copie el codigo desde MASTER PROCESS hasta el final
+   2. Copia el codigo desde MASTER PROCESS hasta el final y pégalo en el objeto creado en el paso 1
    3. agregar import del package que contiene GlobalSettings
    4. cambiar el import you.package.tables._ por el nombre del paquete que contiene la definicion de la tabla.
-   5. seguir las instrucciones del codigo Class que viene a continuacion.
 */
 
-package ${param_PackageBase}.[[${LocalPath.replace("/", ".")}]]
+package ${param_PackageBase}.${PackageProject}
 
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import java.util.Calendar;
 import org.apache.spark.sql.types._
 import ${param_PackageBase}.tables.master._
-import ${param_PackageBase}.[[${LocalPath.replace("/", ".")}]].raw._
+import ${param_PackageBase}.${PackageProject}.raw._
 
 //import com.huemulsolutions.bigdata.tables._
 //import com.huemulsolutions.bigdata.dataquality._
@@ -560,6 +558,8 @@ object ${param_ObjectName} {
     procesa_master(huemulBigDataGov, null, param_ano, param_mes, param_dia)
     """
     }
+    
+    huemulBigDataGov.close
   }
   
   /**
@@ -579,7 +579,7 @@ object ${param_ObjectName} {
       /*************** ABRE RAW DESDE DATALAKE **********************/
       Control.NewStep("Abre DataLake")  
       var DF_RAW =  new ${this.getClass.getSimpleName.replace("_test", "")}(huemulBigDataGov)
-      if (DF_RAW.open("DF_RAW", Control, param_ano, param_mes, ${if (EsMes) "1" else "param_dia"}, 0, 0, 0))       
+      if (!DF_RAW.open("DF_RAW", Control, param_ano, param_mes, ${if (EsMes) "1" else "param_dia"}, 0, 0, 0))       
         Control.RaiseError(s"error encontrado, abortar: ${Symbol}{DF_RAW.Error.ControlError_Message}")
       
       
