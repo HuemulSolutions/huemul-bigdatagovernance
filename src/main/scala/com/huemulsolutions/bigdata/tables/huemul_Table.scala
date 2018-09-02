@@ -365,6 +365,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (DataField.getIsPK) {
           DataField.setNullable(false)
           HasPK = true
+          
+          if (DataField.getMDM_EnableDTLog || DataField.getMDM_EnableOldValue || DataField.getMDM_EnableProcessLog) {
+            RaiseError(s"Error column ${x.getName}:, is PK, can't enabled MDM_EnableDTLog, MDM_EnableOldValue or MDM_EnableProcessLog",1040)
+          }
         }
         
         DataField.SetDefinitionIsClose()
