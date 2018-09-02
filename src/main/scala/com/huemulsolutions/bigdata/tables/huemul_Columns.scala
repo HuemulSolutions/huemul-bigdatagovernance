@@ -148,6 +148,17 @@ class huemul_Columns(param_DataType: DataType
       DQ_MaxDateTimeValue = value
   }
   
+   /** Validate Regular Expression
+   */
+  private var DQ_RegExp: String = null //none, sha2,
+  def getDQ_RegExp: String = {return DQ_RegExp}
+  def setDQ_RegExp(value: String) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setDQ_RegExp, definition is close")
+    else
+      DQ_RegExp = value
+  }
+  
   /**
    save old value when new value arrive 
    */

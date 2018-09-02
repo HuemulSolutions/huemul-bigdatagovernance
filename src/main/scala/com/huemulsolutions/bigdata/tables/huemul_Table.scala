@@ -1236,8 +1236,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         NotNullDQ.setTolerance(0, null)
         ArrayDQ.append(NotNullDQ)
     }
+    
+    //VAlidación DQ_RegExp
+    GetColumns().filter { x => x.getDQ_RegExp != null}.foreach { x => 
+        var SQLFormula : String = s"""${x.get_MyName()} rlike "${x.getDQ_RegExp}" """
 
-  
+        var tand = ""
+                  
+        SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
+        val RegExp : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: RegExp Column ${x.get_MyName()}",SQLFormula, 1041 )
+        
+        RegExp.setTolerance(0, null)
+        ArrayDQ.append(RegExp)
+    }
+    
+   
     //VAlidación DQ máximo y mínimo largo de texto
     GetColumns().filter { x => x.getDQ_MinLen != null || x.getDQ_MaxLen != null  }.foreach { x => 
         var SQLFormula : String = ""

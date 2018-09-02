@@ -493,6 +493,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                            , ${x.getDQ_MaxDecimalValue} --as Column_DQ_MaxValue
                            , '${x.getDQ_MinDateTimeValue}' --as Column_DQ_MinDateTimeValue
                            , '${x.getDQ_MaxDateTimeValue}' --as Column_DQ_MaxDateTimeValue
+                           , '${x.getDQ_RegExp }' --as Column_DQ_RegExp
                            ,'${Control_ClassName}'  --process_id
                       )""")        
           i += 1
