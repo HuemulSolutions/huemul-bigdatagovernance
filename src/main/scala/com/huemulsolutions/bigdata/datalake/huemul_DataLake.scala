@@ -414,11 +414,11 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   } else ""}
   /**********   S E T E O   I N F O R M A T I V O   ****************************************/
   //Nombre del contacto de TI
-  this.setDescription(" [[LLENAR ESTE CAMPO]]")
+  this.setDescription("[[LLENAR ESTE CAMPO]]")
   //Nombre del contacto de negocio
-  this.setBusiness_ResponsibleName(" [[LLENAR ESTE CAMPO]]")
+  this.setBusiness_ResponsibleName("[[LLENAR ESTE CAMPO]]")
   //Nombre del contacto de TI
-  this.setIT_ResponsibleName(" [[LLENAR ESTE CAMPO]]")
+  this.setIT_ResponsibleName("[[LLENAR ESTE CAMPO]]")
    
   /**********   D A T A   Q U A L I T Y   ****************************************/
   //DataQuality: maximo numero de filas o porcentaje permitido, dejar comentado o null en caso de no aplicar
@@ -447,7 +447,7 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
 ${LocalColumns}
 
   //**********Atributos adicionales de DataQuality
-  //yourColumn.setsetIsPK(true) //valor por default en cada campo es false
+  //yourColumn.setIsPK(true) //valor por default en cada campo es false
   //yourColumn.setIsUnique(true) //valor por default en cada campo es false
   //yourColumn.setNullable(true) //valor por default en cada campo es false
   //yourColumn.setIsUnique(true) //valor por default en cada campo es false
@@ -578,7 +578,7 @@ object ${param_ObjectName} {
       
       /*************** ABRE RAW DESDE DATALAKE **********************/
       Control.NewStep("Abre DataLake")  
-      var DF_RAW =  new ${this.getClass.getSimpleName.replace("_test", "")}(huemulBigDataGov)
+      var DF_RAW =  new ${this.getClass.getSimpleName.replace("_test", "")}(huemulBigDataGov, Control)
       if (!DF_RAW.open("DF_RAW", Control, param_ano, param_mes, ${if (EsMes) "1" else "param_dia"}, 0, 0, 0))       
         Control.RaiseError(s"error encontrado, abortar: ${Symbol}{DF_RAW.Error.ControlError_Message}")
       
@@ -591,7 +591,7 @@ object ${param_ObjectName} {
       
       Control.NewStep("Generar Logica de Negocio")
       huemulTable.DF_from_SQL("FinalRAW"
-                          , s${Comas}SELECT TO_DATE("${Symbol}{param_ano}-${Symbol}{param_mes}-${if (EsMes) "1" else s"${Symbol}{param_dia}"}) as periodo_${if (EsMes) "mes" else "dia"}
+                          , s${Comas}SELECT TO_DATE("${Symbol}{param_ano}-${Symbol}{param_mes}-${if (EsMes) "1" else s"${Symbol}{param_dia}"}") as periodo_${if (EsMes) "mes" else "dia"}
 ${LocalFields}
                                FROM DF_RAW${Comas})
       
