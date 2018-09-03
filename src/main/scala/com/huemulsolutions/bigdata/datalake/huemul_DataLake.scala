@@ -440,7 +440,7 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   if (TableType == huemulType_Tables.Transaction) {
   s"""  //Columna de periodo
   val periodo_${if (EsMes) "mes" else "dia"} = new huemul_Columns (StringType, true,"periodo de los datos")
-  periodo_${if (EsMes) "mes" else "dia"}".setIsPK(true)
+  periodo_${if (EsMes) "mes" else "dia"}.setIsPK(true)
   """
   } else ""}  
     
@@ -462,9 +462,9 @@ ${LocalColumns}
   //yourColumn.setEncryptedType("tipo")
     
   //**********Ejemplo para aplicar DataQuality de Integridad Referencial
-  //var i[[tbl_PK]] = new [[tbl_PK]](huemulBigDataGov,Control)
-  //var fk_[[LocalField]] = new huemul_Table_Relationship(i[[tbl_PK]], false)
-  //fk_[[LocalField]].AddRelationship(i[[tbl_PK]].[[PK_Id]], [[LocalField]_Id)
+  //val i[[tbl_PK]] = new [[tbl_PK]](huemulBigDataGov,Control)
+  //val fk_[[tbl_PK]] = new huemul_Table_Relationship(i[[tbl_PK]], false)
+  //fk_[[tbl_PK]].AddRelationship(i[[tbl_PK]].[[PK_Id]], [[LocalField]_Id)
     
   //**********Ejemplo para agregar reglas de DataQuality Avanzadas  -->ColumnXX puede ser null si la validacion es a nivel de tabla
   //**************Parametros
@@ -506,7 +506,7 @@ import com.huemulsolutions.bigdata.control._
 import java.util.Calendar;
 import org.apache.spark.sql.types._
 import ${param_PackageBase}.tables.master._
-import ${param_PackageBase}.${PackageProject}.raw._
+import ${param_PackageBase}.${PackageProject}.datalake._
 
 //import com.huemulsolutions.bigdata.tables._
 //import com.huemulsolutions.bigdata.dataquality._
