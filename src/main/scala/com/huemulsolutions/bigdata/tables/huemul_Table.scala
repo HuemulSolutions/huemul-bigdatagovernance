@@ -635,8 +635,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
-      val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
-      
+      val NewColumnCast = ApplyAutoCast(if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"${Field.get_SQLForInsert()} " else s"New.${Field.get_MappedName()}"
+                                        ,Field.DataType.sql)
+        
       if (_PartitionField.toUpperCase() == x.getName().toUpperCase() ) {
         _PartitionCreateTable += s"${coma_partition}${_PartitionField} ${Field.DataType.sql}"
         coma_partition = ","
@@ -658,7 +659,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           
        
       if (Field.UsedForCheckSum) {
-        StringSQL_hash += s"""${coma_hash}${if (Field.getNullable) s"coalesce(${Field.get_MappedName()},'null')" else Field.get_MappedName()}"""
+        StringSQL_hash += s"""${coma_hash}${if (Field.getNullable) s"coalesce(${NewColumnCast},'null')" else NewColumnCast}"""
         coma_hash = ","
       }
       
