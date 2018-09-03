@@ -172,6 +172,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   def close() {
     application_StillAlive(this.IdApplication)
+    this.spark.catalog.clearCache()
     this.spark.close()
     if (RegisterInControl) this.postgres_connection.connection.close()
     if (ImpalaEnabled) this.impala_connection.connection.close()
