@@ -345,7 +345,7 @@ def GenerateInitialCode(PackageBase: String, PackageProject: String, NewObjectNa
    
     this.SettingByDate(0).DataSchemaConf.ColumnsDef.foreach { x => 
       LocalFields += s"                                     ,${x.getcolumnName_Business}\n"
-      LocalMapping += s"  huemulTable.${x.getcolumnName_Business}.SetMapping(${Coma}${x.getcolumnName_Business}${Coma})\n"
+      LocalMapping += s"      huemulTable.${x.getcolumnName_Business}.SetMapping(${Coma}${x.getcolumnName_Business}${Coma})\n"
        
       LocalColumns += s"  val ${x.getcolumnName_Business} = new huemul_Columns (${x.getDataType}, true, ${Coma}${x.getDescription}${Coma}) \n"
       LocalColumns += s"  ${x.getcolumnName_Business}.setARCO_Data(false)  \n"
