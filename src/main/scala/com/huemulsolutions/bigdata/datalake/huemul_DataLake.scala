@@ -229,6 +229,13 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         
         if (this.SettingInUse.FileType == huemulType_FileType.TEXT_FILE) {
           this.DataRDD = huemulBigDataGov.spark.sparkContext.textFile(this.FileName)
+          
+          if (this.DataRDD  == null) {
+            LocalErrorCode = 3009
+            this.RaiseError_RAW(s"huemul_DataLake Error: File doesn't exist ${FileName}",LocalErrorCode)
+          }     
+          println("2 first line example of file: " + this.FileName)
+          this.DataRDD.take(2).foreach { x => println(x) }
         } else {
           LocalErrorCode = 3006
           this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)
@@ -294,6 +301,10 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         println("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString())                        
     } catch {
       case e: Exception => {
+        println("codigo de error")
+        println(LocalErrorCode)
+        println(e.getMessage)
+        
         if (LocalErrorCode == null)
           LocalErrorCode = 3001
         this.Error_isError = true
