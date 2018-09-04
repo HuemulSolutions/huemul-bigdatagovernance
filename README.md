@@ -5,7 +5,7 @@ El diseño de Huemul BigDataGovernance está pensado en optimizar el tiempo de d
 
 Utilizando una metodología sólida que permite a los ingenieros de tu equipo centrar sus esfuerzos en la definición de las interfaces de entrada, la definición de las tablas y la construcción de los procesos de masterización robustos.
 
-![Branching](HuemulSolutions.github.io/huemul_pasos.png)
+<a href="HuemulSolutions.github.io/huemul_pasos.png"/>
 
 ### ¿Cómo se genera el código?
 Hay dos formas de generar el código de tu solución
