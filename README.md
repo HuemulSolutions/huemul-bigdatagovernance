@@ -1,5 +1,11 @@
 **Huemul BigDataGovernance**, es una librería que trabaja sobre Spark, Hive y HDFS. Permite la implementación de una **estrategia corporativa de dato único**, basada en buenas prácticas de Gobierno de Datos.
 
+Permite implementar tablas con control de Primary Key y Foreing Key al insertar y actualizar datos utilizando la librería, Validación de nulos, largos de textos, máximos/mínimos de números y fechas, valores únicos y valores por default. También permite clasificar los campos en aplicabilidad de derechos ARCO para facilitar la implementación de leyes de protección de datos tipo GDPR, identificar los niveles de seguridad y si se está aplicando algún tipo  de encriptación. Adicionalmente permite agregar reglas de validación más complejas sobre la misma tabla.
+
+Facilita la configuración y lectura de las interfaces de entrada, permitiendo ajustar los parámetros de lectura en esquemas altamente cambientes, crea trazabilidad de las interfaces con las tablas en forma automática, y almacena los diccionarios de datos en un repositorio central.
+
+Finalmente, también automatiza la generación de código a partir de las definiciones de las interfaces de entrada, y la creación del código inicial de lógica de negocio.
+
 ### ¿Cómo Funciona?
 El diseño de Huemul BigDataGovernance está pensado en optimizar el tiempo de desarrollo de los analistas de datos, y al mismo tiempo aumentar la calidad y gobierno de los datos. 
 
@@ -10,10 +16,10 @@ Utilizando una metodología sólida que permite a los ingenieros de tu equipo ce
 ### ¿Cómo se genera el código?
 Hay dos formas de generar el código de tu solución
 
-1.  La primera forma es generar el código desde cero utilizando los [template que están disponibles acá](HuemulSolutions.github.io/template).
-2.  En la segunda forma solo debes crear la definición de tu interfaz de entrada utilizando este [template sencillo](HuemulSolutions.github.io/template_raw), y luego puedes generar el código de tu tabla y el código de masterización en forma automática!. En el código de la tabla se implementa en forma automática validaciones de calidad de datos, y te permite agregar fácilmente otras validaciones más complejas.
+1.  La primera forma es generar el código desde cero utilizando los [template que están disponibles acá](https://HuemulSolutions.github.io/template).
+2.  En la segunda forma solo debes crear la definición de tu interfaz de entrada utilizando este [template sencillo](https://HuemulSolutions.github.io/template_raw), y luego puedes generar el código de tu tabla y el código de masterización en forma automática!. En el código de la tabla se implementa en forma automática validaciones de calidad de datos, y te permite agregar fácilmente otras validaciones más complejas.
 
-![Branching](HuemulSolutions.github.io/huemul_flujo_genera_codigo.png)
+![Branching](https://HuemulSolutions.github.io/huemul_flujo_genera_codigo.png)
 
 ### Acelera los desarrollos en 5X y mejora la calidad de datos!
 ¿Sabías que, en promedio, deberías aplicar como mínimo 3 reglas de calidad de datos por cada columna?, es decir, en una tabla con 10 columnas deberías programar más de 30 reglas de validación (son más de 300 líneas de código si programas cada regla en 10 líneas). y esto es solo para asegurar la validez de tus datos, sin contar reglas de integridad, completitud y precisión.... **y aún no has aplicado ninguna regla de transformación de negocio**
@@ -30,7 +36,7 @@ Toda la **documentación del proyecto siempre estará actualizada**, cada vez qu
 ### Modelo de Operación Basado en Buenas Prácticas de Gobierno de Datos
 La implementación de todas estas etapas puede tardar más de una semana, con Huemul BigDataGovernance lo puedes hacer en unas pocas horas. 
 
-![Branching](HuemulSolutions.github.io/huemul_ciclocompleto.png)
+![Branching](https://HuemulSolutions.github.io/huemul_ciclocompleto.png)
 
 Debido al tiempo que demora implementar todas estas estapas, en la práctica solo se logra trabajar en la lógica de negocio sin DataQuality, los planes de pruebas y documentación de los procesos nunca se complentan adecuadamente, esto poniendo en riesgo el éxito de las soluciones analíticas.
 
@@ -41,5 +47,5 @@ El uso de la librería permite desarrollar en forma flexible tus proyectos de Bi
 
 Nuestra metodología permite implementar ambas estrategias a la vez
 
-![Branching](HuemulSolutions.github.io/huemul_metodologia.png)
+![Branching](https://HuemulSolutions.github.io/huemul_metodologia.png)
 
