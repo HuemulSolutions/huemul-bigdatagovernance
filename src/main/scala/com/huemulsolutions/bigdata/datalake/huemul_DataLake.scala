@@ -322,7 +322,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
  *
  *  @param Param_PackageBase es el package base (ejemplo: your.application)
  *  @param PackageProject es la ruta del package del proyecto (ejemplo "sbif")
- *  @param Param_ObjectName es el nombre de objeto que tendra tu masterizacion "[[modulo]]_[[entidad]]_procesa" (ejemplo comun_institucion_procesa )
+ *  @param Param_ObjectName es el nombre de objeto que tendra tu masterizacion "process_[[modulo]]_[[entidad]]" (ejemplo process_comun_institucion )
  *  @param TableName es el nombre de la tabla "tbl_[[modulo]]_[[entidad]]" (ejemplo tbl_comun_institucion)
  *  @param TableType es el tipo de tabla (master y reference para tablas maestras, Transaction para tablas particionadas por periodo con informacion transaccional)
  *  @param EsMes indica si la tabla transaccional tiene particion mensual o diaria
@@ -406,7 +406,7 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   //Ruta en HDFS donde se guardara el archivo PARQUET
   this.setGlobalPaths(huemulBigDataGov.GlobalSettings.MASTER_SmallFiles_Path)
   //Ruta en HDFS especifica para esta tabla (Globalpaths / localPath)
-  this.setLocalPath("${LocalPath}/")
+  this.setLocalPath("${LocalPath}")
   ${
   if (TableType == huemulType_Tables.Transaction) {
   s"""  //columna de particion
@@ -524,7 +524,7 @@ object ${param_ObjectName} {
     /*************** PARAMETROS **********************/
     var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parametro año, ej: ano=2017").toInt
     var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parametro mes, ej: mes=12").toInt
-    ${if (EsMes)""" 
+    ${if (EsMes)s""" 
     var param_dia = 1
     val param_numMeses = huemulBigDataGov.arguments.GetValue("num_meses", "1").toInt
 
@@ -539,7 +539,7 @@ object ${param_ObjectName} {
       println(s"Procesando Año ${Symbol}param_ano, Mes ${Symbol}param_mes (${Symbol}i de ${Symbol}param_numMeses)")
       
       //Ejecuta codigo
-      var FinOK = procesa_master(huemulBigDataGov, null, param_ano, param_mes)
+      var FinOK = process_master(huemulBigDataGov, null, param_ano, param_mes)
       
       if (FinOK)
         i+=1
@@ -551,11 +551,11 @@ object ${param_ObjectName} {
       Fecha.add(Calendar.MONTH, 1)      
     }
     """
-    else"""
+    else s"""
     var param_dia = huemulBigDataGov.arguments.GetValue("dia", null, "Debe especificar el parametro dia, ej: dia=31").toInt    
     val param_numDias = huemulBigDataGov.arguments.GetValue("num_dias", "1").toInt
 
-    procesa_master(huemulBigDataGov, null, param_ano, param_mes, param_dia)
+    process_master(huemulBigDataGov, null, param_ano, param_mes, param_dia)
     """
     }
     
@@ -567,7 +567,7 @@ object ${param_ObjectName} {
     param_ano: año de los datos  <br>
     param_mes: mes de los datos  <br>
    */
-  def procesa_master(huemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, param_ano: Integer, param_mes: Integer${if (EsMes) "" else ",param_dia: Integer" }): Boolean = {
+  def process_master(huemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, param_ano: Integer, param_mes: Integer${if (EsMes) "" else ",param_dia: Integer" }): Boolean = {
     val Control = new huemul_Control(huemulBigDataGov, ControlParent)    
     
     try {             
