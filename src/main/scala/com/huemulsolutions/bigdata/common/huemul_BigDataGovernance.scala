@@ -112,11 +112,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   @transient val postgres_connection= new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting),"org.postgresql.Driver", DebugMode) // Connection = null
   @transient val impala_connection = new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"org.postgresql.Driver", DebugMode) //Connection = null
   
-  if (!TestPlanMode) {
+  if (!TestPlanMode && RegisterInControl) 
     postgres_connection.StartConnection()
-    if (ImpalaEnabled)
+  if (!TestPlanMode && ImpalaEnabled)
       impala_connection.StartConnection()
-  }
   
   val spark: SparkSession = if (!TestPlanMode) SparkSession.builder().appName(appName)
                                               //.master("local[*]")
@@ -180,6 +179,8 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   def application_StillAlive(ApplicationInUse: String): Boolean = {
+    if (!RegisterInControl) return false
+    
     val CurrentProcess = this.postgres_connection.ExecuteJDBC_WithResult(s"select * from control_executors where application_Id = '${ApplicationInUse}'")
     var IdAppFromDataFrame : String = ""
     var IdAppFromAPI: String = ""
