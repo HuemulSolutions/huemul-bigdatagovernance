@@ -5,15 +5,15 @@ El diseño de Huemul BigDataGovernance está pensado en optimizar el tiempo de d
 
 Utilizando una metodología sólida que permite a los ingenieros de tu equipo centrar sus esfuerzos en la definición de las interfaces de entrada, la definición de las tablas y la construcción de los procesos de masterización robustos.
 
-![Branching](huemul_pasos.png)
+![Branching](HuemulSolutions.github.io/huemul_pasos.png)
 
 ### ¿Cómo se genera el código?
 Hay dos formas de generar el código de tu solución
 
-1.  La primera forma es generar el código desde cero utilizando los [template que están disponibles acá](template).
-2.  En la segunda forma solo debes crear la definición de tu interfaz de entrada utilizando este [template sencillo](template_raw), y luego puedes generar el código de tu tabla y el código de masterización en forma automática!. En el código de la tabla se implementa en forma automática validaciones de calidad de datos, y te permite agregar fácilmente otras validaciones más complejas.
+1.  La primera forma es generar el código desde cero utilizando los [template que están disponibles acá](HuemulSolutions.github.io/template).
+2.  En la segunda forma solo debes crear la definición de tu interfaz de entrada utilizando este [template sencillo](HuemulSolutions.github.io/template_raw), y luego puedes generar el código de tu tabla y el código de masterización en forma automática!. En el código de la tabla se implementa en forma automática validaciones de calidad de datos, y te permite agregar fácilmente otras validaciones más complejas.
 
-![Branching](huemul_flujo_genera_codigo.png)
+![Branching](HuemulSolutions.github.io/huemul_flujo_genera_codigo.png)
 
 ### Acelera los desarrollos en 5X y mejora la calidad de datos!
 ¿Sabías que, en promedio, deberías aplicar como mínimo 3 reglas de calidad de datos por cada columna?, es decir, en una tabla con 10 columnas deberías programar más de 30 reglas de validación (son más de 300 líneas de código si programas cada regla en 10 líneas). y esto es solo para asegurar la validez de tus datos, sin contar reglas de integridad, completitud y precisión.... **y aún no has aplicado ninguna regla de transformación de negocio**
@@ -30,7 +30,7 @@ Toda la **documentación del proyecto siempre estará actualizada**, cada vez qu
 ### Modelo de Operación Basado en Buenas Prácticas de Gobierno de Datos
 La implementación de todas estas etapas puede tardar más de una semana, con Huemul BigDataGovernance lo puedes hacer en unas pocas horas. 
 
-![Branching](huemul_ciclocompleto.png)
+![Branching](HuemulSolutions.github.io/huemul_ciclocompleto.png)
 
 Debido al tiempo que demora implementar todas estas estapas, en la práctica solo se logra trabajar en la lógica de negocio sin DataQuality, los planes de pruebas y documentación de los procesos nunca se complentan adecuadamente, esto poniendo en riesgo el éxito de las soluciones analíticas.
 
@@ -41,5 +41,5 @@ El uso de la librería permite desarrollar en forma flexible tus proyectos de Bi
 
 Nuestra metodología permite implementar ambas estrategias a la vez
 
-![Branching](huemul_metodologia.png)
+![Branching](HuemulSolutions.github.io/huemul_metodologia.png)
 
