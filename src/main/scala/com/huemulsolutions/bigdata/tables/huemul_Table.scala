@@ -4,6 +4,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.util._
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.functions._
 import java.lang.Long
 import scala.collection.mutable._
 import org.apache.hadoop.fs.FileSystem
@@ -223,9 +224,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var CreateInHive: Boolean = true
   private var CreateTableScript: String = ""
   
-  private var _PartitionCreateTable: String = ""
-  
-
   /*  ********************************************************************************
    *****   F I E L D   P R O P E R T I E S    **************************************** 
    ******************************************************************************** */
@@ -420,8 +418,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   private var _NumRows_New: Long = null
   private var _NumRows_Update: Long = null
+  private var _NumRows_Updatable: Long = null
   private var _NumRows_Delete: Long = null
   private var _NumRows_Total: Long = null
+  private var _NumRows_NoChange: Long = null
   
   def NumRows_New(): Long = {
     return _NumRows_New
@@ -431,12 +431,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return _NumRows_Update
   }
   
+  def NumRows_Updatable(): Long = {
+    return _NumRows_Updatable
+  }
+  
   def NumRows_Delete(): Long = {
     return _NumRows_Delete
   }
   
   def NumRows_Total(): Long = {
     return _NumRows_Total
+  }
+  
+  def NumRows_NoChange(): Long = {
+    return _NumRows_NoChange
   }
    /*  ********************************************************************************
    *****   F I E L D   M E T H O D S    **************************************** 
@@ -627,8 +635,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     
     var coma: String = ""    
-    _PartitionCreateTable = ""
-    var coma_partition: String = ""
     
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }
@@ -638,11 +644,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val NewColumnCast = ApplyAutoCast(if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"${Field.get_SQLForInsert()} " else s"New.${Field.get_MappedName()}"
                                         ,Field.DataType.sql)
         
-      if (_PartitionField.toUpperCase() == x.getName().toUpperCase() ) {
-        _PartitionCreateTable += s"${coma_partition}${_PartitionField} ${Field.DataType.sql}"
-        coma_partition = ","
-      }
-      
+     
       //New value (from field or compute column )
       if (huemulBigDataGov.HasName(Field.get_MappedName()) ){
         StringSQL += s"${coma}${NewColumnCast} as ${x.getName} \n"
@@ -717,6 +719,108 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def ApplyAutoCast(ColumnName: String, DataType: String): String = {
     return if (autoCast) s"CAST($ColumnName AS $DataType)" else ColumnName
   }
+  
+  
+  /**
+  CREATE SQL SCRIPT FULL JOIN MASTER DATA OR REFERENCE DATA
+   */
+  private def SQL_Step2_LeftJoin(OfficialAlias: String, NewAlias: String): String = {
+    //Get fields in old table
+    val OfficialColumns = huemulBigDataGov.spark.catalog.listColumns(OfficialAlias).collect()
+       
+    var StringSQL_LeftJoin: String = ""
+    var StringSQl_PK: String = ""
+    var StringSQL_ActionType: String = ""
+    
+    var coma: String = ""
+    var sand: String = ""
+    getALLDeclaredFields().filter { x => x.setAccessible(true)
+                                      x.get(this).isInstanceOf[huemul_Columns] }
+    .foreach { x =>     
+      //Get field
+      var Field = x.get(this).asInstanceOf[huemul_Columns]
+      val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
+      //string for key on
+      if (Field.getIsPK){
+        val NewPKSentence = if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} )" else NewColumnCast
+        StringSQL_LeftJoin += s"${coma}Old.${x.getName} AS ${x.getName} \n"
+        StringSQl_PK += s" $sand Old.${x.getName} = ${NewPKSentence}  " 
+        sand = " and "
+
+        if (StringSQL_ActionType == "")
+          StringSQL_ActionType = s" case when Old.${x.getName} is null then 'NEW' when ${NewColumnCast} is null then 'EQUAL' else 'UPDATE' END as ___ActionType__  "
+      } else {
+        //¿column exist in DataFrame?
+        val columnExist = !(OfficialColumns.filter { y => y.name == x.getName}.length == 0)
+        
+        //String for new DataFrame fulljoin
+        if (columnExist){
+          StringSQL_LeftJoin += s"${coma}cast(old.${x.getName} as ${Field.DataType.sql} ) as old_${x.getName} \n"
+          //StringSQL_LeftJoin += s"${coma}old.${x.getName} as old_${x.getName} \n"
+        }
+        else
+          StringSQL_LeftJoin += s"${coma}cast(null as ${Field.DataType.sql} ) as old_${x.getName} \n"
+        
+        //New value (from field or compute column )
+        if (huemulBigDataGov.HasName(Field.get_MappedName()))
+          StringSQL_LeftJoin += s",${NewColumnCast} as new_${x.getName} \n"
+        if (huemulBigDataGov.HasName(Field.get_SQLForInsert()))
+          StringSQL_LeftJoin += s",CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} ) as new_insert_${x.getName} \n"
+        if (huemulBigDataGov.HasName(Field.get_SQLForUpdate()))
+          StringSQL_LeftJoin += s",CAST(${Field.get_SQLForUpdate()} as ${Field.DataType.sql} ) as new_update_${x.getName} \n"
+          
+        if (Field.getMDM_EnableOldValue || Field.getMDM_EnableDTLog || Field.getMDM_EnableProcessLog) {
+          //Change field, take update field if exist, otherwise use get_name()
+          if (huemulBigDataGov.HasName(Field.get_MappedName())) {
+            val NewFieldTXT = ApplyAutoCast(if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),Field.DataType.sql)
+            val OldFieldTXT = if (columnExist) "old.".concat(x.getName) else "null"
+            StringSQL_LeftJoin += s",CAST(CASE WHEN ${NewFieldTXT} = ${OldFieldTXT} or (${NewFieldTXT} is null and ${OldFieldTXT} is null) THEN 0 ELSE 1 END as Integer ) as __Change_${x.getName}  \n"
+          }
+          else {
+            StringSQL_LeftJoin += s",CAST(0 as Integer ) as __Change_${x.getName}  \n"
+            //Cambio aplicado el 8 de agosto, al no tener campo del df mapeado se cae, 
+            //la solución es poner el campo "tiene cambio" en falso
+          }
+              
+        }
+      
+        if (Field.getMDM_EnableOldValue){
+          if (OfficialColumns.filter { y => y.name == s"${x.getName}_old"}.length == 0) //no existe columna en dataframe
+            StringSQL_LeftJoin += s",CAST(null AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
+          else //existe columna en dataframe
+            StringSQL_LeftJoin += s",CAST(old.${x.getName}_old AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
+        }
+        if (Field.getMDM_EnableDTLog){
+          if (OfficialColumns.filter { y => y.name == s"${x.getName}_fhChange"}.length == 0) //no existe columna en dataframe
+            StringSQL_LeftJoin += s",CAST(null AS TimeStamp) as old_${x.getName}_fhChange \n"
+          else //existe columna en dataframe
+            StringSQL_LeftJoin += s",CAST(old.${x.getName}_fhChange AS TimeStamp) as old_${x.getName}_fhChange \n"
+        }
+        if (Field.getMDM_EnableProcessLog){
+          if (OfficialColumns.filter { y => y.name == s"${x.getName}_ProcessLog"}.length == 0) //no existe columna en dataframe
+            StringSQL_LeftJoin += s",CAST(null AS STRING) as old_${x.getName}_ProcessLog \n"
+          else //existe columna en dataframe
+            StringSQL_LeftJoin += s",CAST(old.${x.getName}_ProcessLog AS STRING) as old_${x.getName}_ProcessLog \n"
+        }   
+          
+      }
+       
+      coma = ","
+    }
+    
+    
+    //Step 1: full join of both DataSet, old for actual recordset, new for new DataFrame
+    StringSQL_LeftJoin = s"""SELECT ${StringSQL_LeftJoin}
+                                   ,${StringSQL_ActionType}
+                             FROM $OfficialAlias Old
+                                LEFT JOIN ${NewAlias} New \n 
+                                   on $StringSQl_PK  
+                          """
+       
+    return StringSQL_LeftJoin 
+  }
+  
+  
   
   /**
   CREATE SQL SCRIPT FULL JOIN MASTER DATA OR REFERENCE DATA
@@ -816,6 +920,56 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        
     return StringSQL_FullJoin 
   }
+  
+  /**
+  CREATE SQL SCRIPT LEFT JOIN 
+   */
+  private def SQL_Step4_Update(NewAlias: String, ProcessName: String): String = {
+    
+    var StringSQL: String = "SELECT "
+    
+    var coma: String = ""
+    getALLDeclaredFields().filter { x => x.setAccessible(true)
+                                      x.get(this).isInstanceOf[huemul_Columns] }
+    .foreach { x =>     
+      //Get field
+      var Field = x.get(this).asInstanceOf[huemul_Columns]
+      
+      //string for key on
+      if (Field.getIsPK){
+        StringSQL += s" ${coma}${x.getName} as ${x.getName} \n"
+        
+      } else {
+        if (   x.getName == "MDM_fhNew" || x.getName == "MDM_ProcessNew" || x.getName == "MDM_fhChange"
+            || x.getName == "MDM_ProcessChange" || x.getName == "MDM_StatusReg" 
+            || x.getName == "MDM_hash")
+          StringSQL += s"${coma}old_${x.getName}  \n"
+        else {          
+          StringSQL += s""" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' THEN ${if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) s"new_update_${x.getName}"  //si tiene valor en SQL update, lo usa
+                                                                               else if (Field.get_ReplaceValueOnUpdate() && this.huemulBigDataGov.HasName(Field.get_MappedName())) s"new_${x.getName}"  //Si hay que reemplaar el valor antiguo con uno nuevo, y está seteado un campo en del dataframe, lo usa
+                                                                               else s"old_${x.getName}"   //de lo contrario deja el valor antiguo
+                                                                           }
+                                        ELSE old_${x.getName} END  as ${x.getName} \n"""
+                
+           if (Field.getMDM_EnableOldValue)
+             StringSQL += s""",CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN old_${x.getName} ELSE old_${x.getName}_old END as ${x.getName}_old \n"""
+           if (Field.getMDM_EnableDTLog)
+             StringSQL += s""",CAST(CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN now() ELSE old_${x.getName}_fhChange END AS TimeStamp) as ${x.getName}_fhChange \n"""
+           if (Field.getMDM_EnableProcessLog)
+             StringSQL += s""",CASE WHEN ___ActionType__ = 'UPDATE' AND __Change_${x.getName} = 1 THEN '${ProcessName}' WHEN ___ActionType__ = 'NEW' THEN '${ProcessName}' ELSE old_${x.getName}_ProcessLog END as ${x.getName}_ProcessLog \n"""             
+        }
+      }
+                         
+      coma = ","
+    }
+                
+    
+    //with previous dataset, make statistics about N° rows new vs old dataset, alerts.
+    StringSQL += s""" ,___ActionType__
+                      FROM $NewAlias New 
+                  """
+    return StringSQL 
+  }
    
   
   /**
@@ -876,9 +1030,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   /**
-  CREATE SQL SCRIPT FULL JOIN MASTER DATA OR REFERENCE DATA
+  CREATE SQL SCRIPT FULL JOIN MASTER DATA OR REFERENCE DATA and for Selective update
    */
-  private def SQL_Step3_Hash_p1(NewAlias: String): String = {
+  private def SQL_Step3_Hash_p1(NewAlias: String, isSelectiveUpdate: Boolean): String = {
     
     var StringSQL: String = "SELECT "
     var StringSQL_hash: String = "sha2(concat( "
@@ -926,7 +1080,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Include HashFields to SQL
     StringSQL += s""",${StringSQL_hash} as MDM_hash \n"""
     
-    if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master) {
+    if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master || isSelectiveUpdate) {
       StringSQL += s""",case when old_MDM_hash = ${StringSQL_hash} THEN 1 ELSE 0 END AS SameHashKey  \n ,___ActionType__ \n"""
     }
     
@@ -1025,9 +1179,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   GET ALL REQUIRED ATTRIBUTES
   Return all fields missing that have been required 
    */
-  private def MissingRequiredFields(): ArrayBuffer[String] = {
-    
+  private def MissingRequiredFields(IsSelectiveUpdate: Boolean): ArrayBuffer[String] = {
     var StringSQL: ArrayBuffer[String] = new ArrayBuffer[String]()
+    if (IsSelectiveUpdate) return StringSQL
+    
+    
     getALLDeclaredFields(true).filter { x => x.setAccessible(true)                                         
                                          x.get(this).isInstanceOf[huemul_Columns] &&
                                          x.get(this).asInstanceOf[huemul_Columns].Required  
@@ -1053,8 +1209,45 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return StringSQL 
   }
   
-  
-  
+  /**
+  GET ALL REQUIRED ATTRIBUTES
+  Return all fields missing that have been required 
+   */
+  private def MissingRequiredFields_SelectiveUpdate(): String = {
+    var PKNotMapped: String = ""
+    var OneColumnMapped: Boolean = false
+    //STEP 1: validate name setting
+    getALLDeclaredFields(true).filter { x => x.setAccessible(true)
+                                    x.get(this).isInstanceOf[huemul_Columns]}
+    .foreach { x =>     
+      //Get field
+      var Field = x.get(this).asInstanceOf[huemul_Columns]
+      
+      if (Field.getIsPK) {
+        
+        var isOK: Boolean = false
+        if (huemulBigDataGov.HasName(Field.get_MappedName))
+          isOK = true
+        else if (!huemulBigDataGov.HasName(Field.get_MappedName) && 
+                (huemulBigDataGov.HasName(Field.get_SQLForUpdate()) && huemulBigDataGov.HasName(Field.get_SQLForInsert())))
+          isOK = true
+        else
+          isOK = false
+          
+        if (!isOK) {
+          PKNotMapped = s"${if (PKNotMapped == "") "" else ", "}${Field.get_MyName()} "
+        }
+        
+      } else 
+        OneColumnMapped = true
+                
+    }
+    
+    if (!OneColumnMapped)
+        RaiseError(s"huemul_Table Error: Only PK mapped, no columns mapped for update",1042)
+    
+    return PKNotMapped
+  }
   
   
   /*  ********************************************************************************
@@ -1062,11 +1255,26 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    ******************************************************************************** */
   
   private def DF_CreateTableScript(): String = {
-                                  
+              
+    var coma_partition = ""
+    var PartitionForCreateTable = ""
+    //Get SQL DataType for Partition Columns
+    getALLDeclaredFields().filter { x => x.setAccessible(true)
+                                      x.get(this).isInstanceOf[huemul_Columns] }
+    .foreach { x =>     
+      //Get field
+      var Field = x.get(this).asInstanceOf[huemul_Columns]
+      
+      if (_PartitionField.toUpperCase() == x.getName().toUpperCase() ) {
+          PartitionForCreateTable += s"${coma_partition}${_PartitionField} ${Field.DataType.sql}"
+          coma_partition = ","
+      }
+    }
+    
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     CreateTableScript = s"""
                                  CREATE EXTERNAL TABLE IF NOT EXISTS ${GetTable()} (${GetColumns_CreateTable(true) })
-                                 ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${_PartitionCreateTable})" else "" }
+                                 ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
                                  STORED AS ${_StorageType.toString()}                                  
                                  LOCATION '${GetFullNameWithPath()}'"""
                                  
@@ -1183,13 +1391,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  private def DF_DataQualityMasterAuto(): huemul_DataQualityResult = {
+  private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean): huemul_DataQualityResult = {
     //TODO: incorporar detalle de registros (muestra de 3 casos) que no cumplen cada condición
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayDQ: ArrayBuffer[huemul_DataQuality] = new ArrayBuffer[huemul_DataQuality]()
     
     //All required fields have been set
-    val SQL_Missing = MissingRequiredFields()
+    val SQL_Missing = MissingRequiredFields(IsSelectiveUpdate)
     if (SQL_Missing.length > 0) {
       Result.isError = true
       Result.Description += "\nhuemul_Table Error: requiered columns missing "
@@ -1324,8 +1532,113 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    Create final DataFrame with full join New DF with old DF
    */
-  private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean, isDelete: Boolean) {
-    if (_TableType == huemulType_Tables.Transaction) {
+  private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean, isDelete: Boolean, isSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String = null) {
+    if (isSelectiveUpdate) {
+      //Update some rows with some columns
+      //Cant update PK fields
+      
+      //***********************************************************************/
+      //STEP 1:    V A L I D A T E   M A P P E D   C O L U M N  S   *********/
+      //***********************************************************************/
+      
+      LocalControl.NewStep("Selective Update: Validating fields ")
+      
+      val PKNotMapped = this.MissingRequiredFields_SelectiveUpdate()
+      
+      if (PKNotMapped != "")
+        RaiseError(s"huemul_Table Error: PK not defined: ${PKNotMapped}",1017)
+      
+      //Get N° rows from user dataframe
+      val NumRowsUserData: Long = this.DataFramehuemul.DataFrame.count()
+      var NumRowsOldDataFrame: Long = 0
+      //**************************************************//
+      //STEP 2:   CREATE BACKUP
+      //**************************************************//
+      LocalControl.NewStep("Selective Update: Select Old Table")                                             
+      val TempAlias: String = s"__${this.TableName}_old"
+      val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
+      
+      if (!huemulBigDataGov.HasName(PartitionValueForSelectiveUpdate) && _TableType == huemulType_Tables.Transaction)
+        RaiseError(s"huemul_Table Error: Partition Value not defined", 1044)
+        
+      
+      val FullPathString = if (_TableType == huemulType_Tables.Transaction) 
+                      s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValueForSelectiveUpdate}"
+                    else
+                      this.GetFullNameWithPath()
+      
+      val FullPath = new org.apache.hadoop.fs.Path(FullPathString)
+      
+      if (fs.exists(FullPath)){
+        //Exist, copy for use
+        
+        //Open actual file
+        val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(FullPathString)
+        val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
+        if (huemulBigDataGov.DebugMode) println(s"copy to temp dir: $tempPath ")
+        DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        DFTempCopy.unpersist()
+       
+        //Open temp file
+        if (huemulBigDataGov.DebugMode) println(s"open temp old df: $tempPath ")
+        val DFTempOpen = if (_TableType == huemulType_Tables.Transaction) 
+                            huemulBigDataGov.spark.read.parquet(tempPath).withColumn(_PartitionField.toLowerCase(), lit(PartitionValueForSelectiveUpdate))
+                         else huemulBigDataGov.spark.read.parquet(tempPath)
+        NumRowsOldDataFrame = DFTempOpen.count()
+        DFTempOpen.createOrReplaceTempView(TempAlias)        
+      } else 
+        RaiseError(s"huemul_Table Error: Table ${FullPathString} doesn't exists",1043)
+        
+      
+      //**************************************************//
+      //STEP 3: Create left Join updating columns
+      //**************************************************//
+      LocalControl.NewStep("Selective Update: Left Join")
+      val SQLLeftJoin_DF = huemulBigDataGov.DF_ExecuteQuery("__LeftJoin"
+                                              , SQL_Step2_LeftJoin(TempAlias, this.DataFramehuemul.Alias)
+                                             )
+                                             
+                                             
+      //**************************************************//
+      //STEP 4: Create Tabla with Update and Insert result
+      //**************************************************//
+
+      LocalControl.NewStep("Selective Update: Update Logic")
+      val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
+                                          , SQL_Step4_Update("__LeftJoin", huemulBigDataGov.ProcessNameCall)
+                                         )
+                                         
+      //**************************************************//
+      //STEP 5: Create Hash
+      //**************************************************//
+      LocalControl.NewStep("Selective Update: Hash Code")                                         
+      val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p2"
+                                          , SQL_Step3_Hash_p1("__Hash_p1", isSelectiveUpdate)
+                                         )
+                                         
+      this.UpdateStatistics(LocalControl, "Selective Update")
+      
+      //N° Rows Updated == NumRowsUserData
+      if (NumRowsUserData != this._NumRows_Updatable) {
+        RaiseError(s"huemul_Table Error: expected to update ${NumRowsUserData} rows, found only ${_NumRows_Updatable}", 1045)
+      } else if (this._NumRows_Total != NumRowsOldDataFrame ) {
+        RaiseError(s"huemul_Table Error: Different count in dataframes, original: ${NumRowsOldDataFrame}, new: ${this._NumRows_Total}, review your dataframe, maybe have duplicate keys", 1046)
+      }
+      
+      LocalControl.NewStep("Selective Update: Final Table")
+      val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall)
+
+     
+      //STEP 2: Execute final table 
+      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
+      if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
+        
+      //Unpersist first DF
+      SQLHash_p2_DF.unpersist()
+      SQLHash_p1_DF.unpersist()
+      SQLLeftJoin_DF.unpersist()
+    }
+    else if (_TableType == huemulType_Tables.Transaction) {
       LocalControl.NewStep("Transaction: Validating fields ")
       //STEP 1: validate name setting
       getALLDeclaredFields(true).filter { x => x.setAccessible(true)
@@ -1352,7 +1665,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       this._NumRows_Total = this.DataFramehuemul.getNumRows
       this._NumRows_New = this.DataFramehuemul.getNumRows
       this._NumRows_Update  = 0
+      this._NumRows_Updatable = 0
       this._NumRows_Delete = 0
+      this._NumRows_NoChange = 0
       
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
     } 
@@ -1366,7 +1681,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val OnlyInsert: Boolean = isInsert && !isUpdate
       
       //All required fields have been set
-      val SQL_Missing = MissingRequiredFields()
+      val SQL_Missing = MissingRequiredFields(isSelectiveUpdate)
       if (SQL_Missing.length > 0) {
         var ColumnsMissing: String = ""
         SQL_Missing.foreach { x => ColumnsMissing +=  s",$x " }
@@ -1441,51 +1756,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //STEP 3: Create Hash
       LocalControl.NewStep("Ref & Master: Hash Code")                                         
       val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p2"
-                                          , SQL_Step3_Hash_p1("__Hash_p1")
+                                          , SQL_Step3_Hash_p1("__Hash_p1", false)
                                          )
                                          
       if (toMemory)
         SQLHash_p2_DF.cache()
                
                                         
-      LocalControl.NewStep("Ref & Master: Statistics")
-      //DQ for Reference and Master Data
-      val DQ_ReferenceData: DataFrame = huemulBigDataGov.spark.sql(
-                        s"""SELECT CAST(SUM(CASE WHEN ___ActionType__ = 'NEW' then 1 else 0 end) as Long) as __New
-                                  ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' and SameHashKey = 0 then 1 else 0 end) as Long) as __Update
-                                  ,CAST(SUM(CASE WHEN ___ActionType__ = 'DELETE' then 1 else 0 end) as Long) as __Delete
-                                  ,CAST(count(1) AS Long) as __Total
-                            FROM __Hash_p2 temp 
-                         """)
-      if (toMemory)
-        DQ_ReferenceData.cache()
-        
-      if (huemulBigDataGov.DebugMode) DQ_ReferenceData.show()
-      
-      val FirstRow = DQ_ReferenceData.first()
-      this._NumRows_Total = FirstRow.getAs("__Total")
-      this._NumRows_New = FirstRow.getAs("__New")
-      this._NumRows_Update  = FirstRow.getAs("__Update")
-      this._NumRows_Delete = FirstRow.getAs("__Delete")
-      
-      LocalControl.NewStep("Ref & Master: Validating Insert & Update")
-      var DQ_Error: String = ""
-      var Error_Number: Integer = null
-      if (this._NumRows_Total == this._NumRows_New)
-        DQ_Error = "" //Doesn't have error, first run
-      else if (this._DQ_MaxNewRecords_Num != null && this._DQ_MaxNewRecords_Num > 0 && this._NumRows_New > this._DQ_MaxNewRecords_Num){
-        DQ_Error = s"huemul_Table Error: DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this._DQ_MaxNewRecords_Num}) "
-        Error_Number = 1005
-      }
-      else if (this._DQ_MaxNewRecords_Perc != null && this._DQ_MaxNewRecords_Perc > Decimal.apply(0) && (Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total)) > this._DQ_MaxNewRecords_Perc) {
-        DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(this._NumRows_New / this._NumRows_Total)}) exceeds % max defined (${this._DQ_MaxNewRecords_Perc}) "
-        Error_Number = 1006
-      }
-
-      if (DQ_Error != "")
-        RaiseError(DQ_Error, Error_Number)
-        
-      DQ_ReferenceData.unpersist()
+      this.UpdateStatistics(LocalControl, "Ref & Master")
       
                                          
       LocalControl.NewStep("Ref & Master: Final Table")
@@ -1506,6 +1784,50 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
   }
   
+  private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String) {
+    LocalControl.NewStep(s"${TypeOfCall}: Statistics")
+    //DQ for Reference and Master Data
+    val DQ_ReferenceData: DataFrame = huemulBigDataGov.spark.sql(
+                      s"""SELECT CAST(SUM(CASE WHEN ___ActionType__ = 'NEW' then 1 else 0 end) as Long) as __New
+                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' and SameHashKey = 0 then 1 else 0 end) as Long) as __Update
+                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' then 1 else 0 end) as Long) as __Updatable
+                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'DELETE' then 1 else 0 end) as Long) as __Delete
+                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'EQUAL' then 1 else 0 end) as Long) as __NoChange
+                                ,CAST(count(1) AS Long) as __Total
+                          FROM __Hash_p2 temp 
+                       """)
+    
+                       if (huemulBigDataGov.DebugMode) DQ_ReferenceData.show()
+    
+    val FirstRow = DQ_ReferenceData.first()
+    this._NumRows_Total = FirstRow.getAs("__Total")
+    this._NumRows_New = FirstRow.getAs("__New")
+    this._NumRows_Update  = FirstRow.getAs("__Update")
+    this._NumRows_Updatable  = FirstRow.getAs("__Updatable")
+    this._NumRows_Delete = FirstRow.getAs("__Delete")
+    this._NumRows_NoChange= FirstRow.getAs("__NoChange")
+    
+    
+    LocalControl.NewStep(s"${TypeOfCall}: Validating Insert & Update")
+    var DQ_Error: String = ""
+    var Error_Number: Integer = null
+    if (this._NumRows_Total == this._NumRows_New)
+      DQ_Error = "" //Doesn't have error, first run
+    else if (this._DQ_MaxNewRecords_Num != null && this._DQ_MaxNewRecords_Num > 0 && this._NumRows_New > this._DQ_MaxNewRecords_Num){
+      DQ_Error = s"huemul_Table Error: DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this._DQ_MaxNewRecords_Num}) "
+      Error_Number = 1005
+    }
+    else if (this._DQ_MaxNewRecords_Perc != null && this._DQ_MaxNewRecords_Perc > Decimal.apply(0) && (Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total)) > this._DQ_MaxNewRecords_Perc) {
+      DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(this._NumRows_New / this._NumRows_Total)}) exceeds % max defined (${this._DQ_MaxNewRecords_Perc}) "
+      Error_Number = 1006
+    }
+
+    if (DQ_Error != "")
+      RaiseError(DQ_Error, Error_Number)
+      
+    DQ_ReferenceData.unpersist()
+  }
+  
   private def GetClassAndPackage(): huemul_AuthorizationPair = {
     val Invoker = new Exception().getStackTrace()(2)
     val InvokerName: String = Invoker.getClassName().replace("$", "")
@@ -1522,7 +1844,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, true, true, true)      
+      Result = this.ExecuteSave(NewAlias, true, true, true, false, null)      
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
       
@@ -1538,7 +1860,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
 
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, true, false, false) 
+      Result = this.ExecuteSave(NewAlias, true, false, false, false, null) 
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
     }
@@ -1553,9 +1875,23 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, false, true, false)  
+      Result = this.ExecuteSave(NewAlias, false, true, false, false, null)  
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+    }
+    
+    return Result
+        
+  }
+  
+  def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: String): Boolean = {   
+    var Result: Boolean = false
+      
+    val whoExecute = GetClassAndPackage()  
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+      Result = this.ExecuteSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate)  
+    else {
+      RaiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
     
     return Result
@@ -1589,7 +1925,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Master & Reference: update and Insert
    Transactional: Delete and Insert new data
    */
-  private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean): Boolean = {
+  private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String): Boolean = {
    
     var LocalControl = new huemul_Control(huemulBigDataGov, Control ,false )
     LocalControl.AddParamInfo("AliasNewData", AliasNewData)
@@ -1614,7 +1950,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     
       //do work
-      DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete)
+      DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate)
   
       LocalControl.NewStep("Register Master Information ")
       Control.RegisterMASTER_CREATE_Use(this)
@@ -1622,7 +1958,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //DataQuality by Columns
       LocalControl.NewStep("Start DataQuality")
-      val DQResult = DF_DataQualityMasterAuto()
+      val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate)
       //Foreing Keys by Columns
       LocalControl.NewStep("Start ForeingKey ")
       val FKResult = DF_ForeingKeyMasterAuto()
@@ -1662,7 +1998,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
       LocalControl.NewStep("Start Save ")                
-      if (SavePersistent(LocalControl, DataFramehuemul.DataFrame, OnlyInsert))
+      if (SavePersistent(LocalControl, DataFramehuemul.DataFrame, OnlyInsert, IsSelectiveUpdate))
         LocalControl.FinishProcessOK
       else {
         result = false
@@ -1703,14 +2039,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
   }
   
-  private def SavePersistent(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean): Boolean = {
+  private def SavePersistent(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
     
-    if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master) {
+    
+    if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master || IsSelectiveUpdate) {
       LocalControl.NewStep("Save: Drop ActionType column")
    
-      if (OnlyInsert)
+      if (OnlyInsert && !IsSelectiveUpdate)
         DF_Final = DF_Final.where("___ActionType__ = 'NEW'") 
      
       DF_Final = DF_Final.drop("___ActionType__")
