@@ -656,6 +656,7 @@ object ${param_ObjectName}_Migrar {
    val clase = new ${NewTableName}(huemulBigDataGov, null)
    clase.CopyToDest(param, "[[environment]]")
    
+   huemulBigDataGov.close
  }
  
 }
