@@ -165,7 +165,17 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
     
       val Error_Id = huemulBigDataGov.huemul_GetUniqueId()
-    
+      if (Control_Error.ControlError_Message == null)
+        Control_Error.ControlError_Message = "null"
+      if (Control_Error.ControlError_Trace == null)
+        Control_Error.ControlError_Trace = "null"
+      if (Control_Error.ControlError_FileName == null)
+        Control_Error.ControlError_FileName = "null"
+      if (Control_Error.ControlError_MethodName == null)
+        Control_Error.ControlError_MethodName = "null"
+      if (Control_Error.ControlError_ClassName == null)
+        Control_Error.ControlError_ClassName = "null"
+        
       //Insert processExcec
       huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_Error_finish (
                           '${this.Control_Id}'  --p_processExec_id
@@ -221,7 +231,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     if (huemulBigDataGov.RegisterInControl) {
        //Insert processExcec
       huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_TestPlanFeature_add (
-                            '${p_Feature_Id.replace("'", "''")}'  --as p_Feature_Id
+                            '${if (p_Feature_Id == null) "null" else p_Feature_Id.replace("'", "''")}'  --as p_Feature_Id
                          , '${p_TestPlan_Id}'  --as p_testPlan_Id
                          ,'${Control_ClassName}'  --p_MDM_ProcessName
                                                   
@@ -254,10 +264,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , '${p_testPlanGroup_Id}'  --as p_testPlanGroup_Id
                          , '${this.Control_Id}'  --p_processExec_id
                          , '${this.Control_ClassName}' --as p_process_id
-                         , '${p_testPlan_name.replace("'", "''")}' --p_testPlan_name
-                         , '${p_testPlan_description.replace("'", "''")}' --p_testPlan_description
-                         , '${p_testPlan_resultExpected.replace("'", "''")}' --p_testPlan_resultExpected
-                         , '${p_testPlan_resultReal.replace("'", "''")}' --p_testPlan_resultReal
+                         , '${if (p_testPlan_name == null) "null" else p_testPlan_name.replace("'", "''")}' --p_testPlan_name
+                         , '${if (p_testPlan_description == null) "null" else p_testPlan_description.replace("'", "''")}' --p_testPlan_description
+                         , '${if (p_testPlan_resultExpected == null) "null" else p_testPlan_resultExpected.replace("'", "''")}' --p_testPlan_resultExpected
+                         , '${if (p_testPlan_resultReal == null) "null" else p_testPlan_resultReal.replace("'", "''")}' --p_testPlan_resultReal
                          , ${p_testPlan_IsOK} --p_testPlan_IsOK
                          , '${Control_ClassName}' --p_Executor_Name
                          
@@ -302,7 +312,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , '${DQ_Description}' --DQ_Description
                          , '${DQ_QueryLevel}' --DQ_IsAggregate
                          , '${DQ_Notification}' --DQ_RaiseError
-                         , '${DQ_SQLFormula.replace("'", "''")}' --DQ_SQLFormula
+                         , '${if (DQ_SQLFormula ==  null) "null" else DQ_SQLFormula.replace("'", "''")}' --DQ_SQLFormula
                          , ${DQ_toleranceError_Rows} --DQ_Error_MaxNumRows
                          , ${DQ_toleranceError_Percent} --DQ_Error_MaxPercent
                          , '${if (DQ_ResultDQ == null) "" else DQ_ResultDQ.replace("'", "''")}' --DQ_ResultDQ
@@ -367,7 +377,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                ,'${huemulBigDataGov.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
                                ,'${y.getcolumnName_TI}'  --RAWFilesDetFields_ITName
                                ,'${y.getcolumnName_Business}' --as RAWFilesDetFields_LogicalName
-                               ,'${y.getDescription.replace("'", "''")}' --as RAWFilesDetFields_description
+                               ,'${if (y.getDescription == null) "null" else y.getDescription.replace("'", "''")}' --as RAWFilesDetFields_description
                                ,'${y.getDataType}' --as RAWFilesDetFields_DataType
                                ,${pos }  --RAWFilesDetFields_Position
                                ,'${y.getPosIni}'  --RAWFilesDetFields_PosIni
@@ -480,7 +490,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                            , ${x.getMDM_EnableDTLog} --as Column_EnableDTLog
                            , ${x.getMDM_EnableOldValue} --as Column_EnableOldValue
                            , ${x.getMDM_EnableProcessLog} --as Column_EnableProcessLog
-                           , '${x.getDefaultValue.replace("'", "''")}' --as Column_DefaultValue
+                           , '${if (x.getDefaultValue == null) "null" else x.getDefaultValue.replace("'", "''")}' --as Column_DefaultValue
                            , '${x.getSecurityLevel}' --as Column_SecurityLevel
                            , '${x.getEncryptedType}' --as Column_Encrypted
                            , '${x.getARCO_Data}' --as Column_ARCO
