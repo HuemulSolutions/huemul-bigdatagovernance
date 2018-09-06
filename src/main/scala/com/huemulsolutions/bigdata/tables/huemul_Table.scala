@@ -1620,9 +1620,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //N° Rows Updated == NumRowsUserData
       if (NumRowsUserData != this._NumRows_Updatable) {
-        RaiseError(s"huemul_Table Error: expected to update ${NumRowsUserData} rows, found only ${_NumRows_Updatable}", 1045)
+        RaiseError(s"huemul_Table Error: it was expected to update ${NumRowsUserData} rows, only ${_NumRows_Updatable} was found", 1045)
       } else if (this._NumRows_Total != NumRowsOldDataFrame ) {
-        RaiseError(s"huemul_Table Error: Different count in dataframes, original: ${NumRowsOldDataFrame}, new: ${this._NumRows_Total}, review your dataframe, maybe have duplicate keys", 1046)
+        RaiseError(s"huemul_Table Error: Different number of rows in dataframes, original: ${NumRowsOldDataFrame}, new: ${this._NumRows_Total}, check your dataframe, maybe have duplicate keys", 1046)
       }
       
       LocalControl.NewStep("Selective Update: Final Table")
@@ -2008,8 +2008,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     } catch {
       case e: Exception => 
         result = false
-        if (ErrorCode == null)
-          ErrorCode = 1027
+        if (ErrorCode == null) {
+          if (this.Error_Code != null && this.Error_Code != 0)
+            ErrorCode  = this.Error_Code
+          else if (LocalControl.Control_Error.ControlError_ErrorCode == null)
+            ErrorCode = 1027
+          else
+            ErrorCode = LocalControl.Control_Error.ControlError_ErrorCode
+        }
+        
         LocalControl.Control_Error.GetError(e, getClass().getSimpleName, ErrorCode)
         LocalControl.FinishProcessError()
     }
