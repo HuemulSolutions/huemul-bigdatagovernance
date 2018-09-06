@@ -23,6 +23,7 @@ import java.sql.Types
 import org.apache.spark.sql.types.DecimalType
 
 import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
+import com.huemulsolutions.bigdata.tables.huemul_Table
 
         
       
@@ -214,6 +215,20 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
     return StillAlive
   }
+  
+  private val TableRegistered: ArrayBuffer[String] = new ArrayBuffer[String]() 
+  def IsTableRegistered(tableName: String): Boolean = {
+    var IsRegister: Boolean = false
+    if (TableRegistered.filter { x => x == tableName }.length > 0)
+      IsRegister = true
+    else {
+      TableRegistered.append(tableName)
+    }
+    
+    
+    return IsRegister
+  }
+  
   
   //var sc: org.apache.spark.SparkContext = spark.sparkContext
   def getMonth(Date: Calendar): Int = {return Date.get(Calendar.MONTH)+1}
