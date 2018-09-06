@@ -448,6 +448,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   }
 
   def RegisterMASTER_CREATE_Basic(DefMaster: huemul_Table) {
+    if (huemulBigDataGov.IsTableRegistered(DefMaster.TableName))
+      return
+      
+    if (huemulBigDataGov.DebugMode) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}]    Register Table&Columns in Control")
     val LocalNewTable_id = huemulBigDataGov.huemul_GetUniqueId()
 
     if (huemulBigDataGov.RegisterInControl) {
