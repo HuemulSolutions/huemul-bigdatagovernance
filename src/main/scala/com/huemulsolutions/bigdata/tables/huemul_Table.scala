@@ -33,9 +33,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Table Name
    */
   val TableName : String= this.getClass.getSimpleName.replace("$", "") // ""
-  println("**********************************************************")
-  println(s"INSTANCIA TABLE NAME: ${TableName}")
-  println("**********************************************************")
+  println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}]    table instance: ${TableName}")
   
   def setDataBase(value: ArrayBuffer[huemul_KeyValuePath]) {
     if (DefinitionIsClose)
@@ -1336,18 +1334,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
       //val FKRuleName: String = GetFieldName[DAPI_MASTER_FK](this, x)
-      val AliasDistinct: String = s"___${x.MyName}_FKRuleDist__"
-      val DF_Distinct = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct, s"SELECT DISTINCT ${SQLFields} FROM ${this.DataFramehuemul.Alias} ${if (x.AllowNull) s" WHERE ${FirstRowFK} is not null " else "" }")
+      val AliasDistinct_B: String = s"___${x.MyName}_FKRuleDistB__"
+      val DF_Distinct = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct_B, s"SELECT DISTINCT ${SQLFields} FROM ${this.DataFramehuemul.Alias} ${if (x.AllowNull) s" WHERE ${FirstRowFK} is not null " else "" }")
            
       //Step2: left join with TABLE MASTER DATA
       val AliasLeft: String = s"___${x.MyName}_FKRuleLeft__"
       val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
       val SQLLeft: String = s"""SELECT FK.* 
-                                 FROM ${AliasDistinct} FK 
+                                 FROM ${AliasDistinct_B} FK 
                                    LEFT JOIN ${InstanceTable.GetTable()} PK
                                      ON ${SQLLeftJoin} 
                                  WHERE ${FirstRowPK} IS NULL
                               """
+                                 
+      val AliasDistinct: String = s"___${x.MyName}_FKRuleDist__"
       val DF_Left = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct, SQLLeft)
       
       //Step3: Return DQ Validation
