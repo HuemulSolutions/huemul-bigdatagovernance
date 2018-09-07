@@ -102,6 +102,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   val dateFormatNumeric: DateFormat = new SimpleDateFormat("yyyyMMdd");
   val dateTimeFormat: DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   val dateTimeText: String = "{{YYYY}}-{{MM}}-{{DD}} {{hh}}:{{mm}}:{{ss}}"
+  val dateFormat: DateFormat = new SimpleDateFormat("yyyy-MM-dd")
   //var AutoInc: BigInt = 0
   
   val Invoker = new Exception().getStackTrace()
