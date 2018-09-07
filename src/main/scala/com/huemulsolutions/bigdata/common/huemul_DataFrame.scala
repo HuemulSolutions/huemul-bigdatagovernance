@@ -654,6 +654,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   
   
   /**
+   Run DataQuality defined by user
+   */
+  def DF_RunDataQuality(ManualRules: ArrayBuffer[huemul_DataQuality]): huemul_DataQualityResult = {
+    return DF_RunDataQuality(null, ManualRules, null, null)
+  }
+   
+  
+  /**
    Run DataQuality defined in Master
    */
   def DF_RunDataQuality(ManualRules: ArrayBuffer[huemul_DataQuality], DF_to_Query: String, dMaster: huemul_Table): huemul_DataQualityResult = {
