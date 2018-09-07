@@ -110,10 +110,49 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   //*****************************************  
 
   
+ def AddParamYear(name: String, value: Integer) {
+	 AddParamInformation(name, value.toString)
+	 UpdateProcessExecParam("year",value)
+ }
  
+ def AddParamMonth(name: String, value: Integer) {
+	 AddParamInformation(name, value.toString)
+	 UpdateProcessExecParam("month",value)
+ }
+ 
+ def AddParamDay(name: String, value: Integer) {
+	 AddParamInformation(name, value.toString)
+	 UpdateProcessExecParam("day",value)
+ }
+ 
+ def AddParamHour(name: String, value: Integer) {
+	 AddParamInformation(name, value.toString)
+	 UpdateProcessExecParam("hour",value)
+ }
+ 
+ def AddParamMin(name: String, value: Integer) {
+	 AddParamInformation(name, value.toString)
+	 UpdateProcessExecParam("min",value)
+ }
+ 
+ def AddParamSec(name: String, value: Integer) {
+	 AddParamInformation(name, value.toString)
+	 UpdateProcessExecParam("sec",value)
+ }
+ 
+ private def UpdateProcessExecParam (paramName: String, value: Integer) {
+    //Insert processExcec
+    if (huemulBigDataGov.RegisterInControl) {
+      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_UpdParam (
+                           '${paramName}'  --p_paramName  
+                         , ${value} --as p_value
+                        )
+                      """)      
+    }
+ }
   
   
- def AddParamInfo(name: String, value: String) {
+ def AddParamInformation(name: String, value: String) {
     val NewParam = new huemul_LibraryParams()
     NewParam.param_name = name
     NewParam.param_value = value

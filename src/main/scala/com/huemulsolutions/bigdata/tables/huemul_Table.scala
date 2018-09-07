@@ -1928,9 +1928,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String): Boolean = {
    
     var LocalControl = new huemul_Control(huemulBigDataGov, Control ,huemulType_Frecuency.ANY_MOMENT, false )
-    LocalControl.AddParamInfo("AliasNewData", AliasNewData)
-    LocalControl.AddParamInfo("IsInsert", IsInsert.toString())
-    LocalControl.AddParamInfo("IsUpdate", IsUpdate.toString())
+    LocalControl.AddParamInformation("AliasNewData", AliasNewData)
+    LocalControl.AddParamInformation("IsInsert", IsInsert.toString())
+    LocalControl.AddParamInformation("IsUpdate", IsUpdate.toString())
+    LocalControl.AddParamInformation("IsDelete", IsDelete.toString())
+    LocalControl.AddParamInformation("IsSelectiveUpdate", IsSelectiveUpdate.toString())
+    LocalControl.AddParamInformation("PartitionValueForSelectiveUpdate", PartitionValueForSelectiveUpdate)
     
     var result : Boolean = true
     var ErrorCode: Integer = null
