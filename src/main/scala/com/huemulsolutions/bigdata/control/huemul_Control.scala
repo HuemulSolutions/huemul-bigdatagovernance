@@ -9,8 +9,9 @@ import com.huemulsolutions.bigdata.tables._
 import com.huemulsolutions.bigdata.dataquality._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
+import huemulType_Frecuency._
 
-class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
+class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrecuency: huemulType_Frecuency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulBigDataGov = phuemulBigDataGov
   val Control_Id: String = huemulBigDataGov.huemul_GetUniqueId() 
   
@@ -34,10 +35,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s""" SELECT
   control_process_addOrUpd(
                   '${Control_ClassName}' -- process_id
-                  ,''  --as area_id
+                  ,'0'  --as area_id
                   ,'${Control_ClassName}' --as process_name
                   ,'${Control_FileName}' --as process_FileName
                   ,''  --as process_description
+                  ,'${runFrecuency}' --p_process_frequency
                   ,''  --as process_owner
                   ,'${Control_ClassName}' --as mdm_processname
                 ) 
