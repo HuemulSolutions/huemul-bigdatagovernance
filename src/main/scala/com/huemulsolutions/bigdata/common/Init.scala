@@ -1,7 +1,7 @@
 package com.huemulsolutions.bigdata.common
 
 import com.huemulsolutions.bigdata.control.huemul_Control
-import com.huemulsolutions.bigdata.tables.huemulType_Frecuency
+import com.huemulsolutions.bigdata.control.huemulType_Frequency
 
 object Init {
   def main(args: Array[String]): Unit = {
@@ -10,7 +10,7 @@ object Init {
  
     val huemulBigDataGov  = new huemul_BigDataGovernance(s"BigData API", args, Global)
     
-    val Control = new huemul_Control(huemulBigDataGov,null, huemulType_Frecuency.ANY_MOMENT, false, false)
+    val Control = new huemul_Control(huemulBigDataGov,null, huemulType_Frequency.ANY_MOMENT, false, false)
     //Control.Init_CreateTables()
   }
 }

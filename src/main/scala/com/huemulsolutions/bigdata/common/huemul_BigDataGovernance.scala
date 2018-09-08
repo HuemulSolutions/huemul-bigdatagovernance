@@ -59,7 +59,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
   val Environment: String = arguments.GetValue("Environment", null, s"MUST be set environment parameter: '${GlobalSettings.GlobalEnvironments}' " )
-  val Malla_Id: String = arguments.GetValue("Malla_Id", "0" )
+  val Malla_Id: String = arguments.GetValue("Malla_Id", "" )
   var HideLibQuery: Boolean = false
   try {
     HideLibQuery = arguments.GetValue("HideLibQuery", "false" ).toBoolean
@@ -111,8 +111,8 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * START SPARK AND POSGRES CONNECTION
    *************************/
-  @transient val postgres_connection= new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting),"org.postgresql.Driver", DebugMode) // Connection = null
-  @transient val impala_connection = new huemul_JDBCProperties(GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"org.postgresql.Driver", DebugMode) //Connection = null
+  @transient val postgres_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting),"org.postgresql.Driver", DebugMode) // Connection = null
+  @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"org.postgresql.Driver", DebugMode) //Connection = null
   
   if (!TestPlanMode && RegisterInControl) 
     postgres_connection.StartConnection()
@@ -489,6 +489,53 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
 
     this.CreateTempTable(SQL_DF, Alias, this.DebugMode)      //crea tabla temporal para debug
     return SQL_DF
+  }
+  
+  def RegisterError(ErrorCode: Integer, Message: String, Trace: String, FileName: String, MethodName: String, ClassName: String, LineNumber: Integer, WhoWriteError: String ) {
+    
+      
+    if (RegisterInControl) {
+      
+      val Error_Id = huemul_GetUniqueId()
+      
+      var message = Message
+      if (message == null)
+        message = "null"
+        
+      var trace = Trace
+      if (trace == null)
+        trace = "null"
+        
+      var fileName = FileName
+      if (fileName == null)
+        fileName = "null"
+        
+      var methodName = MethodName
+      if (methodName == null)
+        methodName = "null"
+        
+      var className = ClassName
+      if (className == null)
+        className = "null"
+        
+      //Insert processExcec
+      postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_Error_register (
+                          '${Error_Id}'  --Error_Id
+                         , '${message.replace("'", "''")}' --as Error_Message
+                         , ${ErrorCode} --as error_code
+                         , '${trace.replace("'", "''")}' --as Error_Trace
+                         , '${className.replace("'", "''")}' --as Error_ClassName
+                         , '${fileName.replace("'", "''")}' --as Error_FileName
+                         , '${LineNumber}' --as Error_LIneNumber
+                         , '${methodName.replace("'", "''")}' --as Error_MethodName
+                         , '' --as Error_Detail
+                         ,'${WhoWriteError}'  --process_id
+                    )
+                      """, false)            
+     
+    }
+        
+                               
   }
   
   /**

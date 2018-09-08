@@ -10,6 +10,7 @@ import huemulType_FileType._
 import scala.collection.mutable._
 import com.huemulsolutions.bigdata.tables._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables._
+import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 
 
 class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
@@ -65,6 +66,12 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   
   private var _allColumnsAsString: Boolean = true 
   //def allColumnsAsString(value: Boolean) {_allColumnsAsString = value}
+  
+  def setFrequency(value: huemulType_Frequency) {
+    _Frequency = value
+  }
+  private var _Frequency: huemulType_Frequency = null
+  def getFrequency: huemulType_Frequency = {return _Frequency} 
   
   def RaiseError_RAW(txt: String, Error_Code: Integer) {
     Error.ControlError_Message = txt

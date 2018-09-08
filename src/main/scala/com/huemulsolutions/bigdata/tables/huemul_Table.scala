@@ -19,6 +19,7 @@ import com.sun.xml.internal.ws.api.pipe.NextAction
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
+import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 //import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
 
 
@@ -164,6 +165,18 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var _WhoCanRun_executeOnlyUpdate: huemul_Authorization = new huemul_Authorization()
   
   /**
+    Local name (example "SBIF\\{{YYYY}}{{MM}}\\"
+   */
+  def setFrequency(value: huemulType_Frequency) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of Frequency, definition is close", 1033)
+    else
+      _Frequency = value
+  }
+  private var _Frequency: huemulType_Frequency = null
+  def getFrequency: huemulType_Frequency = {return _Frequency} 
+  
+  /**
    * Automatically map query names
    */
   def setMappingAuto() {
@@ -221,6 +234,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   private var CreateInHive: Boolean = true
   private var CreateTableScript: String = ""
+  private var PartitionValue: String = null
+  def getPartitionValue(): String = {return PartitionValue}
+  var _tablesUseId: String = null
   
   /*  ********************************************************************************
    *****   F I E L D   P R O P E R T I E S    **************************************** 
@@ -333,7 +349,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     if (this._DataBase == null)
       RaiseError(s"huemul_Table Error: DataBase must be defined",1037)
-    
+    if (this._Frequency == null)
+      RaiseError(s"huemul_Table Error: Frequency must be defined",1047)
+        
       
     
       
@@ -1792,7 +1810,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                 ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' and SameHashKey = 0 then 1 else 0 end) as Long) as __Update
                                 ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' then 1 else 0 end) as Long) as __Updatable
                                 ,CAST(SUM(CASE WHEN ___ActionType__ = 'DELETE' then 1 else 0 end) as Long) as __Delete
-                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'EQUAL' then 1 else 0 end) as Long) as __NoChange
+                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'EQUAL' OR
+                                              (___ActionType__ = 'UPDATE' and SameHashKey <> 0) then 1 else 0 end) as Long) as __NoChange
                                 ,CAST(count(1) AS Long) as __Total
                           FROM __Hash_p2 temp 
                        """)
@@ -1927,7 +1946,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String): Boolean = {
    
-    var LocalControl = new huemul_Control(huemulBigDataGov, Control ,huemulType_Frecuency.ANY_MOMENT, false )
+    var LocalControl = new huemul_Control(huemulBigDataGov, Control ,huemulType_Frequency.ANY_MOMENT, false )
     LocalControl.AddParamInformation("AliasNewData", AliasNewData)
     LocalControl.AddParamInformation("IsInsert", IsInsert.toString())
     LocalControl.AddParamInformation("IsUpdate", IsUpdate.toString())
@@ -1955,10 +1974,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //do work
       DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate)
   
-      LocalControl.NewStep("Register Master Information ")
-      Control.RegisterMASTER_CREATE_Use(this)
-      
-      
       //DataQuality by Columns
       LocalControl.NewStep("Start DataQuality")
       val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate)
@@ -2001,8 +2016,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
       LocalControl.NewStep("Start Save ")                
-      if (SavePersistent(LocalControl, DataFramehuemul.DataFrame, OnlyInsert, IsSelectiveUpdate))
+      if (SavePersist(LocalControl, DataFramehuemul.DataFrame, OnlyInsert, IsSelectiveUpdate)){
+        LocalControl.NewStep("Register Master Information ")
+        Control.RegisterMASTER_CREATE_Use(this)
+      
         LocalControl.FinishProcessOK
+      }
       else {
         result = false
         LocalControl.FinishProcessError()
@@ -2049,7 +2068,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
   }
   
-  private def SavePersistent(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean): Boolean = {
+  private def SavePersist(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
     
@@ -2099,8 +2118,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (DFDistinct.count() != 1){
           RaiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}",1015)
         } else {
-          val PartitionValue = DFDistinct.first().getAs[String](_PartitionField)
-          val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValue}")
+          this.PartitionValue = DFDistinct.first().getAs[String](_PartitionField)
+          val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${this.PartitionValue}")
           
           LocalControl.NewStep("Save: Drop old partition")
           val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       

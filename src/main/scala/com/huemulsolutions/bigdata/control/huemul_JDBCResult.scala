@@ -8,6 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 import java.sql.Types
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 
 class huemul_JDBCResult extends Serializable {
   var ResultSet: Array[Row] = null
@@ -15,7 +16,7 @@ class huemul_JDBCResult extends Serializable {
   var IsError: Boolean = false
 }
 
-class huemul_JDBCProperties(connectionString: String, driver: String, DebugMode: Boolean) extends Serializable {
+class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connectionString: String, driver: String, DebugMode: Boolean) extends Serializable {
   val Driver = driver
   val ConnectionString = connectionString
   var connection: Connection = null
@@ -135,6 +136,8 @@ class huemul_JDBCProperties(connectionString: String, driver: String, DebugMode:
      
     } catch {
       case e: Exception  =>  
+        huemulBigDataGob.RegisterError(9999,e.getMessage(),s"${e}", "", "ExecuteJDBC_WithResult", getClass().getSimpleName(), 0, "HuemulJDBC")
+            
         if (DebugMode) println(SQL)
         if (DebugMode) println(s"JDBC Error: $e")
         if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
@@ -145,7 +148,7 @@ class huemul_JDBCProperties(connectionString: String, driver: String, DebugMode:
     return Result
   }
   
-  def ExecuteJDBC_NoResulSet(SQL: String): huemul_JDBCResult = {   
+  def ExecuteJDBC_NoResulSet(SQL: String, CallErrorRegister: Boolean = true): huemul_JDBCResult = {   
     var Result: huemul_JDBCResult = new huemul_JDBCResult()
     
     val driver = "org.postgresql.Driver"
@@ -170,6 +173,9 @@ class huemul_JDBCProperties(connectionString: String, driver: String, DebugMode:
      
     } catch {
       case e: Exception  =>  
+        if (CallErrorRegister)
+          huemulBigDataGob.RegisterError(9999,e.getMessage(),s"${e}", "", "ExecuteJDBC_NoResulSet", getClass().getSimpleName(), 0, "HuemulJDBC")
+        
         if (DebugMode) println(SQL)
         if (DebugMode) println(s"JDBC Error: $e")
         if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
@@ -179,5 +185,7 @@ class huemul_JDBCProperties(connectionString: String, driver: String, DebugMode:
     
     return Result
   }
+  
+  
   
 }

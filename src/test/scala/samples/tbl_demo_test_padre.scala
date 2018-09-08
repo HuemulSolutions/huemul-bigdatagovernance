@@ -18,6 +18,7 @@ class tbl_demo_test_padre(huemulBigDataGov: huemul_BigDataGovernance, Control: h
   this.setBusiness_ResponsibleName("Nombre 1")
   this.setDataBase(huemulBigDataGov.GlobalSettings.DIM_DataBase)
   this.setDescription("descripcion")
+  this.setFrequency(huemulType_Frequency.MONTHLY)
   this.setDQ_MaxNewRecords_Num(10)
   this.setDQ_MaxNewRecords_Perc(Decimal.apply(0.20))
   this.setGlobalPaths(huemulBigDataGov.GlobalSettings.DIM_BigFiles_Path)

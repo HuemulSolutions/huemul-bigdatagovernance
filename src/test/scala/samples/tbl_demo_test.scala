@@ -21,6 +21,7 @@ class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_
   this.setGlobalPaths(huemulBigDataGov.GlobalSettings.DIM_BigFiles_Path)
   this.setIT_ResponsibleName("IT Responsible")
   this.setLocalPath("demo/")
+  this.setFrequency(huemulType_Frequency.MONTHLY)
   //this.setPartitionField("periodo_id")
   this.setStorageType(huemulType_StorageType.ORC)
   this.setTableType(huemulType_Tables.Reference)

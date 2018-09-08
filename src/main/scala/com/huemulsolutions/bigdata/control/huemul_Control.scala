@@ -9,9 +9,9 @@ import com.huemulsolutions.bigdata.tables._
 import com.huemulsolutions.bigdata.dataquality._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
-import huemulType_Frecuency._
+import huemulType_Frequency._
 
-class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrecuency: huemulType_Frecuency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
+class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrequency: huemulType_Frequency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulBigDataGov = phuemulBigDataGov
   val Control_Id: String = huemulBigDataGov.huemul_GetUniqueId() 
   
@@ -28,6 +28,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   val Control_Params: scala.collection.mutable.ListBuffer[huemul_LibraryParams] = new scala.collection.mutable.ListBuffer[huemul_LibraryParams]() 
   private var LocalIdStep: String = ""
   private var Step_IsDQ: Boolean = false
+  private var AdditionalParamsInfo: String = ""
   
   //Find process name in control_process
   
@@ -39,7 +40,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                   ,'${Control_ClassName}' --as process_name
                   ,'${Control_FileName}' --as process_FileName
                   ,''  --as process_description
-                  ,'${runFrecuency}' --p_process_frequency
+                  ,'${runFrequency}' --p_process_frequency
                   ,''  --as process_owner
                   ,'${Control_ClassName}' --as mdm_processname
                 ) 
@@ -55,9 +56,18 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
            ,'${Control_ClassName}'  --p_process_id
            ,'${huemulBigDataGov.Malla_Id}'  --p_Malla_id
            ,'${huemulBigDataGov.IdApplication}'  --p_Application_id
-           , 'user' --p_processExec_WhosRun
+           , '${if (huemulBigDataGov.Malla_Id == "") "user" else "orchestrator"}' --p_processExec_WhosRun
            , ${huemulBigDataGov.DebugMode} --p_processExec_DebugMode
            , '${huemulBigDataGov.Environment}' --p_processExec_Environment
+
+           , ${this.getparamYear()} --p_processExec_param_year 
+           , ${this.getparamMonth()} --p_processExec_param_month
+           , ${this.getparamDay()} --p_processExec_param_day
+           , ${this.getparamHour()} --p_processExec_param_hour
+           , ${this.getparamMin()} --p_processExec_param_min
+           , ${this.getparamSec()} --p_processExec_param_sec
+           , '' --p_processExec_param_others
+
            ,'${Control_ClassName}'  --p_MDM_ProcessName
           )
           """)
@@ -109,34 +119,57 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   //END Start Singleton
   //*****************************************  
 
-  
+ private var paramYear: Integer = 0
+ def getparamYear(): Integer = {return paramYear}
+ 
+ private var paramMonth: Integer = 0
+ def getparamMonth(): Integer = {return paramMonth}
+ 
+ private var paramDay: Integer = 0
+ def getparamDay(): Integer = {return paramDay}
+ 
+ private var paramHour: Integer = 0
+ def getparamHour(): Integer = {return paramHour}
+ 
+ private var paramMin: Integer = 0
+ def getparamMin(): Integer = {return paramMin}
+ 
+ private var paramSec: Integer = 0
+ def getparamSec(): Integer = {return paramSec}
+ 
  def AddParamYear(name: String, value: Integer) {
-	 AddParamInformation(name, value.toString)
+   paramYear = value
+	 AddParamInformationIntern(name, value.toString)
 	 UpdateProcessExecParam("year",value)
  }
  
  def AddParamMonth(name: String, value: Integer) {
-	 AddParamInformation(name, value.toString)
+   paramMonth = value
+	 AddParamInformationIntern(name, value.toString)
 	 UpdateProcessExecParam("month",value)
  }
  
  def AddParamDay(name: String, value: Integer) {
-	 AddParamInformation(name, value.toString)
+   paramDay = value
+	 AddParamInformationIntern(name, value.toString)
 	 UpdateProcessExecParam("day",value)
  }
  
  def AddParamHour(name: String, value: Integer) {
-	 AddParamInformation(name, value.toString)
+   paramHour = value
+	 AddParamInformationIntern(name, value.toString)
 	 UpdateProcessExecParam("hour",value)
  }
  
  def AddParamMin(name: String, value: Integer) {
-	 AddParamInformation(name, value.toString)
+   paramMin = value
+	 AddParamInformationIntern(name, value.toString)
 	 UpdateProcessExecParam("min",value)
  }
  
  def AddParamSec(name: String, value: Integer) {
-	 AddParamInformation(name, value.toString)
+   paramSec = value
+	 AddParamInformationIntern(name, value.toString)
 	 UpdateProcessExecParam("sec",value)
  }
  
@@ -144,21 +177,38 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //Insert processExcec
     if (huemulBigDataGov.RegisterInControl) {
       huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_UpdParam (
-                           '${paramName}'  --p_paramName  
+                          '${this.Control_Id}'  --processexec_id
+                         ,'${paramName}'  --p_paramName  
                          , ${value} --as p_value
                         )
                       """)      
     }
  }
   
-  
- def AddParamInformation(name: String, value: String) {
+ 
+ private def UpdateProcessExecParamInfo (paramName: String, value: String) {
+    AdditionalParamsInfo = s"${AdditionalParamsInfo}${if (AdditionalParamsInfo == "") "" else ", "} {${paramName}}=${value}"
+    
+    //Insert processExcec
+    if (huemulBigDataGov.RegisterInControl) {
+      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_UpdParamInfo (
+                          '${this.Control_Id}'  --processexec_id
+                         ,'${paramName}'  --p_paramName  
+                         , '${if (value == null) "" else value.replace("'", "''")}' --as p_value
+                        )
+                      """)      
+    }
+ }
+ 
+ private def AddParamInformationIntern(name: String, value: String) {
     val NewParam = new huemul_LibraryParams()
     NewParam.param_name = name
     NewParam.param_value = value
     NewParam.param_type = "function"
     Control_Params += NewParam
           
+    
+    
     //Insert processExcec
     if (huemulBigDataGov.RegisterInControl) {
       huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_ProcessExecParams_add (
@@ -173,6 +223,15 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     if (huemulBigDataGov.DebugMode){
       println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] Param num: ${Control_Params.length}, name: $name, value: $value")
     }
+   
+ }
+  
+ def AddParamInformation(name: String, value: String) {
+   //add to param table
+   AddParamInformationIntern(name, value)
+   
+   //Update in processExec paramAddInfo
+   UpdateProcessExecParamInfo(name, value)
   }
     
   def FinishProcessOK {
@@ -244,6 +303,53 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                
   }
   
+  
+  def RegisterError(ErrorCode: Integer, Message: String, Trace: String, FileName: String, MethodName: String, ClassName: String, LineNumber: Integer, WhoWriteError: String ) {
+    
+      
+    if (huemulBigDataGov.RegisterInControl) {
+      
+      val Error_Id = huemulBigDataGov.huemul_GetUniqueId()
+      
+      var message = Message
+      if (message == null)
+        message = "null"
+        
+      var trace = Trace
+      if (trace == null)
+        trace = "null"
+        
+      var fileName = FileName
+      if (fileName == null)
+        fileName = "null"
+        
+      var methodName = MethodName
+      if (methodName == null)
+        methodName = "null"
+        
+      var className = ClassName
+      if (className == null)
+        className = "null"
+        
+      //Insert processExcec
+      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_Error_register (
+                          '${Error_Id}'  --Error_Id
+                         , '${message.replace("'", "''")}' --as Error_Message
+                         , ${ErrorCode} --as error_code
+                         , '${trace.replace("'", "''")}' --as Error_Trace
+                         , '${className.replace("'", "''")}' --as Error_ClassName
+                         , '${fileName.replace("'", "''")}' --as Error_FileName
+                         , '${LineNumber}' --as Error_LIneNumber
+                         , '${methodName.replace("'", "''")}' --as Error_MethodName
+                         , '' --as Error_Detail
+                         ,'${WhoWriteError}'  --process_id
+                    )
+                      """)            
+     
+    }
+        
+                               
+  }
   
   
   def NewStep(StepName: String) {
@@ -379,7 +485,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , '${dapi_raw.GroupName}' --p_RAWFiles_GroupName
                          , '${dapi_raw.Description}' -- p_RAWFiles_Description
                          , '${dapi_raw.SettingInUse.ContactName}' --p_RAWFiles_Owner
-                         ,''  --p_RAWFiles_Frecuency
+                         ,'${dapi_raw.getFrequency}'  --p_RAWFiles_Frequency
                          ,'${Control_ClassName}'  --MDM_ProcessName
                       )
                       """)
@@ -450,7 +556,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , ${dapi_raw.SettingInUse.getuse_second} -- RAWFilesUse_Second
                          , '${dapi_raw.SettingInUse.getuse_params}' -- RAWFilesUse_params
                          ,'${dapi_raw.FileName}' --RAWFiles_FullName
-                         ,'${dapi_raw.SettingInUse.GetFullNameWithPath()}' --RAWFiles_FullPath
+                         ,'${dapi_raw.FileName}' --RAWFiles_FullPath
                          ,'${dapi_raw.DataFramehuemul.getNumRows}' --RAWFiles_NumRows
                          , '' --RAWFiles_HeaderLine
                          ,'${Control_ClassName}'  --process_id
@@ -463,25 +569,28 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     //Insert control_TablesUse
     if (huemulBigDataGov.RegisterInControl) {
+      DefMaster._tablesUseId = LocalIdStep
       huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesUse_add (
                                     '${DefMaster.TableName}'
                                    ,'${DefMaster.GetCurrentDataBase() }'  
                                    , '${Control_ClassName}' --as Process_Id
                                    , '${Control_Id}' --as ProcessExec_Id
-                                   , '${LocalIdStep}' --as ProcessExecStep_Id
-                                   , null -- TableUse_Year
-                                   , null -- TableUse_Month
-                                   , null -- TableUse_Day  
-                                   , null -- TableUse_Hour 
-                                   , null -- TableUse_Miute
-                                   , null -- TableUse_Second
-                                   , null -- TableUse_params
+                                   , '${DefMaster._tablesUseId}' --as ProcessExecStep_Id
+                                   , ${this.getparamYear()}  -- TableUse_Year
+                                   , ${this.getparamMonth()} -- TableUse_Month
+                                   , ${this.getparamDay()} -- TableUse_Day  
+                                   , ${this.getparamHour()} -- TableUse_Hour 
+                                   , ${this.getparamMin()} -- TableUse_Miute
+                                   , ${this.getparamSec()} -- TableUse_Second
+                                   , '${AdditionalParamsInfo.replace("'", "''")}' -- TableUse_params
                                    , true --as TableUse_Read
                                    , false --as TableUse_Write
-                                   , null --as TableUse_numRowsInsert
-                                   , null --as TableUse_numRowsUpdate
-                                   , null --as TableUse_numRowsMarkDelete
-                                   , null --as TableUse_numRowsTotal
+                                   , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
+                                 , ${DefMaster.NumRows_Update()} -- as TableUse_numRowsUpdate
+                                 , ${DefMaster.NumRows_Updatable() } -- as TableUse_numRowsUpdatable
+                                 , ${DefMaster.NumRows_NoChange() } -- as TableUse_numRowsNoChange
+                                 , ${DefMaster.NumRows_Delete()} -- as TableUse_numRowsMarkDelete
+                                 , ${DefMaster.NumRows_Total()} -- as TableUse_numRowsTotal
                                    ,'${Control_ClassName}'  --process_id
                                   )
                       """)     
@@ -496,6 +605,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     val LocalNewTable_id = huemulBigDataGov.huemul_GetUniqueId()
 
     if (huemulBigDataGov.RegisterInControl) {
+      //Table
       huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s""" select control_Tables_addOrUpd(
                             '${LocalNewTable_id}'  --Table_id
                            ,null  --Area_Id
@@ -508,8 +618,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                            , '${DefMaster.getTableType}' --as Table_TableType
                            , '${DefMaster.getStorageType}' --as Table_StorageType
                            , '${DefMaster.getLocalPath}' --as Table_LocalPath
-                           , '${DefMaster.getGlobalPaths}' --as Table_GlobalPath
+                           , '${DefMaster.GetPath(DefMaster.getGlobalPaths)}' --as Table_GlobalPath
                            , '' --as Table_SQLCreate
+                           , '${DefMaster.getFrequency}' --as Table_Frequency
                            ,'${Control_ClassName}'  --process_id
                           )
       """)
@@ -553,45 +664,15 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       )""")        
           i += 1
         }
-    }
-  }
-  
-  def RegisterMASTER_CREATE_Use(DefMaster: huemul_Table) {     
       
-    if (huemulBigDataGov.RegisterInControl) {
-      //Insert control_TablesUse
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesUse_add (
-                                  '${DefMaster.TableName}'
-                                 ,'${DefMaster.GetCurrentDataBase() }'  
-                                 , '${Control_ClassName}' --as Process_Id
-                                 , '${Control_Id}' --as ProcessExec_Id
-                                 , '${LocalIdStep}' --as ProcessExecStep_Id
-                                   , null -- TableUse_Year
-                                   , null -- TableUse_Month
-                                   , null -- TableUse_Day  
-                                   , null -- TableUse_Hour 
-                                   , null -- TableUse_Miute
-                                   , null -- TableUse_Second
-                                   , null -- TableUse_params
-                                 , false --as TableUse_Read
-                                 , true --as TableUse_Write
-                                 , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
-                                 , ${DefMaster.NumRows_Update()} -- as TableUse_numRowsUpdate
-                                 , ${DefMaster.NumRows_Delete()} -- as TableUse_numRowsMarkDelete
-                                 , ${DefMaster.NumRows_Total()} -- as TableUse_numRowsTotal
-                                 ,'${Control_ClassName}'  --process_id
-                                )
-                    """)
-                    
       //Insert control_tablesrel_add
       DefMaster.GetForeingKey().foreach { x =>       
         val p_tablerel_id = huemulBigDataGov.huemul_GetUniqueId()
-        
-        val localDatabaseName = x._Class_TableName.asInstanceOf[huemul_Table].GetCurrentDataBase()
-        val Resultado = 
-        huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""select control_tablesrel_add (
+        val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
+        val localDatabaseName = InstanceTable.GetCurrentDataBase()
+        val Resultado = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""select control_tablesrel_add (
                                     '${p_tablerel_id}'    --p_tablerel_id
-                                   ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
+                                   ,'${InstanceTable.TableName }'  --p_table_Namepk
                                    ,'${localDatabaseName }'  --p_table_BBDDpk
   
                                    ,'${DefMaster.TableName }'  --p_table_NameFK
@@ -608,7 +689,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
          x.Relationship.foreach { y => 
             huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesRelCol_add (
                                       '${IdRel}'    --p_tablerel_id
-                                     ,'${x._Class_TableName.asInstanceOf[huemul_Table].TableName }'  --p_table_Namepk
+                                     ,'${InstanceTable.TableName }'  --p_table_Namepk
                                      ,'${localDatabaseName }'  --p_table_BBDDpk
                                      ,'${y.PK.get_MyName() }'  --p_ColumnName_PK
   
@@ -621,6 +702,41 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                         """)
           }
       }
+    }
+  }
+  
+  def RegisterMASTER_CREATE_Use(DefMaster: huemul_Table) {     
+      
+    if (huemulBigDataGov.RegisterInControl) {
+      //Insert control_TablesUse
+      DefMaster._tablesUseId = LocalIdStep
+      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesUse_add (
+                                  '${DefMaster.TableName}'
+                                 ,'${DefMaster.GetCurrentDataBase() }'  
+                                 , '${Control_ClassName}' --as Process_Id
+                                 , '${Control_Id}' --as ProcessExec_Id
+                                 , '${DefMaster._tablesUseId}' --as ProcessExecStep_Id
+                                   , ${this.getparamYear()}  -- TableUse_Year
+                                   , ${this.getparamMonth()} -- TableUse_Month
+                                   , ${this.getparamDay()} -- TableUse_Day  
+                                   , ${this.getparamHour()} -- TableUse_Hour 
+                                   , ${this.getparamMin()} -- TableUse_Miute
+                                   , ${this.getparamSec()} -- TableUse_Second
+                                   , null -- TableUse_params
+                                 , false --as TableUse_Read
+                                 , true --as TableUse_Write
+                                 , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
+                                 , ${DefMaster.NumRows_Update()} -- as TableUse_numRowsUpdate
+                                 , ${DefMaster.NumRows_Updatable() } -- as TableUse_numRowsUpdatable
+                                 , ${DefMaster.NumRows_NoChange() } -- as TableUse_numRowsNoChange
+                                 , ${DefMaster.NumRows_Delete()} -- as TableUse_numRowsMarkDelete
+                                 , ${DefMaster.NumRows_Total()} -- as TableUse_numRowsTotal
+                                 , '${DefMaster.getPartitionValue}' -- as PartitionValue
+                                 ,'${Control_ClassName}'  --process_id
+                                )
+                    """)
+                    
+      
     }
                         
   }

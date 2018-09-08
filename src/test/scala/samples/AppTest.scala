@@ -4,7 +4,7 @@ import org.junit._
 import Assert._
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
-import com.huemulsolutions.bigdata.tables.huemulType_Frecuency
+import com.huemulsolutions.bigdata.control.huemulType_Frequency
 
 
 @Test
@@ -13,7 +13,7 @@ class AppTest {
     args(0) = "Environment=production,RegisterInControl=false,TestPlanMode=true"
       
     val huemulBigDataGov = new huemul_BigDataGovernance("Pruebas Inicialización de Clases",args,globalSettings.Global)
-    val Control = new huemul_Control(huemulBigDataGov,null, huemulType_Frecuency.ANY_MOMENT)
+    val Control = new huemul_Control(huemulBigDataGov,null, huemulType_Frequency.ANY_MOMENT)
       
     /*TEST PARA HUEMUL_LIBRARY*/
     
