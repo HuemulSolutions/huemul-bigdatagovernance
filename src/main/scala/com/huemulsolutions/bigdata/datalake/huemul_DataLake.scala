@@ -17,7 +17,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   /***
    * Id of data (example: PlanCuentas)
    */
-  var LogicalName : String= ""
+  val LogicalName : String= this.getClass.getSimpleName.replace("$", "") // ""
   /***
    * Group or System (Example: SBIF)
    */
