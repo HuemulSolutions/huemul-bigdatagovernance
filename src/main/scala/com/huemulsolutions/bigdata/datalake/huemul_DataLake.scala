@@ -60,7 +60,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   private var rawFiles_id: String = ""
   def setrawFiles_id(id: String) {rawFiles_id = id}
   def getrawFiles_id(): String = {return rawFiles_id}
-  //RAW_OpenFile(RAW_File_Info, ano, mes, dia, hora, min, seg, AdditionalParams)
+  //RAW_OpenFile(RAW_File_Info, year, mes, day, hora, min, seg, AdditionalParams)
   
   var DataRDD: RDD[String] = null
   
@@ -201,9 +201,9 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * Open the file with huemulBigDataGov.spark.sparkContext.textFile <br>
    * and set de DataRDD attribute
    */
-  def OpenFile(ano: Integer, mes: Integer, dia: Integer, hora: Integer, min: Integer, seg: Integer, AdditionalParams: String = null): Boolean = {    
+  def OpenFile(year: Integer, month: Integer, day: Integer, hour: Integer, min: Integer, sec: Integer, AdditionalParams: String = null): Boolean = {    
     //Ask for definition in date
-    val DateProcess = huemulBigDataGov.setDateTime(ano, mes, dia, hora, min, seg)
+    val DateProcess = huemulBigDataGov.setDateTime(year, month, day, hour, min, sec)
     var LocalErrorCode: Integer = null
     if (huemulBigDataGov.DebugMode) println("N° array config: " + this.SettingByDate.length.toString())
     val DataResult = this.SettingByDate.filter { x => DateProcess.getTimeInMillis >= x.StartDate.getTimeInMillis && DateProcess.getTimeInMillis <= x.EndDate.getTimeInMillis  }
@@ -218,7 +218,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
        this.SettingInUse = DataResult(0)
     }         
     
-    this.SettingInUse.SetParamsInUse(ano, mes, dia, hora, min, seg, AdditionalParams)
+    this.SettingInUse.SetParamsInUse(year, month, day, hour, min, sec, AdditionalParams)
     
     try {
         this.StartRead_dt = Calendar.getInstance()
@@ -226,7 +226,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         /********   OPEN FILE   *********************************/
         /************************************************************************/
         //Open File 
-        this.FileName = huemulBigDataGov.ReplaceWithParams(this.SettingInUse.GetFullNameWithPath(), ano, mes, dia, hora, min, seg, AdditionalParams)
+        this.FileName = huemulBigDataGov.ReplaceWithParams(this.SettingInUse.GetFullNameWithPath(), year, month, day, hour, min, sec, AdditionalParams)
         //DQ: Validate name special characters 
         if (this.FileName.contains("{{") || this.FileName.contains("}}")) {
           LocalErrorCode = 3005
@@ -343,10 +343,10 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
  *  @param Param_ObjectName es el nombre de objeto que tendra tu masterizacion "process_[[modulo]]_[[entidad]]" (ejemplo process_comun_institucion )
  *  @param TableName es el nombre de la tabla "tbl_[[modulo]]_[[entidad]]" (ejemplo tbl_comun_institucion)
  *  @param TableType es el tipo de tabla (master y reference para tablas maestras, Transaction para tablas particionadas por periodo con informacion transaccional)
- *  @param EsMes indica si la tabla transaccional tiene particion mensual o diaria
+ *  @param Frecuency indica si la tabla transaccional tiene particion mensual, diaria. Además indica la periocididad de actualización del proceso
  *  @param AutoMapping true para indicar que los nombres de columnas en raw son iguales a la tabla, indicar false si los nombres de columnas en raw son distintos a tabla 
  */
-def GenerateInitialCode(PackageBase: String, PackageProject: String, NewObjectName: String, NewTableName: String, TableType: huemulType_Tables , EsMes: Boolean, AutoMapping: Boolean = true) {
+def GenerateInitialCode(PackageBase: String, PackageProject: String, NewObjectName: String, NewTableName: String, TableType: huemulType_Tables , Frecuency: huemulType_Frequency, AutoMapping: Boolean = true) {
     val Symbol: String = "$"
     val Comas: String = "\"\"\""
     val Coma: String = "\""
@@ -390,6 +390,11 @@ def GenerateInitialCode(PackageBase: String, PackageProject: String, NewObjectNa
       
     }
     
+    val PeriodName: String = if (Frecuency == huemulType_Frequency.MONTHLY) "month" 
+                                   else if (Frecuency == huemulType_Frequency.ANNUAL) "year"
+                                   else if (Frecuency == huemulType_Frequency.DAILY) "day"
+                                   else if (Frecuency == huemulType_Frequency.WEEKLY) "week" 
+                                   else "other"
     
     var Code: String = s"""
 
@@ -425,10 +430,13 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   this.setGlobalPaths(huemulBigDataGov.GlobalSettings.MASTER_SmallFiles_Path)
   //Ruta en HDFS especifica para esta tabla (Globalpaths / localPath)
   this.setLocalPath("${LocalPath}")
+  //Frecuencia de actualización
+  this.setFrequency(huemulType_Frequency.${Frecuency})
+
   ${
   if (TableType == huemulType_Tables.Transaction) {
   s"""  //columna de particion
-  this.setPartitionField("periodo_${if (EsMes) "mes" else "dia"}")"""
+  this.setPartitionField("period_${PeriodName}")"""
   } else ""}
   /**********   S E T E O   I N F O R M A T I V O   ****************************************/
   //Nombre del contacto de TI
@@ -456,9 +464,9 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
 
   ${
   if (TableType == huemulType_Tables.Transaction) {
-  s"""  //Columna de periodo
-  val periodo_${if (EsMes) "mes" else "dia"} = new huemul_Columns (StringType, true,"periodo de los datos")
-  periodo_${if (EsMes) "mes" else "dia"}.setIsPK(true)
+  s"""  //Columna de period
+  val period_${PeriodName} = new huemul_Columns (StringType, true,"periodo de los datos")
+  period_${PeriodName}.setIsPK(true)
   """
   } else ""}  
     
@@ -540,40 +548,40 @@ object ${param_ObjectName} {
     val huemulBigDataGov  = new huemul_BigDataGovernance(s"Masterizacion tabla ${NewTableName} - ${Symbol}{this.getClass.getSimpleName}", args, globalSettings.Global)
     
     /*************** PARAMETROS **********************/
-    var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parametro año, ej: ano=2017").toInt
-    var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parametro mes, ej: mes=12").toInt
-    ${if (EsMes)s""" 
-    var param_dia = 1
-    val param_numMeses = huemulBigDataGov.arguments.GetValue("num_meses", "1").toInt
+    var param_year = huemulBigDataGov.arguments.GetValue("year", null, "Debe especificar el parametro año, ej: year=2017").toInt
+    var param_month = huemulBigDataGov.arguments.GetValue("month", null, "Debe especificar el parametro month, ej: month=12").toInt
+    ${if (Frecuency == huemulType_Frequency.MONTHLY)s""" 
+    var param_day = 1
+    val param_numMonths = huemulBigDataGov.arguments.GetValue("num_months", "1").toInt
 
     /*************** CICLO REPROCESO MASIVO **********************/
     var i: Int = 1
     var FinOK: Boolean = true
-    var Fecha = huemulBigDataGov.setDateTime(param_ano, param_mes, param_dia, 0, 0, 0)
+    var Fecha = huemulBigDataGov.setDateTime(param_year, param_month, param_day, 0, 0, 0)
     
-    while (i <= param_numMeses) {
-      param_ano = huemulBigDataGov.getYear(Fecha)
-      param_mes = huemulBigDataGov.getMonth(Fecha)
-      println(s"Procesando Año ${Symbol}param_ano, Mes ${Symbol}param_mes (${Symbol}i de ${Symbol}param_numMeses)")
+    while (i <= param_numMonths) {
+      param_year = huemulBigDataGov.getYear(Fecha)
+      param_month = huemulBigDataGov.getMonth(Fecha)
+      println(s"Procesando Año ${Symbol}param_year, month ${Symbol}param_month (${Symbol}i de ${Symbol}param_numMonths)")
       
       //Ejecuta codigo
-      var FinOK = process_master(huemulBigDataGov, null, param_ano, param_mes)
+      var FinOK = process_master(huemulBigDataGov, null, param_year, param_month)
       
       if (FinOK)
         i+=1
       else {
-        println(s"ERROR Procesando Año ${Symbol}param_ano, Mes ${Symbol}param_mes (${Symbol}i de ${Symbol}param_numMeses)")
-        i = param_numMeses + 1
+        println(s"ERROR Procesando Año ${Symbol}param_year, month ${Symbol}param_month (${Symbol}i de ${Symbol}param_numMonths)")
+        i = param_numMonths + 1
       }
         
       Fecha.add(Calendar.MONTH, 1)      
     }
     """
     else s"""
-    var param_dia = huemulBigDataGov.arguments.GetValue("dia", null, "Debe especificar el parametro dia, ej: dia=31").toInt    
-    val param_numDias = huemulBigDataGov.arguments.GetValue("num_dias", "1").toInt
+    var param_day = huemulBigDataGov.arguments.GetValue("day", null, "Debe especificar el parametro day, ej: day=31").toInt    
+    val param_numdays = huemulBigDataGov.arguments.GetValue("num_days", "1").toInt
 
-    process_master(huemulBigDataGov, null, param_ano, param_mes, param_dia)
+    process_master(huemulBigDataGov, null, param_year, param_month, param_day)
     """
     }
     
@@ -582,22 +590,23 @@ object ${param_ObjectName} {
   
   /**
     masterizacion de archivo [[CAMBIAR]] <br>
-    param_ano: año de los datos  <br>
-    param_mes: mes de los datos  <br>
+    param_year: año de los datos  <br>
+    param_month: mes de los datos  <br>
    */
-  def process_master(huemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, param_ano: Integer, param_mes: Integer${if (EsMes) "" else ",param_dia: Integer" }): Boolean = {
-    val Control = new huemul_Control(huemulBigDataGov, ControlParent)    
+  def process_master(huemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, param_year: Integer, param_month: Integer${if (Frecuency == huemulType_Frequency.DAILY) ",param_day: Integer" else "" }): Boolean = {
+    val Control = new huemul_Control(huemulBigDataGov, ControlParent, huemulType_Frequency.${Frecuency})    
     
     try {             
       /*************** AGREGAR PARAMETROS A CONTROL **********************/
-      Control.AddParamInfo("param_ano", param_ano.toString())
-      Control.AddParamInfo("param_mes", param_mes.toString())
-      ${if (EsMes) "" else s"""Control.AddParamInfo("param_dia", param_dia.toString())"""}
+      Control.AddParamYear("param_year", param_year)
+      Control.AddParamMonth("param_month", param_month)
+      ${if (Frecuency == huemulType_Frequency.DAILY) s"""Control.AddParamDay("param_day", param_day)""" else ""}
+      //Control.AddParamInformation("param_oters", param_otherparams)
       
       /*************** ABRE RAW DESDE DATALAKE **********************/
       Control.NewStep("Abre DataLake")  
       var DF_RAW =  new ${this.getClass.getSimpleName.replace("_test", "")}(huemulBigDataGov, Control)
-      if (!DF_RAW.open("DF_RAW", Control, param_ano, param_mes, ${if (EsMes) "1" else "param_dia"}, 0, 0, 0))       
+      if (!DF_RAW.open("DF_RAW", Control, param_year, param_month, ${if (Frecuency == huemulType_Frequency.DAILY) "param_day" else "1" }, 0, 0, 0))       
         Control.RaiseError(s"error encontrado, abortar: ${Symbol}{DF_RAW.Error.ControlError_Message}")
       
       
@@ -609,7 +618,7 @@ object ${param_ObjectName} {
       
       Control.NewStep("Generar Logica de Negocio")
       huemulTable.DF_from_SQL("FinalRAW"
-                          , s${Comas}SELECT TO_DATE("${Symbol}{param_ano}-${Symbol}{param_mes}-${if (EsMes) "1" else s"${Symbol}{param_dia}"}") as periodo_${if (EsMes) "mes" else "dia"}
+                          , s${Comas}SELECT TO_DATE("${Symbol}{param_year}-${Symbol}{param_month}-${if (Frecuency == huemulType_Frequency.DAILY) s"${Symbol}{param_day}" else "1"}") as period_${PeriodName}
 ${LocalFields}
                                FROM DF_RAW${Comas})
       
@@ -622,7 +631,7 @@ ${LocalFields}
       Control.NewStep("Asocia columnas de la tabla con nombres de campos de SQL")
       ${if (AutoMapping) s"""huemulTable.setMappingAuto()"""
       else { s"""
-      huemulTable.periodo_${if (EsMes) "mes" else "dia"}.SetMapping("periodo_${if (EsMes) "mes" else "dia"}")
+      huemulTable.period_${PeriodName}.SetMapping("period_${PeriodName}")
 ${LocalMapping}
       """
       }}
@@ -644,9 +653,12 @@ ${LocalMapping}
   
 }
 
+ """
+ 
 /**
 * Objeto permite mover archivos HDFS desde ambiente origen (ejemplo producción) a ambientes destino (ejemplo ambiente experimental)
 */
+        /*
 object ${param_ObjectName}_Migrar {
  
  def main(args : Array[String]) {
@@ -654,11 +666,11 @@ object ${param_ObjectName}_Migrar {
     val huemulBigDataGov  = new huemul_BigDataGovernance(s"Migración de datos tabla ${NewTableName}  - ${Symbol}{this.getClass.getSimpleName}", args, globalSettings.Global)
     
     /*************** PARAMETROS **********************/
-    var param_ano = huemulBigDataGov.arguments.GetValue("ano", null, "Debe especificar el parametro año, ej: ano=2017").toInt
-    var param_mes = huemulBigDataGov.arguments.GetValue("mes", null, "Debe especificar el parametro mes, ej: mes=12").toInt
-    var param_dia = ${if (EsMes) "1" else s"""huemulBigDataGov.arguments.GetValue("dia", null, "Debe especificar el parametro dia, ej: dia=31").toInt"""}
+    var param_year = huemulBigDataGov.arguments.GetValue("year", null, "Debe especificar el parametro año, ej: year=2017").toInt
+    var param_month = huemulBigDataGov.arguments.GetValue("month", null, "Debe especificar el parametro month, ej: month=12").toInt
+    var param_day = ${if (Frecuency == huemulType_Frequency.DAILY) s"""huemulBigDataGov.arguments.GetValue("day", null, "Debe especificar el parametro day, ej: day=31").toInt""" else "1"}
    
-    var param = huemulBigDataGov.ReplaceWithParams("{{YYYY}}-{{MM}}-{{DD}}", param_ano, param_mes, param_dia, 0, 0, 0)
+    var param = huemulBigDataGov.ReplaceWithParams("{{YYYY}}-{{MM}}-{{DD}}", param_year, param_month, param_day, 0, 0, 0)
     
    val clase = new ${NewTableName}(huemulBigDataGov, null)
    clase.CopyToDest(param, "[[environment]]")
@@ -667,15 +679,8 @@ object ${param_ObjectName}_Migrar {
  }
  
 }
+*/
 
-
-
-
-
-
-
-
-  """
    
    println(Code)
     
