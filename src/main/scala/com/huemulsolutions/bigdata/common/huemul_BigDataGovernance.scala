@@ -172,12 +172,17 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    *************************/
   
   def close() {
-    application_StillAlive(this.IdApplication)
+    application_closeAll(this.IdApplication)
     this.spark.catalog.clearCache()
     this.spark.close()
     if (RegisterInControl) this.postgres_connection.connection.close()
     if (ImpalaEnabled) this.impala_connection.connection.close()
     
+  }
+  
+  def application_closeAll(ApplicationInUse: String) {
+    if (RegisterInControl) 
+      this.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
   }
   
   def application_StillAlive(ApplicationInUse: String): Boolean = {
@@ -211,7 +216,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
                 
     //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
     if (!StillAlive) {
-      val a = this.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
+      application_closeAll(ApplicationInUse)
     }
     
     return StillAlive
