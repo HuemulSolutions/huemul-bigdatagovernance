@@ -70,7 +70,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   def setFrequency(value: huemulType_Frequency) {
     _Frequency = value
   }
-  private var _Frequency: huemulType_Frequency = null
+  private var _Frequency: huemulType_Frequency = huemulType_Frequency.ANY_MOMENT
   def getFrequency: huemulType_Frequency = {return _Frequency} 
   
   def RaiseError_RAW(txt: String, Error_Code: Integer) {
