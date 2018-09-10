@@ -281,6 +281,16 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * Return DataBaseName.TableName
    */
   def GetTable(): String = {
+    if (!_TableWasRegistered) {
+      Control.RegisterMASTER_USE(this)
+      _TableWasRegistered = true
+    }
+    
+    return InternalGetTable()
+  }
+  private var _TableWasRegistered: Boolean = false
+  
+  private def InternalGetTable(): String = {
     return s"${GetDataBase(_DataBase)}.${TableName}"
   }
   
@@ -291,7 +301,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Return DataBaseName.TableName
    */
-  def GetTable(ManualEnvironment: String): String = {
+  private def InternalGetTable(ManualEnvironment: String): String = {
     return s"${GetDataBase(this._DataBase, ManualEnvironment)}.${TableName}"
   }
   
@@ -1289,7 +1299,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     CreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${GetTable()} (${GetColumns_CreateTable(true) })
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable()} (${GetColumns_CreateTable(true) })
                                  ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
                                  STORED AS ${_StorageType.toString()}                                  
                                  LOCATION '${GetFullNameWithPath()}'"""
@@ -1360,7 +1370,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
       val SQLLeft: String = s"""SELECT FK.* 
                                  FROM ${AliasDistinct_B} FK 
-                                   LEFT JOIN ${InstanceTable.GetTable()} PK
+                                   LEFT JOIN ${InstanceTable.InternalGetTable()} PK
                                      ON ${SQLLeftJoin} 
                                  WHERE ${FirstRowPK} IS NULL
                               """
@@ -1388,7 +1398,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DF_Alias = DataFramehuemul.Alias
       Values.ColumnName =null
       Values.DQ_Name =s"FK - ${SQLFields}"
-      Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.GetTable()} "
+      Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.InternalGetTable()} "
       Values.DQ_QueryLevel = huemulType_DQQueryLevel.Row // IsAggregate =false
       Values.DQ_Notification = huemulType_DQNotification.ERROR// RaiseError =true
       Values.DQ_SQLFormula =SQLLeft
@@ -1459,7 +1469,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     SQL_NotNull_FinalTable().foreach { x => 
       if (huemulBigDataGov.DebugMode) println(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD ${x.get_MyName()}")
       
-        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: Not Null for field ${x.get_MyName()} ", s"${x.get_MyName()} IS NOT NULL",1023)
+        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, s"Not Null for field ${x.get_MyName()} ", s"${x.get_MyName()} IS NOT NULL",1023)
         NotNullDQ.setTolerance(0, null)
         ArrayDQ.append(NotNullDQ)
     }
@@ -1471,7 +1481,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         var tand = ""
                   
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
-        val RegExp : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: RegExp Column ${x.get_MyName()}",SQLFormula, 1041 )
+        val RegExp : huemul_DataQuality = new huemul_DataQuality(x, s"RegExp Column ${x.get_MyName()}",SQLFormula, 1041 )
         
         RegExp.setTolerance(0, null)
         ArrayDQ.append(RegExp)
@@ -1492,7 +1502,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           SQLFormula += s" $tand length(${x.get_MyName()}) <= ${x.getDQ_MaxLen}"
                   
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
-        val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax length Column ${x.get_MyName()}",SQLFormula, 1020 )
+        val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, s"length DQ for Column ${x.get_MyName()}",SQLFormula, 1020 )
         MinMaxLen.setTolerance(0, null)
         ArrayDQ.append(MinMaxLen)
     }
@@ -1511,7 +1521,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           SQLFormula += s" $tand ${x.get_MyName()} <= ${x.getDQ_MaxDecimalValue}"
         
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
-        val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax Number Column ${x.get_MyName()}", SQLFormula,1021)
+        val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, s"Range Number DQ for Column ${x.get_MyName()}", SQLFormula,1021)
         MinMaxNumber.setTolerance(0, null)         
         ArrayDQ.append(MinMaxNumber)
     }
@@ -1530,7 +1540,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           SQLFormula += s" $tand ${x.get_MyName()} <= '${x.getDQ_MaxDateTimeValue}'"
           
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
-        val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, s"huemul_Table Error: MinMax DateTime Column ${x.get_MyName()} ", SQLFormula, 1022)
+        val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, s"Range DateTime DQ Column ${x.get_MyName()} ", SQLFormula, 1022)
         MinMaxDT.setTolerance(0, null)
         ArrayDQ.append(MinMaxDT)
     }
@@ -1742,7 +1752,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val DFTempOpen = huemulBigDataGov.spark.read.parquet(tempPath)        
         DFTempOpen.createOrReplaceTempView(TempAlias)        
       } else {
-          println(s"create empty dataframe because ${this.GetTable()} does not exist")
+          println(s"create empty dataframe because ${this.InternalGetTable()} does not exist")
           val Schema = GetSchema()
           val SchemaForEmpty = StructType(Schema.map { x => StructField(x.name, x.dataType, x.nullable) })
           val EmptyRDD = huemulBigDataGov.spark.sparkContext.emptyRDD[Row]
@@ -2010,7 +2020,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //Create table persistent
       if (huemulBigDataGov.DebugMode){
-        println(s"Saving ${GetTable()} Table with params: ") 
+        println(s"Saving ${InternalGetTable()} Table with params: ") 
         println(s"${_PartitionField} field for partitioning table")
         println(s"${GetFullNameWithPath()} path")
       }
@@ -2054,7 +2064,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
        org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
        
-       val DestTableName: String = GetTable(DestEnvironment)
+       val DestTableName: String = InternalGetTable(DestEnvironment)
        println(s"MSCK REPAIR TABLE ${DestTableName}")
        huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${DestTableName}")
               
@@ -2082,7 +2092,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       DF_Final = DF_Final.drop("___ActionType__")
     }
       
-    val sqlDrop01 = s"drop table if exists ${GetTable()}"
+    val sqlDrop01 = s"drop table if exists ${InternalGetTable()}"
     if (CreateInHive ) {
       LocalControl.NewStep("Save: Drop Hive table Def")
       if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sqlDrop01)
@@ -2155,13 +2165,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         if (CreateInHive && (_PartitionField != null && _PartitionField != "")) {
           LocalControl.NewStep("Save: Repair Hive Metadata")
-          if (huemulBigDataGov.DebugMode) println(s"MSCK REPAIR TABLE ${GetTable()}")
-          huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${GetTable()}")
+          if (huemulBigDataGov.DebugMode) println(s"MSCK REPAIR TABLE ${InternalGetTable()}")
+          huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${InternalGetTable()}")
         }
         
         if (huemulBigDataGov.ImpalaEnabled) {
           LocalControl.NewStep("Save: refresh Impala Metadata")
-          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh table ${GetTable()}")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh table ${InternalGetTable()}")
         }
       } catch {
         case e: Exception => 
