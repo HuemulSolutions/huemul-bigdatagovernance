@@ -1955,7 +1955,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Transactional: Delete and Insert new data
    */
   private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String): Boolean = {
-   
+    if (!this.DefinitionIsClose)
+      this.RaiseError(s"huemul_Table Error: MUST call ApplyTableDefinition ${this.TableName}", 1048)
+    
     var LocalControl = new huemul_Control(huemulBigDataGov, Control ,huemulType_Frequency.ANY_MOMENT, false )
     LocalControl.AddParamInformation("AliasNewData", AliasNewData)
     LocalControl.AddParamInformation("IsInsert", IsInsert.toString())
