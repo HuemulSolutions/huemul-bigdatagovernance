@@ -65,7 +65,7 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
   def getuse_minute: Integer = {return use_minute}
   private var use_second: Integer = null
   def getuse_second: Integer = {return use_second}
-  private var use_params: String = null
+  private var use_params: String = ""
   def getuse_params: String = {return use_params}
   
   def SetParamsInUse(ano: Integer, mes: Integer, dia: Integer, hora: Integer, min: Integer, seg: Integer, AdditionalParams: String){
