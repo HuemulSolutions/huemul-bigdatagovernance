@@ -208,7 +208,7 @@ class huemul_Columns(param_DataType: DataType
   
    def get_MyName(): String = {
     if (this.MyName == null || this.MyName == "")
-      sys.error(s"DAPI ERROR: MUST call 'ApplyTableDefinition' in table definition, (field description: ${this.Description} )")
+      sys.error(s"Huemul ERROR: MUST call 'ApplyTableDefinition' in table definition, (field description: ${this.Description} )")
 
     return this.MyName
   }
