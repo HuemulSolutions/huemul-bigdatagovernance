@@ -75,7 +75,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   var ImpalaEnabled: Boolean = GlobalSettings.ImpalaEnabled
   try {
-    ImpalaEnabled = arguments.GetValue("ImpalaEnabled", "false" ).toBoolean
+    ImpalaEnabled = arguments.GetValue("ImpalaEnabled", s"${GlobalSettings.ImpalaEnabled}" ).toBoolean
   } catch {    
     case e: Exception => println("ImpalaEnabled: error values (true or false)")
   }
@@ -112,7 +112,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * START SPARK AND POSGRES CONNECTION
    *************************/
   @transient val postgres_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting),"org.postgresql.Driver", DebugMode) // Connection = null
-  @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"org.postgresql.Driver", DebugMode) //Connection = null
+  @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode) //Connection = null
   
   if (!TestPlanMode && RegisterInControl) 
     postgres_connection.StartConnection()
