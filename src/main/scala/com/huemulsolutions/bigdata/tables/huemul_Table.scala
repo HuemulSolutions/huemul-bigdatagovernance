@@ -241,13 +241,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /*  ********************************************************************************
    *****   F I E L D   P R O P E R T I E S    **************************************** 
    ******************************************************************************** */
-  val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false)
+  
   val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false)
   val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false)
   val MDM_fhChange = new huemul_Columns (TimestampType, false, "fecha / hora de último cambio de valor en los campos de negocio", false)
   val MDM_ProcessChange = new huemul_Columns (StringType, false, "Nombre del proceso que cambió los datos", false)
   val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false)
-      
+  val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false)
+  
   var AdditionalRowsForDistint: String = ""
   private var DefinitionIsClose: Boolean = false
   
@@ -424,7 +425,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   
-  private def getALLDeclaredFields(OnlyUserDefined: Boolean = false) : Array[java.lang.reflect.Field] = {
+  private def getALLDeclaredFields(OnlyUserDefined: Boolean = false, PartitionColumnToEnd: Boolean = false) : Array[java.lang.reflect.Field] = {
     val pClass = getClass()  
     
     val a = pClass.getDeclaredFields()
@@ -436,6 +437,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }       
       
       c = a.union(b)  
+    }
+    
+    if (PartitionColumnToEnd) {
+      val partitionlast = c.filter { x => x.getName.toUpperCase() == this.getPartitionField.toUpperCase() }
+      val rest_array = c.filter { x => x.getName.toUpperCase() != this.getPartitionField.toUpperCase() }
+      c = rest_array.union(partitionlast)
     }
 
     
@@ -583,7 +590,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Create schema from DataDef Definition
    */
   private def GetColumns_CreateTable(ForHive: Boolean = false): String = {
-    val fieldList = getALLDeclaredFields()
+    val fieldList = getALLDeclaredFields(false,true)
     val NumFields = fieldList.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }.length
     
@@ -656,13 +663,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var StringSQL: String = ""
     var StringSQl_PK: String = ""
     
+    var StringSQL_partition: String = ""
     var StringSQL_hash: String = "sha2(concat( "
     var coma_hash: String = ""
     
     
     var coma: String = ""    
     
-    getALLDeclaredFields().filter { x => x.setAccessible(true)
+    getALLDeclaredFields(false,true).filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }
     .foreach { x =>     
       //Get field
@@ -673,12 +681,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
      
       //New value (from field or compute column )
       if (huemulBigDataGov.HasName(Field.get_MappedName()) ){
-        StringSQL += s"${coma}${NewColumnCast} as ${x.getName} \n"
-        coma = ","
+        if (Field.get_MyName().toUpperCase() == this.getPartitionField.toUpperCase())
+          StringSQL_partition += s",${NewColumnCast} as ${x.getName} \n"
+        else {
+          StringSQL += s"${coma}${NewColumnCast} as ${x.getName} \n"
+          coma = ","
+        }
       } else {
         if (x.getName == "MDM_fhNew") {
-          StringSQL += s"${coma}CAST(now() AS ${Field.DataType.sql} ) as ${x.getName} \n"
-          coma = ","
+          if (Field.get_MyName().toUpperCase() == this.getPartitionField.toUpperCase())
+            StringSQL_partition += s"${coma}CAST(now() AS ${Field.DataType.sql} ) as ${x.getName} \n"
+          else {   
+            StringSQL += s",CAST(now() AS ${Field.DataType.sql} ) as ${x.getName} \n"
+            coma = ","
+          }
+            
         } else if (x.getName == "MDM_ProcessNew") {
           StringSQL += s"${coma}CAST('${processName}' AS ${Field.DataType.sql} ) as ${x.getName} \n"
           coma = ","
@@ -700,6 +717,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Step 1: full join of both DataSet, old for actual recordset, new for new DataFrame
     StringSQL = s"""SELECT ${StringSQL}
                     ,${StringSQL_hash} as MDM_hash
+                    ${StringSQL_partition}
                     FROM $OfficialAlias new
                           """
        
