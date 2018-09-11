@@ -151,8 +151,8 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
   def ExecuteJDBC_NoResulSet(SQL: String, CallErrorRegister: Boolean = true): huemul_JDBCResult = {   
     var Result: huemul_JDBCResult = new huemul_JDBCResult()
     
-    val driver = "org.postgresql.Driver"
-    val url = ""
+    //val driver = "org.postgresql.Driver"
+    //val url = ""
    
     var i = 0
     while (i<=2 && connection.isClosed()) {
@@ -167,7 +167,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
   
     try {
       val statement = connection.createStatement()
-      val Resultado = statement.executeQuery(SQL)
+      val Resultado = statement.execute(SQL)
     
       //connection.close()
      
