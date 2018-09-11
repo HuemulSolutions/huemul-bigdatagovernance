@@ -2173,7 +2173,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         if (huemulBigDataGov.ImpalaEnabled) {
           LocalControl.NewStep("Save: refresh Impala Metadata")
-          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh table ${InternalGetTable()}")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"invalidate metadata ${InternalGetTable()}")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh ${InternalGetTable()}")
         }
       } catch {
         case e: Exception => 
