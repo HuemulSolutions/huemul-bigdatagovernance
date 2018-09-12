@@ -20,6 +20,8 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
 import com.huemulsolutions.bigdata.control.huemulType_Frequency._
+import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
+
 //import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
 
 
@@ -364,7 +366,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       RaiseError(s"huemul_Table Error: Frequency must be defined",1047)
         
       
-    
+    var PartitionFieldValid: Boolean = false
       
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
@@ -398,6 +400,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         DataField.SetDefinitionIsClose()
         
+        if (this.getTableType == huemulType_Tables.Transaction && DataField.get_MyName().toUpperCase() == this.getPartitionField.toUpperCase())
+          PartitionFieldValid = true
       }
       
       //Nombre de DQ      
@@ -415,11 +419,16 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
       }
     }
+    
+    
     if (huemulBigDataGov.DebugMode) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] register metadata")
     //Register TableName and fields
     Control.RegisterMASTER_CREATE_Basic(this)
     if (huemulBigDataGov.DebugMode) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] end ApplyTableDefinition")
     if (!HasPK) this.RaiseError("huemul_Table Error: PK not defined", 1017)
+    if (this.getTableType == huemulType_Tables.Transaction && !PartitionFieldValid)
+      RaiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional (invalida name ${this.getPartitionField} )",1035)
+      
     DefinitionIsClose = true
     return true
   }
