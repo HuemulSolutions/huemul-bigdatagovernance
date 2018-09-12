@@ -11,6 +11,7 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
 import org.apache.spark.sql.catalyst.expressions.Coalesce
+import org.apache.spark.storage.StorageLevel._
 
 /**
  * Def_Fabric_DataInfo: Define method to improve DQ over DF
@@ -42,8 +43,16 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /**
    * No Rows info
    */
-  private var NumRows: Long = -1
-  def getNumRows(): Long = {return NumRows}
+  
+  //private var NumRows: Long = -1
+  private var _NumRows: Long = -1
+  def getNumRows(): Long = {
+    if (_NumRows == -1)
+      _NumRows = DataFrame.count()
+      
+    return _NumRows
+    
+  }
   
   /**
    * num cols Info
@@ -62,13 +71,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   def getDQResult(): ArrayBuffer[huemul_DQRecord] = {return DQ_Result}
   
   def setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean = true) {
+    //DF.persist(MEMORY_ONLY_SER)
     DataDF = DF
     DataSchema = DF.schema
     DataDF.createOrReplaceTempView(Alias)
     AliasDF = Alias
     
     //Set as Readed
-    NumRows = DataDF.count()
+    //NumRows = DataDF.count() //este parámetro se setea autmáticamente al intentar leer getNumRows
     NumCols = DataDF.columns.length
     //Data_isRead = true
     //TODO: ver como poner la fecha de término de lectura StopRead_dt = Calendar.getInstance()
@@ -117,15 +127,15 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
 
     val DQResult = new huemul_DataQualityResult()
     //var Rows = NumRows
-    if (NumRows >= NumMin && NumRows <= NumMax ) {
+    if (getNumRows >= NumMin && getNumRows <= NumMax ) {
       DQResult.isError = false
-    } else if (NumRows < NumMin) {
+    } else if (getNumRows < NumMin) {
       DQResult.isError = true
-      DQResult.Description = s"huemul_DataFrame Error: Rows($NumRows) < MinDef($NumMin)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($getNumRows) < MinDef($NumMin)"
       DQResult.Error_Code = 2001
-    } else if (NumRows > NumMax) {
+    } else if (getNumRows > NumMax) {
       DQResult.isError = true
-      DQResult.Description = s"huemul_DataFrame Error: Rows($NumRows) > MaxDef($NumMax)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($getNumRows) > MaxDef($NumMax)"
       DQResult.Error_Code = 2002
     }
     
@@ -153,7 +163,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
-    Values.DQ_NumRowsTotal =NumRows
+    Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
     
     this.DQ_Register(Values)    
@@ -168,15 +178,15 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   def DQ_NumRows(ObjectData: Object, NumRowsExpected: Long): huemul_DataQualityResult = {
     val DQResult = new huemul_DataQualityResult()
     //var Rows = NumRows
-    if (NumRows == NumRowsExpected ) {
+    if (getNumRows == NumRowsExpected ) {
       DQResult.isError = false
-    } else if (NumRows < NumRowsExpected) {
+    } else if (getNumRows < NumRowsExpected) {
       DQResult.isError = true
-      DQResult.Description = s"huemul_DataFrame Error: Rows($NumRows) < NumExpected($NumRowsExpected)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($getNumRows) < NumExpected($NumRowsExpected)"
       DQResult.Error_Code = 2003
-    } else if (NumRows > NumRowsExpected) {
+    } else if (getNumRows > NumRowsExpected) {
       DQResult.isError = true
-      DQResult.Description = s"huemul_DataFrame Error: Rows($NumRows) > NumExpected($NumRowsExpected)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($getNumRows) > NumExpected($NumRowsExpected)"
       DQResult.Error_Code = 2004
     }
     
@@ -205,7 +215,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
-    Values.DQ_NumRowsTotal =NumRows
+    Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
       
     this.DQ_Register(Values)
@@ -522,7 +532,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_ErrorCode = DQResult.Error_Code
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =DQDup
-    Values.DQ_NumRowsTotal =NumRows
+    Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
 
     this.DQ_Register(Values)
