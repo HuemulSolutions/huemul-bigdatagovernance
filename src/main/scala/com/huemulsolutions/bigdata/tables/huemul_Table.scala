@@ -2112,20 +2112,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       DF_Final = DF_Final.drop("___ActionType__")
     }
       
-    val sqlDrop01 = s"drop table if exists ${InternalGetTable()}"
-    if (CreateInHive ) {
-      LocalControl.NewStep("Save: Drop Hive table Def")
-      if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sqlDrop01)
-      try {
-        val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetCurrentDataBase()).collect()
-        if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase()  }.length > 0) 
-          huemulBigDataGov.spark.sql(sqlDrop01)
-          
-      } catch {
-        case t: Throwable => println(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
-      }
-     
-    }
     
     try {
       if (_PartitionField == null || _PartitionField == ""){
@@ -2173,6 +2159,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     if (Result) {
+      if (CreateInHive ) {
+        val sqlDrop01 = s"drop table if exists ${InternalGetTable()}"
+        LocalControl.NewStep("Save: Drop Hive table Def")
+        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sqlDrop01)
+        try {
+          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetCurrentDataBase()).collect()
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase()  }.length > 0) 
+            huemulBigDataGov.spark.sql(sqlDrop01)
+            
+        } catch {
+          case t: Throwable => println(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+        }
+       
+      }
+        
       try {
         //create table
         if (CreateInHive ) {
