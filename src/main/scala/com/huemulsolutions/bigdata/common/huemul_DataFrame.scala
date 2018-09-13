@@ -460,7 +460,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * DQ_DuplicateValues: validate duplicate rows for ColDuplicate
    *  
    */
-  def DQ_DuplicateValues(ObjectData: Object, ColDuplicate: String, colMaxMin: String, TempFileName: String = null) : huemul_DataQualityResult = {
+  def DQ_DuplicateValues2(ObjectData: Object, ColDuplicate: String, colMaxMin: String, TempFileName: String = null) : huemul_DataQualityResult = {
     var colMaxMin_local = colMaxMin
     if (colMaxMin_local == null)
       colMaxMin_local = "0"
@@ -707,7 +707,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       ErrorLog.dqDF = huemulBigDataGov.DF_ExecuteQuery(AliasDQ
                                         , SQLDQ)
       
-      val FirstReg = ErrorLog.dqDF.first()
+      val FirstReg = ErrorLog.dqDF.collect()(0) // .first()
       val DQTotalRows = FirstReg.getAs[Long](s"___Total")
       import java.util.Calendar;
       //Get DQ Result from DF

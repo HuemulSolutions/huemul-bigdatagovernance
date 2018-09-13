@@ -1145,7 +1145,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   
-  private def SQL_Step4_Final(NewAlias: String, ProcessName: String): String = {
+  private def SQL_Step4_Final(NewAlias: String, ProcessName: String, IncludeActionType: Boolean): String = {
     var StringSQL: String = "SELECT "
     
     var coma: String = ""
@@ -1184,8 +1184,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       coma = ","
     }
     
-    StringSQL += s", ___ActionType__ \n FROM $NewAlias New\n" 
+    if (IncludeActionType)
+      StringSQL += s", ___ActionType__ \n" 
        
+    StringSQL += s"FROM $NewAlias New\n" 
+     
     return StringSQL
   }
   
@@ -1194,9 +1197,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
   CREATE SQL SCRIPT FIELDS FOR VALIDATE PRIMARY KEY
    */
-  private def SQL_Unique_FinalTable(): ArrayBuffer[String] = {
+  private def SQL_Unique_FinalTable(): ArrayBuffer[huemul_Columns] = {
     
-    var StringSQL: ArrayBuffer[String] = new ArrayBuffer[String]()
+    var StringSQL: ArrayBuffer[huemul_Columns] = new ArrayBuffer[huemul_Columns]()
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                          x.get(this).isInstanceOf[huemul_Columns] &&
                                          x.get(this).asInstanceOf[huemul_Columns].getIsUnique && huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
@@ -1204,7 +1207,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
-      StringSQL.append(x.getName)
+      StringSQL.append(Field)
     }
        
     return StringSQL 
@@ -1470,6 +1473,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Result.Error_Code = 1017
     }    
     
+    /*
     if (huemulBigDataGov.DebugMode) println("DF_SAVE DQ: VALIDATE PRIMARY KEY")
     val DQ_PK = DataFramehuemul.DQ_DuplicateValues(this, SQL_PK, null, "PK")
     if (DQ_PK.isError) {
@@ -1477,19 +1481,26 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Result.Description += s"\nhuemul_Table Error: PK: ${DQ_PK.Description} " 
       Result.Error_Code = 1018
     }
-    
-    
+    */
+    val DQ_PK : huemul_DataQuality = new huemul_DataQuality(null, s"PK Validation",s"count(1) = count(distinct ${SQL_PK} )", 1018, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR )
+    DQ_PK.setTolerance(0, null)
+    ArrayDQ.append(DQ_PK)
+        
     //*********************************
     //Aplicar DQ según definición de campos en DataDefDQ: Unique Values   
     //*********************************
     SQL_Unique_FinalTable().foreach { x => 
       if (huemulBigDataGov.DebugMode) println(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
-      val DQ_Unique = DataFramehuemul.DQ_DuplicateValues(this, x, null) 
-      if (DQ_Unique.isError) {
-        Result.isError = true
-        Result.Description += s"\nhuemul_Table Error: error Unique for field $x: ${DQ_Unique.Description} "
-        Result.Error_Code = 1019
-      }            
+      
+      val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(x, s"UNIQUE Validation ",s"count(1) = count(distinct ${x.get_MyName()} )", 2006, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR )
+      DQ_UNIQUE.setTolerance(0, null)
+      ArrayDQ.append(DQ_UNIQUE)
+      //val DQ_Unique = DataFramehuemul.DQ_DuplicateValues(this, x, null) 
+      //if (DQ_Unique.isError) {
+      //  Result.isError = true
+      //  Result.Description += s"\nhuemul_Table Error: error Unique for field $x: ${DQ_Unique.Description} "
+      //  Result.Error_Code = 1019
+      //}            
     }
     
     //Aplicar DQ según definición de campos en DataDefDQ: Acepta nulos (nullable)
@@ -1681,7 +1692,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
       LocalControl.NewStep("Selective Update: Final Table")
-      val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall)
+      val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall, true)
 
      
       //STEP 2: Execute final table 
@@ -1718,7 +1729,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       LocalControl.NewStep("Transaction: Get Statistics info")
       this._NumRows_Total = this.DataFramehuemul.getNumRows
-      this._NumRows_New = this.DataFramehuemul.getNumRows
+      this._NumRows_New = this._NumRows_Total
       this._NumRows_Update  = 0
       this._NumRows_Updatable = 0
       this._NumRows_Delete = 0
@@ -1822,7 +1833,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
                                          
       LocalControl.NewStep("Ref & Master: Final Table")
-      val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall)
+      val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall, if (OnlyInsert) true else false)
 
      
       //STEP 2: Execute final table 
@@ -1853,9 +1864,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                           FROM __Hash_p2 temp 
                        """)
     
-                       if (huemulBigDataGov.DebugMode) DQ_ReferenceData.show()
+    if (huemulBigDataGov.DebugMode) DQ_ReferenceData.show()
     
-    val FirstRow = DQ_ReferenceData.first()
+    val FirstRow = DQ_ReferenceData.collect()(0) // .first()
     this._NumRows_Total = FirstRow.getAs("__Total")
     this._NumRows_New = FirstRow.getAs("__New")
     this._NumRows_Update  = FirstRow.getAs("__Update")
@@ -2115,10 +2126,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master || IsSelectiveUpdate) {
       LocalControl.NewStep("Save: Drop ActionType column")
    
-      if (OnlyInsert && !IsSelectiveUpdate)
+      if (OnlyInsert && !IsSelectiveUpdate) {
         DF_Final = DF_Final.where("___ActionType__ = 'NEW'") 
-     
-      DF_Final = DF_Final.drop("___ActionType__")
+      }
+      if (OnlyInsert)
+        DF_Final = DF_Final.drop("___ActionType__")
+      
     }
       
     
@@ -2139,11 +2152,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       else{
         //Get Partition_Id Values
         LocalControl.NewStep("Save: Validating N° partitions")
-        val DFDistinct = DF_Final.select(_PartitionField).distinct().withColumn(_PartitionField, DF_Final.col(_PartitionField).cast(StringType))
-        if (DFDistinct.count() != 1){
-          RaiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.count()}",1015)
+        val DFDistinct = DF_Final.select(_PartitionField).distinct().withColumn(_PartitionField, DF_Final.col(_PartitionField).cast(StringType)).collect()
+        if (DFDistinct.length != 1){
+          RaiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.length}",1015)
         } else {
-          this.PartitionValue = DFDistinct.first().getAs[String](_PartitionField)
+          this.PartitionValue = DFDistinct(0).getAs[String](_PartitionField)
           val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${this.PartitionValue}")
           
           LocalControl.NewStep("Save: Drop old partition")
