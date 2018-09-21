@@ -57,9 +57,9 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	</distributionManagement>
   
   <scm>
-    <connection>https://github.com/HuemulSolutions/Bigdata-Governance.git</connection>
-    <developerConnection>https://github.com/HuemulSolutions/Bigdata-Governance.git</developerConnection>
-    <url>https://github.com/HuemulSolutions/Bigdata-Governance</url>
+    <connection>https://github.com/HuemulSolutions/huemul-bigdatagovernance.git</connection>
+    <developerConnection>https://github.com/HuemulSolutions/huemul-bigdatagovernance.git</developerConnection>
+    <url>https://github.com/HuemulSolutions/huemul-bigdatagovernance</url>
    </scm>
  
 
