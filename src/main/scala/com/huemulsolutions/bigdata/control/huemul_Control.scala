@@ -30,47 +30,45 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private var Step_IsDQ: Boolean = false
   private var AdditionalParamsInfo: String = ""
   
+  private var processExec_param_others: String = ""
+  private var processExec_dtStart: java.util.Calendar = null
+  private var processExecStep_dtStart: java.util.Calendar = null
+  
+  
   //Find process name in control_process
   
-  if (RegisterInControlLog && huemulBigDataGov.RegisterInControl)
-  huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s""" SELECT
-  control_process_addOrUpd(
-                  '${Control_ClassName}' -- process_id
-                  ,'0'  --as area_id
-                  ,'${Control_ClassName}' --as process_name
-                  ,'${Control_FileName}' --as process_FileName
-                  ,''  --as process_description
-                  ,'${runFrequency}' --p_process_frequency
-                  ,''  --as process_owner
-                  ,'${Control_ClassName}' --as mdm_processname
-                ) 
-      """)
+  if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) {
+    control_process_addOrUpd(Control_ClassName
+                  ,Control_ClassName
+                  ,Control_FileName
+                  ,""
+                  ,runFrequency.toString()
+                  ,""
+                  ,Control_ClassName)     
+  }
   
   
   //Insert processExcec
   if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) {
     println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
-  huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_add (
-            '${Control_Id}'  --p_processExec_id
-           ,${if (Control_IdParent == null) "null" else s"'${Control_IdParent}'"}  --p_processExec_idParent
-           ,'${Control_ClassName}'  --p_process_id
-           ,'${huemulBigDataGov.Malla_Id}'  --p_Malla_id
-           ,'${huemulBigDataGov.IdApplication}'  --p_Application_id
-           , '${if (huemulBigDataGov.Malla_Id == "") "user" else "orchestrator"}' --p_processExec_WhosRun
-           , ${huemulBigDataGov.DebugMode} --p_processExec_DebugMode
-           , '${huemulBigDataGov.Environment}' --p_processExec_Environment
+    control_processExec_add(Control_Id
+           ,Control_IdParent
+           ,Control_ClassName
+           ,huemulBigDataGov.Malla_Id
+           ,huemulBigDataGov.IdApplication
+           ,huemulBigDataGov.Malla_Id
+           ,huemulBigDataGov.DebugMode
+           ,huemulBigDataGov.Environment
 
-           , ${this.getparamYear()} --p_processExec_param_year 
-           , ${this.getparamMonth()} --p_processExec_param_month
-           , ${this.getparamDay()} --p_processExec_param_day
-           , ${this.getparamHour()} --p_processExec_param_hour
-           , ${this.getparamMin()} --p_processExec_param_min
-           , ${this.getparamSec()} --p_processExec_param_sec
-           , '' --p_processExec_param_others
+           ,this.getparamYear() 
+           ,this.getparamMonth()
+           ,this.getparamDay()
+           ,this.getparamHour()
+           ,this.getparamMin()
+           ,this.getparamSec()
 
-           ,'${Control_ClassName}'  --p_MDM_ProcessName
-          )
-          """)
+           ,Control_ClassName
+           )
           }
   
   //Insert new record
@@ -87,16 +85,12 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     
     while (ContinueInLoop) {
-      //Try to add Singleton Mode      
-      val Ejec =  huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""select control_singleton_Add (
-                        '${Control_ClassName}'  --p_singleton_id
-                       ,'${huemulBigDataGov.IdApplication}'  --p_application_Id
-                       ,'${Control_ClassName}'  --p_singleton_name
-                      )
-                      """)
-
+      //Try to add Singleton Mode
+      val Ejec = control_singleton_Add(Control_ClassName, huemulBigDataGov.IdApplication, Control_ClassName)
+      
       var ApplicationInUse: String = null
-      ApplicationInUse = Ejec.ResultSet(0).getString(0)        
+      if (Ejec.ResultSet.length == 1)
+        ApplicationInUse = Ejec.ResultSet(0).getAs[String]("application_Id")        
       
       //if don't have error, exit
       if (!Ejec.IsError && ApplicationInUse == null)
@@ -176,12 +170,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
  private def UpdateProcessExecParam (paramName: String, value: Integer) {
     //Insert processExcec
     if (huemulBigDataGov.RegisterInControl) {
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_UpdParam (
-                          '${this.Control_Id}'  --processexec_id
-                         ,'${paramName}'  --p_paramName  
-                         , ${value} --as p_value
-                        )
-                      """)      
+      control_processExec_UpdParam(this.Control_Id
+                                   ,paramName  
+                                   ,value)
     }
  }
   
@@ -191,12 +182,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     //Insert processExcec
     if (huemulBigDataGov.RegisterInControl) {
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_UpdParamInfo (
-                          '${this.Control_Id}'  --processexec_id
-                         ,'${paramName}'  --p_paramName  
-                         , '${if (value == null) "" else value.replace("'", "''")}' --as p_value
-                        )
-                      """)      
+      control_processExec_UpdParamInfo(this.Control_Id, paramName, value)
+      
     }
  }
  
@@ -211,13 +198,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     //Insert processExcec
     if (huemulBigDataGov.RegisterInControl) {
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_ProcessExecParams_add (
-                           '${this.Control_Id}'  --processexec_id
-                         , '${NewParam.param_name}' --as processExecParams_Name
-                         , '${NewParam.param_value}' --as processExecParams_Value
-                         ,'${Control_ClassName}'  --process_id
-                        )
-                      """)      
+      control_ProcessExecParams_add(this.Control_Id
+                                   ,NewParam.param_name
+                                   ,NewParam.param_value
+                                   ,Control_ClassName
+                         )
     }
 
     if (huemulBigDataGov.DebugMode){
@@ -240,20 +225,12 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       if (!huemulBigDataGov.HasName(Control_IdParent)) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ALL OK")
       println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
     
-    
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_processExec_Finish (
-                             '${Control_Id}'  --p_processExec_id
-                           , '${this.LocalIdStep}' --as p_processExecStep_id
-                           ,  null --as p_error_id
-                           )
-                        """)   
+      control_processExec_Finish(Control_Id, this.LocalIdStep, null)
+      
                         
       if (this.IsSingleton) {
-          huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_singleton_remove (
-                             '${Control_ClassName}'  --p_processExec_id
-                           )
-                        """)  
-        }
+        control_singleton_remove(Control_ClassName)  
+      }
     }
   }
   
@@ -277,26 +254,23 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         Control_Error.ControlError_ClassName = ""
         
       //Insert processExcec
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_Error_finish (
-                          '${this.Control_Id}'  --p_processExec_id
-                         , '${this.LocalIdStep}'  --p_processExecStep_id
-                         , '${Error_Id}'  --Error_Id
-                         , '${Control_Error.ControlError_Message.replace("'", "''")}' --as Error_Message
-                         , ${Control_Error.ControlError_ErrorCode} --as error_code
-                         , '${Control_Error.ControlError_Trace.replace("'", "''")}' --as Error_Trace
-                         , '${Control_Error.ControlError_ClassName.replace("'", "''")}' --as Error_ClassName
-                         , '${Control_Error.ControlError_FileName.replace("'", "''")}' --as Error_FileName
-                         , '${Control_Error.ControlError_LineNumber}' --as Error_LIneNumber
-                         , '${Control_Error.ControlError_MethodName.replace("'", "''")}' --as Error_MethodName
-                         , '' --as Error_Detail
-                         ,'${Control_ClassName}'  --process_id
-                    )
-                      """)            
+      control_Error_finish( this.Control_Id
+                           ,this.LocalIdStep
+                           ,Error_Id
+                           ,Control_Error.ControlError_Message.replace("'", "''")
+                           ,Control_Error.ControlError_ErrorCode
+                           ,Control_Error.ControlError_Trace.replace("'", "''")
+                           ,Control_Error.ControlError_ClassName.replace("'", "''")
+                           ,Control_Error.ControlError_FileName.replace("'", "''")
+                           ,Control_Error.ControlError_LineNumber.toString()
+                           ,Control_Error.ControlError_MethodName.replace("'", "''")
+                           ,"" //--as Error_Detail
+                           ,Control_ClassName
+                           )
+                           
+              
       if (this.IsSingleton) {
-        huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_singleton_remove (
-                           '${Control_ClassName}'  --p_processExec_id
-                         )
-                      """)  
+        control_singleton_remove(Control_ClassName)
       }
     }
         
@@ -332,20 +306,17 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         className = ""
         
       //Insert processExcec
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_Error_register (
-                          '${Error_Id}'  --Error_Id
-                         , '${message.replace("'", "''")}' --as Error_Message
-                         , ${ErrorCode} --as error_code
-                         , '${trace.replace("'", "''")}' --as Error_Trace
-                         , '${className.replace("'", "''")}' --as Error_ClassName
-                         , '${fileName.replace("'", "''")}' --as Error_FileName
-                         , '${LineNumber}' --as Error_LIneNumber
-                         , '${methodName.replace("'", "''")}' --as Error_MethodName
-                         , '' --as Error_Detail
-                         ,'${WhoWriteError}'  --process_id
-                    )
-                      """)            
-     
+      control_Error_register(Error_Id
+                             ,message.replace("'", "''")
+                             ,ErrorCode
+                             ,trace.replace("'", "''")
+                             ,className.replace("'", "''")
+                             ,fileName.replace("'", "''")
+                             ,LineNumber.toString()
+                             ,methodName.replace("'", "''")
+                             ,"" //--as Error_Detail
+                             ,WhoWriteError
+                           )
     }
         
                                
@@ -359,17 +330,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //New Step add
     val PreviousLocalIdStep = LocalIdStep
     LocalIdStep = huemulBigDataGov.huemul_GetUniqueId()
+    processExecStep_dtStart = huemulBigDataGov.getCurrentDateTimeJava()
     
     if (huemulBigDataGov.RegisterInControl) {
       //Insert processExcec
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_processExecStep_add (
-                  '${LocalIdStep}'  --p_processExecStep_id
-                 ,'${PreviousLocalIdStep}'  --p_processExecStep_idAnt
-                 ,'${this.Control_Id}'  --p_processExec_id
-                 , '${StepName}' --p_processExecStep_Name
-                 ,'${Control_ClassName}'  --p_MDM_ProcessName
-                )
-          """)
+      control_processExecStep_add(LocalIdStep, PreviousLocalIdStep, this.Control_Id, StepName, Control_ClassName)
     }
   }
   
@@ -377,12 +342,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_TestPlan_Id: String) {
     if (huemulBigDataGov.RegisterInControl) {
        //Insert processExcec
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_TestPlanFeature_add (
-                            '${if (p_Feature_Id == null) "" else p_Feature_Id.replace("'", "''")}'  --as p_Feature_Id
-                         , '${p_TestPlan_Id}'  --as p_testPlan_Id
-                         ,'${Control_ClassName}'  --p_MDM_ProcessName
-                                                  
-                        )""")
+      control_TestPlanFeature_add(p_Feature_Id
+                                 ,p_TestPlan_Id
+                                 ,Control_ClassName)
     }
     
     
@@ -406,19 +368,17 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                      
     if (huemulBigDataGov.RegisterInControl) {
        //Insert processExcec
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_TestPlan_add (
-                        '${testPlan_Id}'  --as p_testPlan_Id
-                         , '${p_testPlanGroup_Id}'  --as p_testPlanGroup_Id
-                         , '${this.Control_Id}'  --p_processExec_id
-                         , '${this.Control_ClassName}' --as p_process_id
-                         , '${if (p_testPlan_name == null) "" else p_testPlan_name.replace("'", "''")}' --p_testPlan_name
-                         , '${if (p_testPlan_description == null) "" else p_testPlan_description.replace("'", "''")}' --p_testPlan_description
-                         , '${if (p_testPlan_resultExpected == null) "" else p_testPlan_resultExpected.replace("'", "''")}' --p_testPlan_resultExpected
-                         , '${if (p_testPlan_resultReal == null) "" else p_testPlan_resultReal.replace("'", "''")}' --p_testPlan_resultReal
-                         , ${p_testPlan_IsOK} --p_testPlan_IsOK
-                         , '${Control_ClassName}' --p_Executor_Name
-                         
-                        )""")
+      control_TestPlan_add(testPlan_Id
+                         , p_testPlanGroup_Id
+                         , this.Control_Id
+                         , this.Control_ClassName
+                         , p_testPlan_name
+                         , p_testPlan_description
+                         , p_testPlan_resultExpected
+                         , p_testPlan_resultReal
+                         , p_testPlan_IsOK
+                         , Control_ClassName
+                        )
     }
     
     return testPlan_Id
@@ -447,29 +407,29 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
 
     if (huemulBigDataGov.RegisterInControl) {
       //Insert processExcec
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_DQ_add (
-                        '${DQId}'  --as p_DQ_Id
-                         , '${Table_Name}'  --as Table_name
-                         , '${BBDD_Name}'  --asp_BBDD_name
-                         , '${this.Control_ClassName}' --as p_Process_Id
-                         , '${this.Control_Id}' -- p_ProcessExec_Id
-                         , ${if (ColumnName == null) "null" else s"'${ColumnName}'"} --Column_Name
-                         , '${DF_Alias}' --p_Dq_AliasDF
-                         , '${DQ_Name}' --p_DQ_Name
-                         , '${DQ_Description}' --DQ_Description
-                         , '${DQ_QueryLevel}' --DQ_IsAggregate
-                         , '${DQ_Notification}' --DQ_RaiseError
-                         , '${if (DQ_SQLFormula ==  null) "" else DQ_SQLFormula.replace("'", "''")}' --DQ_SQLFormula
-                         , ${DQ_toleranceError_Rows} --DQ_Error_MaxNumRows
-                         , ${DQ_toleranceError_Percent} --DQ_Error_MaxPercent
-                         , '${if (DQ_ResultDQ == null) "" else DQ_ResultDQ.replace("'", "''")}' --DQ_ResultDQ
-                         , ${DQ_ErrorCode} --DQ_ErrorCode
-                         , ${DQ_NumRowsOK} --DQ_NumRowsOK
-                         , ${DQ_NumRowsError} --DQ_NumRowsError
-                         , ${DQ_NumRowsTotal} --DQ_NumRowsTotal
-                         , ${DQ_IsError} --DQ_IsError
-                         ,'${Control_ClassName}'  --process_id
-                        )""")
+      control_DQ_add(   DQId
+                         , Table_Name
+                         , BBDD_Name
+                         , this.Control_ClassName
+                         , this.Control_Id
+                         , ColumnName
+                         , DF_Alias
+                         , DQ_Name
+                         , DQ_Description
+                         , DQ_QueryLevel.toString()
+                         , DQ_Notification.toString()
+                         , DQ_SQLFormula
+                         , DQ_toleranceError_Rows
+                         , DQ_toleranceError_Percent
+                         , DQ_ResultDQ
+                         , DQ_ErrorCode
+                         , DQ_NumRowsOK
+                         , DQ_NumRowsError
+                         , DQ_NumRowsTotal
+                         , DQ_IsError
+                         , Control_ClassName
+                         )
+     
     }
     
   }
@@ -485,89 +445,83 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     if (huemulBigDataGov.RegisterInControl) {
       //Insert processExcec
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
-        select control_rawFiles_add ( '${dapi_raw.getrawFiles_id}'  --p_RAWFiles_id
-                         , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
-                         , '${dapi_raw.GroupName.toUpperCase()}' --p_RAWFiles_GroupName
-                         , '${dapi_raw.Description}' -- p_RAWFiles_Description
-                         , '${dapi_raw.SettingInUse.ContactName}' --p_RAWFiles_Owner
-                         ,'${dapi_raw.getFrequency}'  --p_RAWFiles_Frequency
-                         ,'${Control_ClassName}'  --MDM_ProcessName
-                      )
-                      """)
-                      
+      val ExecResult = control_rawFiles_add(dapi_raw.getrawFiles_id
+                         , dapi_raw.LogicalName
+                         , dapi_raw.GroupName.toUpperCase()
+                         , dapi_raw.Description
+                         , dapi_raw.SettingInUse.ContactName
+                         , dapi_raw.getFrequency.toString()
+                         , Control_ClassName
+                         )
+     
+      //dapi_raw.getrawFiles_id if new, otherwise take Id from DataBase                   
+      val LocalRawFiles_id = ExecResult.OpenVar
+      
       //Insert Config Details
       dapi_raw.SettingByDate.foreach { x => 
         //Insert processExcec
-        val RAWFilesDet_id = huemulBigDataGov.huemul_GetUniqueId()
-        huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_RAWFilesDet_add (
-                               '${RAWFilesDet_id}' --as RAWFilesDet_id
-                             , '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
-                             , '${dapi_raw.GroupName.toUpperCase()}' --p_RAWFiles_GroupName
-                             ,'${huemulBigDataGov.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
-                             ,'${huemulBigDataGov.dateTimeFormat.format(x.EndDate.getTime) }'  --RAWFilesDet_EndDate
-                             ,'${x.FileName }'  --RAWFilesDet_FileName
-                             ,'${x.LocalPath }'  --RAWFilesDet_LocalPath
-                             ,'${x.GetPath(x.GlobalPath) }'  --RAWFilesDet_GlobalPath
-                             ,'${x.DataSchemaConf.ColSeparatorType }'  --RAWFilesDet_Data_ColSeparatorType
-                             ,'${GetCharRepresentation(x.DataSchemaConf.ColSeparator) }'  --RAWFilesDet_Data_ColSeparator
-                             ,''  --RAWFilesDet_Data_HeaderColumnsString
-                             ,'${x.LogSchemaConf.ColSeparatorType }'  --RAWFilesDet_Log_ColSeparatorType
-                             ,'${GetCharRepresentation(x.LogSchemaConf.ColSeparator) }'  --RAWFilesDet_Log_ColSeparator
-                             ,''  --RAWFilesDet_Log_HeaderColumnsString
-                             ,'${x.LogNumRows_FieldName }'  --RAWFilesDet_Log_NumRowsFieldName
-                             ,'${x.ContactName }'  --RAWFilesDet_ContactName
-                             ,'${Control_ClassName}'  --process_id
-                            )
-                          """)   
+        var RAWFilesDet_id = huemulBigDataGov.huemul_GetUniqueId()
+        
+        val ExecResultDet = control_RAWFilesDet_add(LocalRawFiles_id
+                             ,RAWFilesDet_id
+                             ,x.StartDate
+                             ,x.EndDate
+                             ,x.FileName
+                             ,x.LocalPath
+                             ,x.GetPath(x.GlobalPath)
+                             ,x.DataSchemaConf.ColSeparatorType.toString()
+                             ,GetCharRepresentation(x.DataSchemaConf.ColSeparator)
+                             ,""  //RAWFilesDet_Data_HeaderColumnsString
+                             ,x.LogSchemaConf.ColSeparatorType.toString()
+                             ,GetCharRepresentation(x.LogSchemaConf.ColSeparator) 
+                             ,""  //RAWFilesDet_Log_HeaderColumnsString
+                             ,x.LogNumRows_FieldName 
+                             ,x.ContactName 
+                             ,Control_ClassName
+                             )
+            
+        RAWFilesDet_id = ExecResultDet.OpenVar //if new take RAWFilesDet_id, if update take from DataBase
          
-         if (x.DataSchemaConf.ColumnsDef != null) {
+        if (x.DataSchemaConf.ColumnsDef != null) {
            var pos: Integer = 0
            x.DataSchemaConf.ColumnsDef.foreach { y =>
-                 huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_RAWFilesDetFields_add(
-                                 '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
-                               , '${dapi_raw.GroupName.toUpperCase()}' --p_RAWFiles_GroupName
-                               ,'${huemulBigDataGov.dateTimeFormat.format(x.StartDate.getTime) }'  --RAWFilesDet_StartDate
-                               ,'${y.getcolumnName_TI}'  --RAWFilesDetFields_ITName
-                               ,'${y.getcolumnName_Business}' --as RAWFilesDetFields_LogicalName
-                               ,'${if (y.getDescription == null) "" else y.getDescription.replace("'", "''")}' --as RAWFilesDetFields_description
-                               ,'${y.getDataType}' --as RAWFilesDetFields_DataType
-                               ,${pos }  --RAWFilesDetFields_Position
-                               ,${y.getPosIni}  --RAWFilesDetFields_PosIni
-                               ,${y.getPosFin}  --RAWFilesDetFields_PosFin
-                               , ${y.getApplyTrim} --,RAWFilesDetFields_ApplyTrim     
-                               , ${y.getConvertToNull} --,RAWFilesDetFields_ConvertNull   
-                               ,'${Control_ClassName}'  --process_id
-                          )
-                            """)   
-                            
-                 pos += 1
+             control_RAWFilesDetFields_add(LocalRawFiles_id
+                                          ,RAWFilesDet_id
+                                          ,y.getcolumnName_TI
+                                          ,y.getcolumnName_Business
+                                          ,y.getDescription.replace("'", "''")
+                                          ,y.getDataType.toString()
+                                          ,pos
+                                          ,y.getPosIni
+                                          ,y.getPosFin
+                                          ,y.getApplyTrim     
+                                          ,y.getConvertToNull   
+                                          ,Control_ClassName
+                                          )
+                pos += 1
              }
          }
       }
     
       //Insert control_rawFilesUse
       val rawfilesuse_id = huemulBigDataGov.huemul_GetUniqueId()
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_rawFilesUse_add (
-                           '${dapi_raw.LogicalName}' --p_RAWFiles_LogicalName
-                         , '${dapi_raw.GroupName.toUpperCase()}' --p_RAWFiles_GroupName
-                         ,'${rawfilesuse_id }'  --rawfilesuse_id
-                         ,'${this.Control_ClassName}'  --process_id
-                         ,'${this.Control_Id}'          --processExec_Id
-                         , ${dapi_raw.SettingInUse.getuse_year} -- RAWFilesUse_Year
-                         , ${dapi_raw.SettingInUse.getuse_month} -- ,RAWFilesUse_Month
-                         , ${dapi_raw.SettingInUse.getuse_day} -- RAWFilesUse_Day 
-                         , ${dapi_raw.SettingInUse.getuse_hour} -- RAWFilesUse_Hour
-                         , ${dapi_raw.SettingInUse.getuse_minute} -- RAWFilesUse_Miute
-                         , ${dapi_raw.SettingInUse.getuse_second} -- RAWFilesUse_Second
-                         , '${dapi_raw.SettingInUse.getuse_params}' -- RAWFilesUse_params
-                         ,'${dapi_raw.FileName}' --RAWFiles_FullName
-                         ,'${dapi_raw.FileName}' --RAWFiles_FullPath
-                         ,'${dapi_raw.DataFramehuemul.getNumRows}' --RAWFiles_NumRows
-                         , '' --RAWFiles_HeaderLine
-                         ,'${Control_ClassName}'  --process_id
-                        )
-                      """)
+      control_rawFilesUse_add(LocalRawFiles_id
+                             ,rawfilesuse_id
+                             ,this.Control_ClassName
+                             ,this.Control_Id
+                             ,dapi_raw.SettingInUse.getuse_year
+                             ,dapi_raw.SettingInUse.getuse_month
+                             ,dapi_raw.SettingInUse.getuse_day 
+                             ,dapi_raw.SettingInUse.getuse_hour
+                             ,dapi_raw.SettingInUse.getuse_minute
+                             ,dapi_raw.SettingInUse.getuse_second
+                             ,dapi_raw.SettingInUse.getuse_params
+                             ,dapi_raw.FileName
+                             ,dapi_raw.FileName
+                             ,dapi_raw.DataFramehuemul.getNumRows.toString()
+                             ,"" //--RAWFiles_HeaderLine
+                             ,Control_ClassName
+                           )
     }
   }
   
@@ -576,31 +530,31 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //Insert control_TablesUse
     if (huemulBigDataGov.RegisterInControl) {
       DefMaster._tablesUseId = LocalIdStep
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesUse_add (
-                                    '${DefMaster.TableName}'
-                                   ,'${DefMaster.GetCurrentDataBase() }'  
-                                   , '${Control_ClassName}' --as Process_Id
-                                   , '${Control_Id}' --as ProcessExec_Id
-                                   , '${DefMaster._tablesUseId}' --as ProcessExecStep_Id
-                                   , ${this.getparamYear()}  -- TableUse_Year
-                                   , ${this.getparamMonth()} -- TableUse_Month
-                                   , ${this.getparamDay()} -- TableUse_Day  
-                                   , ${this.getparamHour()} -- TableUse_Hour 
-                                   , ${this.getparamMin()} -- TableUse_Miute
-                                   , ${this.getparamSec()} -- TableUse_Second
-                                   , '${AdditionalParamsInfo.replace("'", "''")}' -- TableUse_params
-                                   , true --as TableUse_Read
-                                   , false --as TableUse_Write
-                                   , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
-                                 , ${DefMaster.NumRows_Update()} -- as TableUse_numRowsUpdate
-                                 , ${DefMaster.NumRows_Updatable() } -- as TableUse_numRowsUpdatable
-                                 , ${DefMaster.NumRows_NoChange() } -- as TableUse_numRowsNoChange
-                                 , ${DefMaster.NumRows_Delete()} -- as TableUse_numRowsMarkDelete
-                                 , ${DefMaster.NumRows_Total()} -- as TableUse_numRowsTotal
-                                 , ${if (DefMaster.getPartitionValue == null) "null" else s"'${DefMaster.getPartitionValue}'"} -- as PartitionValue
-                                  ,'${Control_ClassName}'  --process_id
+      
+      control_TablesUse_add(  DefMaster.TableName
+                             ,DefMaster.GetCurrentDataBase()  
+                             ,Control_ClassName
+                             ,Control_Id
+                             ,DefMaster._tablesUseId
+                             ,this.getparamYear()
+                             ,this.getparamMonth()
+                             ,this.getparamDay()  
+                             ,this.getparamHour() 
+                             ,this.getparamMin()
+                             ,this.getparamSec()
+                             ,AdditionalParamsInfo.replace("'", "''")
+                             ,true //--as TableUse_Read
+                             ,false //--as TableUse_Write
+                             ,DefMaster.NumRows_New()
+                             ,DefMaster.NumRows_Update()
+                             ,DefMaster.NumRows_Updatable()
+                             ,DefMaster.NumRows_NoChange() 
+                             ,DefMaster.NumRows_Delete()
+                             ,DefMaster.NumRows_Total()
+                             ,DefMaster.getPartitionValue
+                             ,Control_ClassName
                                   )
-                      """)     
+     
     }
   }
 
@@ -609,29 +563,28 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       return
       
     if (huemulBigDataGov.DebugMode) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}]    Register Table&Columns in Control")
-    val LocalNewTable_id = huemulBigDataGov.huemul_GetUniqueId()
+    var LocalNewTable_id = huemulBigDataGov.huemul_GetUniqueId()
 
     if (huemulBigDataGov.RegisterInControl) {
       //Table
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s""" select control_Tables_addOrUpd(
-                            '${LocalNewTable_id}'  --Table_id
-                           ,null  --Area_Id
-                           , '${DefMaster.GetCurrentDataBase()}' --as Table_BBDDName
-                           , '${DefMaster.TableName}' --as Table_Name
-                           , '${DefMaster.getDescription}' --as Table_Description
-                           , '${DefMaster.getBusiness_ResponsibleName}' --as Table_BusinessOwner
-                           , '${DefMaster.getIT_ResponsibleName}' --as Table_ITOwner
-                           , '${DefMaster.getPartitionField}' --as Table_PartitionField
-                           , '${DefMaster.getTableType}' --as Table_TableType
-                           , '${DefMaster.getStorageType}' --as Table_StorageType
-                           , '${DefMaster.getLocalPath}' --as Table_LocalPath
-                           , '${DefMaster.GetPath(DefMaster.getGlobalPaths)}' --as Table_GlobalPath
-                           , '' --as Table_SQLCreate
-                           , '${DefMaster.getFrequency}' --as Table_Frequency
-                           ,'${Control_ClassName}'  --process_id
-                          )
-      """)
-    
+      val ExecResultTable = control_Tables_addOrUpd(LocalNewTable_id
+                             ,null //  --Area_Id
+                             ,DefMaster.GetCurrentDataBase()
+                             ,DefMaster.TableName
+                             ,DefMaster.getDescription
+                             ,DefMaster.getBusiness_ResponsibleName
+                             ,DefMaster.getIT_ResponsibleName
+                             ,DefMaster.getPartitionField
+                             ,DefMaster.getTableType.toString()
+                             ,DefMaster.getStorageType.toString()
+                             ,DefMaster.getLocalPath
+                             ,DefMaster.GetPath(DefMaster.getGlobalPaths)
+                             ,"" //--as Table_SQLCreate
+                             ,DefMaster.getFrequency.toString()
+                             ,Control_ClassName
+                             )
+      
+      LocalNewTable_id = ExecResultTable.OpenVar
       
       //Insert control_Columns
       var i: Integer = 0
@@ -639,36 +592,33 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       DefMaster.GetColumns().foreach { x => 
         val Column_Id = huemulBigDataGov.huemul_GetUniqueId()
     
-        huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_Columns_addOrUpd (
-        
-                            '${Column_Id}' --Column_Id
-                           , '${DefMaster.TableName}' --as Table_Name
-                           , '${localDatabaseName}' --as Table_BBDDName
-                           , ${i} --as Column_Position
-                           , '${x.get_MyName()}' --as Column_Name
-                           , '${x.Description}' --as Column_Description
-                           , null --as Column_Formula
-                           , '${x.DataType.sql}' --as Column_DataType
-                           , false --as Column_SensibleData
-                           , ${x.getMDM_EnableDTLog} --as Column_EnableDTLog
-                           , ${x.getMDM_EnableOldValue} --as Column_EnableOldValue
-                           , ${x.getMDM_EnableProcessLog} --as Column_EnableProcessLog
-                           , ${if (x.getDefaultValue == null) "null" else s"'${x.getDefaultValue.replace("'", "''")}'"} --as Column_DefaultValue
-                           , '${x.getSecurityLevel}' --as Column_SecurityLevel
-                           , '${x.getEncryptedType}' --as Column_Encrypted
-                           , '${x.getARCO_Data}' --as Column_ARCO
-                           , ${x.getNullable} --as Column_Nullable
-                           , ${x.getIsPK} --as Column_IsPK
-                           , ${x.getIsUnique} --as Column_IsUnique
-                           , ${x.getDQ_MinLen} --as Column_DQ_MinLen
-                           , ${x.getDQ_MaxLen} --as Column_DQ_MaxLen
-                           , ${x.getDQ_MinDecimalValue} --as Column_DQ_MinValue
-                           , ${x.getDQ_MaxDecimalValue} --as Column_DQ_MaxValue
-                           , ${if (x.getDQ_MinDateTimeValue == null) "null" else s"'${x.getDQ_MinDateTimeValue}'"} --as Column_DQ_MinDateTimeValue
-                           , ${if (x.getDQ_MaxDateTimeValue == null) "null" else s"'${x.getDQ_MaxDateTimeValue}'"} --as Column_DQ_MaxDateTimeValue
-                           , ${if (x.getDQ_RegExp == null) "null" else s"'${x.getDQ_RegExp}'" } --as Column_DQ_RegExp
-                           ,'${Control_ClassName}'  --process_id
-                      )""")        
+        control_Columns_addOrUpd( LocalNewTable_id
+                                 ,Column_Id
+                                 ,i
+                                 ,x.get_MyName()
+                                 ,x.Description
+                                 ,null //--as Column_Formula
+                                 ,x.DataType.sql
+                                 ,false //--as Column_SensibleData
+                                 ,x.getMDM_EnableDTLog
+                                 ,x.getMDM_EnableOldValue
+                                 ,x.getMDM_EnableProcessLog
+                                 ,x.getDefaultValue.replace("'", "''")
+                                 ,x.getSecurityLevel.toString()
+                                 ,x.getEncryptedType
+                                 ,x.getARCO_Data
+                                 ,x.getNullable
+                                 ,x.getIsPK
+                                 ,x.getIsUnique
+                                 ,x.getDQ_MinLen
+                                 ,x.getDQ_MaxLen
+                                 ,x.getDQ_MinDecimalValue
+                                 ,x.getDQ_MaxDecimalValue
+                                 ,x.getDQ_MinDateTimeValue
+                                 ,x.getDQ_MaxDateTimeValue
+                                 ,x.getDQ_RegExp
+                                 ,Control_ClassName
+                                 )     
           i += 1
         }
       
@@ -677,36 +627,25 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         val p_tablerel_id = huemulBigDataGov.huemul_GetUniqueId()
         val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
         val localDatabaseName = InstanceTable.GetCurrentDataBase()
-        val Resultado = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""select control_tablesrel_add (
-                                    '${p_tablerel_id}'    --p_tablerel_id
-                                   ,'${InstanceTable.TableName }'  --p_table_Namepk
-                                   ,'${localDatabaseName }'  --p_table_BBDDpk
-  
-                                   ,'${DefMaster.TableName }'  --p_table_NameFK
-                                   ,'${DefMaster.GetCurrentDataBase() }'  --p_table_BBDDFK
-  
-                                   ,'${x.MyName }'  --p_TableFK_NameRelationship
-  
-                                   ,'${Control_ClassName}'  --process_id
-                                  )
-                      """)
+        
+        val ResultExecRel = control_TablesRel_add(p_tablerel_id
+                             ,LocalNewTable_id 
+                             ,DefMaster.TableName
+                             ,DefMaster.GetCurrentDataBase() 
+                             ,x.MyName 
+                             ,Control_ClassName)
+        
                       
-         val IdRel = Resultado.ResultSet(0).getString(0)
+         val IdRel = ResultExecRel.OpenVar
+         val FK_Id = ResultExecRel.OpenVar2
   
          x.Relationship.foreach { y => 
-            huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesRelCol_add (
-                                      '${IdRel}'    --p_tablerel_id
-                                     ,'${InstanceTable.TableName }'  --p_table_Namepk
-                                     ,'${localDatabaseName }'  --p_table_BBDDpk
-                                     ,'${y.PK.get_MyName() }'  --p_ColumnName_PK
-  
-                                     ,'${DefMaster.TableName }'  --p_table_NameFK
-                                     ,'${DefMaster.GetCurrentDataBase() }'  --p_table_BBDDFK
-                                     ,'${y.FK.get_MyName() }'  --p_ColumnName_FK    
-  
-                                     ,'${Control_ClassName}'  --process_id
-                                    )
-                        """)
+           control_TablesRelCol_add (IdRel
+                                     ,LocalNewTable_id
+                                     ,y.PK.get_MyName()
+                                     ,FK_Id
+                                     ,y.FK.get_MyName() 
+                                     ,Control_ClassName)
           }
       }
     }
@@ -717,33 +656,30 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     if (huemulBigDataGov.RegisterInControl) {
       //Insert control_TablesUse
       DefMaster._tablesUseId = LocalIdStep
-      huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_TablesUse_add (
-                                  '${DefMaster.TableName}'
-                                 ,'${DefMaster.GetCurrentDataBase() }'  
-                                 , '${Control_ClassName}' --as Process_Id
-                                 , '${Control_Id}' --as ProcessExec_Id
-                                 , '${DefMaster._tablesUseId}' --as ProcessExecStep_Id
-                                   , ${this.getparamYear()}  -- TableUse_Year
-                                   , ${this.getparamMonth()} -- TableUse_Month
-                                   , ${this.getparamDay()} -- TableUse_Day  
-                                   , ${this.getparamHour()} -- TableUse_Hour 
-                                   , ${this.getparamMin()} -- TableUse_Miute
-                                   , ${this.getparamSec()} -- TableUse_Second
-                                   , null -- TableUse_params
-                                 , false --as TableUse_Read
-                                 , true --as TableUse_Write
-                                 , ${DefMaster.NumRows_New()} -- as TableUse_numRowsInsert
-                                 , ${DefMaster.NumRows_Update()} -- as TableUse_numRowsUpdate
-                                 , ${DefMaster.NumRows_Updatable() } -- as TableUse_numRowsUpdatable
-                                 , ${DefMaster.NumRows_NoChange() } -- as TableUse_numRowsNoChange
-                                 , ${DefMaster.NumRows_Delete()} -- as TableUse_numRowsMarkDelete
-                                 , ${DefMaster.NumRows_Total()} -- as TableUse_numRowsTotal
-                                 , ${if (DefMaster.getPartitionValue == null) "null" else s"'${DefMaster.getPartitionValue}'"} -- as PartitionValue
-                                 ,'${Control_ClassName}'  --process_id
-                                )
-                    """)
-                    
       
+       control_TablesUse_add(  DefMaster.TableName
+                             ,DefMaster.GetCurrentDataBase()  
+                             ,Control_ClassName
+                             ,Control_Id
+                             ,DefMaster._tablesUseId
+                             ,this.getparamYear()
+                             ,this.getparamMonth()
+                             ,this.getparamDay()  
+                             ,this.getparamHour() 
+                             ,this.getparamMin()
+                             ,this.getparamSec()
+                             ,AdditionalParamsInfo.replace("'", "''")
+                             ,false //--as TableUse_Read
+                             ,true //--as TableUse_Write
+                             ,DefMaster.NumRows_New()
+                             ,DefMaster.NumRows_Update()
+                             ,DefMaster.NumRows_Updatable()
+                             ,DefMaster.NumRows_NoChange() 
+                             ,DefMaster.NumRows_Delete()
+                             ,DefMaster.NumRows_Total()
+                             ,DefMaster.getPartitionValue
+                             ,Control_ClassName
+                            ) 
     }
                         
   }
@@ -753,5 +689,1364 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     sys.error(txt)
   }
   
+  private def ReplaceSQLStringNulls(ColumnName: String): String = {
+    return huemulBigDataGov.ReplaceSQLStringNulls(ColumnName)
+  }
   
+  /**********************************************************************************************
+   * PROCEDIMIENTOS PARA INSERTAR EN MODELO DE CONTROL
+   */
+  
+  private def control_TestPlan_add (   p_testPlan_Id: String
+                       , p_testPlanGroup_Id: String
+                       , p_processExec_id: String
+                       , p_process_id: String
+                       , p_testPlan_name: String
+                       , p_testPlan_description: String
+                       , p_testPlan_resultExpected: String
+                       , p_testPlan_resultReal: String
+                       , p_testPlan_IsOK: Boolean    
+                       , p_Executor_Name: String): huemul_JDBCResult =  {
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      INSERT INTO control_TestPlan ( testPlan_Id             
+                                ,testPlanGroup_Id        
+                                ,processExec_id          
+                                ,process_id              
+                                ,testPlan_name           
+                                ,testPlan_description    
+                                ,testPlan_resultExpected   
+                                ,testPlan_resultReal     
+                                ,testPlan_IsOK           
+                                ,MDM_fhCreate            
+                                ,MDM_ProcessName         
+                              )
+      SELECT ${ReplaceSQLStringNulls(p_testPlan_Id)}
+           , ${ReplaceSQLStringNulls(p_testPlanGroup_Id)}
+           , ${ReplaceSQLStringNulls(p_processExec_id)}
+           , ${ReplaceSQLStringNulls(p_process_id)}
+           , ${ReplaceSQLStringNulls(p_testPlan_name)}
+           , ${ReplaceSQLStringNulls(p_testPlan_description)}
+           , ${ReplaceSQLStringNulls(p_testPlan_resultExpected)}
+           , ${ReplaceSQLStringNulls(p_testPlan_resultReal)}
+           , ${p_testPlan_IsOK}
+           , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+           , ${ReplaceSQLStringNulls(p_Executor_Name)}
+    """)
+           
+    return ExecResult
+                       
+  }
+  
+  
+  private def control_TestPlanFeature_add (   p_Feature_Id: String
+                       , p_testPlan_Id: String
+                       , p_Executor_Name: String): huemul_JDBCResult =  {
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      INSERT INTO control_TestPlanFeature ( Feature_Id             
+                                ,testPlan_Id                 
+                                ,MDM_fhCreate            
+                                ,MDM_ProcessName         
+                              )
+      SELECT ${ReplaceSQLStringNulls(p_Feature_Id)}
+           , ${ReplaceSQLStringNulls(p_testPlan_Id)}
+           , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+           , ${ReplaceSQLStringNulls(p_Executor_Name)}
+    """)
+           
+    return ExecResult             
+  }
+  
+  private def control_process_addOrUpd (p_process_id: String
+                       , p_process_name: String
+                       , p_process_FileName: String
+                       , p_process_description: String
+                       , p_process_frequency: String
+                       , p_process_owner: String
+                       , p_mdm_processname: String): huemul_JDBCResult =  {
+    //Verify if record exist
+    var ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+                    SELECT Count(1) as Cantidad, MDM_ManualChange 
+                    FROM control_process 
+                    WHERE process_id = ${ReplaceSQLStringNulls(p_process_id)}
+          """)
+
+    
+    if (ExecResult.ResultSet.length == 1) {
+      //Record exist, update
+      val MDM_ManualChange = ExecResult.ResultSet(0).getAs[Int]("MDM_ManualChange")
+      if (MDM_ManualChange == 0) {
+        ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+                      UPDATE control_process 
+                      SET area_id = CASE WHEN MDM_ManualChange THEN area_id ELSE p_area_id END
+                    	   , process_name			    = ${ReplaceSQLStringNulls(p_process_name)}
+                         , process_FileName     = ${ReplaceSQLStringNulls(p_process_FileName)}
+                    	   , process_description	= ${ReplaceSQLStringNulls(p_process_description)}
+                    	   , process_owner			  = ${ReplaceSQLStringNulls(p_process_owner)}
+                    	   , process_frequency    = ${ReplaceSQLStringNulls(p_process_frequency)}
+                    	WHERE process_id = ${ReplaceSQLStringNulls(p_process_id)}
+            """)
+      }
+    } else {
+      //New record
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+              INSERT INTO control_process (process_id
+                        							   , area_id
+                        							   , process_name
+                                         , process_FileName
+                        							   , process_description
+                        							   , process_owner
+                        							   , process_frequency
+                        							   , mdm_fhcreate
+                        							   , mdm_processname) 	
+            	SELECT ${ReplaceSQLStringNulls(p_process_id)}
+            		   , '0'
+            		   , ${ReplaceSQLStringNulls(p_process_name)}
+                   , ${ReplaceSQLStringNulls(p_process_FileName)}
+            		   , ${ReplaceSQLStringNulls(p_process_description)}
+            		   , ${ReplaceSQLStringNulls(p_process_owner)}
+            		   , ${ReplaceSQLStringNulls(p_process_frequency)}
+            		   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+            		   , ${ReplaceSQLStringNulls(p_mdm_processname)}
+            """)
+    }
+    
+    return ExecResult             
+  }
+  
+  private def control_singleton_Add (   p_singleton_id: String
+                       , p_application_Id: String
+                       , p_singleton_name: String): huemul_JDBCResult =  {
+    var ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+              SELECT application_id
+              FROM control_singleton
+              WHERE Singleton_Id = ${ReplaceSQLStringNulls(p_singleton_id)}
+    """)
+    var application_Id: String = ""
+    
+    if (ExecResult.ResultSet.length == 0) {
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      INSERT INTO control_singleton (singleton_id
+                								   , application_id
+                								   , singleton_name
+                								   , mdm_fhcreate) 	
+  		SELECT ${ReplaceSQLStringNulls(p_singleton_id)}
+  			   , ${ReplaceSQLStringNulls(p_application_Id)}
+  			   , ${ReplaceSQLStringNulls(p_singleton_name)}
+  			   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+      """)
+      
+      //If error, get application id
+      if (ExecResult.IsError) {
+        ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+              SELECT *
+              FROM control_singleton
+              WHERE Singleton_Id = ${ReplaceSQLStringNulls(p_singleton_id)}
+        """)
+        
+        application_Id = ExecResult.ResultSet(0).getAs[String]("application_id")
+      }
+      
+    } else {
+      application_Id = ExecResult.ResultSet(0).getAs[String]("application_id")
+    }
+    
+    return ExecResult             
+  }
+  
+  private def control_singleton_remove (p_singleton_id: String): huemul_JDBCResult =  {
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      DELETE FROM control_singleton 
+      WHERE singleton_id = ${ReplaceSQLStringNulls(p_singleton_id)}
+    """)
+           
+    return ExecResult             
+  }
+  
+  private def control_executors_remove (p_application_Id: String): huemul_JDBCResult =  {
+    val ExecResult1 = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(p_application_Id)}""")
+    val ExecResult2 = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(p_application_Id)}""")
+           
+    return ExecResult2             
+  }
+  
+  private def control_executors_add (p_application_Id: String
+                                    ,p_IdSparkPort: String
+                                    ,p_IdPortMonitoring: String
+                                    ,p_Executor_Name: String
+      ): huemul_JDBCResult =  {
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      INSERT INTO control_executors (application_Id
+                  							   , IdSparkPort
+                  							   , IdPortMonitoring
+                  							   , Executor_dtStart
+                  							   , Executor_Name) 	
+    	SELECT ${ReplaceSQLStringNulls(p_application_Id)}
+    		   , ${ReplaceSQLStringNulls(p_IdSparkPort)}
+    		   , ${ReplaceSQLStringNulls(p_IdPortMonitoring)}
+    		   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+    		   , ${ReplaceSQLStringNulls(p_Executor_Name)}
+    """)
+           
+    return ExecResult             
+  }
+  
+  
+  private def control_processExec_UpdParam (p_processExec_id: String
+                                    ,p_paramName: String
+                                    ,p_value: Integer
+      ): huemul_JDBCResult =  {
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      UPDATE control_processExec 
+	    SET processExec_param_$p_paramName = ${p_value}
+      WHERE processexec_id = ${ReplaceSQLStringNulls(p_processExec_id)} 
+    	
+    """)
+           
+    return ExecResult             
+  }
+  
+  private def control_processExec_UpdParamInfo (p_processExec_id: String
+                                    ,p_paramName: String
+                                    ,p_value: String
+      ): huemul_JDBCResult =  {
+    
+    processExec_param_others = s"${processExec_param_others}${if (processExec_param_others == "") "" else ", "}{${p_paramName}}=${p_value}" 
+    
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      UPDATE control_processExec 
+	    SET processExec_param_others = ${ReplaceSQLStringNulls(processExec_param_others)} 
+      WHERE processexec_id = ${ReplaceSQLStringNulls(p_processExec_id)} 
+    	
+    """)
+           
+    return ExecResult             
+  }
+  
+  
+  private def control_processExec_add ( p_processExec_id: String
+                                       ,p_processExec_idParent: String
+                                       ,p_process_id: String
+                                       ,p_Malla_id: String
+											                 ,p_application_Id: String
+                                       ,p_processExec_WhosRun: String
+                                       ,p_processExec_DebugMode: Boolean
+                                       ,p_processExec_Environment: String
+                											 ,p_processExec_param_year: Integer 
+                											 ,p_processExec_param_month: Integer 
+                											 ,p_processExec_param_day: Integer 
+                											 ,p_processExec_param_hour: Integer 
+                											 ,p_processExec_param_min: Integer 
+                											 ,p_processExec_param_sec: Integer 
+                                       ,p_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    
+    this.processExec_dtStart = huemulBigDataGov.getCurrentDateTimeJava()
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_processExec (
+                               processexec_id
+                              ,processexec_idparent
+                              ,process_id
+                              ,malla_id
+    						              ,application_Id
+                              ,processexec_isstart
+                              ,processexec_iscancelled
+                              ,processexec_isenderror
+                              ,processexec_isendok
+                              ,processexec_dtstart
+                              ,processexec_dtend
+                              ,processexec_durhour
+                              ,processexec_durmin
+                              ,processexec_dursec
+                              ,processexec_whosrun
+                              ,processexec_debugmode
+                              ,processexec_environment
+                						  ,processExec_param_year	
+                						  ,processExec_param_month	
+                						  ,processExec_param_day	
+                						  ,processExec_param_hour	
+                						  ,processExec_param_min	
+                						  ,processExec_param_sec	
+                						  ,processExec_param_others
+                              ,error_id
+                              ,mdm_fhcreate
+                              ,mdm_processname)
+         SELECT ${ReplaceSQLStringNulls(p_processExec_id)}
+    			  ,${ReplaceSQLStringNulls(p_processExec_idParent)}
+    			  ,${ReplaceSQLStringNulls(p_process_id)}
+    			  ,${ReplaceSQLStringNulls(p_Malla_id)}
+    			  ,${ReplaceSQLStringNulls(p_application_Id)}
+    			  ,1
+    			  ,0
+    			  ,0
+    			  ,0
+    			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+    			  ,null
+    			  ,0
+    			  ,0
+    			  ,0
+    			  ,${ReplaceSQLStringNulls(p_processExec_WhosRun)}
+    			  ,${if (p_processExec_DebugMode) "1" else "0"}
+    			  ,${ReplaceSQLStringNulls(p_processExec_Environment)}
+    			  ,${p_processExec_param_year}	
+    			  ,${p_processExec_param_month}	
+    			  ,${p_processExec_param_day}	
+    			  ,${p_processExec_param_hour}	
+    			  ,${p_processExec_param_min}	
+    			  ,${p_processExec_param_sec}	
+    			  ,""
+    			  ,null
+    			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+    			  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+    	
+    """)
+           
+    return ExecResult             
+  }
+  
+  
+  private def control_processExec_Finish (p_processExec_id: String
+                                    ,p_processExecStep_id: String
+                                    ,p_error_id: String
+      ): huemul_JDBCResult =  {
+    
+     
+    val endDataTime = huemulBigDataGov.getCurrentDateTimeJava()
+    val DiffDateStep = huemulBigDataGov.getDateTimeDiff(processExecStep_dtStart, endDataTime)
+     
+    
+    var ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      UPDATE control_processExecStep
+      SET  processexecstep_status  = ${if (p_error_id == null || p_error_id == "") "'OK'" else "'ERROR'"}
+    			,processexecstep_dtend   = ${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(endDataTime.getTime()) )}
+    			,processexecstep_durhour = ${DiffDateStep.hour + (DiffDateStep.days*24)}
+    			,processexecstep_durmin  = ${DiffDateStep.minute}
+    			,processexecstep_dursec  = ${DiffDateStep.second}
+    			,error_id				         = ${ReplaceSQLStringNulls(p_error_id)}
+	    WHERE processExecStep_id = ${ReplaceSQLStringNulls(p_processExecStep_id)}    	
+    """)
+    
+    if (!ExecResult.IsError) {
+      val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, endDataTime)
+      
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      UPDATE control_processExec
+        SET  processexec_iscancelled = false
+        	  ,processexec_isenderror = ${if (p_error_id == null || p_error_id == "") "0" else "1"}
+        	  ,processexec_isendok	  = ${if (p_error_id == null || p_error_id == "") "1" else "0"}
+        	  ,processexec_dtend	    = ${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(endDataTime.getTime()) )}
+        	  ,processexec_durhour	  = ${DiffDate.hour + (DiffDate.days*24)}
+        	  ,processexec_durmin	    = ${DiffDate.minute}
+        	  ,processexec_dursec	    = ${DiffDate.second}
+        	  ,error_id				        = ${ReplaceSQLStringNulls(p_error_id)}
+        	WHERE processexec_id = ${ReplaceSQLStringNulls(p_processExec_id )}  	
+      """)
+    }
+           
+    return ExecResult             
+  }
+  
+  
+  private def control_processExecStep_add (p_processExecStep_id: String
+                                    ,p_processExecStep_idAnt: String
+                                    ,p_processExec_id: String
+                                    ,p_processExecStep_Name: String
+                                    ,p_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    
+    if (p_processExecStep_idAnt != null) {
+      val endDataTime = huemulBigDataGov.getCurrentDateTimeJava()
+      val DiffDateStep = huemulBigDataGov.getDateTimeDiff(processExecStep_dtStart, endDataTime)
+    
+    
+      val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      UPDATE control_processExecStep
+  		SET processexecstep_status  = 'OK'
+         ,processexecstep_dtend   = ${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(endDataTime.getTime()) )}
+  		   ,processexecstep_durhour = ${DiffDateStep.hour + (DiffDateStep.days*24)}
+  		   ,processexecstep_durmin  = ${DiffDateStep.minute}
+  		   ,processexecstep_dursec  = ${DiffDateStep.second}
+  		WHERE processExecStep_id = ${ReplaceSQLStringNulls(p_processExecStep_idAnt)}	
+      """)
+    }
+    
+    
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      INSERT INTO control_processExecStep (  processexecstep_id
+                      										  ,processexec_id
+                      										  ,processexecstep_name
+                      										  ,processexecstep_status
+                      										  ,processexecstep_dtstart
+                      										  ,processexecstep_dtend
+                      										  ,processexecstep_durhour
+                      										  ,processexecstep_durmin
+                      										  ,processexecstep_dursec
+                      										  ,error_id
+                      										  ,mdm_fhcreate
+                      										  ,mdm_processname)
+       SELECT  ${ReplaceSQLStringNulls(p_processExecStep_id)}	
+      			  ,${ReplaceSQLStringNulls(p_processExec_id)}	
+      			  ,${ReplaceSQLStringNulls(p_processExecStep_Name)}	
+      			  ,'RUNNING'
+      			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+      			  ,null
+      			  ,0
+      			  ,0
+      			  ,0
+      			  ,null
+      			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+      			  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}	
+      """)
+           
+    return ExecResult             
+  }
+  
+  
+  private def control_DQ_add (p_DQ_Id: String
+                             ,p_Table_name: String
+                             ,p_BBDD_name: String
+                             ,p_Process_Id: String
+                             ,p_ProcessExec_Id: String
+                             ,p_Column_Name: String
+                             ,p_Dq_AliasDF: String
+                             ,p_DQ_Name: String
+                             ,p_DQ_Description: String
+                             ,p_DQ_QueryLevel: String
+                             ,p_DQ_Notification: String
+                             ,p_DQ_SQLFormula: String
+                             ,p_DQ_toleranceError_Rows: Long
+                             ,p_DQ_toleranceError_Percent: Decimal
+                             ,p_DQ_ResultDQ: String
+                             ,p_DQ_ErrorCode: Integer
+                             ,p_DQ_NumRowsOK: Long
+                             ,p_DQ_NumRowsError: Long
+                             ,p_DQ_NumRowsTotal: Long
+                             ,p_DQ_IsError: Boolean
+                             ,p_MDM_ProcessName: String
+                             
+      ): huemul_JDBCResult =  {
+    
+    //Get Table Id
+    val ExecResultTable = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          select Table_id 
+          from control_Tables 
+          where Table_BBDDName = ${ReplaceSQLStringNulls(p_BBDD_name)} 
+          and   Table_Name     = ${ReplaceSQLStringNulls(p_Table_name)}	
+      """)
+    val LocalTable_Id: String = if (ExecResultTable.IsError || ExecResultTable.ResultSet.length == 0) null else ExecResultTable.ResultSet(0).getAs[String]("Table_id") 
+      
+    //Get column Id
+    val ExecResultColumn = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          select Column_id 
+          from control_Columns 
+          where Table_Id     = ${ReplaceSQLStringNulls(LocalTable_Id)} 
+          and   Column_Name  = ${ReplaceSQLStringNulls(p_Column_Name)}	
+      """)
+    val LocalColumn_Id: String = if (ExecResultColumn.IsError || ExecResultColumn.ResultSet.length == 0) null else ExecResultColumn.ResultSet(0).getAs[String]("Column_id") 
+      
+    
+    
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+         INSERT INTO control_DQ ( dq_id
+                                 ,table_id
+                                 ,process_id
+                                 ,processexec_id
+                                 ,column_id
+                                 ,column_name
+                                 ,dq_aliasdf
+                                 ,dq_name
+                                 ,dq_description
+                                 ,DQ_QueryLevel
+                                 ,DQ_Notification
+                                 ,dq_sqlformula
+                                 ,dq_DQ_toleranceError_Rows
+                                 ,dq_DQ_toleranceError_Percent
+                                 ,dq_resultdq
+                                 ,dq_ErrorCode
+                                 ,dq_numrowsok
+                                 ,dq_numrowserror
+                                 ,dq_numrowstotal
+                                 ,DQ_IsError
+                                 ,mdm_fhcreate
+                                 ,mdm_processname)
+      	SELECT  ${ReplaceSQLStringNulls(p_DQ_Id)}
+        			 ,${ReplaceSQLStringNulls(LocalTable_Id)}
+        			 ,${ReplaceSQLStringNulls(p_Process_Id)}
+        			 ,${ReplaceSQLStringNulls(p_ProcessExec_Id)}
+        			 ,${ReplaceSQLStringNulls(LocalColumn_Id)}
+        			 ,${ReplaceSQLStringNulls(p_Column_Name)}
+        			 ,${ReplaceSQLStringNulls(p_Dq_AliasDF)}
+        			 ,${ReplaceSQLStringNulls(p_DQ_Name)}
+        			 ,${ReplaceSQLStringNulls(p_DQ_Description)}
+        			 ,${ReplaceSQLStringNulls(p_DQ_QueryLevel)}
+        			 ,${ReplaceSQLStringNulls(p_DQ_Notification)}
+        			 ,${ReplaceSQLStringNulls(p_DQ_SQLFormula.replace("'", "''"))}
+        			 ,${p_DQ_toleranceError_Rows}
+        			 ,${p_DQ_toleranceError_Percent}
+        			 ,${ReplaceSQLStringNulls(p_DQ_ResultDQ.replace("'", "''"))}
+               ,${p_DQ_ErrorCode}
+        			 ,${p_DQ_NumRowsOK}
+        			 ,${p_DQ_NumRowsError}
+        			 ,${p_DQ_NumRowsTotal}
+               ,${if (p_DQ_IsError) "1" else "0"}
+        			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+        			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+      """)
+           
+    return ExecResult             
+  }
+  
+  
+  
+  private def control_rawFiles_add (p_RAWFiles_id: String
+                             ,p_RAWFiles_LogicalName: String
+                             ,p_RAWFiles_GroupName: String
+                             ,p_RAWFiles_Description: String
+                             ,p_RAWFiles_Owner: String
+                             ,p_RAWFiles_frequency: String
+                             ,p_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    
+    //Get ExecResultRawFiles Id
+    val ExecResultRawFiles = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          select MDM_ManualChange, rawfiles_id 
+          from control_rawFiles 
+          where rawfiles_groupname = ${ReplaceSQLStringNulls(p_RAWFiles_GroupName)} 
+          and   rawfiles_logicalname = ${ReplaceSQLStringNulls(p_RAWFiles_LogicalName)} 
+      """)
+      
+    var LocalMDM_ManualChange: String = null
+    var Localrawfiles_id: String = null
+    if (!ExecResultRawFiles.IsError && ExecResultRawFiles.ResultSet.length == 1) {
+      LocalMDM_ManualChange = ExecResultRawFiles.ResultSet(0).getAs[String]("MDM_ManualChange")
+      Localrawfiles_id = ExecResultRawFiles.ResultSet(0).getAs[String]("rawfiles_id")
+      
+    }
+    
+    var ExecResult: huemul_JDBCResult = null
+    if (ExecResultRawFiles.ResultSet.length == 1 && LocalMDM_ManualChange == "0") {
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE control_rawFiles
+          SET rawfiles_description	= ${ReplaceSQLStringNulls(p_RAWFiles_Description)}
+        		 ,rawfiles_owner		    = ${ReplaceSQLStringNulls(p_RAWFiles_Owner)}
+        		 ,rawfiles_frequency	  = ${ReplaceSQLStringNulls(p_RAWFiles_frequency)}
+        	WHERE rawfiles_id = ${ReplaceSQLStringNulls(Localrawfiles_id)}
+        """)
+        
+      ExecResult.OpenVar = Localrawfiles_id
+    } else if (ExecResultRawFiles.ResultSet.length == 0) {
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_rawFiles (rawfiles_id
+                      								 ,area_id
+                      								 ,rawfiles_logicalname
+                      								 ,rawfiles_groupname
+                      								 ,rawfiles_description
+                      								 ,rawfiles_owner
+                      								 ,rawfiles_frequency
+                      								 ,MDM_ManualChange
+                      								 ,mdm_fhcreate
+                      								 ,mdm_processname)
+        	SELECT ${ReplaceSQLStringNulls(p_RAWFiles_id)}
+        			 ,''
+        			 ,${ReplaceSQLStringNulls(p_RAWFiles_LogicalName)}
+        			 ,${ReplaceSQLStringNulls(p_RAWFiles_GroupName)}
+        			 ,${ReplaceSQLStringNulls(p_RAWFiles_Description)}
+        			 ,${ReplaceSQLStringNulls(p_RAWFiles_Owner)}
+        			 ,${ReplaceSQLStringNulls(p_RAWFiles_frequency)}
+        			 ,0 
+        			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+        			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+        """)
+        
+      ExecResult.OpenVar = p_RAWFiles_id
+    }
+           
+    return ExecResult             
+  }
+  
+  
+  private def control_RAWFilesDet_add (p_RAWFiles_Id: String
+                             ,p_RAWFilesDet_id: String
+                             ,p_RAWFilesDet_StartDate: Calendar
+                             ,p_RAWFilesDet_EndDate: Calendar
+                             ,p_RAWFilesDet_FileName: String
+                             ,p_RAWFilesDet_LocalPath: String
+                             ,p_RAWFilesDet_GlobalPath: String
+                             ,p_RAWFilesDet_Data_ColSeparatorType: String
+                             ,p_RAWFilesDet_Data_ColSeparator: String
+                             ,p_RAWFilesDet_Data_HeaderColumnsString: String
+                             ,p_RAWFilesDet_Log_ColSeparatorType: String
+                             ,p_RAWFilesDet_Log_ColSeparator: String
+                             ,p_RAWFilesDet_Log_HeaderColumnsString: String
+                             ,p_RAWFilesDet_Log_NumRowsFieldName: String
+                             ,p_RAWFilesDet_ContactName: String
+                             ,p_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    var ExecResult: huemul_JDBCResult = null
+    
+    val p_RAWFilesDet_StartDate_string: String = huemulBigDataGov.dateTimeFormat.format(p_RAWFilesDet_StartDate.getTime)
+    val p_RAWFilesDet_EndDate_string: String = huemulBigDataGov.dateTimeFormat.format(p_RAWFilesDet_EndDate.getTime)
+    //Get ExecResultRawFiles Id
+    val ExecResultRawFilesDet = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT rawfilesdet_id 
+					FROM control_RAWFilesDet 
+					WHERE RAWFiles_id = ${ReplaceSQLStringNulls(p_RAWFiles_Id)}
+					AND   RAWFilesDet_StartDate = ${ReplaceSQLStringNulls(p_RAWFilesDet_StartDate_string)}
+      """)
+      
+    var Localrawfilesdet_id: String = null
+    if (!ExecResultRawFilesDet.IsError && ExecResultRawFilesDet.ResultSet.length == 1) {
+      Localrawfilesdet_id = ExecResultRawFilesDet.ResultSet(0).getAs[String]("rawfilesdet_id")
+      
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE control_RAWFilesDetFields 
+          SET MDM_Active = false 
+          where rawfilesdet_id = 	${ReplaceSQLStringNulls(Localrawfilesdet_id)}
+        """)
+        
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE control_RAWFilesDet
+      		SET rawfilesdet_enddate                   = ${ReplaceSQLStringNulls(p_RAWFilesDet_EndDate_string)}						
+      		   ,rawfilesdet_filename					        = ${ReplaceSQLStringNulls(p_RAWFilesDet_FileName)}					
+      		   ,rawfilesdet_localpath					        = ${ReplaceSQLStringNulls(p_RAWFilesDet_LocalPath)}					
+      		   ,rawfilesdet_globalpath					      = ${ReplaceSQLStringNulls(p_RAWFilesDet_GlobalPath)}					
+      		   ,rawfilesdet_data_colseparatortype		  = ${ReplaceSQLStringNulls(p_RAWFilesDet_Data_ColSeparatorType)}		
+      		   ,rawfilesdet_data_colseparator			    = ${ReplaceSQLStringNulls(p_RAWFilesDet_Data_ColSeparator)}			
+      		   ,rawfilesdet_data_headercolumnsstring	= ${ReplaceSQLStringNulls(p_RAWFilesDet_Data_HeaderColumnsString)}	
+      		   ,rawfilesdet_log_colseparatortype		  = ${ReplaceSQLStringNulls(p_RAWFilesDet_Log_ColSeparatorType)}		
+      		   ,rawfilesdet_log_colseparator			    = ${ReplaceSQLStringNulls(p_RAWFilesDet_Log_ColSeparator)}			
+      		   ,rawfilesdet_log_headercolumnsstring		= ${ReplaceSQLStringNulls(p_RAWFilesDet_Log_HeaderColumnsString)}		
+      		   ,rawfilesdet_log_numrowsfieldname		  = ${ReplaceSQLStringNulls(p_RAWFilesDet_Log_NumRowsFieldName)}		
+      		   ,rawfilesdet_contactname					      = ${ReplaceSQLStringNulls(p_RAWFilesDet_ContactName)}					
+      		WHERE rawfilesdet_id = ${ReplaceSQLStringNulls(Localrawfilesdet_id)}
+        """)
+        
+      ExecResult.OpenVar = Localrawfilesdet_id
+    } else {
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_RAWFilesDet ( rawfilesdet_id
+                    										   ,rawfiles_id
+                    										   ,rawfilesdet_startdate
+                    										   ,rawfilesdet_enddate
+                    										   ,rawfilesdet_filename
+                    										   ,rawfilesdet_localpath
+                    										   ,rawfilesdet_globalpath
+                    										   ,rawfilesdet_data_colseparatortype
+                    										   ,rawfilesdet_data_colseparator
+                    										   ,rawfilesdet_data_headercolumnsstring
+                    										   ,rawfilesdet_log_colseparatortype
+                    										   ,rawfilesdet_log_colseparator
+                    										   ,rawfilesdet_log_headercolumnsstring
+                    										   ,rawfilesdet_log_numrowsfieldname
+                    										   ,rawfilesdet_contactname
+                    										   ,mdm_fhcreate
+                    										   ,mdm_processname)
+        		SELECT  ${ReplaceSQLStringNulls(p_RAWFilesDet_id)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFiles_Id)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_StartDate_string)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_EndDate_string)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_FileName)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_LocalPath)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_GlobalPath)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Data_ColSeparatorType)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Data_ColSeparator)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Data_HeaderColumnsString)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Log_ColSeparatorType)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Log_ColSeparator)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Log_HeaderColumnsString)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Log_NumRowsFieldName)}
+          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_ContactName)}
+          			   ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+          			   ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+        """)
+      ExecResult.OpenVar = p_RAWFilesDet_id
+    }
+    
+    
+    return ExecResult             
+  }
+  
+  
+  private def control_RAWFilesDetFields_add (p_RAWFiles_Id: String
+                             ,p_RAWFilesDet_id: String
+                             ,p_RAWFilesDetFields_ITName: String
+                             ,p_RAWFilesDetFields_LogicalName: String
+                             ,p_RAWFilesDetFields_description: String
+                             ,p_RAWFilesDetFields_DataType: String
+                             ,P_RAWFilesDetFields_Position: Integer
+                             ,P_RAWFilesDetFields_PosIni: Integer
+                             ,P_RAWFilesDetFields_PosFin: Integer
+                             ,p_RAWFilesDetFields_ApplyTrim: Boolean
+                             ,p_RAWFilesDetFields_ConvertNull: Boolean
+                             ,P_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    var ExecResult: huemul_JDBCResult = null
+    
+     //Get ExecResultRawFiles Id
+    val ExecResultRawFilesDetFields = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT RAWFilesDetFields_LogicalName
+					FROM control_RAWFilesDetFields 
+					WHERE rawfilesdet_id = ${ReplaceSQLStringNulls(p_RAWFilesDet_id)}
+					AND   RAWFilesDetFields_LogicalName = ${ReplaceSQLStringNulls(p_RAWFilesDetFields_LogicalName)}
+      """)
+      
+    
+    if (!ExecResultRawFilesDetFields.IsError && ExecResultRawFilesDetFields.ResultSet.length == 1) {
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE control_RAWFilesDetFields
+        	SET  MDM_Active = 1
+        		,RAWFilesDetFields_ITName		    =  ${ReplaceSQLStringNulls(p_RAWFilesDetFields_ITName)}
+        		,RAWFilesDetFields_LogicalName  =  ${ReplaceSQLStringNulls(p_RAWFilesDetFields_LogicalName)}
+        		,RAWFilesDetFields_description  =  ${ReplaceSQLStringNulls(p_RAWFilesDetFields_description)}
+        		,RAWFilesDetFields_DataType     =  ${ReplaceSQLStringNulls(p_RAWFilesDetFields_DataType)}
+        		,rawfilesdetfields_position     =  ${P_RAWFilesDetFields_Position}
+        		,rawfilesdetfields_posini       =  ${P_RAWFilesDetFields_PosIni}
+        		,rawfilesdetfields_posfin       =  ${P_RAWFilesDetFields_PosFin}
+        		,RAWFilesDetFields_ApplyTrim    =  ${if (p_RAWFilesDetFields_ApplyTrim) "1" else "0"}
+        		,RAWFilesDetFields_ConvertNull  =  ${if (p_RAWFilesDetFields_ConvertNull) "1" else "0"}
+        	WHERE rawfilesdet_id = ${ReplaceSQLStringNulls(p_RAWFilesDet_id)}
+        	AND   RAWFilesDetFields_LogicalName = ${ReplaceSQLStringNulls(p_RAWFilesDetFields_LogicalName)}
+        """)
+    } else {
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_RAWFilesDetFields (  rawfilesdet_id
+                            											,RAWFilesDetFields_ITName
+                            											,RAWFilesDetFields_LogicalName
+                            											,RAWFilesDetFields_description
+                            											,RAWFilesDetFields_DataType
+                            											,rawfilesdetfields_position
+                            											,rawfilesdetfields_posini
+                            											,rawfilesdetfields_posfin
+                                                  ,RAWFilesDetFields_ApplyTrim
+                                                  ,RAWFilesDetFields_ConvertNull 
+                            											,MDM_Active
+                            											,mdm_fhcreate
+                            											,mdm_processname)
+        	SELECT ${ReplaceSQLStringNulls(p_RAWFilesDet_id)}
+          			,${ReplaceSQLStringNulls(p_RAWFilesDetFields_ITName)}
+          			,${ReplaceSQLStringNulls(p_RAWFilesDetFields_LogicalName)}
+          			,${ReplaceSQLStringNulls(p_RAWFilesDetFields_description)}
+          			,${ReplaceSQLStringNulls(p_RAWFilesDetFields_DataType)}
+          			,${P_RAWFilesDetFields_Position}
+          			,${P_RAWFilesDetFields_PosIni}
+          			,${P_RAWFilesDetFields_PosFin}
+          			,${if (p_RAWFilesDetFields_ApplyTrim) "1" else "0"}
+          			,${if (p_RAWFilesDetFields_ConvertNull) "1" else "0"} 
+          			,1
+          			,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+          			,${ReplaceSQLStringNulls(P_MDM_ProcessName)}
+        """)
+    }
+    
+    return ExecResult             
+  }
+  
+  
+  private def control_rawFilesUse_add (p_RAWFiles_Id: String
+                             ,p_RAWFilesUse_id: String
+                             ,p_Process_Id: String
+                             ,p_ProcessExec_Id: String
+                             ,p_RAWFilesUse_Year: Integer
+                             ,p_RAWFilesUse_Month: Integer
+                             ,p_RAWFilesUse_Day: Integer
+                             ,p_RAWFilesUse_Hour: Integer
+                             ,p_RAWFilesUse_Minute: Integer
+                             ,p_RAWFilesUse_Second: Integer
+                             ,p_RAWFilesUse_params: String
+                             ,p_RAWFiles_fullName: String
+                             ,p_RAWFiles_fullPath: String
+                             ,p_RAWFiles_numRows: String
+                             ,p_RAWFiles_HeaderLine: String
+                             ,p_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_rawFilesUse (  rawfilesuse_id
+                          									 ,rawfiles_id
+                          									 ,process_id
+                          									 ,processexec_id
+                                             ,RAWFilesUse_Year
+                                             ,RAWFilesUse_Month
+                                             ,RAWFilesUse_Day
+                                             ,RAWFilesUse_Hour
+                                             ,RAWFilesUse_Minute
+                                             ,RAWFilesUse_Second
+                                             ,RAWFilesUse_params
+                          									 ,rawfiles_fullname
+                          									 ,rawfiles_fullpath
+                          									 ,rawfiles_numrows
+                          									 ,rawfiles_headerline
+                          									 ,mdm_fhcreate
+                          									 ,mdm_processname)
+        	SELECT  ${ReplaceSQLStringNulls(p_RAWFilesUse_id)}
+          			 ,${ReplaceSQLStringNulls(p_RAWFiles_Id)}
+          			 ,${ReplaceSQLStringNulls(p_Process_Id)}
+          			 ,${ReplaceSQLStringNulls(p_ProcessExec_Id)}
+                 ,${p_RAWFilesUse_Year}
+                 ,${p_RAWFilesUse_Month}   
+                 ,${p_RAWFilesUse_Day}     
+                 ,${p_RAWFilesUse_Hour}    
+                 ,${p_RAWFilesUse_Minute}   
+                 ,${p_RAWFilesUse_Second}  
+                 ,${ReplaceSQLStringNulls(p_RAWFilesUse_params)}
+          			 ,${ReplaceSQLStringNulls(p_RAWFiles_fullName)}
+          			 ,${ReplaceSQLStringNulls(p_RAWFiles_fullPath)}
+          			 ,${ReplaceSQLStringNulls(p_RAWFiles_numRows)}
+          			 ,${ReplaceSQLStringNulls(p_RAWFiles_HeaderLine)}
+          			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+          			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+        """)
+    
+    
+    return ExecResult             
+  }
+  
+  
+  private def control_ProcessExecParams_add (p_processExec_id: String
+                             ,p_processExecParams_Name: String
+                             ,p_processExecParams_Value: String
+                             ,p_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_ProcessExecParams (processexec_id
+                              								  ,processexecparams_name
+                              								  ,processexecparams_value
+                              								  ,mdm_fhcreate
+                              								  ,mdm_processname)
+        	SELECT ${ReplaceSQLStringNulls(p_processExec_id)}
+          		  ,${ReplaceSQLStringNulls(p_processExecParams_Name)}
+          		  ,${ReplaceSQLStringNulls(p_processExecParams_Value)}
+          		  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+          		  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+        """)
+    
+    
+    return ExecResult             
+  }
+  
+  private def control_TablesUse_add (p_Table_Name: String
+                             ,p_Table_BBDDName: String
+                             ,p_Process_Id: String
+                             ,p_ProcessExec_Id: String
+                             ,p_ProcessExecStep_Id: String
+                             ,p_TableUse_Year: Integer
+                             ,p_TableUse_Month: Integer
+                             ,p_TableUse_Day: Integer
+                             ,p_TableUse_Hour: Integer
+                             ,p_TableUse_Minute: Integer
+                             ,p_TableUse_Second: Integer
+                             ,p_TableUse_params: String
+                             ,p_TableUse_Read: Boolean
+                             ,p_TableUse_Write: Boolean
+                             ,p_TableUse_numRowsNew: Long
+                             ,p_TableUse_numRowsUpdate: Long
+                             ,p_TableUse_numRowsUpdatable: Long
+                             ,p_TableUse_numRowsNoChange: Long
+                             ,p_TableUse_numRowsMarkDelete: Long
+                             ,p_TableUse_numRowsTotal: Long
+                             ,p_TableUse_PartitionValue: String
+                             ,p_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    
+     //Get ExecResultRawFiles Id
+    val ExecResult_TableId = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT Table_Id
+					FROM Control_Tables 
+					WHERE Table_Name = ${ReplaceSQLStringNulls(p_Table_Name)}
+          and   Table_BBDDName = ${ReplaceSQLStringNulls(p_Table_BBDDName)}
+      """)
+    
+    var LocalTable_id: String = null
+    if (!ExecResult_TableId.IsError && ExecResult_TableId.ResultSet.length == 1){
+      LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("Table_Id")
+    }
+      
+      
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_TablesUse ( table_id
+                      								   ,process_id
+                      								   ,processexec_id
+                                         ,ProcessExecStep_Id
+                                         ,TableUse_Year
+                                         ,TableUse_Month
+                                         ,TableUse_Day
+                                         ,TableUse_Hour
+                                         ,TableUse_Minute
+                                         ,TableUse_Second
+                                         ,TableUse_params
+                      								   ,tableuse_read
+                      								   ,tableuse_write
+                      								   ,tableuse_numrowsnew
+                      								   ,tableuse_numrowsupdate
+                      								   ,TableUse_numRowsUpdatable
+                      								   ,TableUse_numRowsNoChange 
+                      								   ,tableuse_numrowsmarkdelete
+                      								   ,tableuse_numrowstotal
+                      								   ,TableUse_PartitionValue
+                      								   ,mdm_fhcreate
+                      								   ,mdm_processname)
+        	SELECT  ${ReplaceSQLStringNulls(LocalTable_id)}
+          		   ,${ReplaceSQLStringNulls(p_Process_Id)}
+          		   ,${ReplaceSQLStringNulls(p_ProcessExec_Id)}
+                 ,${ReplaceSQLStringNulls(p_ProcessExecStep_Id)}
+                 ,${p_TableUse_Year}
+                 ,${p_TableUse_Month}
+                 ,${p_TableUse_Day}
+                 ,${p_TableUse_Hour}
+                 ,${p_TableUse_Minute}
+                 ,${p_TableUse_Second}
+                 ,${ReplaceSQLStringNulls(p_TableUse_params)}
+          		   ,${if (p_TableUse_Read) "1" else "0"}
+          		   ,${if (p_TableUse_Write) "1" else "0"}
+          		   ,${p_TableUse_numRowsNew}
+          		   ,${p_TableUse_numRowsUpdate}
+          		   ,${p_TableUse_numRowsUpdatable}
+          		   ,${p_TableUse_numRowsNoChange}
+          		   ,${p_TableUse_numRowsMarkDelete}
+          		   ,${p_TableUse_numRowsTotal}
+          		   ,${ReplaceSQLStringNulls(p_TableUse_PartitionValue)}
+          		   ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+          		   ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+        """)
+    
+    
+    return ExecResult             
+  }
+  
+  
+  private def control_Tables_addOrUpd (p_Table_id: String
+                             ,p_Area_Id: String
+                             ,p_Table_BBDDName: String
+                             ,p_Table_Name: String
+                             ,p_Table_Description: String
+                             ,p_Table_BusinessOwner: String
+                             ,p_Table_ITOwner: String
+                             ,p_Table_PartitionField: String
+                             ,p_Table_TableType: String
+                             ,p_Table_StorageType: String
+                             ,p_Table_LocalPath: String
+                             ,p_Table_GlobalPath: String
+                             ,p_Table_SQLCreate: String
+                             ,p_Table_Frequency: String
+                             ,p_MDM_ProcessName: String
+      ): huemul_JDBCResult =  {
+    
+     //Get ExecResultRawFiles Id
+    val ExecResult_TableId = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT Table_Id
+					FROM Control_Tables 
+					WHERE Table_Name = ${ReplaceSQLStringNulls(p_Table_Name)}
+          and   Table_BBDDName = ${ReplaceSQLStringNulls(p_Table_BBDDName)}
+      """)
+    
+    var ExecResult: huemul_JDBCResult = null
+    var LocalTable_id: String = null
+    if (!ExecResult_TableId.IsError && ExecResult_TableId.ResultSet.length == 1){
+      LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("Table_Id")
+      
+      
+      val ExecResultCol = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE Control_Columns 
+          SET MDM_Active = 0 
+          WHERE Table_Id = ${ReplaceSQLStringNulls(p_Table_id)}
+          """)
+      
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE control_Tables 
+          SET table_description     = CASE WHEN MDM_ManualChange = 1 THEN table_description		ELSE ${ReplaceSQLStringNulls(p_Table_Description)}	END	 
+        		 ,table_businessowner	  = CASE WHEN MDM_ManualChange = 1 THEN table_businessowner	ELSE ${ReplaceSQLStringNulls(p_Table_BusinessOwner)}	END
+        		 ,table_itowner			    = CASE WHEN MDM_ManualChange = 1 THEN table_itowner			  ELSE ${ReplaceSQLStringNulls(p_Table_ITOwner)}		END
+        		 ,table_partitionfield	= ${ReplaceSQLStringNulls(p_Table_PartitionField)}	
+        		 ,table_tabletype		    = ${ReplaceSQLStringNulls(p_Table_TableType)}		
+        		 ,table_storagetype		  = ${ReplaceSQLStringNulls(p_Table_StorageType)}		
+        		 ,table_localpath		    = ${ReplaceSQLStringNulls(p_Table_LocalPath)}		
+        		 ,table_globalpath		  = ${ReplaceSQLStringNulls(p_Table_GlobalPath)}		
+        		 ,table_sqlcreate    		= ${ReplaceSQLStringNulls(p_Table_SQLCreate)}		
+        		 ,Table_Frequency		    = ${ReplaceSQLStringNulls(p_Table_Frequency)}
+          WHERE Table_Id = ${ReplaceSQLStringNulls(p_Table_id)}
+          """)
+          
+      ExecResult.OpenVar = LocalTable_id
+    } else {
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_Tables ( table_id
+                      								,area_id
+                      								,table_bbddname
+                      								,table_name
+                      								,table_description
+                      								,table_businessowner
+                      								,table_itowner
+                      								,table_partitionfield
+                      								,table_tabletype
+                      								,table_storagetype
+                      								,table_localpath
+                      								,table_globalpath
+                      								,table_sqlcreate
+                      								,Table_Frequency
+                      								,mdm_fhcreate
+                      								,mdm_processname) 	
+        	SELECT   ${ReplaceSQLStringNulls(p_Table_id)}
+            			,${ReplaceSQLStringNulls(p_Area_Id)}
+            			,${ReplaceSQLStringNulls(p_Table_BBDDName)}
+            			,${ReplaceSQLStringNulls(p_Table_Name)}
+            			,${ReplaceSQLStringNulls(p_Table_Description)}
+            			,${ReplaceSQLStringNulls(p_Table_BusinessOwner)}
+            			,${ReplaceSQLStringNulls(p_Table_ITOwner)}
+            			,${ReplaceSQLStringNulls(p_Table_PartitionField)}
+            			,${ReplaceSQLStringNulls(p_Table_TableType)}
+            			,${ReplaceSQLStringNulls(p_Table_StorageType)}
+            			,${ReplaceSQLStringNulls(p_Table_LocalPath)}
+            			,${ReplaceSQLStringNulls(p_Table_GlobalPath)}
+            			,${ReplaceSQLStringNulls(p_Table_SQLCreate)}
+            			,${ReplaceSQLStringNulls(p_Table_Frequency)}
+            			,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+            			,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+          """)
+      ExecResult.OpenVar = p_Table_id
+    }
+    
+    
+    return ExecResult             
+  }
+  
+  
+  private def control_Columns_addOrUpd (p_Table_id: String
+                             ,p_Column_id: String
+                             ,p_Column_Position: Integer
+                             ,p_Column_Name: String
+                             ,p_Column_Description: String
+                             ,p_Column_Formula: String
+                             ,p_Column_DataType: String
+                             ,p_Column_SensibleData: Boolean
+                             ,p_Column_EnableDTLog: Boolean
+                             ,p_Column_EnableOldValue: Boolean
+                             ,p_Column_EnableProcessLog: Boolean
+                             ,p_Column_DefaultValue: String
+                             ,p_Column_SecurityLevel: String
+                             ,p_Column_Encrypted: String
+                             ,p_Column_ARCO: Boolean
+                             ,p_Column_Nullable: Boolean
+                             ,p_Column_IsPK: Boolean
+                             ,p_Column_IsUnique: Boolean
+                             ,p_Column_DQ_MinLen: Integer
+                             ,p_Column_DQ_MaxLen: Integer
+                             ,p_Column_DQ_MinDecimalValue: Decimal
+                             ,p_Column_DQ_MaxDecimalValue: Decimal
+                             ,p_Column_DQ_MinDateTimeValue: String
+                             ,p_Column_DQ_MaxDateTimeValue: String
+                             ,p_Column_DQ_RegExp: String
+                             ,p_MDM_ProcessName: String
+
+                             
+      ): huemul_JDBCResult =  {
+    
+     //Get Column Id
+    val ExecResult_ColumnId = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT column_id
+					FROM control_Columns 
+					WHERE Table_Id = ${ReplaceSQLStringNulls(p_Table_id)}
+          and   Column_Name = ${ReplaceSQLStringNulls(p_Column_Name)}
+      """)
+    
+    var ExecResult: huemul_JDBCResult = null
+    var Localcolumn_id: String = null
+    if (!ExecResult_ColumnId.IsError && ExecResult_ColumnId.ResultSet.length == 1){
+      Localcolumn_id = ExecResult_ColumnId.ResultSet(0).getAs[String]("column_id")
+      
+      
+      val ExecResultCol = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE Control_Columns 
+          SET MDM_Active = 0 
+          WHERE Table_Id = ${ReplaceSQLStringNulls(p_Table_id)}
+          """)
+      
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE control_Columns 
+          SET column_position	            = ${p_Column_Position}				
+        		 ,column_description			    = CASE WHEN MDM_ManualChange = 1 THEN column_description ELSE ${ReplaceSQLStringNulls(p_Column_Description)}	END
+        		 ,column_formula				      = CASE WHEN MDM_ManualChange = 1 THEN column_formula ELSE ${ReplaceSQLStringNulls(p_Column_Formula)}	END			
+        		 ,column_datatype				      = ${ReplaceSQLStringNulls(p_Column_DataType)}				
+        		 ,column_sensibledata			    = CASE WHEN MDM_ManualChange = 1 THEN column_sensibledata ELSE ${if (p_Column_SensibleData) "1" else "0"}	END		
+        		 ,column_enabledtlog			    = ${if (p_Column_EnableDTLog) "1" else "0"}
+        		 ,column_enableoldvalue			  = ${if (p_Column_EnableOldValue) "1" else "0"}
+        		 ,column_enableprocesslog		  = ${if (p_Column_EnableProcessLog) "1" else "0"}
+        		 ,column_defaultvalue			    = ${ReplaceSQLStringNulls(p_Column_DefaultValue)}			
+        		 ,column_securitylevel			  = CASE WHEN MDM_ManualChange = 1 THEN column_securitylevel ELSE ${ReplaceSQLStringNulls(p_Column_SecurityLevel)}	END		
+        		 ,column_encrypted				    = ${ReplaceSQLStringNulls(p_Column_Encrypted)}				
+        		 ,column_arco					        = CASE WHEN MDM_ManualChange = 1 THEN column_arco ELSE ${if (p_Column_ARCO) "1" else "0"}	END				
+        		 ,column_nullable				      = ${if (p_Column_Nullable) "1" else "0"}				
+        		 ,column_ispk					        = ${if (p_Column_IsPK) "1" else "0"}
+        		 ,column_isunique				      = ${if (p_Column_IsUnique) "1" else "0"}
+        		 ,column_dq_minlen				    = ${p_Column_DQ_MinLen}				
+        		 ,column_dq_maxlen				    = ${p_Column_DQ_MaxLen}				
+        		 ,column_dq_mindecimalvalue		= ${p_Column_DQ_MinDecimalValue}		
+        		 ,column_dq_maxdecimalvalue		= ${p_Column_DQ_MaxDecimalValue}		
+        		 ,column_dq_mindatetimevalue	= ${ReplaceSQLStringNulls(p_Column_DQ_MinDateTimeValue)}	
+        		 ,column_dq_maxdatetimevalue	= ${ReplaceSQLStringNulls(p_Column_DQ_MaxDateTimeValue)}	
+        		 ,Column_DQ_RegExp            = ${ReplaceSQLStringNulls(p_Column_DQ_RegExp)}
+        		 ,MDM_Active					        = 1
+          WHERE Column_id = ${ReplaceSQLStringNulls(Localcolumn_id)}
+          """)
+          
+      ExecResult.OpenVar = Localcolumn_id
+    } else {
+      ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_Columns ( column_id
+                      								 ,table_id
+                      								 ,column_position
+                      								 ,column_name
+                      								 ,column_description
+                      								 ,column_formula
+                      								 ,column_datatype
+                      								 ,column_sensibledata
+                      								 ,column_enabledtlog
+                      								 ,column_enableoldvalue
+                      								 ,column_enableprocesslog
+                      								 ,column_defaultvalue
+                      								 ,column_securitylevel
+                      								 ,column_encrypted
+                      								 ,column_arco
+                      								 ,column_nullable
+                      								 ,column_ispk
+                      								 ,column_isunique
+                      								 ,column_dq_minlen
+                      								 ,column_dq_maxlen
+                      								 ,column_dq_mindecimalvalue
+                      								 ,column_dq_maxdecimalvalue
+                      								 ,column_dq_mindatetimevalue
+                      								 ,column_dq_maxdatetimevalue
+                      								 ,Column_DQ_RegExp
+                      								 ,mdm_fhcreate
+                      								 ,mdm_processname
+                                       ,MDM_ManualChange) 	
+        	SELECT    ${ReplaceSQLStringNulls(p_Column_id)}
+            			 ,${ReplaceSQLStringNulls(p_Table_id)}
+            			 ,${p_Column_Position}
+            			 ,${ReplaceSQLStringNulls(p_Column_Name)}
+            			 ,${ReplaceSQLStringNulls(p_Column_Description)}
+            			 ,${ReplaceSQLStringNulls(p_Column_Formula)}
+            			 ,${ReplaceSQLStringNulls(p_Column_DataType)}
+            			 ,${if (p_Column_SensibleData) "1" else "0"}
+            			 ,${if (p_Column_EnableDTLog) "1" else "0"}
+            			 ,${if (p_Column_EnableOldValue) "1" else "0"}
+            			 ,${if (p_Column_EnableProcessLog) "1" else "0"}
+            			 ,${ReplaceSQLStringNulls(p_Column_DefaultValue)}
+            			 ,${ReplaceSQLStringNulls(p_Column_SecurityLevel)}
+            			 ,${ReplaceSQLStringNulls(p_Column_Encrypted)}
+            			 ,${if (p_Column_ARCO) "1" else "0"}
+            			 ,${if (p_Column_Nullable) "1" else "0"}
+            			 ,${if (p_Column_IsPK) "1" else "0"}
+            			 ,${if (p_Column_IsUnique) "1" else "0"}
+            			 ,${p_Column_DQ_MinLen}
+            			 ,${p_Column_DQ_MaxLen}
+            			 ,${p_Column_DQ_MinDecimalValue}
+            			 ,${p_Column_DQ_MaxDecimalValue}
+            			 ,${ReplaceSQLStringNulls(p_Column_DQ_MinDateTimeValue)}
+            			 ,${ReplaceSQLStringNulls(p_Column_DQ_MaxDateTimeValue)}
+            			 ,${ReplaceSQLStringNulls(p_Column_DQ_RegExp)}
+            			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+            			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+            			 ,0
+          """)
+          
+      ExecResult.OpenVar = p_Column_id
+    }
+    
+    
+    return ExecResult             
+  }
+  
+  
+  private def control_TablesRel_add (p_TableRel_id: String
+                             ,p_PK_ID: String
+                             ,p_Table_NameFK: String
+                             ,p_Table_BBDDFK: String
+                             ,p_TableFK_NameRelationship: String
+                             ,p_mdm_processname: String
+      ): huemul_JDBCResult =  {
+    
+     //Get Column Id
+    val ExecResult_FK_Id = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT Table_Id 
+          FROM control_Tables 
+  			  WHERE Table_Name = ${ReplaceSQLStringNulls(p_Table_NameFK)}
+  			  AND   Table_BBDDName = ${ReplaceSQLStringNulls(p_Table_BBDDFK)}
+      """)
+    
+    var ExecResult: huemul_JDBCResult = null
+    var FK_Id: String = null
+    if (!ExecResult_FK_Id.IsError && ExecResult_FK_Id.ResultSet.length == 1){
+      FK_Id = ExecResult_FK_Id.ResultSet(0).getAs[String]("Table_Id")
+      
+      val ExecResult_Rel_Id = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT TableRel_id 
+					 FROM control_TablesRel 
+					 WHERE Table_idPK = ${ReplaceSQLStringNulls(p_PK_ID)}
+					 AND   Table_idFK = ${ReplaceSQLStringNulls(FK_Id)}
+					 AND   TableFK_NameRelationship = ${ReplaceSQLStringNulls(p_TableFK_NameRelationship)}
+      """)
+      
+      var TableRel_id: String = null
+      if (!ExecResult_Rel_Id.IsError && ExecResult_Rel_Id.ResultSet.length == 1){
+        TableRel_id = ExecResult_Rel_Id.ResultSet(0).getAs[String]("TableRel_id")
+      
+        ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          DELETE FROM control_TablesRelCol WHERE TableRel_id = ${ReplaceSQLStringNulls(TableRel_id)}
+          """)
+          
+        ExecResult.OpenVar = TableRel_id
+      } else {
+        ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_TablesRel (TableRel_id
+                      							   , Table_idPK
+                      							   , Table_idFK
+                      							   , TableFK_NameRelationship
+                      							   , MDM_fhCreate
+                      							   , mdm_processname) 	
+      		SELECT ${ReplaceSQLStringNulls(p_TableRel_id)}
+      			   , ${ReplaceSQLStringNulls(p_PK_ID)}
+      			   , ${ReplaceSQLStringNulls(FK_Id)}
+      			   , ${ReplaceSQLStringNulls(p_TableFK_NameRelationship)}
+      			   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+      			   , ${ReplaceSQLStringNulls(p_mdm_processname)}
+          """)
+        ExecResult.OpenVar = p_TableRel_id
+        ExecResult.OpenVar2 = FK_Id
+      }
+    }
+    
+    
+    
+    return ExecResult             
+  }
+  
+  
+  
+  private def control_TablesRelCol_add (p_TableRel_id: String
+                             ,p_PK_ID: String
+                             ,p_ColumnName_PK: String
+                             ,p_FK_ID: String
+                             ,p_ColumnName_FK: String
+                             ,p_mdm_processname: String
+      ): huemul_JDBCResult =  {
+    
+     //Get Column Id PK
+    val ExecResult_ColumnPK_Id = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT Column_Id 
+          FROM control_columns
+				  WHERE table_id    = ${ReplaceSQLStringNulls(p_PK_ID)}
+				  AND   column_name = ${ReplaceSQLStringNulls(p_ColumnName_PK)}
+      """)
+    
+    var ExecResult: huemul_JDBCResult = null
+    var ColumnPK: String = null
+    if (!ExecResult_ColumnPK_Id.IsError && ExecResult_ColumnPK_Id.ResultSet.length == 1){
+      ColumnPK = ExecResult_ColumnPK_Id.ResultSet(0).getAs[String]("Column_Id")
+    }
+    
+    //Get Column Id FK
+    val ExecResult_ColumnFK_Id = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
+          SELECT Column_Id 
+          FROM control_columns
+				  WHERE table_id    = ${ReplaceSQLStringNulls(p_FK_ID)}
+				  AND   column_name = ${ReplaceSQLStringNulls(p_ColumnName_FK)}
+      """)
+    
+    var ColumnFK: String = null
+    if (!ExecResult_ColumnFK_Id.IsError && ExecResult_ColumnFK_Id.ResultSet.length == 1){
+      ColumnFK = ExecResult_ColumnFK_Id.ResultSet(0).getAs[String]("Column_Id")
+    }
+    
+    
+    ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_TablesRelCol (TableRel_id
+                        									 ,Column_idFK
+                        									 ,Column_idPK
+                        									 ,MDM_fhCreate
+                        									 ,MDM_ProcessName
+        									 )
+        	SELECT ${ReplaceSQLStringNulls(p_TableRel_id)}
+          		  ,${ReplaceSQLStringNulls(ColumnFK)}
+          		  ,${ReplaceSQLStringNulls(ColumnPK)}
+          		  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+          		  ,${ReplaceSQLStringNulls(p_mdm_processname)}
+      """)
+      
+    
+    
+    
+    return ExecResult             
+  }
+  
+  
+  
+  private def control_Error_finish (p_processExec_id: String
+                                   ,p_processExecStep_id: String
+                                   ,p_Error_Id: String
+                                   ,p_Error_Message: String
+                                   ,p_Error_Code: Integer
+                                   ,p_Error_Trace: String
+                                   ,p_Error_ClassName: String
+                                   ,p_Error_FileName: String
+                                   ,p_Error_LIneNumber: String
+                                   ,p_Error_MethodName: String
+                                   ,p_Error_Detail: String
+                                   ,p_MDM_ProcessName  : String                                 
+      ): huemul_JDBCResult =  {
+    
+    val ExecResult = control_Error_register(p_Error_Id
+                                   ,p_Error_Message
+                                   ,p_Error_Code
+                                   ,p_Error_Trace
+                                   ,p_Error_ClassName
+                                   ,p_Error_FileName
+                                   ,p_Error_LIneNumber
+                                   ,p_Error_MethodName
+                                   ,p_Error_Detail
+                                   ,p_MDM_ProcessName)
+      
+    control_processExec_Finish(p_processExec_id, p_processExecStep_id, p_Error_Id)
+      
+    
+    return ExecResult             
+  }
+  
+  private def control_Error_register (p_Error_Id: String
+                                   ,p_Error_Message: String
+                                   ,p_Error_Code: Integer
+                                   ,p_Error_Trace: String
+                                   ,p_Error_ClassName: String
+                                   ,p_Error_FileName: String
+                                   ,p_Error_LIneNumber: String
+                                   ,p_Error_MethodName: String
+                                   ,p_Error_Detail: String
+                                   ,p_MDM_ProcessName  : String                                 
+      ): huemul_JDBCResult =  {
+    
+    val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO Control_Error (error_id
+                                    ,error_message
+                                    ,error_code
+                                    ,error_trace
+                                    ,error_classname
+                                    ,error_filename
+                                    ,error_linenumber
+                                    ,error_methodname
+                                    ,error_detail
+                                    ,mdm_fhcrea
+                                    ,mdm_processname)
+        	SELECT ${ReplaceSQLStringNulls(p_Error_Id)}
+          		  ,${ReplaceSQLStringNulls(p_Error_Message)}
+                ,${p_Error_Code}
+          		  ,${ReplaceSQLStringNulls(p_Error_Trace)}
+          		  ,${ReplaceSQLStringNulls(p_Error_ClassName)}
+          		  ,${ReplaceSQLStringNulls(p_Error_FileName)}
+          		  ,${ReplaceSQLStringNulls(p_Error_LIneNumber)}
+          		  ,${ReplaceSQLStringNulls(p_Error_MethodName)}
+          		  ,${ReplaceSQLStringNulls(p_Error_Detail)}
+          		  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+          		  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
+      """)
+       
+    
+    return ExecResult             
+  }
 }
