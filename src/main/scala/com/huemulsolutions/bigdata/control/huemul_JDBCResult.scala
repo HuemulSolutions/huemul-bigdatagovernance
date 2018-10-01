@@ -14,6 +14,16 @@ class huemul_JDBCResult extends Serializable {
   var ResultSet: Array[Row] = null
   var ErrorDescription: String = ""
   var IsError: Boolean = false
+  
+  /**
+   * open variable for keep any value
+   */
+  var OpenVar: String = null
+  
+  /**
+   * open variable for keep any value
+   */
+  var OpenVar2: String = null
 }
 
 class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connectionString: String, driver: String, DebugMode: Boolean) extends Serializable {
