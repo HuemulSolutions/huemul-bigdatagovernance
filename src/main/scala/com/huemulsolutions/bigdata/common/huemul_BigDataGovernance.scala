@@ -98,9 +98,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    /***
    * True for show all messages
    */
+  val standardDateFormat: String = "yyyy-MM-dd HH:mm:ss"
   val DebugMode : Boolean = arguments.GetValue("debugmode","false").toBoolean
   val dateFormatNumeric: DateFormat = new SimpleDateFormat("yyyyMMdd");
-  val dateTimeFormat: DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+  val dateTimeFormat: DateFormat = new SimpleDateFormat(standardDateFormat);
   val dateTimeText: String = "{{YYYY}}-{{MM}}-{{DD}} {{hh}}:{{mm}}:{{ss}}"
   val dateFormat: DateFormat = new SimpleDateFormat("yyyy-MM-dd")
   //var AutoInc: BigInt = 0
@@ -155,12 +156,17 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       println(s"waiting for singleton Application Id in use: ${IdApplication}, maybe you're creating two times a spark connection")
       Thread.sleep(10000)
     }
-    val Result = postgres_connection.ExecuteJDBC_WithResult(s""" SELECT control_executors_add(
-                    '${IdApplication}' -- p_application_Id
-                    ,'${IdSparkPort}'  --as p_IdSparkPort
-                    ,'${IdPortMonitoring}' --as p_IdPortMonitoring
-                    ,'${appName}'  --as p_Executor_Name
-                  ) 
+    val Result = postgres_connection.ExecuteJDBC_WithResult(s"""
+                  INSERT INTO control_executors (application_Id
+                  							   , IdSparkPort
+                  							   , IdPortMonitoring
+                  							   , Executor_dtStart
+                  							   , Executor_Name) 	
+                	SELECT ${ReplaceSQLStringNulls(IdApplication)}
+                		   , ${ReplaceSQLStringNulls(IdSparkPort)}
+                		   , ${ReplaceSQLStringNulls(IdPortMonitoring)}
+                		   , ${ReplaceSQLStringNulls(getCurrentDateTime())}
+                		   , ${ReplaceSQLStringNulls(appName)}
         """)
   }
                 
@@ -181,8 +187,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   def application_closeAll(ApplicationInUse: String) {
-    if (RegisterInControl) 
-      this.postgres_connection.ExecuteJDBC_NoResulSet(s"""SELECT control_executors_remove ('${ApplicationInUse}' )""")
+    if (RegisterInControl) {
+       val ExecResult1 = postgres_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+       val ExecResult2 = postgres_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+    }
+      
   }
   
   def application_StillAlive(ApplicationInUse: String): Boolean = {
@@ -262,6 +271,44 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     return result
   }
   
+  /***
+   * ReplaceSQLStringNulls: returns text for SQL
+   * from version 1.1
+   */
+  def ReplaceSQLStringNulls(ColumnName: String): String = {
+    return if (ColumnName == null) "null" else s"'${ColumnName.replace("'", "''")}'"
+  }
+  
+  /***
+   * getCurrentDateTime: returns current datetime in specific format
+   * from version 1.1
+   */
+  def getCurrentDateTime (format: String = standardDateFormat): String = {
+    
+    val dateTimeFormat: DateFormat = new SimpleDateFormat(format)  
+    val ActualDateTime: Calendar  = Calendar.getInstance()
+        
+    val Fecha: String = dateTimeFormat.format(ActualDateTime.getTime())
+    
+    return Fecha
+  }
+  
+  /***
+   * getCurrentDateTime: returns current datetime
+   * from version 1.1
+   */
+  def getCurrentDateTimeJava (): java.util.Calendar = {
+    return Calendar.getInstance()
+  }
+  
+  /**
+   * Return day, hour, minute and second difference from two datetime
+   */
+  def getDateTimeDiff(dt_start: Calendar, dt_end: Calendar): huemul_DateTimePart = {
+    val dif = dt_start.getTimeInMillis - dt_end.getTimeInMillis
+      
+    return new huemul_DateTimePart(dif)
+  }
  
   /***
    * setDate: returns calendar for parameters (StringDate = YYYY-MM-DD) 
@@ -524,19 +571,30 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         className = "null"
         
       //Insert processExcec
-      postgres_connection.ExecuteJDBC_NoResulSet(s"""select control_Error_register (
-                          '${Error_Id}'  --Error_Id
-                         , '${message.replace("'", "''")}' --as Error_Message
-                         , ${ErrorCode} --as error_code
-                         , '${trace.replace("'", "''")}' --as Error_Trace
-                         , '${className.replace("'", "''")}' --as Error_ClassName
-                         , '${fileName.replace("'", "''")}' --as Error_FileName
-                         , '${LineNumber}' --as Error_LIneNumber
-                         , '${methodName.replace("'", "''")}' --as Error_MethodName
-                         , '' --as Error_Detail
-                         ,'${WhoWriteError}'  --process_id
-                    )
-                      """, false)            
+      postgres_connection.ExecuteJDBC_NoResulSet(s"""
+              INSERT INTO Control_Error (error_id
+                                    ,error_message
+                                    ,error_code
+                                    ,error_trace
+                                    ,error_classname
+                                    ,error_filename
+                                    ,error_linenumber
+                                    ,error_methodname
+                                    ,error_detail
+                                    ,mdm_fhcrea
+                                    ,mdm_processname)
+        	SELECT ${ReplaceSQLStringNulls(Error_Id)}
+          		  ,${ReplaceSQLStringNulls(message.replace("'", "''"))}
+                ,${ErrorCode}
+          		  ,${ReplaceSQLStringNulls(trace.replace("'", "''"))}
+          		  ,${ReplaceSQLStringNulls(className.replace("'", "''"))}
+          		  ,${ReplaceSQLStringNulls(fileName.replace("'", "''"))}
+          		  ,${ReplaceSQLStringNulls(LineNumber.toString())}
+          		  ,${ReplaceSQLStringNulls(methodName.replace("'", "''"))}
+          		  ,""
+          		  ,${ReplaceSQLStringNulls(getCurrentDateTime())}
+          		  ,${ReplaceSQLStringNulls(WhoWriteError)}
+             """, false)            
      
     }
         
