@@ -51,7 +51,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  println("huemul_BigDataGovernance version 1.0.0 - sv01")
+  println("huemul_BigDataGovernance version 1.1.0 - sv01")
    
       
         
@@ -99,6 +99,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * True for show all messages
    */
   val standardDateFormat: String = "yyyy-MM-dd HH:mm:ss"
+  val standardDateFormatMilisec: String = "yyyy-MM-dd HH:mm:ss:SSS"
   val DebugMode : Boolean = arguments.GetValue("debugmode","false").toBoolean
   val dateFormatNumeric: DateFormat = new SimpleDateFormat("yyyyMMdd");
   val dateTimeFormat: DateFormat = new SimpleDateFormat(standardDateFormat);
@@ -156,7 +157,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       println(s"waiting for singleton Application Id in use: ${IdApplication}, maybe you're creating two times a spark connection")
       Thread.sleep(10000)
     }
-    val Result = postgres_connection.ExecuteJDBC_WithResult(s"""
+    val Result = postgres_connection.ExecuteJDBC_NoResulSet(s"""
                   INSERT INTO control_executors (application_Id
                   							   , IdSparkPort
                   							   , IdPortMonitoring
@@ -206,8 +207,8 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (CurrentProcess.ResultSet == null || CurrentProcess.ResultSet.length == 0) { //dosn't have records, was eliminted by other process (rarely)
       StillAlive = false            
     } else {
-      IdAppFromDataFrame = CurrentProcess.ResultSet(0).getAs[String]("application_id")
-      URLMonitor = s"${CurrentProcess.ResultSet(0).getAs[String]("idportmonitoring")}/api/v1/applications/"            
+      IdAppFromDataFrame = CurrentProcess.ResultSet(0).getAs[String]("application_id".toLowerCase())
+      URLMonitor = s"${CurrentProcess.ResultSet(0).getAs[String]("idportmonitoring".toLowerCase())}/api/v1/applications/"            
     
       //Get Id App from Spark URL Monitoring          
       try {
@@ -283,7 +284,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * getCurrentDateTime: returns current datetime in specific format
    * from version 1.1
    */
-  def getCurrentDateTime (format: String = standardDateFormat): String = {
+  def getCurrentDateTime (format: String = standardDateFormatMilisec): String = {
     
     val dateTimeFormat: DateFormat = new SimpleDateFormat(format)  
     val ActualDateTime: Calendar  = Calendar.getInstance()
@@ -305,7 +306,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * Return day, hour, minute and second difference from two datetime
    */
   def getDateTimeDiff(dt_start: Calendar, dt_end: Calendar): huemul_DateTimePart = {
-    val dif = dt_start.getTimeInMillis - dt_end.getTimeInMillis
+    val dif = dt_end.getTimeInMillis - dt_start.getTimeInMillis 
       
     return new huemul_DateTimePart(dif)
   }
@@ -591,7 +592,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           		  ,${ReplaceSQLStringNulls(fileName.replace("'", "''"))}
           		  ,${ReplaceSQLStringNulls(LineNumber.toString())}
           		  ,${ReplaceSQLStringNulls(methodName.replace("'", "''"))}
-          		  ,""
+          		  ,''
           		  ,${ReplaceSQLStringNulls(getCurrentDateTime())}
           		  ,${ReplaceSQLStringNulls(WhoWriteError)}
              """, false)            

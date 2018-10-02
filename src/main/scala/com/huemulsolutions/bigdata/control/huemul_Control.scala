@@ -83,14 +83,15 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     var NumCycle: Int = 0
     var ContinueInLoop: Boolean = true
     
-    
+    var ApplicationInUse: String = null
     while (ContinueInLoop) {
       //Try to add Singleton Mode
       val Ejec = control_singleton_Add(Control_ClassName, huemulBigDataGov.IdApplication, Control_ClassName)
       
-      var ApplicationInUse: String = null
-      if (Ejec.ResultSet.length == 1)
-        ApplicationInUse = Ejec.ResultSet(0).getAs[String]("application_Id")        
+      if (Ejec.ResultSet == null)
+        ApplicationInUse= null
+      else if (Ejec.ResultSet.length == 1)
+        ApplicationInUse = Ejec.ResultSet(0).getAs[String]("application_Id".toLowerCase())        
       
       //if don't have error, exit
       if (!Ejec.IsError && ApplicationInUse == null)
@@ -257,13 +258,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       control_Error_finish( this.Control_Id
                            ,this.LocalIdStep
                            ,Error_Id
-                           ,Control_Error.ControlError_Message.replace("'", "''")
+                           ,Control_Error.ControlError_Message
                            ,Control_Error.ControlError_ErrorCode
-                           ,Control_Error.ControlError_Trace.replace("'", "''")
-                           ,Control_Error.ControlError_ClassName.replace("'", "''")
-                           ,Control_Error.ControlError_FileName.replace("'", "''")
+                           ,Control_Error.ControlError_Trace
+                           ,Control_Error.ControlError_ClassName
+                           ,Control_Error.ControlError_FileName
                            ,Control_Error.ControlError_LineNumber.toString()
-                           ,Control_Error.ControlError_MethodName.replace("'", "''")
+                           ,Control_Error.ControlError_MethodName
                            ,"" //--as Error_Detail
                            ,Control_ClassName
                            )
@@ -307,13 +308,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         
       //Insert processExcec
       control_Error_register(Error_Id
-                             ,message.replace("'", "''")
+                             ,message
                              ,ErrorCode
-                             ,trace.replace("'", "''")
-                             ,className.replace("'", "''")
-                             ,fileName.replace("'", "''")
+                             ,trace
+                             ,className
+                             ,fileName
                              ,LineNumber.toString()
-                             ,methodName.replace("'", "''")
+                             ,methodName
                              ,"" //--as Error_Detail
                              ,WhoWriteError
                            )
@@ -330,7 +331,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //New Step add
     val PreviousLocalIdStep = LocalIdStep
     LocalIdStep = huemulBigDataGov.huemul_GetUniqueId()
-    processExecStep_dtStart = huemulBigDataGov.getCurrentDateTimeJava()
+    
     
     if (huemulBigDataGov.RegisterInControl) {
       //Insert processExcec
@@ -489,7 +490,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                           ,RAWFilesDet_id
                                           ,y.getcolumnName_TI
                                           ,y.getcolumnName_Business
-                                          ,y.getDescription.replace("'", "''")
+                                          ,y.getDescription
                                           ,y.getDataType.toString()
                                           ,pos
                                           ,y.getPosIni
@@ -542,7 +543,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,this.getparamHour() 
                              ,this.getparamMin()
                              ,this.getparamSec()
-                             ,AdditionalParamsInfo.replace("'", "''")
+                             ,AdditionalParamsInfo
                              ,true //--as TableUse_Read
                              ,false //--as TableUse_Write
                              ,DefMaster.NumRows_New()
@@ -568,7 +569,6 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     if (huemulBigDataGov.RegisterInControl) {
       //Table
       val ExecResultTable = control_Tables_addOrUpd(LocalNewTable_id
-                             ,null //  --Area_Id
                              ,DefMaster.GetCurrentDataBase()
                              ,DefMaster.TableName
                              ,DefMaster.getDescription
@@ -603,7 +603,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                  ,x.getMDM_EnableDTLog
                                  ,x.getMDM_EnableOldValue
                                  ,x.getMDM_EnableProcessLog
-                                 ,x.getDefaultValue.replace("'", "''")
+                                 ,x.getDefaultValue
                                  ,x.getSecurityLevel.toString()
                                  ,x.getEncryptedType
                                  ,x.getARCO_Data
@@ -668,7 +668,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,this.getparamHour() 
                              ,this.getparamMin()
                              ,this.getparamSec()
-                             ,AdditionalParamsInfo.replace("'", "''")
+                             ,AdditionalParamsInfo
                              ,false //--as TableUse_Read
                              ,true //--as TableUse_Write
                              ,DefMaster.NumRows_New()
@@ -765,7 +765,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                        , p_mdm_processname: String): huemul_JDBCResult =  {
     //Verify if record exist
     var ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
-                    SELECT Count(1) as Cantidad, MDM_ManualChange 
+                    SELECT MDM_ManualChange 
                     FROM control_process 
                     WHERE process_id = ${ReplaceSQLStringNulls(p_process_id)}
           """)
@@ -773,12 +773,12 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     if (ExecResult.ResultSet.length == 1) {
       //Record exist, update
-      val MDM_ManualChange = ExecResult.ResultSet(0).getAs[Int]("MDM_ManualChange")
+      
+      val MDM_ManualChange = ExecResult.ResultSet(0).getAs[Int]("MDM_ManualChange".toLowerCase())
       if (MDM_ManualChange == 0) {
         ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
                       UPDATE control_process 
-                      SET area_id = CASE WHEN MDM_ManualChange THEN area_id ELSE p_area_id END
-                    	   , process_name			    = ${ReplaceSQLStringNulls(p_process_name)}
+                      SET  process_name			    = ${ReplaceSQLStringNulls(p_process_name)}
                          , process_FileName     = ${ReplaceSQLStringNulls(p_process_FileName)}
                     	   , process_description	= ${ReplaceSQLStringNulls(p_process_description)}
                     	   , process_owner			  = ${ReplaceSQLStringNulls(p_process_owner)}
@@ -796,6 +796,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                         							   , process_description
                         							   , process_owner
                         							   , process_frequency
+                                         , MDM_ManualChange
                         							   , mdm_fhcreate
                         							   , mdm_processname) 	
             	SELECT ${ReplaceSQLStringNulls(p_process_id)}
@@ -805,6 +806,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             		   , ${ReplaceSQLStringNulls(p_process_description)}
             		   , ${ReplaceSQLStringNulls(p_process_owner)}
             		   , ${ReplaceSQLStringNulls(p_process_frequency)}
+            		   , 0
             		   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
             		   , ${ReplaceSQLStringNulls(p_mdm_processname)}
             """)
@@ -837,17 +839,19 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       
       //If error, get application id
       if (ExecResult.IsError) {
+        println(s"${ExecResult.ErrorDescription}")
         ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
               SELECT *
               FROM control_singleton
               WHERE Singleton_Id = ${ReplaceSQLStringNulls(p_singleton_id)}
         """)
         
-        application_Id = ExecResult.ResultSet(0).getAs[String]("application_id")
+        if (ExecResult.ResultSet.length > 0)
+          application_Id = ExecResult.ResultSet(0).getAs[String]("application_id".toLowerCase())
       }
       
     } else {
-      application_Id = ExecResult.ResultSet(0).getAs[String]("application_id")
+      application_Id = ExecResult.ResultSet(0).getAs[String]("application_id".toLowerCase())
     }
     
     return ExecResult             
@@ -993,7 +997,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     			  ,${p_processExec_param_hour}	
     			  ,${p_processExec_param_min}	
     			  ,${p_processExec_param_sec}	
-    			  ,""
+    			  ,''
     			  ,null
     			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
     			  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
@@ -1030,7 +1034,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       
       ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
       UPDATE control_processExec
-        SET  processexec_iscancelled = false
+        SET  processexec_iscancelled = 0
         	  ,processexec_isenderror = ${if (p_error_id == null || p_error_id == "") "0" else "1"}
         	  ,processexec_isendok	  = ${if (p_error_id == null || p_error_id == "") "1" else "0"}
         	  ,processexec_dtend	    = ${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(endDataTime.getTime()) )}
@@ -1053,7 +1057,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                     ,p_MDM_ProcessName: String
       ): huemul_JDBCResult =  {
     
-    if (p_processExecStep_idAnt != null) {
+    if (huemulBigDataGov.HasName(p_processExecStep_idAnt)) {
       val endDataTime = huemulBigDataGov.getCurrentDateTimeJava()
       val DiffDateStep = huemulBigDataGov.getDateTimeDiff(processExecStep_dtStart, endDataTime)
     
@@ -1069,7 +1073,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       """)
     }
     
-    
+    processExecStep_dtStart = huemulBigDataGov.getCurrentDateTimeJava()
     val ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
       INSERT INTO control_processExecStep (  processexecstep_id
                       										  ,processexec_id
@@ -1087,7 +1091,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       			  ,${ReplaceSQLStringNulls(p_processExec_id)}	
       			  ,${ReplaceSQLStringNulls(p_processExecStep_Name)}	
       			  ,'RUNNING'
-      			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
+      			  ,${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(processExecStep_dtStart.getTime()) )}
       			  ,null
       			  ,0
       			  ,0
@@ -1132,7 +1136,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           where Table_BBDDName = ${ReplaceSQLStringNulls(p_BBDD_name)} 
           and   Table_Name     = ${ReplaceSQLStringNulls(p_Table_name)}	
       """)
-    val LocalTable_Id: String = if (ExecResultTable.IsError || ExecResultTable.ResultSet.length == 0) null else ExecResultTable.ResultSet(0).getAs[String]("Table_id") 
+    val LocalTable_Id: String = if (ExecResultTable.IsError || ExecResultTable.ResultSet.length == 0) null else ExecResultTable.ResultSet(0).getAs[String]("table_id".toLowerCase()) 
       
     //Get column Id
     val ExecResultColumn = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
@@ -1141,7 +1145,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           where Table_Id     = ${ReplaceSQLStringNulls(LocalTable_Id)} 
           and   Column_Name  = ${ReplaceSQLStringNulls(p_Column_Name)}	
       """)
-    val LocalColumn_Id: String = if (ExecResultColumn.IsError || ExecResultColumn.ResultSet.length == 0) null else ExecResultColumn.ResultSet(0).getAs[String]("Column_id") 
+    val LocalColumn_Id: String = if (ExecResultColumn.IsError || ExecResultColumn.ResultSet.length == 0) null else ExecResultColumn.ResultSet(0).getAs[String]("column_id".toLowerCase()) 
       
     
     
@@ -1179,10 +1183,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         			 ,${ReplaceSQLStringNulls(p_DQ_Description)}
         			 ,${ReplaceSQLStringNulls(p_DQ_QueryLevel)}
         			 ,${ReplaceSQLStringNulls(p_DQ_Notification)}
-        			 ,${ReplaceSQLStringNulls(p_DQ_SQLFormula.replace("'", "''"))}
+        			 ,${ReplaceSQLStringNulls(p_DQ_SQLFormula)}
         			 ,${p_DQ_toleranceError_Rows}
         			 ,${p_DQ_toleranceError_Percent}
-        			 ,${ReplaceSQLStringNulls(p_DQ_ResultDQ.replace("'", "''"))}
+        			 ,${ReplaceSQLStringNulls(p_DQ_ResultDQ)}
                ,${p_DQ_ErrorCode}
         			 ,${p_DQ_NumRowsOK}
         			 ,${p_DQ_NumRowsError}
@@ -1214,16 +1218,16 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           and   rawfiles_logicalname = ${ReplaceSQLStringNulls(p_RAWFiles_LogicalName)} 
       """)
       
-    var LocalMDM_ManualChange: String = null
+    var LocalMDM_ManualChange: Int = -1
     var Localrawfiles_id: String = null
     if (!ExecResultRawFiles.IsError && ExecResultRawFiles.ResultSet.length == 1) {
-      LocalMDM_ManualChange = ExecResultRawFiles.ResultSet(0).getAs[String]("MDM_ManualChange")
-      Localrawfiles_id = ExecResultRawFiles.ResultSet(0).getAs[String]("rawfiles_id")
+      LocalMDM_ManualChange = ExecResultRawFiles.ResultSet(0).getAs[Int]("MDM_ManualChange".toLowerCase())
+      Localrawfiles_id = ExecResultRawFiles.ResultSet(0).getAs[String]("rawfiles_id".toLowerCase())
       
     }
     
     var ExecResult: huemul_JDBCResult = null
-    if (ExecResultRawFiles.ResultSet.length == 1 && LocalMDM_ManualChange == "0") {
+    if (ExecResultRawFiles.ResultSet.length == 1 && LocalMDM_ManualChange == 0) {
       ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
           UPDATE control_rawFiles
           SET rawfiles_description	= ${ReplaceSQLStringNulls(p_RAWFiles_Description)}
@@ -1246,7 +1250,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								 ,mdm_fhcreate
                       								 ,mdm_processname)
         	SELECT ${ReplaceSQLStringNulls(p_RAWFiles_id)}
-        			 ,''
+        			 ,'0'
         			 ,${ReplaceSQLStringNulls(p_RAWFiles_LogicalName)}
         			 ,${ReplaceSQLStringNulls(p_RAWFiles_GroupName)}
         			 ,${ReplaceSQLStringNulls(p_RAWFiles_Description)}
@@ -1295,11 +1299,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       
     var Localrawfilesdet_id: String = null
     if (!ExecResultRawFilesDet.IsError && ExecResultRawFilesDet.ResultSet.length == 1) {
-      Localrawfilesdet_id = ExecResultRawFilesDet.ResultSet(0).getAs[String]("rawfilesdet_id")
+      Localrawfilesdet_id = ExecResultRawFilesDet.ResultSet(0).getAs[String]("rawfilesdet_id".toLowerCase())
       
       ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
           UPDATE control_RAWFilesDetFields 
-          SET MDM_Active = false 
+          SET MDM_Active = 0 
           where rawfilesdet_id = 	${ReplaceSQLStringNulls(Localrawfilesdet_id)}
         """)
         
@@ -1556,7 +1560,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     var LocalTable_id: String = null
     if (!ExecResult_TableId.IsError && ExecResult_TableId.ResultSet.length == 1){
-      LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("Table_Id")
+      LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("Table_Id".toLowerCase())
     }
       
       
@@ -1613,7 +1617,6 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   
   private def control_Tables_addOrUpd (p_Table_id: String
-                             ,p_Area_Id: String
                              ,p_Table_BBDDName: String
                              ,p_Table_Name: String
                              ,p_Table_Description: String
@@ -1640,7 +1643,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     var ExecResult: huemul_JDBCResult = null
     var LocalTable_id: String = null
     if (!ExecResult_TableId.IsError && ExecResult_TableId.ResultSet.length == 1){
-      LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("Table_Id")
+      LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("Table_Id".toLowerCase())
       
       
       val ExecResultCol = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
@@ -1684,7 +1687,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								,mdm_fhcreate
                       								,mdm_processname) 	
         	SELECT   ${ReplaceSQLStringNulls(p_Table_id)}
-            			,${ReplaceSQLStringNulls(p_Area_Id)}
+            			,'0'
             			,${ReplaceSQLStringNulls(p_Table_BBDDName)}
             			,${ReplaceSQLStringNulls(p_Table_Name)}
             			,${ReplaceSQLStringNulls(p_Table_Description)}
@@ -1749,14 +1752,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     var ExecResult: huemul_JDBCResult = null
     var Localcolumn_id: String = null
     if (!ExecResult_ColumnId.IsError && ExecResult_ColumnId.ResultSet.length == 1){
-      Localcolumn_id = ExecResult_ColumnId.ResultSet(0).getAs[String]("column_id")
-      
-      
-      val ExecResultCol = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
-          UPDATE Control_Columns 
-          SET MDM_Active = 0 
-          WHERE Table_Id = ${ReplaceSQLStringNulls(p_Table_id)}
-          """)
+      Localcolumn_id = ExecResult_ColumnId.ResultSet(0).getAs[String]("column_id".toLowerCase())
       
       ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
           UPDATE control_Columns 
@@ -1771,7 +1767,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         		 ,column_defaultvalue			    = ${ReplaceSQLStringNulls(p_Column_DefaultValue)}			
         		 ,column_securitylevel			  = CASE WHEN MDM_ManualChange = 1 THEN column_securitylevel ELSE ${ReplaceSQLStringNulls(p_Column_SecurityLevel)}	END		
         		 ,column_encrypted				    = ${ReplaceSQLStringNulls(p_Column_Encrypted)}				
-        		 ,column_arco					        = CASE WHEN MDM_ManualChange = 1 THEN column_arco ELSE ${if (p_Column_ARCO) "1" else "0"}	END				
+        		 ,column_arco					        = CASE WHEN MDM_ManualChange = 1 THEN column_arco ELSE ${if (p_Column_ARCO) "'1'" else "'0'"}	END				
         		 ,column_nullable				      = ${if (p_Column_Nullable) "1" else "0"}				
         		 ,column_ispk					        = ${if (p_Column_IsPK) "1" else "0"}
         		 ,column_isunique				      = ${if (p_Column_IsUnique) "1" else "0"}
@@ -1816,7 +1812,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								 ,Column_DQ_RegExp
                       								 ,mdm_fhcreate
                       								 ,mdm_processname
-                                       ,MDM_ManualChange) 	
+                                       ,MDM_ManualChange
+                                       ,MDM_Active) 	
         	SELECT    ${ReplaceSQLStringNulls(p_Column_id)}
             			 ,${ReplaceSQLStringNulls(p_Table_id)}
             			 ,${p_Column_Position}
@@ -1831,7 +1828,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			 ,${ReplaceSQLStringNulls(p_Column_DefaultValue)}
             			 ,${ReplaceSQLStringNulls(p_Column_SecurityLevel)}
             			 ,${ReplaceSQLStringNulls(p_Column_Encrypted)}
-            			 ,${if (p_Column_ARCO) "1" else "0"}
+            			 ,${if (p_Column_ARCO) "'1'" else "'0'"}
             			 ,${if (p_Column_Nullable) "1" else "0"}
             			 ,${if (p_Column_IsPK) "1" else "0"}
             			 ,${if (p_Column_IsUnique) "1" else "0"}
@@ -1845,6 +1842,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
             			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
             			 ,0
+                   ,1
           """)
           
       ExecResult.OpenVar = p_Column_id
@@ -1874,7 +1872,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     var ExecResult: huemul_JDBCResult = null
     var FK_Id: String = null
     if (!ExecResult_FK_Id.IsError && ExecResult_FK_Id.ResultSet.length == 1){
-      FK_Id = ExecResult_FK_Id.ResultSet(0).getAs[String]("Table_Id")
+      FK_Id = ExecResult_FK_Id.ResultSet(0).getAs[String]("Table_Id".toLowerCase())
       
       val ExecResult_Rel_Id = huemulBigDataGov.postgres_connection.ExecuteJDBC_WithResult(s"""
           SELECT TableRel_id 
@@ -1886,7 +1884,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       
       var TableRel_id: String = null
       if (!ExecResult_Rel_Id.IsError && ExecResult_Rel_Id.ResultSet.length == 1){
-        TableRel_id = ExecResult_Rel_Id.ResultSet(0).getAs[String]("TableRel_id")
+        TableRel_id = ExecResult_Rel_Id.ResultSet(0).getAs[String]("TableRel_id".toLowerCase())
       
         ExecResult = huemulBigDataGov.postgres_connection.ExecuteJDBC_NoResulSet(s"""
           DELETE FROM control_TablesRelCol WHERE TableRel_id = ${ReplaceSQLStringNulls(TableRel_id)}
@@ -1939,7 +1937,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     var ExecResult: huemul_JDBCResult = null
     var ColumnPK: String = null
     if (!ExecResult_ColumnPK_Id.IsError && ExecResult_ColumnPK_Id.ResultSet.length == 1){
-      ColumnPK = ExecResult_ColumnPK_Id.ResultSet(0).getAs[String]("Column_Id")
+      ColumnPK = ExecResult_ColumnPK_Id.ResultSet(0).getAs[String]("Column_Id".toLowerCase())
     }
     
     //Get Column Id FK
@@ -1952,7 +1950,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     var ColumnFK: String = null
     if (!ExecResult_ColumnFK_Id.IsError && ExecResult_ColumnFK_Id.ResultSet.length == 1){
-      ColumnFK = ExecResult_ColumnFK_Id.ResultSet(0).getAs[String]("Column_Id")
+      ColumnFK = ExecResult_ColumnFK_Id.ResultSet(0).getAs[String]("Column_Id".toLowerCase())
     }
     
     
