@@ -1593,7 +1593,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  
+  def GetOrderByColumn(): String = {
+    var ColumnName: String = null
+    
+    
+    val Result = this.getALLDeclaredFields(true, true).filter { x => x.setAccessible(true)
+                                      x.get(this).isInstanceOf[huemul_Columns] &&
+                                      x.get(this).asInstanceOf[huemul_Columns].getIsPK }.foreach {x => 
+      x.setAccessible(true)
+      if (ColumnName == null)
+        ColumnName = x.get(this).asInstanceOf[huemul_Columns].get_MyName()
+    }
+    
+    return ColumnName
+  }
  
   /**
    Create final DataFrame with full join New DF with old DF
