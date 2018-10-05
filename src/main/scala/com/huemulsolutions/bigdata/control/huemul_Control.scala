@@ -50,7 +50,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   //Insert processExcec
   if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) {
-    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}")
     control_processExec_add(Control_Id
            ,Control_IdParent
            ,Control_ClassName
