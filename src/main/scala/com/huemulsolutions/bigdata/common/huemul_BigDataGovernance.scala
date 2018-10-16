@@ -341,8 +341,8 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       println(s"path result for table alias $Alias: $FileToTemp ")
       DF.write.mode(SaveMode.Overwrite).parquet(FileToTemp)
            
-      val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)       
-      fs.setPermission(new org.apache.hadoop.fs.Path(FileToTemp), new FsPermission("770"))
+      //val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)       
+      //fs.setPermission(new org.apache.hadoop.fs.Path(FileToTemp), new FsPermission("770"))
     }
   }
   
