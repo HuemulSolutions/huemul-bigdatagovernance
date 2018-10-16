@@ -729,7 +729,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
            , ${ReplaceSQLStringNulls(p_testPlan_description)}
            , ${ReplaceSQLStringNulls(p_testPlan_resultExpected)}
            , ${ReplaceSQLStringNulls(p_testPlan_resultReal)}
-           , ${p_testPlan_IsOK}
+           , ${if (p_testPlan_IsOK) "1" else "0"}
            , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
            , ${ReplaceSQLStringNulls(p_Executor_Name)}
     """)
