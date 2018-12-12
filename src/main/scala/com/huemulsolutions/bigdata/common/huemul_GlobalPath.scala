@@ -17,7 +17,8 @@ class huemul_GlobalPath() extends Serializable {
     var GlobalEnvironments: String = "prod, desa, qa" //prod: PRODUCCION, desa: DESARROLLO, qa: ambientes previos a producción
     var ImpalaEnabled: Boolean = false
     
-    val POSTGRE_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
+    var CONTROL_Driver: String = "org.postgresql.Driver"
+    val CONTROL_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     val IMPALA_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
     //RAW
