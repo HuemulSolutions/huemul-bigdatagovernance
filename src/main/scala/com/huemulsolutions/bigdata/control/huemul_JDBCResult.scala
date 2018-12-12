@@ -32,8 +32,8 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
   var connection: Connection = null
   
   def StartConnection() {
-    
-    Class.forName(driver)
+    if (driver != null && driver != "")
+      Class.forName(driver)
     this.connection = DriverManager.getConnection(ConnectionString)
     
   }
