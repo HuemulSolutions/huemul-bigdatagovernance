@@ -113,11 +113,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * START SPARK AND POSGRES CONNECTION
    *************************/
-  @transient val postgres_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.POSTGRE_Setting),"org.postgresql.Driver", DebugMode) // Connection = null
+  @transient val CONTROL_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.CONTROL_Setting),GlobalSettings.CONTROL_Driver, DebugMode) // Connection = null
   @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode) //Connection = null
   
   if (!TestPlanMode && RegisterInControl) 
-    postgres_connection.StartConnection()
+    CONTROL_connection.StartConnection()
   if (!TestPlanMode && ImpalaEnabled)
       impala_connection.StartConnection()
   
@@ -157,7 +157,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       println(s"waiting for singleton Application Id in use: ${IdApplication}, maybe you're creating two times a spark connection")
       Thread.sleep(10000)
     }
-    val Result = postgres_connection.ExecuteJDBC_NoResulSet(s"""
+    val Result = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
                   INSERT INTO control_executors (application_Id
                   							   , IdSparkPort
                   							   , IdPortMonitoring
@@ -182,15 +182,15 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     application_closeAll(this.IdApplication)
     this.spark.catalog.clearCache()
     this.spark.close()
-    if (RegisterInControl) this.postgres_connection.connection.close()
+    if (RegisterInControl) this.CONTROL_connection.connection.close()
     if (ImpalaEnabled) this.impala_connection.connection.close()
     
   }
   
   def application_closeAll(ApplicationInUse: String) {
     if (RegisterInControl) {
-       val ExecResult1 = postgres_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
-       val ExecResult2 = postgres_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+       val ExecResult1 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+       val ExecResult2 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
     }
       
   }
@@ -198,7 +198,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   def application_StillAlive(ApplicationInUse: String): Boolean = {
     if (!RegisterInControl) return false
     
-    val CurrentProcess = this.postgres_connection.ExecuteJDBC_WithResult(s"select * from control_executors where application_Id = '${ApplicationInUse}'")
+    val CurrentProcess = this.CONTROL_connection.ExecuteJDBC_WithResult(s"select * from control_executors where application_Id = '${ApplicationInUse}'")
     var IdAppFromDataFrame : String = ""
     var IdAppFromAPI: String = ""
     var URLMonitor: String = ""
@@ -572,7 +572,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         className = "null"
         
       //Insert processExcec
-      postgres_connection.ExecuteJDBC_NoResulSet(s"""
+      CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
               INSERT INTO Control_Error (error_id
                                     ,error_message
                                     ,error_code
