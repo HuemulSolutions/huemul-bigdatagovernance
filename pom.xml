@@ -95,6 +95,11 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	   <artifactId>postgresql</artifactId>
 	   <version>9.4.1212</version>                                
 	</dependency> 
+	<dependency>
+       <groupId>org.apache.hive</groupId>
+       <artifactId>hive-jdbc</artifactId>
+       <version>1.1.0</version>
+	</dependency>
 
     <!-- Test -->
     <dependency>
