@@ -17,6 +17,46 @@ class AppTest {
       
     /*TEST PARA HUEMUL_LIBRARY*/
     
+    
+    @Test
+    def test_DifFechas_OK() = assertTrue(diffechas)
+    
+    def diffechas(): Boolean = {
+     
+      
+      /*
+      val fechaUno = huemulBigDataGov.setDateTime(2018, 10, 29, 15, 20, 5)
+      val fechados = huemulBigDataGov.setDateTime(2018, 10, 1, 10, 30, 10)
+      
+      
+      val dif = fechaUno.getTimeInMillis - fechados.getTimeInMillis
+      
+      println("TEST DE FECHAS")
+      println(huemulBigDataGov.dateTimeFormat.format(fechaUno.getTime))
+      println(huemulBigDataGov.dateTimeFormat.format(fechados.getTime))
+      println(dif)
+      
+      var calc = dif / 1000
+      val sec = calc % 60
+      calc /= 60
+      val min = calc % 60
+      calc /= 60
+      val hour = calc % 24
+      calc /= 24
+      val day = calc
+      
+      println (s"$day dias, $hour horas, $min minutos, $sec segundos")
+      
+      //fechados.setTimeInMillis(dif)
+      //println(huemulBigDataGov.dateTimeFormat.format(fechados.getTime))
+      println("TEST DE FECHAS")
+      *  * 
+      */
+      
+      return true
+     
+    }
+    
     @Test
     def test_HasName_OK() = assertTrue(huemulBigDataGov.HasName("si tiene"))
     
@@ -42,6 +82,8 @@ class AppTest {
     var TestTable: tbl_demo_test = null
     try {
        TestTable = new tbl_demo_test(huemulBigDataGov, Control)  
+       println("***************************************TestTable.GetOrderByColumn()")
+       println(TestTable.GetOrderByColumn())
     } catch {
       case t: Throwable => t.printStackTrace() // TODO: handle error
     }
