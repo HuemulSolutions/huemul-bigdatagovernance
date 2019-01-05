@@ -43,7 +43,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
     
     var i = 0
     while (i<=2 && connection.isClosed()) {
-      println("postgres connection closed, trying to establish new connection")
+      println("CONTROL connection closed, trying to establish new connection")
       StartConnection()
       i+=1
     }
@@ -166,7 +166,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
    
     var i = 0
     while (i<=2 && connection.isClosed()) {
-      println("postgres connection closed, trying to establish new connection")
+      println("CONTROL connection closed, trying to establish new connection")
       StartConnection()
       i+=1
     }
