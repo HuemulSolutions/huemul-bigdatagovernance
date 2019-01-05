@@ -573,7 +573,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         
       //Insert processExcec
       CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
-              INSERT INTO Control_Error (error_id
+              insert into control_error (error_id
                                     ,error_message
                                     ,error_code
                                     ,error_trace
