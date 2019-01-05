@@ -158,11 +158,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       Thread.sleep(10000)
     }
     val Result = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
-                  INSERT INTO control_executors (application_Id
-                  							   , IdSparkPort
-                  							   , IdPortMonitoring
-                  							   , Executor_dtStart
-                  							   , Executor_Name) 	
+                  insert into control_executors (application_id
+                  							   , idsparkport
+                  							   , idportmonitoring
+                  							   , executor_dtstart
+                  							   , executor_name) 	
                 	SELECT ${ReplaceSQLStringNulls(IdApplication)}
                 		   , ${ReplaceSQLStringNulls(IdSparkPort)}
                 		   , ${ReplaceSQLStringNulls(IdPortMonitoring)}
@@ -198,7 +198,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   def application_StillAlive(ApplicationInUse: String): Boolean = {
     if (!RegisterInControl) return false
     
-    val CurrentProcess = this.CONTROL_connection.ExecuteJDBC_WithResult(s"select * from control_executors where application_Id = '${ApplicationInUse}'")
+    val CurrentProcess = this.CONTROL_connection.ExecuteJDBC_WithResult(s"select * from control_executors where application_id = '${ApplicationInUse}'")
     var IdAppFromDataFrame : String = ""
     var IdAppFromAPI: String = ""
     var URLMonitor: String = ""
@@ -475,6 +475,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   
+/*  
   def ExecuteJDBC_onSpark2(ConnectionString: String, SQL: String,valor: Boolean = true): huemul_JDBCResult = {
     //OJO: este proceso ejecuta con spark.read.jdbc y devuelve los datos en un arreglo porque el comportamiento 
     //al usar el DataFrame es distinto al esperado
@@ -529,6 +530,9 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       
     return Result
   }
+  * 
+  */
+  
   
   /**
    * Execute a SQL sentence, create a new alias and save de DF result into HDFS
