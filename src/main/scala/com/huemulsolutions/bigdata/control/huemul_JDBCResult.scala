@@ -30,12 +30,13 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
   val Driver = driver
   val ConnectionString = connectionString
   var connection: Connection = null
+  var statement: java.sql.Statement  = null
   
   def StartConnection() {
     if (driver != null && driver != "")
       Class.forName(driver)
     this.connection = DriverManager.getConnection(ConnectionString)
-    
+    this.statement = this.connection.createStatement()
   }
   
   def ExecuteJDBC_WithResult(SQL: String): huemul_JDBCResult = {   
@@ -54,7 +55,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
       
         
       try {
-        val statement = connection.createStatement()
+        
         val Resultado = statement.executeQuery(SQL)
         var fieldsStruct = new Array[StructField](0);
  
@@ -176,7 +177,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
     }
   
     try {
-      val statement = connection.createStatement()
+      //val statement = connection.createStatement()
       val Resultado = statement.execute(SQL)
     
       //connection.close()

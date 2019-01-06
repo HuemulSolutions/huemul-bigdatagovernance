@@ -148,7 +148,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   println(s"application_Id: ${IdApplication}")  
   println(s"URL Monitoring: ${IdPortMonitoring}")
   
-  val IdSparkPort = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").first().getAs[String]("value") else ""
+  val IdSparkPort = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").collectAsList().get(0).getAs[String]("value") else ""
   println(s"Port_Id: ${IdSparkPort}")
   
   //Process Registry
