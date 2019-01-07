@@ -210,10 +210,10 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     
     if (DataResult.length == 0) {
       LocalErrorCode = 3003 
-      RaiseError_RAW("huemul_DataLake Error: No definition found in " + this.LogicalName + " (" + this.SettingByDate.length.toString() + ")",LocalErrorCode)
+      RaiseError_RAW(s"huemul_DataLake Error: No definition found in ${this.LogicalName} (${this.SettingByDate.length.toString()})",LocalErrorCode)
     } else if (DataResult.length > 1) {
       LocalErrorCode = 3004
-      RaiseError_RAW("huemul_DataLake Error: Multiple definitions found in " + this.LogicalName + " (" + this.SettingByDate.length.toString() + ")", LocalErrorCode )
+      RaiseError_RAW(s"huemul_DataLake Error: Multiple definitions found in ${this.LogicalName} (${this.SettingByDate.length.toString()})", LocalErrorCode )
     } else if (DataResult.length == 1) {
        this.SettingInUse = DataResult(0)
     }         

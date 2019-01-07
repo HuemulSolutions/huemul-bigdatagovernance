@@ -14,18 +14,29 @@ class huemul_JDBCResult extends Serializable {
   var ResultSet: Array[Row] = null
   var ErrorDescription: String = ""
   var IsError: Boolean = false
+  
+  /**
+   * open variable for keep any value
+   */
+  var OpenVar: String = null
+  
+  /**
+   * open variable for keep any value
+   */
+  var OpenVar2: String = null
 }
 
 class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connectionString: String, driver: String, DebugMode: Boolean) extends Serializable {
   val Driver = driver
   val ConnectionString = connectionString
   var connection: Connection = null
+  var statement: java.sql.Statement  = null
   
   def StartConnection() {
-    
-    Class.forName(driver)
+    if (driver != null && driver != "")
+      Class.forName(driver)
     this.connection = DriverManager.getConnection(ConnectionString)
-    
+    this.statement = this.connection.createStatement()
   }
   
   def ExecuteJDBC_WithResult(SQL: String): huemul_JDBCResult = {   
@@ -33,7 +44,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
     
     var i = 0
     while (i<=2 && connection.isClosed()) {
-      println("postgres connection closed, trying to establish new connection")
+      println("CONTROL connection closed, trying to establish new connection")
       StartConnection()
       i+=1
     }
@@ -44,7 +55,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
       
         
       try {
-        val statement = connection.createStatement()
+        
         val Resultado = statement.executeQuery(SQL)
         var fieldsStruct = new Array[StructField](0);
  
@@ -156,7 +167,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
    
     var i = 0
     while (i<=2 && connection.isClosed()) {
-      println("postgres connection closed, trying to establish new connection")
+      println("CONTROL connection closed, trying to establish new connection")
       StartConnection()
       i+=1
     }
@@ -166,7 +177,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
     }
   
     try {
-      val statement = connection.createStatement()
+      //val statement = connection.createStatement()
       val Resultado = statement.execute(SQL)
     
       //connection.close()
