@@ -53,6 +53,11 @@ class huemul_GlobalPath() extends Serializable {
     //TEMPORAL
     val TEMPORAL_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
+    //DQ_Error
+    var DQ_SaveErrorDetails: Boolean = true
+    val DQError_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
+    val DQError_DataBase: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
+    
     def GetPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
       val Result = Division.filter { x => x.environment == huemulBigDataGov.Environment }
       if (Result == null || Result.length == 0)
