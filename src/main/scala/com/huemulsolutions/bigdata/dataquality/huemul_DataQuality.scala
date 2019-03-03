@@ -22,6 +22,7 @@ class huemul_DataQuality(FieldName: huemul_Columns
             ,Error_Code: Integer
             ,QueryLevel: huemulType_DQQueryLevel = huemulType_DQQueryLevel.Row //,IsAggregated: Boolean
             ,Notification: huemulType_DQNotification = huemulType_DQNotification.ERROR //RaiseError: Boolean
+            ,SaveErrorDetails: Boolean = true
             ) extends Serializable {
   
   private var ToleranceError_Percent: Decimal = null
@@ -46,6 +47,7 @@ class huemul_DataQuality(FieldName: huemul_Columns
   def getQueryLevel(): huemulType_DQQueryLevel  = {return QueryLevel}
   def getDescription(): String  ={return  Description}
   def getNotification(): huemulType_DQNotification = {return Notification}
+  def getSaveErrorDetails(): Boolean = {return if (QueryLevel == huemulType_DQQueryLevel.Row) SaveErrorDetails else false}
   def getErrorCode(): Integer = {return Error_Code}
   var NumRowsOK: java.lang.Long = null
   var NumRowsTotal: java.lang.Long = null
