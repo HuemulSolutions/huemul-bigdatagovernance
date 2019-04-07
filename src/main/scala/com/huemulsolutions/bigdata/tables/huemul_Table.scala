@@ -25,7 +25,7 @@ import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
 //import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
 
 
-class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
+class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_TableDQ with Serializable  {
   if (Control == null) 
     sys.error("Control is null in huemul_DataFrame")
   
@@ -294,7 +294,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * Get Fullpath hdfs for DQ results = GlobalPaths + DQError_Path + TableName + "_DQ"
    */
   def GetFullNameWithPath_DQ() : String = {
-    return GlobalPath + huemulBigDataGov.GlobalSettings.DQError_Path + TableName + "_DQ"
+    return this.GetPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_DQ"
   }
   
   def GetFullNameWithPath2(ManualEnvironment: String) : String = {
@@ -466,7 +466,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def getALLDeclaredFields(OnlyUserDefined: Boolean = false, PartitionColumnToEnd: Boolean = false, WithDQColumns: Boolean = false) : Array[java.lang.reflect.Field] = {
     val pClass = getClass()  
     
-    val a = pClass.getDeclaredFields()
+    val a = pClass.getDeclaredFields()  //huemul_table
     
     var c = a
     if (!OnlyUserDefined){
@@ -479,8 +479,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     if (WithDQColumns) {
-        val DQClass = new huemul_DataQualityResult ()
-        c = DQClass.getClass().getDeclaredFields.union(c)
+        val DQClass = pClass.getSuperclass().getSuperclass() //huemul_TableDQ
+        val d = DQClass.getDeclaredFields.filter { x => x.setAccessible(true)
+                                      x.get(this).isInstanceOf[huemul_Columns] } 
+        
+        c = d.union(c)
     }
     
     if (PartitionColumnToEnd) {
