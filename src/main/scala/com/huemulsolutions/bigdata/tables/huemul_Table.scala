@@ -25,7 +25,7 @@ import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
 //import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
 
 
-class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
+class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_TableDQ with Serializable  {
   if (Control == null) 
     sys.error("Control is null in huemul_DataFrame")
   
@@ -57,6 +57,22 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   def getTableType: huemulType_Tables = {return _TableType}
   private var _TableType : huemulType_Tables = huemulType_Tables.Transaction
+  
+  
+  /**
+   Save DQ Result to disk, only if DQ_SaveErrorDetails in GlobalPath is true
+   */
+  def setSaveDQResult(value: Boolean) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of SaveDQResult, definition is close", 1033)
+    else
+      _SaveDQResult = value
+  }
+  def getSaveDQResult: Boolean = {return _SaveDQResult}
+  private var _SaveDQResult : Boolean = true
+  
+  
+  
   
   /**
    Type of Persistent storage (parquet, csv, json)
@@ -251,6 +267,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false)
   val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false)
   
+  
   var AdditionalRowsForDistint: String = ""
   private var DefinitionIsClose: Boolean = false
   
@@ -266,9 +283,18 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   
-    
+  /**
+   * Get Fullpath hdfs = GlobalPaths + LocalPaths + TableName  
+   */
   def GetFullNameWithPath() : String = {
     return GlobalPath + _LocalPath + TableName
+  }
+  
+  /**
+   * Get Fullpath hdfs for DQ results = GlobalPaths + DQError_Path + TableName + "_DQ"
+   */
+  def GetFullNameWithPath_DQ() : String = {
+    return this.GetPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_DQ"
   }
   
   def GetFullNameWithPath2(ManualEnvironment: String) : String = {
@@ -293,8 +319,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   private var _TableWasRegistered: Boolean = false
   
-  private def InternalGetTable(): String = {
-    return s"${GetDataBase(_DataBase)}.${TableName}"
+  private def InternalGetTable(forDQ_output_error: Boolean = false): String = {
+    return s"${if (forDQ_output_error) GetDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase) else GetDataBase(_DataBase)}.${if (forDQ_output_error) TableName + "_DQ" else TableName}"
   }
   
   def GetCurrentDataBase(): String = {
@@ -434,18 +460,30 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   
-  private def getALLDeclaredFields(OnlyUserDefined: Boolean = false, PartitionColumnToEnd: Boolean = false) : Array[java.lang.reflect.Field] = {
+  /**
+   * Get all declared fields from class
+   */
+  private def getALLDeclaredFields(OnlyUserDefined: Boolean = false, PartitionColumnToEnd: Boolean = false, WithDQColumns: Boolean = false) : Array[java.lang.reflect.Field] = {
     val pClass = getClass()  
     
-    val a = pClass.getDeclaredFields()
+    val a = pClass.getDeclaredFields()  //huemul_table
+    
     var c = a
     if (!OnlyUserDefined){
       var b = pClass.getSuperclass().getDeclaredFields()
       
       if (this._TableType == huemulType_Tables.Transaction) 
-        b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }       
+        b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }     
       
-      c = a.union(b)  
+      c = a.union(b)
+    }
+    
+    if (WithDQColumns) {
+        val DQClass = pClass.getSuperclass().getSuperclass() //huemul_TableDQ
+        val d = DQClass.getDeclaredFields.filter { x => x.setAccessible(true)
+                                      x.get(this).isInstanceOf[huemul_Columns] } 
+        
+        c = d.union(c)
     }
     
     if (PartitionColumnToEnd) {
@@ -598,8 +636,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    Create schema from DataDef Definition
    */
-  private def GetColumns_CreateTable(ForHive: Boolean = false): String = {
-    val fieldList = getALLDeclaredFields(false,true)
+  private def GetColumns_CreateTable(ForHive: Boolean = false, ForDQ: Boolean = false): String = {
+    val fieldList = getALLDeclaredFields(false,true,ForDQ)
     val NumFields = fieldList.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }.length
     
@@ -612,19 +650,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       var DataTypeLocal = Field.DataType.sql
       
-      /*
-      if (ForHive && DataTypeLocal.toUpperCase() == "DATE"){
-        DataTypeLocal = TimestampType.sql
+      if (ForDQ) {
+        //create StructType
+        if ("dq_control_id".toUpperCase() != x.getName.toUpperCase()) {
+          ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
+          coma = ","
+        }
       }
-      * 
-      */
-          
-      //create StructType
-      if (_PartitionField != null && _PartitionField.toUpperCase() != x.getName.toUpperCase()) {
-        ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
-        coma = ","
+      else {
+        //create StructType
+        if (_PartitionField != null && _PartitionField.toUpperCase() != x.getName.toUpperCase()) {
+          ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
+          coma = ","
+        }
       }
-      
+        
       if (Field.getMDM_EnableOldValue)
         ColumnsCreateTable += s"$coma${x.getName}_old ${DataTypeLocal} \n"  
       if (Field.getMDM_EnableDTLog) 
@@ -635,6 +675,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     return ColumnsCreateTable
   }
+  
+  
+ 
   
   /**
   CREATE SQL SCRIPT FIELDS FOR VALIDATE PRIMARY KEY
@@ -1328,16 +1371,37 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
-    CreateTableScript = s"""
+    val lCreateTableScript = s"""
                                  CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable()} (${GetColumns_CreateTable(true) })
                                  ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
                                  STORED AS ${_StorageType.toString()}                                  
                                  LOCATION '${GetFullNameWithPath()}'"""
                                  
     if (huemulBigDataGov.DebugMode)
-      println(s"Create Table sentence: ${CreateTableScript} ")
+      println(s"Create Table sentence: ${lCreateTableScript} ")
       
-    return CreateTableScript    
+    return lCreateTableScript    
+  }
+  
+  /**
+   * Create table script to save DQ Results
+   */
+  private def DF_CreateTable_DQ_Script(): String = {
+              
+    var coma_partition = ""
+    var PartitionForCreateTable = s"dq_control_id STRING"
+    
+    //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+    val lCreateTableScript = s"""
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(true)} (${GetColumns_CreateTable(true, true) })
+                                 PARTITIONED BY (${PartitionForCreateTable})
+                                 STORED AS ${_StorageType.toString()}                                  
+                                 LOCATION '${GetFullNameWithPath_DQ()}'"""
+                                 
+    if (huemulBigDataGov.DebugMode)
+      println(s"Create Table sentence: ${lCreateTableScript} ")
+      
+    return lCreateTableScript    
   }
   
   /* //este metodo retorna el nombre de un objeto
@@ -1473,15 +1537,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Result.Error_Code = 1017
     }    
     
-    /*
-    if (huemulBigDataGov.DebugMode) println("DF_SAVE DQ: VALIDATE PRIMARY KEY")
-    val DQ_PK = DataFramehuemul.DQ_DuplicateValues(this, SQL_PK, null, "PK")
-    if (DQ_PK.isError) {
-      Result.isError = true
-      Result.Description += s"\nhuemul_Table Error: PK: ${DQ_PK.Description} " 
-      Result.Error_Code = 1018
-    }
-    */
     val DQ_PK : huemul_DataQuality = new huemul_DataQuality(null, s"PK Validation",s"count(1) = count(distinct ${SQL_PK} )", 1018, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR )
     DQ_PK.setTolerance(0, null)
     ArrayDQ.append(DQ_PK)
@@ -1494,13 +1549,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(x, s"UNIQUE Validation ",s"count(1) = count(distinct ${x.get_MyName()} )", 2006, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR )
       DQ_UNIQUE.setTolerance(0, null)
-      ArrayDQ.append(DQ_UNIQUE)
-      //val DQ_Unique = DataFramehuemul.DQ_DuplicateValues(this, x, null) 
-      //if (DQ_Unique.isError) {
-      //  Result.isError = true
-      //  Result.Description += s"\nhuemul_Table Error: error Unique for field $x: ${DQ_Unique.Description} "
-      //  Result.Error_Code = 1019
-      //}            
+      ArrayDQ.append(DQ_UNIQUE) 
     }
     
     //Aplicar DQ según definición de campos en DataDefDQ: Acepta nulos (nullable)
@@ -1584,6 +1633,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.GetDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this)
+    
+    //Save errors to disk
+    if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && ResultDQ.DetailErrorsDF != null && this.getSaveDQResult) {
+      Control.NewStep("Start Save DQ Error Details ")                
+      if (!SavePersist_DQ(Control, ResultDQ.DetailErrorsDF)){
+        println("Warning: DQ error can't save to disk")
+      }
+    }
+    
     if (ResultDQ.isError){
       Result.isError = true
       Result.Description += s"\n${ResultDQ.Description}"
@@ -2131,6 +2189,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
   }
   
+  /**
+   * Save data to disk
+   */
   private def SavePersist(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
@@ -2213,7 +2274,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //create table
         if (CreateInHive ) {
           LocalControl.NewStep("Save: Create Table in Hive Metadata")
-          DF_CreateTableScript() 
+          CreateTableScript = DF_CreateTableScript() 
          
           huemulBigDataGov.spark.sql(CreateTableScript)
         }
@@ -2236,6 +2297,77 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           this.Error_isError = true
           this.Error_Text = s"huemul_Table Error: create external table failed. ${e.getMessage}"
           this.Error_Code = 1025
+          Result = false
+          LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
+      }
+    }
+      
+    return Result
+    
+  }
+  
+  /**
+   * Save DQ Result data to disk
+   */
+  private def SavePersist_DQ(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
+    var DF_Final = DF
+    var Result: Boolean = true
+      
+    try {      
+      LocalControl.NewStep("Save DQ Result: Saving new DQ result")
+      if (huemulBigDataGov.DebugMode) println(s"saving path: ${GetFullNameWithPath_DQ()} ")        
+      DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(GetFullNameWithPath_DQ())
+      
+    } catch {
+      case e: Exception => 
+        this.Error_isError = true
+        this.Error_Text = s"huemul_Table DQ Error: write in disk failed for DQ result. ${e.getMessage}"
+        this.Error_Code = 1049
+        Result = false
+        LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
+    }
+    
+    if (Result) {
+      if (CreateInHive ) {
+        val sqlDrop01 = s"drop table if exists ${InternalGetTable(true)}"
+        LocalControl.NewStep("Save: Drop Hive table Def")
+        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sqlDrop01)
+        try {
+          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)).collect()
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase() }.length > 0) 
+            huemulBigDataGov.spark.sql(sqlDrop01)
+            
+        } catch {
+          case t: Throwable => println(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+        }
+       
+      }
+        
+      try {
+        //create table
+        if (CreateInHive ) {
+          LocalControl.NewStep("Save: Create Table in Hive Metadata")
+          val lscript = DF_CreateTable_DQ_Script() 
+         
+          huemulBigDataGov.spark.sql(lscript)
+        }
+    
+        //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
+        LocalControl.NewStep("Save: Repair Hive Metadata")
+        if (huemulBigDataGov.DebugMode) println(s"MSCK REPAIR TABLE ${InternalGetTable(true)}")
+        huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${InternalGetTable(true)}")
+        
+        if (huemulBigDataGov.ImpalaEnabled) {
+          LocalControl.NewStep("Save: refresh Impala Metadata")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"invalidate metadata ${InternalGetTable(true)}")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh ${InternalGetTable(true)}")
+        }
+      } catch {
+        case e: Exception => 
+          
+          this.Error_isError = true
+          this.Error_Text = s"huemul_Table DQ Error: create external table DQ output failed. ${e.getMessage}"
+          this.Error_Code = 1050
           Result = false
           LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
       }

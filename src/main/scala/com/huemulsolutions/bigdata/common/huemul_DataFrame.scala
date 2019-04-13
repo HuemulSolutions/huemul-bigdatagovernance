@@ -700,6 +700,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DATA QUALITY ADHOC QUERY")
       println(SQLDQ)
     }
+    var DF_ErrorDetails: DataFrame = null
     
     if (SQLDQ != ""){
       //Execute DQ
@@ -709,7 +710,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       
       val FirstReg = ErrorLog.dqDF.collect()(0) // .first()
       val DQTotalRows = FirstReg.getAs[Long](s"___Total")
-      import java.util.Calendar;
+      
+      //import java.util.Calendar;
       //Get DQ Result from DF
       
       getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
@@ -776,6 +778,28 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
           NumTotalErrors += 1
           localErrorCode = x.getErrorCode()
         }
+        
+        //Save details to DF with errors
+        if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails()) {
+          //Query to get detail errors
+          //Control.NewStep(s"Step: DQ Result: Get detales for (Id ${x.getId}) ${x.getDescription} ") 
+          val SQL_Detail = s"""SELECT '${Control.Control_Id }' as dq_control_id
+                                     ,'${if (x.getFieldName == null) "all" else x.getFieldName.get_MyName()}' as dq_error_columnname
+                                     ,'${x.getNotification()}' as dq_error_notification 
+                                     ,'${x.getErrorCode()}' as dq_error_code
+                                     ,'(Id ${x.getId}) ${x.getDescription}' as dq_error_descripcion
+                                     , *
+                               FROM  ${AliasToQuery}
+                               WHERE ${x.getSQLFormula()}  """
+                               
+          //Execute query
+          var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
+                               
+          if (DF_ErrorDetails == null)
+            DF_ErrorDetails = DF_EDetail
+          else
+            DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
+        }
       }
     }
     
@@ -785,6 +809,9 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       ErrorLog.Description = txtTotalErrors
       ErrorLog.Error_Code = localErrorCode 
     }
+    
+    ErrorLog.DetailErrorsDF = DF_ErrorDetails
+    
     
     return ErrorLog
   }

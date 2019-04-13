@@ -51,7 +51,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  println("huemul_BigDataGovernance version 1.1.0 - sv01")
+  println("huemul_BigDataGovernance version 1.2.0 - sv01")
    
       
         
