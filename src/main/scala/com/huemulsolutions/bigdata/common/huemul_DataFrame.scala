@@ -782,6 +782,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         //Save details to DF with errors
         if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails()) {
           //Query to get detail errors
+          //Control.NewStep(s"Step: DQ Result: Get detales for (Id ${x.getId}) ${x.getDescription} ") 
           val SQL_Detail = s"""SELECT '${Control.Control_Id }' as dq_control_id
                                      ,'${if (x.getFieldName == null) "all" else x.getFieldName.get_MyName()}' as dq_error_columnname
                                      ,'${x.getNotification()}' as dq_error_notification 
