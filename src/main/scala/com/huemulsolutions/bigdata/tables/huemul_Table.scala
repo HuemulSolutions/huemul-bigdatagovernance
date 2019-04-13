@@ -652,7 +652,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       if (ForDQ) {
         //create StructType
-        if ("_control_id".toUpperCase() != null && _PartitionField.toUpperCase() != x.getName.toUpperCase()) {
+        if ("dq_control_id".toUpperCase() != x.getName.toUpperCase()) {
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
           coma = ","
         }
@@ -1389,25 +1389,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def DF_CreateTable_DQ_Script(): String = {
               
     var coma_partition = ""
-    var PartitionForCreateTable = ""
-    
-    //Get SQL DataType for Partition Columns
-    getALLDeclaredFields(false,false,true).filter { x => x.setAccessible(true)
-                                      x.get(this).isInstanceOf[huemul_Columns] }
-    .foreach { x =>     
-      //Get field
-      var Field = x.get(this).asInstanceOf[huemul_Columns]
-      
-      if ("_control_id".toUpperCase() == x.getName().toUpperCase() ) {
-          PartitionForCreateTable += s"${coma_partition}${_PartitionField} ${Field.DataType.sql}"
-          coma_partition = ","
-      }
-    }
+    var PartitionForCreateTable = s"dq_control_id STRING"
     
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     val lCreateTableScript = s"""
                                  CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(true)} (${GetColumns_CreateTable(true, true) })
-                                 ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
+                                 PARTITIONED BY (${PartitionForCreateTable})
                                  STORED AS ${_StorageType.toString()}                                  
                                  LOCATION '${GetFullNameWithPath_DQ()}'"""
                                  
@@ -2329,7 +2316,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save DQ Result: Saving new DQ result")
       if (huemulBigDataGov.DebugMode) println(s"saving path: ${GetFullNameWithPath_DQ()} ")        
-      DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("_control_id").save(GetFullNameWithPath_DQ())
+      DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(GetFullNameWithPath_DQ())
       
     } catch {
       case e: Exception => 
