@@ -237,11 +237,12 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   }
   
   def FinishProcessError() {
-    
+
+    if (Control_IdParent == null) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ERROR")
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
+
       
     if (huemulBigDataGov.RegisterInControl) {
-      if (Control_IdParent == null) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ERROR")
-      println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
     
       val Error_Id = huemulBigDataGov.huemul_GetUniqueId()
       if (Control_Error.ControlError_Message == null)
