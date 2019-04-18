@@ -221,10 +221,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   }
     
   def FinishProcessOK {
-    
+
+    if (!huemulBigDataGov.HasName(Control_IdParent)) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ALL OK")
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
+
     if (huemulBigDataGov.RegisterInControl) {
-      if (!huemulBigDataGov.HasName(Control_IdParent)) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ALL OK")
-      println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
     
       control_processExec_Finish(Control_Id, this.LocalIdStep, null)
       
