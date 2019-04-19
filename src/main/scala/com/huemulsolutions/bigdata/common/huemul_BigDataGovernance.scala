@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.DecimalType
 
 import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
 import com.huemulsolutions.bigdata.tables.huemul_Table
+import org.apache.spark.sql.catalyst.expressions.Coalesce
 
         
       
@@ -333,13 +334,20 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   /***
    Create a temp table in huemulBigDataGov_Temp (Hive), and persist on HDFS Temp folder
+   NumPartitionCoalesce = null for automatically settings
    */
-  def CreateTempTable(DF: DataFrame, Alias: String, CreateTable: Boolean) {
+  def CreateTempTable(DF: DataFrame, Alias: String, CreateTable: Boolean, NumPartitionCoalesce: Integer ) {
     //Create parquet in temp folder
     if (CreateTable && SaveTempDF){
       val FileToTemp: String = GlobalSettings.GetDebugTempPath(this, ProcessNameCall, Alias) + ".parquet"      
       println(s"path result for table alias $Alias: $FileToTemp ")
-      DF.write.mode(SaveMode.Overwrite).parquet(FileToTemp)
+      //version 1.3 --> prueba para optimizar escritura temporal
+      if (NumPartitionCoalesce == null || NumPartitionCoalesce == 0)
+        DF.write.mode(SaveMode.Overwrite).parquet(FileToTemp)
+      else
+        DF.coalesce(NumPartitionCoalesce).write.mode(SaveMode.Overwrite).parquet(FileToTemp)
+      
+      //DF.repartition(4).write.mode(SaveMode.Overwrite).parquet(FileToTemp)
            
       //val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)       
       //fs.setPermission(new org.apache.hadoop.fs.Path(FileToTemp), new FsPermission("770"))
@@ -544,7 +552,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     //Change alias name
     SQL_DF.createOrReplaceTempView(Alias)         //crea vista sql
 
-    this.CreateTempTable(SQL_DF, Alias, this.DebugMode)      //crea tabla temporal para debug
+    this.CreateTempTable(SQL_DF, Alias, this.DebugMode, null)      //crea tabla temporal para debug
     return SQL_DF
   }
   

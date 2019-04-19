@@ -17,7 +17,7 @@ import org.apache.spark.storage.StorageLevel._
  * Def_Fabric_DataInfo: Define method to improve DQ over DF
  */
 class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
-  
+  private val numPartitionsForTempFiles: Integer = 2
   if (Control == null) 
     sys.error("Control is null in huemul_DataFrame")
     
@@ -84,7 +84,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     //TODO: ver como poner la fecha de término de lectura StopRead_dt = Calendar.getInstance()
         
     if (SaveInTemp)
-      huemulBigDataGov.CreateTempTable(DataDF, AliasDF, huemulBigDataGov.DebugMode)
+      huemulBigDataGov.CreateTempTable(DataDF, AliasDF, huemulBigDataGov.DebugMode, null)
   }
   
   /**   
@@ -395,7 +395,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       DQResult.dqDF = huemulBigDataGov.spark.sql(SQL)
             
       if (huemulBigDataGov.DebugMode) DQResult.dqDF.show()        
-      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByCol_${Col}",huemulBigDataGov.DebugMode)
+      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByCol_${Col}",huemulBigDataGov.DebugMode, numPartitionsForTempFiles)
       
       val FirstRow = DQResult.dqDF.first()
       DQResult.profilingResult.max_Col = FirstRow.getAs[String]("max_Col")   
@@ -444,7 +444,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         DQResult.dqDF.printSchema()
         DQResult.dqDF.show()
       }
-      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByFunction_${function}",huemulBigDataGov.DebugMode)
+      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByFunction_${function}",huemulBigDataGov.DebugMode, numPartitionsForTempFiles)
       
     } catch {
       case e: Exception => {
@@ -490,7 +490,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         var TempFileName_local = TempFileName
         if (TempFileName_local == null)
           TempFileName_local = ColDuplicate
-        huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_DupliVal_${TempFileName_local}",huemulBigDataGov.DebugMode)
+        huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_DupliVal_${TempFileName_local}",huemulBigDataGov.DebugMode, numPartitionsForTempFiles)
       }
       
       //duplicate rows found
@@ -563,7 +563,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         DQResult.dqDF.show()
         
       }
-      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_NotNullValues_${Col}",huemulBigDataGov.DebugMode)
+      huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_NotNullValues_${Col}",huemulBigDataGov.DebugMode, numPartitionsForTempFiles)
       
       //null rows found
       DQDup = DQResult.dqDF.count()
