@@ -72,8 +72,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var _SaveDQResult : Boolean = true
   
   
-  
-  
   /**
    Type of Persistent storage (parquet, csv, json)
    */
@@ -234,8 +232,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getDQ_MaxNewRecords_Perc: Decimal = {return _DQ_MaxNewRecords_Perc}
   private var _DQ_MaxNewRecords_Perc: Decimal = null
   
+  //V1.3 --> set num partitions with repartition
+  /**
+   Set num of partitions (repartition function used). Value null for default behavior
+   */
+  def setNumPartitions(value: Integer) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of NumPartitions, definition is close", 1033)
+    else
+      _NumPartitions = value
+  }
+  def getNumPartitions: Integer = {return _NumPartitions}
+  private var _NumPartitions : Integer = null
   
-  
+  private val numPartitionsForDQFiles: Integer = 2
   
   /****** METODOS DEL LADO DEL "USUARIO" **************************/
   
@@ -1514,7 +1524,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean): huemul_DataQualityResult = {
-    //TODO: incorporar detalle de registros (muestra de 3 casos) que no cumplen cada condición
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayDQ: ArrayBuffer[huemul_DataQuality] = new ArrayBuffer[huemul_DataQuality]()
     
@@ -1713,7 +1722,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(FullPathString)
         val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
         if (huemulBigDataGov.DebugMode) println(s"copy to temp dir: $tempPath ")
-        DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        if (this.getNumPartitions == null || this.getNumPartitions <= 0)
+          DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        else
+          DFTempCopy.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+          
         DFTempCopy.unpersist()
        
         //Open temp file
@@ -1853,7 +1866,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(this.GetFullNameWithPath())
         val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
         if (huemulBigDataGov.DebugMode) println(s"copy to temp dir: $tempPath ")
-        DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        if (this.getNumPartitions == null || this.getNumPartitions <= 0)
+          DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        else
+          DFTempCopy.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
         DFTempCopy.unpersist()
        
         //Open temp file
@@ -2211,6 +2227,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     try {
       if (_PartitionField == null || _PartitionField == ""){
+        if (this.getNumPartitions == null || this.getNumPartitions <= 0) {
+          LocalControl.NewStep("Save: Set num FileParts")
+          DF_Final = DF_Final.repartition(this.getNumPartitions)
+        }
+        
         if (OnlyInsert) {
           LocalControl.NewStep("Save: Append Master & Ref Data")
           DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
@@ -2236,8 +2257,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           LocalControl.NewStep("Save: Drop old partition")
           val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
           fs.delete(FullPath, true)
+          
+          if (this.getNumPartitions == null || this.getNumPartitions <= 0){
+            LocalControl.NewStep("Save: Set num FileParts")
+            DF_Final = DF_Final.repartition(this.getNumPartitions)
+          }
+          
           LocalControl.NewStep("Save: OverWrite partition with new data")
-          if (huemulBigDataGov.DebugMode) println(s"saving path: ${FullPath} ")        
+          if (huemulBigDataGov.DebugMode) println(s"saving path: ${FullPath} ")     
+          
           DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
                 
           //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
@@ -2316,7 +2344,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save DQ Result: Saving new DQ result")
       if (huemulBigDataGov.DebugMode) println(s"saving path: ${GetFullNameWithPath_DQ()} ")        
-      DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(GetFullNameWithPath_DQ())
+      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(GetFullNameWithPath_DQ())
       
     } catch {
       case e: Exception => 
