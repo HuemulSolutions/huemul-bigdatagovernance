@@ -342,6 +342,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       val FileToTemp: String = GlobalSettings.GetDebugTempPath(this, ProcessNameCall, Alias) + ".parquet"      
       println(s"path result for table alias $Alias: $FileToTemp ")
       //version 1.3 --> prueba para optimizar escritura temporal
+      //Se aplica coalesce en vez de repartition para evitar el shuffle interno
       if (NumPartitionCoalesce == null || NumPartitionCoalesce == 0)
         DF.write.mode(SaveMode.Overwrite).parquet(FileToTemp)
       else
