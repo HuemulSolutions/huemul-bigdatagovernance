@@ -53,13 +53,18 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * ARGUMENTS
    *************************/
   println("huemul_BigDataGovernance version 1.3.0 - sv01")
-   
-      
-        
-        
+  
+       
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
   val Environment: String = arguments.GetValue("Environment", null, s"MUST be set environment parameter: '${GlobalSettings.GlobalEnvironments}' " )
+  
+  
+   //Validating GlobalSettings
+  println("Validating GlobalSetings..")
+  //if (this. globalSettings.RAW_BigFiles_Path
+  
+  
   val Malla_Id: String = arguments.GetValue("Malla_Id", "" )
   var HideLibQuery: Boolean = false
   try {

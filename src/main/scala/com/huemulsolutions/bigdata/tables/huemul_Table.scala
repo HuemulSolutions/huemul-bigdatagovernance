@@ -2227,18 +2227,28 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     try {
       if (_PartitionField == null || _PartitionField == ""){
+        /*
+         * Se descarta esta forma, no la aplica realmente al grabar los datos
         if (this.getNumPartitions == null || this.getNumPartitions <= 0) {
           LocalControl.NewStep("Save: Set num FileParts")
           DF_Final = DF_Final.repartition(this.getNumPartitions)
         }
+        * 
+        */
         
         if (OnlyInsert) {
           LocalControl.NewStep("Save: Append Master & Ref Data")
-          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
+          if (this.getNumPartitions == null || this.getNumPartitions <= 0)
+            DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
+          else
+            DF_Final.repartition(this.getNumPartitions).write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
         }
         else {
           LocalControl.NewStep("Save: Overwrite Master & Ref Data")
-          DF_Final.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(GetFullNameWithPath())
+          if (this.getNumPartitions == null || this.getNumPartitions <= 0)
+            DF_Final.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(GetFullNameWithPath())
+          else
+            DF_Final.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(GetFullNameWithPath())
         }
         
         //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
@@ -2258,15 +2268,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
           fs.delete(FullPath, true)
           
+          /*
           if (this.getNumPartitions == null || this.getNumPartitions <= 0){
             LocalControl.NewStep("Save: Set num FileParts")
             DF_Final = DF_Final.repartition(this.getNumPartitions)
           }
+          * 
+          */
           
           LocalControl.NewStep("Save: OverWrite partition with new data")
           if (huemulBigDataGov.DebugMode) println(s"saving path: ${FullPath} ")     
           
-          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
+          if (this.getNumPartitions == null || this.getNumPartitions <= 0)
+            DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
+          else
+            DF_Final.repartition(this.getNumPartitions).write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
                 
           //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
   
