@@ -90,9 +90,16 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /**   
    Create DF from SQL (equivalent to spark.sql method)
    */
-  def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true) {
+  def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sql)
-    val DFTemp = huemulBigDataGov.spark.sql(sql)
+    
+    
+    //val DFTemp = huemulBigDataGov.spark.sql(sql)
+                 
+                 
+    val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
+                 else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
+                 
     
     setDataFrame(DFTemp, Alias, SaveInTemp)
         
