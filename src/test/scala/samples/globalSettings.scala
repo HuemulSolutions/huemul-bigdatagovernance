@@ -75,6 +75,14 @@ object globalSettings {
    
    Global.SANDBOX_BigFiles_Path.append(new huemul_KeyValuePath("production","hdfs:///user/data/production/sandbox/"))
    Global.SANDBOX_BigFiles_Path.append(new huemul_KeyValuePath("experimental","hdfs:///user/data/experimental/sandbox/"))
+   
+   //DQ_ERROR SETTING
+   Global.DQ_SaveErrorDetails = true
+   Global.DQError_DataBase.append(new huemul_KeyValuePath("production","production_DQError"))
+   Global.DQError_DataBase.append(new huemul_KeyValuePath("experimental","experimental_DQError"))
+   
+   Global.DQError_Path.append(new huemul_KeyValuePath("production","hdfs:///user/data/production/dqerror/"))
+   Global.DQError_Path.append(new huemul_KeyValuePath("experimental","hdfs:///user/data/experimental/dqerror/"))
 
 }
 
