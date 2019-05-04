@@ -93,13 +93,10 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sql)
     
-    
-    //val DFTemp = huemulBigDataGov.spark.sql(sql)
-                 
-                 
+    //Cambio en v1.3: optimiza tiempo al aplicar repartition para archivos pequeños             
     val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
-                 
+      
     
     setDataFrame(DFTemp, Alias, SaveInTemp)
         
