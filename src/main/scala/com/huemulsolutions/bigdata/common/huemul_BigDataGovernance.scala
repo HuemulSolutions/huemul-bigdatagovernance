@@ -62,7 +62,48 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
    //Validating GlobalSettings
   println("Validating GlobalSetings..")
-  //if (this. globalSettings.RAW_BigFiles_Path
+  var ErrorGlobalSettings: String = ""
+  if (!this.GlobalSettings.ValidPath(globalSettings.RAW_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.RAW_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_DataBase, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_DataBase"
+  if (!this.GlobalSettings.ValidPath(globalSettings.DIM_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.DIM_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.DIM_DataBase, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_DataBase"
+  if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_DataBase, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_DataBase"
+  if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_DataBase, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_DataBase"
+  if (!this.GlobalSettings.ValidPath(globalSettings.TEMPORAL_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}TEMPORAL_Path"
+  
+  if (this.GlobalSettings.DQ_SaveErrorDetails) {
+    if (!this.GlobalSettings.ValidPath(globalSettings.DQError_Path, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_Path"
+    if (!this.GlobalSettings.ValidPath(globalSettings.DQError_DataBase, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_DataBase"
+  }
+  
+  if (ErrorGlobalSettings.length()> 0) {
+    sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
+  }
   
   
   val Malla_Id: String = arguments.GetValue("Malla_Id", "" )
