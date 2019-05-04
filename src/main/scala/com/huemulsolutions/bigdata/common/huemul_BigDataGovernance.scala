@@ -44,8 +44,10 @@ import org.apache.spark.sql.catalyst.expressions.Coalesce
  *  @constructor create a new person with a name and age.
  *  @param appName nombre de la aplicación
  *  @param args argumentos de la aplicación
+ *  @param globalSettings configuración de rutas y Bases de datos
+ *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
-class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath) extends Serializable  {
+class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   
@@ -169,12 +171,15 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   if (!TestPlanMode && ImpalaEnabled)
       impala_connection.StartConnection()
   
-  val spark: SparkSession = if (!TestPlanMode) SparkSession.builder().appName(appName)
+  val spark: SparkSession = if (!TestPlanMode & LocalSparkSession == null) 
+                                      SparkSession.builder().appName(appName)
                                               //.master("local[*]")
                                               .config("spark.sql.warehouse.dir", warehouseLocation)
                                               .config("spark.sql.parquet.writeLegacyFormat",true)
                                               .enableHiveSupport()
                                               .getOrCreate()
+                            else if (!TestPlanMode & LocalSparkSession != null)
+                                      LocalSparkSession
                             else null
 
   if (!TestPlanMode) {
