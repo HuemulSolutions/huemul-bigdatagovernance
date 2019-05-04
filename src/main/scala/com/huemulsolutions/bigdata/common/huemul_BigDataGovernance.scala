@@ -61,7 +61,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   
    //Validating GlobalSettings
-  println("Validating GlobalSetings..")
+  println("Start Validating GlobalSetings..")
   var ErrorGlobalSettings: String = ""
   if (!this.GlobalSettings.ValidPath(globalSettings.RAW_SmallFiles_Path, this.Environment))
     ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_SmallFiles_Path"
@@ -100,6 +100,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (!this.GlobalSettings.ValidPath(globalSettings.DQError_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_DataBase"
   }
+  println("End Validating GlobalSetings..")
   
   if (ErrorGlobalSettings.length()> 0) {
     sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
