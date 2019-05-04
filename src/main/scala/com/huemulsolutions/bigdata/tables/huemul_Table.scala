@@ -1779,8 +1779,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall, true)
 
      
-      //STEP 2: Execute final table 
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
+      //STEP 2: Execute final table  //Add this.getNumPartitions param in v1.3
+      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
         
       //Unpersist first DF
@@ -1808,8 +1808,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFinalTable = SQL_Step0_TXHash(this.DataFramehuemul.Alias, huemulBigDataGov.ProcessNameCall)
       if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery)
         println(SQLFinalTable)
-      //STEP 2: Execute final table 
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
+      //STEP 2: Execute final table //Add debugmode and getnumpartitions in v1.3
+      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
       
       LocalControl.NewStep("Transaction: Get Statistics info")
       this._NumRows_Total = this.DataFramehuemul.getNumRows
@@ -1923,8 +1923,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall, if (OnlyInsert) true else false)
 
      
-      //STEP 2: Execute final table 
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
+      //STEP 2: Execute final table // Add debugmode and getnumpartitions in v1.3 
+      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
       
       //Unpersist first DF
@@ -2227,28 +2227,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     try {
       if (_PartitionField == null || _PartitionField == ""){
-        /*
-         * Se descarta esta forma, no la aplica realmente al grabar los datos
-        if (this.getNumPartitions == null || this.getNumPartitions <= 0) {
+        
+        if (this.getNumPartitions > 0) {
           LocalControl.NewStep("Save: Set num FileParts")
           DF_Final = DF_Final.repartition(this.getNumPartitions)
         }
-        * 
-        */
-        
+                
         if (OnlyInsert) {
           LocalControl.NewStep("Save: Append Master & Ref Data")
-          if (this.getNumPartitions == null || this.getNumPartitions <= 0)
-            DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
-          else
-            DF_Final.repartition(this.getNumPartitions).write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
         }
         else {
           LocalControl.NewStep("Save: Overwrite Master & Ref Data")
-          if (this.getNumPartitions == null || this.getNumPartitions <= 0)
-            DF_Final.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(GetFullNameWithPath())
-          else
-            DF_Final.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(GetFullNameWithPath())
         }
         
         //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
@@ -2268,21 +2259,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
           fs.delete(FullPath, true)
           
-          /*
-          if (this.getNumPartitions == null || this.getNumPartitions <= 0){
+          if (this.getNumPartitions > 0) {
             LocalControl.NewStep("Save: Set num FileParts")
             DF_Final = DF_Final.repartition(this.getNumPartitions)
           }
-          * 
-          */
           
           LocalControl.NewStep("Save: OverWrite partition with new data")
           if (huemulBigDataGov.DebugMode) println(s"saving path: ${FullPath} ")     
           
-          if (this.getNumPartitions == null || this.getNumPartitions <= 0)
-            DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
-          else
-            DF_Final.repartition(this.getNumPartitions).write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
                 
           //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
   
@@ -2422,8 +2407,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   
-  def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true) {
-    this.DataFramehuemul.DF_from_SQL(Alias, sql, SaveInTemp) 
+  def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
+    this.DataFramehuemul.DF_from_SQL(Alias, sql, SaveInTemp, NumPartitions) 
   }
   
   
