@@ -227,7 +227,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
   
     if (!huemulBigDataGov.HasName(Control_IdParent)) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ALL OK")
-    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Duration: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
 
     if (huemulBigDataGov.RegisterInControl) {
     
@@ -245,7 +245,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
     
     if (Control_IdParent == null) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ERROR")
-    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Duration: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
 
       
     if (huemulBigDataGov.RegisterInControl) {
