@@ -32,6 +32,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   private var processExec_param_others: String = ""
   private var processExec_dtStart: java.util.Calendar = null
+  private var processExec_dtEnd: java.util.Calendar = null
   private var processExecStep_dtStart: java.util.Calendar = null
   
   
@@ -222,8 +223,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
   def FinishProcessOK {
 
+    processExec_dtEnd = huemulBigDataGov.getCurrentDateTimeJava()
+    val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
+  
     if (!huemulBigDataGov.HasName(Control_IdParent)) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ALL OK")
-    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Duration: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
 
     if (huemulBigDataGov.RegisterInControl) {
     
@@ -237,9 +241,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   }
   
   def FinishProcessError() {
-
+    processExec_dtEnd = huemulBigDataGov.getCurrentDateTimeJava()
+    val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
+    
     if (Control_IdParent == null) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ERROR")
-    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH ProcessExec_Id: ${Control_Id}, processName: ${Control_ClassName}")
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Duration: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
 
       
     if (huemulBigDataGov.RegisterInControl) {
@@ -1015,16 +1021,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                     ,p_processExecStep_id: String
                                     ,p_error_id: String
       ): huemul_JDBCResult =  {
-    
-     
-    val endDataTime = huemulBigDataGov.getCurrentDateTimeJava()
-    val DiffDateStep = huemulBigDataGov.getDateTimeDiff(processExecStep_dtStart, endDataTime)
+    val DiffDateStep = huemulBigDataGov.getDateTimeDiff(processExecStep_dtStart, processExec_dtEnd)
      
     
     var ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
       UPDATE control_processexecstep
       SET  processexecstep_status  = ${if (p_error_id == null || p_error_id == "") "'OK'" else "'ERROR'"}
-    			,processexecstep_dtend   = ${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(endDataTime.getTime()) )}
+    			,processexecstep_dtend   = ${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(processExec_dtEnd.getTime()) )}
     			,processexecstep_durhour = ${DiffDateStep.hour + (DiffDateStep.days*24)}
     			,processexecstep_durmin  = ${DiffDateStep.minute}
     			,processexecstep_dursec  = ${DiffDateStep.second}
@@ -1033,14 +1036,14 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     """)
     
     if (!ExecResult.IsError) {
-      val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, endDataTime)
+      val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
       
       ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
       UPDATE control_processexec
         SET  processexec_iscancelled = 0
         	  ,processexec_isenderror = ${if (p_error_id == null || p_error_id == "") "0" else "1"}
         	  ,processexec_isendok	  = ${if (p_error_id == null || p_error_id == "") "1" else "0"}
-        	  ,processexec_dtend	    = ${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(endDataTime.getTime()) )}
+        	  ,processexec_dtend	    = ${ReplaceSQLStringNulls(huemulBigDataGov.dateTimeFormat.format(processExec_dtEnd.getTime()) )}
         	  ,processexec_durhour	  = ${DiffDate.hour + (DiffDate.days*24)}
         	  ,processexec_durmin	    = ${DiffDate.minute}
         	  ,processexec_dursec	    = ${DiffDate.second}
