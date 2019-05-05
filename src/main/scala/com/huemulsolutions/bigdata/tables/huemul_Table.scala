@@ -1678,7 +1678,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    Create final DataFrame with full join New DF with old DF
    */
-  private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean, isDelete: Boolean, isSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String = null) {
+  private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean, isDelete: Boolean, isSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String = null, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null) {
     if (isSelectiveUpdate) {
       //Update some rows with some columns
       //Cant update PK fields
@@ -1750,7 +1750,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                              
                                              
       //**************************************************//
-      //STEP 4: Create Tabla with Update and Insert result
+      //STEP 4: Create Table with Update and Insert result
       //**************************************************//
 
       LocalControl.NewStep("Selective Update: Update Logic")
@@ -1935,6 +1935,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     } else
       RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
+      
+    //if (this._NumRows_Total < 1000000)
+    if (storageLevelOfDF != null)
+      this.DataFramehuemul.DataFrame.persist(storageLevelOfDF)
   }
   
   private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String) {
@@ -1994,11 +1998,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return new huemul_AuthorizationPair(ClassNameInvoker,PackageNameInvoker)
   }
   
-  def executeFull(NewAlias: String): Boolean = {
+  def executeFull(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
     var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, true, true, true, false, null)      
+      Result = this.ExecuteSave(NewAlias, true, true, true, false, null, storageLevelOfDF)      
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
       
@@ -2007,14 +2011,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  def executeOnlyInsert(NewAlias: String): Boolean = {
+  def executeOnlyInsert(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
     var Result: Boolean = false
     if (this._TableType == huemulType_Tables.Transaction)
       RaiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
 
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, true, false, false, false, null) 
+      Result = this.ExecuteSave(NewAlias, true, false, false, false, null, storageLevelOfDF) 
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
     }
@@ -2022,14 +2026,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  def executeOnlyUpdate(NewAlias: String): Boolean = {   
+  def executeOnlyUpdate(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {   
     var Result: Boolean = false
     if (this._TableType == huemulType_Tables.Transaction)
       RaiseError("huemul_Table Error: DoOnlyUpdatehuemul is not available for Transaction Tables", 1011)
       
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, false, true, false, false, null)  
+      Result = this.ExecuteSave(NewAlias, false, true, false, false, null, storageLevelOfDF)  
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
@@ -2038,12 +2042,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
   }
   
-  def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: String): Boolean = {   
+  def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {   
     var Result: Boolean = false
       
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate)  
+      Result = this.ExecuteSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate, storageLevelOfDF)  
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
@@ -2079,7 +2083,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Master & Reference: update and Insert
    Transactional: Delete and Insert new data
    */
-  private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String): Boolean = {
+  private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel): Boolean = {
     if (!this.DefinitionIsClose)
       this.RaiseError(s"huemul_Table Error: MUST call ApplyTableDefinition ${this.TableName}", 1048)
     
@@ -2109,7 +2113,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     
       //do work
-      DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate)
+      DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate, storageLevelOfDF)
   
       //DataQuality by Columns
       LocalControl.NewStep("Start DataQuality")
