@@ -1929,8 +1929,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
       
     //if (this._NumRows_Total < 1000000)
-    if (storageLevelOfDF != null)
+    if (storageLevelOfDF != null) {
+      //println("***** cache")
       this.DataFramehuemul.DataFrame.persist(storageLevelOfDF)
+      }
+    //else 
+      //println("***** sin cache")
   }
   
   private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String) {
