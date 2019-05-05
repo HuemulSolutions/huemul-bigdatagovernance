@@ -1894,27 +1894,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFullJoin_DF = huemulBigDataGov.DF_ExecuteQuery("__FullJoin"
                                               , SQL_Step1_FullJoin(TempAlias, NextAlias, isUpdate, isDelete)
                                              )
-      var toMemory: Boolean = false
-      //if (SQLFullJoin_DF.count() <= 1000000)
-      //  toMemory = true
                         
       //STEP 2: Create Tabla with Update and Insert result
       LocalControl.NewStep("Ref & Master: Update & Insert Logic")
       val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
                                           , SQL_Step2_UpdateAndInsert("__FullJoin", huemulBigDataGov.ProcessNameCall, isInsert)
                                          )
-      if (toMemory)
-        SQLHash_p1_DF.cache()
-      
+     
       //STEP 3: Create Hash
       LocalControl.NewStep("Ref & Master: Hash Code")                                         
       val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p2"
                                           , SQL_Step3_Hash_p1("__Hash_p1", false)
                                          )
                                          
-      if (toMemory)
-        SQLHash_p2_DF.cache()
-               
                                         
       this.UpdateStatistics(LocalControl, "Ref & Master")
       
