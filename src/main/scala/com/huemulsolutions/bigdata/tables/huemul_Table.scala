@@ -72,8 +72,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var _SaveDQResult : Boolean = true
   
   
-  
-  
   /**
    Type of Persistent storage (parquet, csv, json)
    */
@@ -234,8 +232,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getDQ_MaxNewRecords_Perc: Decimal = {return _DQ_MaxNewRecords_Perc}
   private var _DQ_MaxNewRecords_Perc: Decimal = null
   
+  //V1.3 --> set num partitions with repartition
+  /**
+   Set num of partitions (repartition function used). Value null for default behavior
+   */
+  def setNumPartitions(value: Integer) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of NumPartitions, definition is close", 1033)
+    else
+      _NumPartitions = value
+  }
+  def getNumPartitions: Integer = {return _NumPartitions}
+  private var _NumPartitions : Integer = null
   
-  
+  private val numPartitionsForDQFiles: Integer = 2
   
   /****** METODOS DEL LADO DEL "USUARIO" **************************/
   
@@ -1514,7 +1524,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean): huemul_DataQualityResult = {
-    //TODO: incorporar detalle de registros (muestra de 3 casos) que no cumplen cada condición
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayDQ: ArrayBuffer[huemul_DataQuality] = new ArrayBuffer[huemul_DataQuality]()
     
@@ -1669,7 +1678,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    Create final DataFrame with full join New DF with old DF
    */
-  private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean, isDelete: Boolean, isSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String = null) {
+  private def DF_MDM_Dohuemul(LocalControl: huemul_Control, AliasNewData: String, isInsert: Boolean, isUpdate: Boolean, isDelete: Boolean, isSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String = null, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null) {
     if (isSelectiveUpdate) {
       //Update some rows with some columns
       //Cant update PK fields
@@ -1713,7 +1722,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(FullPathString)
         val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
         if (huemulBigDataGov.DebugMode) println(s"copy to temp dir: $tempPath ")
-        DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        if (this.getNumPartitions == null || this.getNumPartitions <= 0)
+          DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        else
+          DFTempCopy.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+          
         DFTempCopy.unpersist()
        
         //Open temp file
@@ -1737,7 +1750,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                              
                                              
       //**************************************************//
-      //STEP 4: Create Tabla with Update and Insert result
+      //STEP 4: Create Table with Update and Insert result
       //**************************************************//
 
       LocalControl.NewStep("Selective Update: Update Logic")
@@ -1766,8 +1779,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall, true)
 
      
-      //STEP 2: Execute final table 
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
+      //STEP 2: Execute final table  //Add this.getNumPartitions param in v1.3
+      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
         
       //Unpersist first DF
@@ -1795,8 +1808,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFinalTable = SQL_Step0_TXHash(this.DataFramehuemul.Alias, huemulBigDataGov.ProcessNameCall)
       if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery)
         println(SQLFinalTable)
-      //STEP 2: Execute final table 
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
+      //STEP 2: Execute final table //Add debugmode and getnumpartitions in v1.3
+      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
       
       LocalControl.NewStep("Transaction: Get Statistics info")
       this._NumRows_Total = this.DataFramehuemul.getNumRows
@@ -1853,7 +1866,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(this.GetFullNameWithPath())
         val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
         if (huemulBigDataGov.DebugMode) println(s"copy to temp dir: $tempPath ")
-        DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        if (this.getNumPartitions == null || this.getNumPartitions <= 0)
+          DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+        else
+          DFTempCopy.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
         DFTempCopy.unpersist()
        
         //Open temp file
@@ -1878,27 +1894,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFullJoin_DF = huemulBigDataGov.DF_ExecuteQuery("__FullJoin"
                                               , SQL_Step1_FullJoin(TempAlias, NextAlias, isUpdate, isDelete)
                                              )
-      var toMemory: Boolean = false
-      //if (SQLFullJoin_DF.count() <= 1000000)
-      //  toMemory = true
                         
       //STEP 2: Create Tabla with Update and Insert result
       LocalControl.NewStep("Ref & Master: Update & Insert Logic")
       val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
                                           , SQL_Step2_UpdateAndInsert("__FullJoin", huemulBigDataGov.ProcessNameCall, isInsert)
                                          )
-      if (toMemory)
-        SQLHash_p1_DF.cache()
-      
+     
       //STEP 3: Create Hash
       LocalControl.NewStep("Ref & Master: Hash Code")                                         
       val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p2"
                                           , SQL_Step3_Hash_p1("__Hash_p1", false)
                                          )
                                          
-      if (toMemory)
-        SQLHash_p2_DF.cache()
-               
                                         
       this.UpdateStatistics(LocalControl, "Ref & Master")
       
@@ -1907,8 +1915,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall, if (OnlyInsert) true else false)
 
      
-      //STEP 2: Execute final table 
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable)
+      //STEP 2: Execute final table // Add debugmode and getnumpartitions in v1.3 
+      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
       
       //Unpersist first DF
@@ -1919,6 +1927,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     } else
       RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
+      
+    //if (this._NumRows_Total < 1000000)
+    if (storageLevelOfDF != null) {
+      //println("***** cache")
+      this.DataFramehuemul.DataFrame.persist(storageLevelOfDF)
+      }
+    //else 
+      //println("***** sin cache")
   }
   
   private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String) {
@@ -1978,11 +1994,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return new huemul_AuthorizationPair(ClassNameInvoker,PackageNameInvoker)
   }
   
-  def executeFull(NewAlias: String): Boolean = {
+  def executeFull(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
     var Result: Boolean = false
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, true, true, true, false, null)      
+      Result = this.ExecuteSave(NewAlias, true, true, true, false, null, storageLevelOfDF)      
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
       
@@ -1991,14 +2007,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  def executeOnlyInsert(NewAlias: String): Boolean = {
+  def executeOnlyInsert(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
     var Result: Boolean = false
     if (this._TableType == huemulType_Tables.Transaction)
       RaiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
 
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, true, false, false, false, null) 
+      Result = this.ExecuteSave(NewAlias, true, false, false, false, null, storageLevelOfDF) 
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
     }
@@ -2006,14 +2022,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  def executeOnlyUpdate(NewAlias: String): Boolean = {   
+  def executeOnlyUpdate(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {   
     var Result: Boolean = false
     if (this._TableType == huemulType_Tables.Transaction)
       RaiseError("huemul_Table Error: DoOnlyUpdatehuemul is not available for Transaction Tables", 1011)
       
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, false, true, false, false, null)  
+      Result = this.ExecuteSave(NewAlias, false, true, false, false, null, storageLevelOfDF)  
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
@@ -2022,12 +2038,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
   }
   
-  def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: String): Boolean = {   
+  def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {   
     var Result: Boolean = false
       
     val whoExecute = GetClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate)  
+      Result = this.ExecuteSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate, storageLevelOfDF)  
     else {
       RaiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
@@ -2063,7 +2079,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Master & Reference: update and Insert
    Transactional: Delete and Insert new data
    */
-  private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String): Boolean = {
+  private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel): Boolean = {
     if (!this.DefinitionIsClose)
       this.RaiseError(s"huemul_Table Error: MUST call ApplyTableDefinition ${this.TableName}", 1048)
     
@@ -2093,7 +2109,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     
       //do work
-      DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate)
+      DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate, storageLevelOfDF)
   
       //DataQuality by Columns
       LocalControl.NewStep("Start DataQuality")
@@ -2211,6 +2227,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     try {
       if (_PartitionField == null || _PartitionField == ""){
+        
+        if (this.getNumPartitions > 0) {
+          LocalControl.NewStep("Save: Set num FileParts")
+          DF_Final = DF_Final.repartition(this.getNumPartitions)
+        }
+                
         if (OnlyInsert) {
           LocalControl.NewStep("Save: Append Master & Ref Data")
           DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
@@ -2236,8 +2258,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           LocalControl.NewStep("Save: Drop old partition")
           val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
           fs.delete(FullPath, true)
+          
+          if (this.getNumPartitions > 0) {
+            LocalControl.NewStep("Save: Set num FileParts")
+            DF_Final = DF_Final.repartition(this.getNumPartitions)
+          }
+          
           LocalControl.NewStep("Save: OverWrite partition with new data")
-          if (huemulBigDataGov.DebugMode) println(s"saving path: ${FullPath} ")        
+          if (huemulBigDataGov.DebugMode) println(s"saving path: ${FullPath} ")     
+          
           DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
                 
           //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
@@ -2316,7 +2345,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save DQ Result: Saving new DQ result")
       if (huemulBigDataGov.DebugMode) println(s"saving path: ${GetFullNameWithPath_DQ()} ")        
-      DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(GetFullNameWithPath_DQ())
+      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(GetFullNameWithPath_DQ())
       
     } catch {
       case e: Exception => 
@@ -2378,8 +2407,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   
-  def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true) {
-    this.DataFramehuemul.DF_from_SQL(Alias, sql, SaveInTemp) 
+  def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
+    this.DataFramehuemul.DF_from_SQL(Alias, sql, SaveInTemp, NumPartitions) 
   }
   
   

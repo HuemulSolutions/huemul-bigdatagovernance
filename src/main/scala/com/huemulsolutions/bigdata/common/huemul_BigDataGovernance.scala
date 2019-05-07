@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.DecimalType
 
 import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
 import com.huemulsolutions.bigdata.tables.huemul_Table
+import org.apache.spark.sql.catalyst.expressions.Coalesce
 
         
       
@@ -43,22 +44,71 @@ import com.huemulsolutions.bigdata.tables.huemul_Table
  *  @constructor create a new person with a name and age.
  *  @param appName nombre de la aplicación
  *  @param args argumentos de la aplicación
+ *  @param globalSettings configuración de rutas y Bases de datos
+ *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
-class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath) extends Serializable  {
+class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   
   /*********************
    * ARGUMENTS
    *************************/
-  println("huemul_BigDataGovernance version 1.2.0 - sv01")
-   
-      
-        
-        
+  println("huemul_BigDataGovernance version 1.3.0 - sv01")
+  
+       
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
   val Environment: String = arguments.GetValue("Environment", null, s"MUST be set environment parameter: '${GlobalSettings.GlobalEnvironments}' " )
+  
+  
+   //Validating GlobalSettings
+  println("Start Validating GlobalSetings..")
+  var ErrorGlobalSettings: String = ""
+  if (!this.GlobalSettings.ValidPath(globalSettings.RAW_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.RAW_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_DataBase, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_DataBase"
+  if (!this.GlobalSettings.ValidPath(globalSettings.DIM_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.DIM_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.DIM_DataBase, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_DataBase"
+  if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_DataBase, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_DataBase"
+  if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_SmallFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_SmallFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_BigFiles_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_BigFiles_Path"
+  if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_DataBase, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_DataBase"
+  if (!this.GlobalSettings.ValidPath(globalSettings.TEMPORAL_Path, this.Environment))
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}TEMPORAL_Path"
+  
+  if (this.GlobalSettings.DQ_SaveErrorDetails) {
+    if (!this.GlobalSettings.ValidPath(globalSettings.DQError_Path, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_Path"
+    if (!this.GlobalSettings.ValidPath(globalSettings.DQError_DataBase, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_DataBase"
+  }
+  println("End Validating GlobalSetings..")
+  
+  if (ErrorGlobalSettings.length()> 0) {
+    sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
+  }
+  
+  
   val Malla_Id: String = arguments.GetValue("Malla_Id", "" )
   var HideLibQuery: Boolean = false
   try {
@@ -121,12 +171,15 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   if (!TestPlanMode && ImpalaEnabled)
       impala_connection.StartConnection()
   
-  val spark: SparkSession = if (!TestPlanMode) SparkSession.builder().appName(appName)
+  val spark: SparkSession = if (!TestPlanMode & LocalSparkSession == null) 
+                                      SparkSession.builder().appName(appName)
                                               //.master("local[*]")
                                               .config("spark.sql.warehouse.dir", warehouseLocation)
                                               .config("spark.sql.parquet.writeLegacyFormat",true)
                                               .enableHiveSupport()
                                               .getOrCreate()
+                            else if (!TestPlanMode & LocalSparkSession != null)
+                                      LocalSparkSession
                             else null
 
   if (!TestPlanMode) {
@@ -333,13 +386,21 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   /***
    Create a temp table in huemulBigDataGov_Temp (Hive), and persist on HDFS Temp folder
+   NumPartitionCoalesce = null for automatically settings
    */
-  def CreateTempTable(DF: DataFrame, Alias: String, CreateTable: Boolean) {
+  def CreateTempTable(DF: DataFrame, Alias: String, CreateTable: Boolean, NumPartitionCoalesce: Integer ) {
     //Create parquet in temp folder
     if (CreateTable && SaveTempDF){
       val FileToTemp: String = GlobalSettings.GetDebugTempPath(this, ProcessNameCall, Alias) + ".parquet"      
       println(s"path result for table alias $Alias: $FileToTemp ")
-      DF.write.mode(SaveMode.Overwrite).parquet(FileToTemp)
+      //version 1.3 --> prueba para optimizar escritura temporal
+      //Se aplica coalesce en vez de repartition para evitar el shuffle interno
+      if (NumPartitionCoalesce == null || NumPartitionCoalesce == 0)
+        DF.write.mode(SaveMode.Overwrite).parquet(FileToTemp)
+      else
+        DF.coalesce(NumPartitionCoalesce).write.mode(SaveMode.Overwrite).parquet(FileToTemp)
+      
+      //DF.repartition(4).write.mode(SaveMode.Overwrite).parquet(FileToTemp)
            
       //val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)       
       //fs.setPermission(new org.apache.hadoop.fs.Path(FileToTemp), new FsPermission("770"))
@@ -544,7 +605,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     //Change alias name
     SQL_DF.createOrReplaceTempView(Alias)         //crea vista sql
 
-    this.CreateTempTable(SQL_DF, Alias, this.DebugMode)      //crea tabla temporal para debug
+    this.CreateTempTable(SQL_DF, Alias, this.DebugMode, null)      //crea tabla temporal para debug
     return SQL_DF
   }
   
