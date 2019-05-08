@@ -243,7 +243,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       _NumPartitions = value
   }
   def getNumPartitions: Integer = {return _NumPartitions}
-  private var _NumPartitions : Integer = null
+  private var _NumPartitions : Integer = 0
   
   private val numPartitionsForDQFiles: Integer = 2
   
