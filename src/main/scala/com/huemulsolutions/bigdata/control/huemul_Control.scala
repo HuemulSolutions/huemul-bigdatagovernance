@@ -31,7 +31,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private var AdditionalParamsInfo: String = ""
   
   private var processExec_param_others: String = ""
-  private var processExec_dtStart: java.util.Calendar = null
+  private var processExec_dtStart: java.util.Calendar = huemulBigDataGov.getCurrentDateTimeJava()
   private var processExec_dtEnd: java.util.Calendar = null
   private var processExecStep_dtStart: java.util.Calendar = null
   
