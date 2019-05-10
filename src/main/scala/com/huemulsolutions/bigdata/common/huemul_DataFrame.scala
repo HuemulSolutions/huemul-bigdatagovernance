@@ -794,7 +794,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                                      ,'(Id ${x.getId}) ${x.getDescription}' as dq_error_descripcion
                                      , *
                                FROM  ${AliasToQuery}
-                               WHERE ${x.getSQLFormula()}  """
+                               WHERE not (${x.getSQLFormula()})  """
                                
           //Execute query
           var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
