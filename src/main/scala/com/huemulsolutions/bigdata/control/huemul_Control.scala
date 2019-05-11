@@ -35,6 +35,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private var processExec_dtEnd: java.util.Calendar = null
   private var processExecStep_dtStart: java.util.Calendar = null
   
+  private val testPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = new scala.collection.mutable.ListBuffer[huemul_TestPlan]() 
+  
   
   //Find process name in control_process
   
@@ -371,10 +373,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //Create New Id
     val testPlan_Id = huemulBigDataGov.huemul_GetUniqueId()
     
-    //if (!p_testPlan_IsOK) {
-      println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
-    //}
-                     
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
+    
+    
+    
     if (huemulBigDataGov.RegisterInControl) {
        //Insert processExcec
       control_TestPlan_add(testPlan_Id
