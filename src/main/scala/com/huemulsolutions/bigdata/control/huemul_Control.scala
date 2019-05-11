@@ -401,6 +401,40 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     return testPlan_Id
   }
   
+  /**
+   * TestPlan_IsOK: Determine if Testplan finish OK
+   * @author sebas_rod
+   * @param TotalOkExpected: indicate total number of TestPlan expected ok. Null exptected all OK & > 1 testplan
+   */
+  def TestPlan_IsOK(TotalOkExpected: Integer = null): Boolean = {
+    var IsOK: Boolean = false
+    
+    val NumOK = getTestPlanDetails.count { x => x.gettestPlan_IsOK == true }
+    val NumTotal = getTestPlanDetails.length
+    
+    if (TotalOkExpected == null) {
+      
+     
+      if (NumTotal <= 0)
+        IsOK = false
+      else if (NumTotal == NumOK)
+        IsOK = true
+
+      println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK} ")
+    
+    } else {
+       if (NumOK == TotalOkExpected)
+         IsOK = true
+         
+       println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK}, N° User Expected OK: ${TotalOkExpected} ")
+    
+    }
+    
+    
+    return IsOK
+  }
+  
+  
   def RegisterDQuality (Table_Name: String
                              , BBDD_Name: String
                              , DF_Alias: String
