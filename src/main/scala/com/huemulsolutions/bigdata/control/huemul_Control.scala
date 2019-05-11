@@ -407,7 +407,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   /**
    * TestPlan_IsOK: Determine if Testplan finish OK
    * @author sebas_rod
-   * @param TotalOkExpected: indicate total number of TestPlan expected ok. Null exptected all OK & > 1 testplan
+   * @param TotalOkExpected (default null): indicate total number of TestPlan expected ok. Null exptected all OK & > 1 testplan
    * @Version >= 1.4
    */
   def TestPlan_IsOK(TotalOkExpected: Integer = null): Boolean = {
