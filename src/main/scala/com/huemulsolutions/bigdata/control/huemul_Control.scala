@@ -375,7 +375,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
     
-    
+    testPlanDetails.append(new huemul_TestPlan(testPlan_Id
+                                              ,p_testPlanGroup_Id
+                                              ,p_testPlan_name
+                                              ,p_testPlan_description
+                                              ,p_testPlan_resultExpected
+                                              ,p_testPlan_resultReal
+                                              ,p_testPlan_IsOK))
     
     if (huemulBigDataGov.RegisterInControl) {
        //Insert processExcec
