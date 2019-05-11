@@ -34,6 +34,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private var processExec_dtStart: java.util.Calendar = huemulBigDataGov.getCurrentDateTimeJava()
   private var processExec_dtEnd: java.util.Calendar = null
   private var processExecStep_dtStart: java.util.Calendar = null
+  private var _testPlanGroup_Id: String = null
   
   private val testPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = new scala.collection.mutable.ListBuffer[huemul_TestPlan]() 
   def getTestPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = {return testPlanDetails}
@@ -373,6 +374,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //Create New Id
     val testPlan_Id = huemulBigDataGov.huemul_GetUniqueId()
     
+    //Get TestPlanGroup to use in final check
+    _testPlanGroup_Id = p_testPlanGroup_Id
     println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
     
     testPlanDetails.append(new huemul_TestPlan(testPlan_Id
@@ -405,6 +408,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
    * TestPlan_IsOK: Determine if Testplan finish OK
    * @author sebas_rod
    * @param TotalOkExpected: indicate total number of TestPlan expected ok. Null exptected all OK & > 1 testplan
+   * @Version >= 1.4
    */
   def TestPlan_IsOK(TotalOkExpected: Integer = null): Boolean = {
     var IsOK: Boolean = false
@@ -419,15 +423,16 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         IsOK = false
       else if (NumTotal == NumOK)
         IsOK = true
-
-      println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK} ")
     
+      RegisterTestPlan(_testPlanGroup_Id, "FINAL CHECK", "TestPlan_IsOK", "All test plan OK && TestPlan > 0", s"N° Total ($NumTotal) = N° OK ($NumOK)",IsOK)
+      println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK} ")
     } else {
        if (NumOK == TotalOkExpected)
          IsOK = true
          
+       
+       RegisterTestPlan(_testPlanGroup_Id, "FINAL CHECK", "TestPlan_IsOK", "User Expected OK = TestPlan OK", s"N° Total ($NumTotal) = N° OK Expected ($TotalOkExpected)",IsOK)
        println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK}, N° User Expected OK: ${TotalOkExpected} ")
-    
     }
     
     
