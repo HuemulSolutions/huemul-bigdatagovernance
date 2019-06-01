@@ -423,10 +423,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         TotalOK = 0
          
       if (TotalProcess != TotalOK) {
-        RaiseError(s"TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+        println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
       } else if (TotalProcess != TotalProcessExpected) {
-        RaiseError(s"TestPlan_IsOkById doesn't have the expected process: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+        println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan_IsOkById doesn't have the expected process: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
       } else
+        println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan_IsOkById OK: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
         IsOK = true
     }
     
