@@ -54,7 +54,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  println("huemul_BigDataGovernance version 1.4.0 - sv1.0") 
+  println("huemul_BigDataGovernance version 2.0.0 - sv1.0") 
        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
