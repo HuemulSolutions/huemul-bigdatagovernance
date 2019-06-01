@@ -301,10 +301,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   /**
-   * Get Fullpath hdfs for DQ results = GlobalPaths + DQError_Path + TableName + "_DQ"
+   * Get Fullpath hdfs for DQ results = GlobalPaths + DQError_Path + TableName + "_dq"
    */
   def GetFullNameWithPath_DQ() : String = {
-    return this.GetPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_DQ"
+    return this.GetPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_dq"
   }
   
   def GetFullNameWithPath2(ManualEnvironment: String) : String = {
@@ -330,7 +330,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var _TableWasRegistered: Boolean = false
   
   private def InternalGetTable(forDQ_output_error: Boolean = false): String = {
-    return s"${if (forDQ_output_error) GetDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase) else GetDataBase(_DataBase)}.${if (forDQ_output_error) TableName + "_DQ" else TableName}"
+    return s"${if (forDQ_output_error) GetDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase) else GetDataBase(_DataBase)}.${if (forDQ_output_error) TableName + "_dq" else TableName}"
   }
   
   def GetCurrentDataBase(): String = {

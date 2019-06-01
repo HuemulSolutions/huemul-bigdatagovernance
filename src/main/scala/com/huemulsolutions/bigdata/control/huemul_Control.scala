@@ -34,7 +34,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private var processExec_dtStart: java.util.Calendar = huemulBigDataGov.getCurrentDateTimeJava()
   private var processExec_dtEnd: java.util.Calendar = null
   private var processExecStep_dtStart: java.util.Calendar = null
+  private var _testPlanGroup_Id: String = null
   
+  private val testPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = new scala.collection.mutable.ListBuffer[huemul_TestPlan]() 
+  def getTestPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = {return testPlanDetails}
   
   //Find process name in control_process
   
@@ -50,8 +53,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   
   //Insert processExcec
-  if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) {
-    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}")
+  println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}")
+  if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) { 
     control_processExec_add(Control_Id
            ,Control_IdParent
            ,Control_ClassName
@@ -371,10 +374,18 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //Create New Id
     val testPlan_Id = huemulBigDataGov.huemul_GetUniqueId()
     
-    //if (!p_testPlan_IsOK) {
-      println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
-    //}
-                     
+    //Get TestPlanGroup to use in final check
+    _testPlanGroup_Id = p_testPlanGroup_Id
+    println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
+    
+    testPlanDetails.append(new huemul_TestPlan(testPlan_Id
+                                              ,p_testPlanGroup_Id
+                                              ,p_testPlan_name
+                                              ,p_testPlan_description
+                                              ,p_testPlan_resultExpected
+                                              ,p_testPlan_resultReal
+                                              ,p_testPlan_IsOK))
+    
     if (huemulBigDataGov.RegisterInControl) {
        //Insert processExcec
       control_TestPlan_add(testPlan_Id
@@ -392,6 +403,72 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     return testPlan_Id
   }
+  
+  /**
+   * TestPlan_IsOkById: Determine if Testplan finish OK
+   * @author sebas_rod
+   * @param TotalProcessExpected: indicate total number of process with all test OK. 
+   * Version >= 1.4
+   */
+  def TestPlan_IsOkById(TestPlanId: String, TotalProcessExpected: Integer ): Boolean = {
+    var IsOK: Boolean = false
+    
+    val ResultTestPlan = control_TestPlanTest_GetOK(TestPlanId)
+    
+    if (ResultTestPlan.ResultSet.length == 1) {
+    
+      val TotalProcess = ResultTestPlan.ResultSet(0).getAs[Integer]("cantidad".toLowerCase())
+      var TotalOK = ResultTestPlan.ResultSet(0).getAs[Integer]("total_ok".toLowerCase())
+      if (TotalOK == null)
+        TotalOK = 0
+         
+      if (TotalProcess != TotalOK) {
+        println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+      } else if (TotalProcess != TotalProcessExpected) {
+        println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan_IsOkById doesn't have the expected process: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+      } else
+        println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan_IsOkById OK: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+        IsOK = true
+    }
+    
+    return IsOK
+  }
+  
+  /**
+   * TestPlan_CurrentIsOK: Determine if current class Testplan finish OK. for a specific Id use TestPlan_IsOkById
+   * @author sebas_rod
+   * @param TotalOkExpected (default null): indicate total number of TestPlan expected ok. Null exptected all OK & > 1 testplan
+   * Version >= 1.4
+   */
+  def TestPlan_CurrentIsOK(TotalOkExpected: Integer = null): Boolean = {
+    var IsOK: Boolean = false
+    
+    val NumOK = getTestPlanDetails.count { x => x.gettestPlan_IsOK == true }
+    val NumTotal = getTestPlanDetails.length
+    
+    if (TotalOkExpected == null) {
+      
+     
+      if (NumTotal <= 0)
+        IsOK = false
+      else if (NumTotal == NumOK)
+        IsOK = true
+    
+      RegisterTestPlan(_testPlanGroup_Id, "TestPlan_IsOK", "FINAL CHECK", "All test plan OK && TestPlan > 0", s"N° Total ($NumTotal) = N° OK ($NumOK)",IsOK)
+      println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK} ")
+    } else {
+       if (NumOK == TotalOkExpected)
+         IsOK = true
+         
+       
+       RegisterTestPlan(_testPlanGroup_Id, "TestPlan_IsOK", "FINAL CHECK", "User Expected OK = TestPlan OK", s"N° Total ($NumTotal) = N° OK Expected ($TotalOkExpected)",IsOK)
+       println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK}, N° User Expected OK: ${TotalOkExpected} ")
+    }
+    
+    
+    return IsOK
+  }
+  
   
   def RegisterDQuality (Table_Name: String
                              , BBDD_Name: String
@@ -762,6 +839,20 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
            , ${ReplaceSQLStringNulls(p_Executor_Name)}
     """)
            
+    return ExecResult             
+  }
+  
+  /**
+   * 
+   */
+  private def control_TestPlanTest_GetOK ( p_testPlan_Id: String): huemul_JDBCResult =  {
+    var ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+                    select cast(count(1) as Integer) as cantidad, cast(sum(testplan_isok) as Integer) as total_ok 
+                    from control_testplan 
+                    where testplangroup_id = '${p_testPlan_Id}' 
+                    and testplan_name = 'TestPlan_IsOK'
+          """)
+  
     return ExecResult             
   }
   
