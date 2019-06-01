@@ -415,18 +415,21 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     val ResultTestPlan = control_TestPlanTest_GetOK(TestPlanId)
     
-    val TotalProcess = ResultTestPlan.ResultSet(0).getAs[Integer]("cantidad".toLowerCase())
-    var TotalOK = ResultTestPlan.ResultSet(0).getAs[Integer]("total_ok".toLowerCase())
-    if (TotalOK == null)
-      TotalOK = 0
-       
-    if (TotalProcess != TotalOK) {
-      RaiseError(s"TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
-    } else if (TotalProcess != TotalProcessExpected) {
-      RaiseError(s"TestPlan_IsOkById doesn't have the expected process: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
-    } else
-      IsOK = true
-          
+    if (ResultTestPlan.ResultSet.length == 1) {
+    
+      val TotalProcess = ResultTestPlan.ResultSet(0).getAs[Integer]("cantidad".toLowerCase())
+      var TotalOK = ResultTestPlan.ResultSet(0).getAs[Integer]("total_ok".toLowerCase())
+      if (TotalOK == null)
+        TotalOK = 0
+         
+      if (TotalProcess != TotalOK) {
+        RaiseError(s"TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+      } else if (TotalProcess != TotalProcessExpected) {
+        RaiseError(s"TestPlan_IsOkById doesn't have the expected process: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+      } else
+        IsOK = true
+    }
+    
     return IsOK
   }
   
@@ -843,7 +846,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
    */
   private def control_TestPlanTest_GetOK ( p_testPlan_Id: String): huemul_JDBCResult =  {
     var ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
-                    select count(1) as cantidad, sum(testplan_isok) as total_ok 
+                    select cast(count(1) as Integer) as cantidad, cast(sum(testplan_isok) as Integer) as total_ok 
                     from control_testplan 
                     where testplangroup_id = '${p_testPlan_Id}' 
                     and testplan_name = 'TestPlan_IsOK'
