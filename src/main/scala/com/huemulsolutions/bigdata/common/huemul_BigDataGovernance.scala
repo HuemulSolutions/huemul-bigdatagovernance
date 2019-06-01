@@ -200,6 +200,19 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   val IdApplication = if (!TestPlanMode) spark.sparkContext.applicationId else ""
   println(s"application_Id: ${IdApplication}")  
   println(s"URL Monitoring: ${IdPortMonitoring}")
+
+  /*
+  if (!TestPlanMode) {
+    println(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
+    spark.sql("set").show()
+    println(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
+    spark.sql("set").filter("key='spark.driver.port'").show()
+    println(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
+    spark.sql("set").filter("key='spark.driver.port'").select("value").show()
+    println(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
+  }
+  * 
+  */
   
   val IdSparkPort = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").collectAsList().get(0).getAs[String]("value") else ""
   println(s"Port_Id: ${IdSparkPort}")
