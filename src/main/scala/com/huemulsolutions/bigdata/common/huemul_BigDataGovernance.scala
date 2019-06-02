@@ -233,6 +233,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
                 		   , ${ReplaceSQLStringNulls(IdPortMonitoring)}
                 		   , ${ReplaceSQLStringNulls(getCurrentDateTime())}
                 		   , ${ReplaceSQLStringNulls(appName)}
+                  ${if (GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }
         """)
   }
                 
@@ -672,6 +673,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           		  ,''
           		  ,${ReplaceSQLStringNulls(getCurrentDateTime())}
           		  ,${ReplaceSQLStringNulls(WhoWriteError)}
+          ${if (GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }
              """, false)            
      
     }
