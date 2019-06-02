@@ -39,7 +39,12 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
     this.statement = this.connection.createStatement()
   }
   
-  def ExecuteJDBC_WithResult(SQL: String): huemul_JDBCResult = {   
+  /**
+   * ExecuteJDBC_WithResult: Returns SQL Result
+   * @param SQL: String = Query
+   * @param toLowerCase: Boolean defaul true: convert all result to lowercase, otherwise returns as engine define
+   */
+  def ExecuteJDBC_WithResult(SQL: String, toLowerCase: Boolean = true): huemul_JDBCResult = {   
     var Result: huemul_JDBCResult = new huemul_JDBCResult()
     
     var i = 0
@@ -89,8 +94,10 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
                                  else if (DataTypeInt == 1111) DataTypes.StringType
                                  else DataTypes.StringType
                                  
-        
-        fieldsStruct = fieldsStruct:+ ( StructField(Metadata.getColumnName(i) , DataType  , false , null))
+        if (toLowerCase)
+          fieldsStruct = fieldsStruct:+ ( StructField(Metadata.getColumnName(i).toLowerCase() , DataType  , false , null))
+        else 
+          fieldsStruct = fieldsStruct:+ ( StructField(Metadata.getColumnName(i) , DataType  , false , null))
        i+=1
       }
       
