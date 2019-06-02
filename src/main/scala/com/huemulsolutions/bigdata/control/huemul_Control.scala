@@ -557,10 +557,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,x.GetPath(x.GlobalPath)
                              ,x.DataSchemaConf.ColSeparatorType.toString()
                              ,GetCharRepresentation(x.DataSchemaConf.ColSeparator)
-                             ,""  //RAWFilesDet_Data_HeaderColumnsString
+                             ,""  //rawfilesdet_data_headcolstring
                              ,x.LogSchemaConf.ColSeparatorType.toString()
                              ,GetCharRepresentation(x.LogSchemaConf.ColSeparator) 
-                             ,""  //RAWFilesDet_Log_HeaderColumnsString
+                             ,""  //rawfilesdet_log_headcolstring
                              ,x.LogNumRows_FieldName 
                              ,x.ContactName 
                              ,Control_ClassName
@@ -1372,13 +1372,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_RAWFilesDet_FileName: String
                              ,p_RAWFilesDet_LocalPath: String
                              ,p_RAWFilesDet_GlobalPath: String
-                             ,p_RAWFilesDet_Data_ColSeparatorType: String
-                             ,p_RAWFilesDet_Data_ColSeparator: String
-                             ,p_RAWFilesDet_Data_HeaderColumnsString: String
-                             ,p_RAWFilesDet_Log_ColSeparatorType: String
-                             ,p_RAWFilesDet_Log_ColSeparator: String
-                             ,p_RAWFilesDet_Log_HeaderColumnsString: String
-                             ,p_RAWFilesDet_Log_NumRowsFieldName: String
+                             ,p_rawfilesdet_data_colseptype: String
+                             ,p_rawfilesdet_data_colsep: String
+                             ,p_rawfilesdet_data_headcolstring: String
+                             ,p_rawfilesdet_log_colseptype: String
+                             ,p_rawfilesdet_log_colsep: String
+                             ,p_rawfilesdet_log_headcolstring: String
+                             ,p_rawfilesdet_log_numrowsfield: String
                              ,p_RAWFilesDet_ContactName: String
                              ,p_MDM_ProcessName: String
       ): huemul_JDBCResult =  {
@@ -1410,13 +1410,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       		   ,rawfilesdet_filename					        = ${ReplaceSQLStringNulls(p_RAWFilesDet_FileName)}					
       		   ,rawfilesdet_localpath					        = ${ReplaceSQLStringNulls(p_RAWFilesDet_LocalPath)}					
       		   ,rawfilesdet_globalpath					      = ${ReplaceSQLStringNulls(p_RAWFilesDet_GlobalPath)}					
-      		   ,rawfilesdet_data_colseparatortype		  = ${ReplaceSQLStringNulls(p_RAWFilesDet_Data_ColSeparatorType)}		
-      		   ,rawfilesdet_data_colseparator			    = ${ReplaceSQLStringNulls(p_RAWFilesDet_Data_ColSeparator)}			
-      		   ,rawfilesdet_data_headercolumnsstring	= ${ReplaceSQLStringNulls(p_RAWFilesDet_Data_HeaderColumnsString)}	
-      		   ,rawfilesdet_log_colseparatortype		  = ${ReplaceSQLStringNulls(p_RAWFilesDet_Log_ColSeparatorType)}		
-      		   ,rawfilesdet_log_colseparator			    = ${ReplaceSQLStringNulls(p_RAWFilesDet_Log_ColSeparator)}			
-      		   ,rawfilesdet_log_headercolumnsstring		= ${ReplaceSQLStringNulls(p_RAWFilesDet_Log_HeaderColumnsString)}		
-      		   ,rawfilesdet_log_numrowsfieldname		  = ${ReplaceSQLStringNulls(p_RAWFilesDet_Log_NumRowsFieldName)}		
+      		   ,rawfilesdet_data_colseptype		  = ${ReplaceSQLStringNulls(p_rawfilesdet_data_colseptype)}		
+      		   ,rawfilesdet_data_colsep			    = ${ReplaceSQLStringNulls(p_rawfilesdet_data_colsep)}			
+      		   ,rawfilesdet_data_headcolstring	= ${ReplaceSQLStringNulls(p_rawfilesdet_data_headcolstring)}	
+      		   ,rawfilesdet_log_colseptype		  = ${ReplaceSQLStringNulls(p_rawfilesdet_log_colseptype)}		
+      		   ,rawfilesdet_log_colsep			    = ${ReplaceSQLStringNulls(p_rawfilesdet_log_colsep)}			
+      		   ,rawfilesdet_log_headcolstring		= ${ReplaceSQLStringNulls(p_rawfilesdet_log_headcolstring)}		
+      		   ,rawfilesdet_log_numrowsfield		  = ${ReplaceSQLStringNulls(p_rawfilesdet_log_numrowsfield)}		
       		   ,rawfilesdet_contactname					      = ${ReplaceSQLStringNulls(p_RAWFilesDet_ContactName)}					
       		WHERE rawfilesdet_id = ${ReplaceSQLStringNulls(Localrawfilesdet_id)}
         """)
@@ -1431,13 +1431,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                     										   ,rawfilesdet_filename
                     										   ,rawfilesdet_localpath
                     										   ,rawfilesdet_globalpath
-                    										   ,rawfilesdet_data_colseparatortype
-                    										   ,rawfilesdet_data_colseparator
-                    										   ,rawfilesdet_data_headercolumnsstring
-                    										   ,rawfilesdet_log_colseparatortype
-                    										   ,rawfilesdet_log_colseparator
-                    										   ,rawfilesdet_log_headercolumnsstring
-                    										   ,rawfilesdet_log_numrowsfieldname
+                    										   ,rawfilesdet_data_colseptype
+                    										   ,rawfilesdet_data_colsep
+                    										   ,rawfilesdet_data_headcolstring
+                    										   ,rawfilesdet_log_colseptype
+                    										   ,rawfilesdet_log_colsep
+                    										   ,rawfilesdet_log_headcolstring
+                    										   ,rawfilesdet_log_numrowsfield
                     										   ,rawfilesdet_contactname
                     										   ,mdm_fhcreate
                     										   ,mdm_processname)
@@ -1448,13 +1448,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_FileName)}
           			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_LocalPath)}
           			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_GlobalPath)}
-          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Data_ColSeparatorType)}
-          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Data_ColSeparator)}
-          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Data_HeaderColumnsString)}
-          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Log_ColSeparatorType)}
-          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Log_ColSeparator)}
-          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Log_HeaderColumnsString)}
-          			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_Log_NumRowsFieldName)}
+          			   ,${ReplaceSQLStringNulls(p_rawfilesdet_data_colseptype)}
+          			   ,${ReplaceSQLStringNulls(p_rawfilesdet_data_colsep)}
+          			   ,${ReplaceSQLStringNulls(p_rawfilesdet_data_headcolstring)}
+          			   ,${ReplaceSQLStringNulls(p_rawfilesdet_log_colseptype)}
+          			   ,${ReplaceSQLStringNulls(p_rawfilesdet_log_colsep)}
+          			   ,${ReplaceSQLStringNulls(p_rawfilesdet_log_headcolstring)}
+          			   ,${ReplaceSQLStringNulls(p_rawfilesdet_log_numrowsfield)}
           			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_ContactName)}
           			   ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           			   ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
