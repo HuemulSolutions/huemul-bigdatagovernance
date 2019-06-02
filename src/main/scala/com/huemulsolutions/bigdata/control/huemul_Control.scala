@@ -875,7 +875,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     if (ExecResult.ResultSet.length == 1) {
       //Record exist, update
       
-      ExecResult.ResultSet(0).schema.printTreeString()
+      //ExecResult.ResultSet(0).schema.printTreeString()
       
       val MDM_ManualChange = ExecResult.ResultSet(0).getAs[Long]("mdm_manualchange".toLowerCase()).toInt
       if (MDM_ManualChange == 0) {
