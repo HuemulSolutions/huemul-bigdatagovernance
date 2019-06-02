@@ -18,6 +18,7 @@ class huemul_GlobalPath() extends Serializable {
     var ImpalaEnabled: Boolean = false
     
     var CONTROL_Driver: String = "org.postgresql.Driver"
+    var CONTROL_IsOracle: Boolean = false //from 2.0, compatibility with oracle
     val CONTROL_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     val IMPALA_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
