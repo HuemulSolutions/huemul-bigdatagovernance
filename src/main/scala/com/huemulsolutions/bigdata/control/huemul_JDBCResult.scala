@@ -124,7 +124,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
                else if (DataTypeInt == -1) Resultado.getString(i)
                else if (DataTypeInt == 0) Resultado.getString(i)
                else if (DataTypeInt == 1) Resultado.getString(i)
-               else if (DataTypeInt == 2) Resultado.getBigDecimal(i)
+               else if (DataTypeInt == 2) Resultado.getLong(i)
                else if (DataTypeInt == 3) Resultado.getBigDecimal(i)
                else if (DataTypeInt == 4) Resultado.getInt(i)
                else if (DataTypeInt == 5) Resultado.getShort(i)
