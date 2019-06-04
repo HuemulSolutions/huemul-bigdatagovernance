@@ -417,8 +417,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     if (ResultTestPlan.ResultSet.length == 1) {
     
-      val TotalProcess = ResultTestPlan.ResultSet(0).getAs[Long]("cantidad".toLowerCase()).toInt
-      var TotalOK = ResultTestPlan.ResultSet(0).getAs[Long]("total_ok".toLowerCase()).toInt
+      val TotalProcess = ResultTestPlan.GetValue("cantidad",ResultTestPlan.ResultSet(0)).toString().toInt //ResultTestPlan.ResultSet(0).getAs[Long]("cantidad".toLowerCase()).toInt
+      var TotalOK = ResultTestPlan.GetValue("total_ok",ResultTestPlan.ResultSet(0)).toString().toInt //ResultTestPlan.ResultSet(0).getAs[Long]("total_ok".toLowerCase()).toInt
       if (TotalOK == null)
         TotalOK = 0
          
@@ -858,6 +858,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     return ExecResult             
   }
   
+  def huemul_toInt(x: Any): Option[Int] = x match {
+    case i: Int => Some(i)
+    case _ => None
+  }
+  
   private def control_process_addOrUpd (p_process_id: String
                        , p_process_name: String
                        , p_process_FileName: String
@@ -877,7 +882,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       
       //ExecResult.ResultSet(0).schema.printTreeString()
       
-      val MDM_ManualChange = ExecResult.ResultSet(0).getAs[Long]("mdm_manualchange".toLowerCase()).toInt
+      //val MDM_ManualChange =  ExecResult.ResultSet(0).getAs[Long]("mdm_manualchange".toLowerCase()).asInstanceOf[Int]
+      val MDM_ManualChange = ExecResult.GetValue("mdm_manualchange".toLowerCase(), ExecResult.ResultSet(0)).toString().toInt
       if (MDM_ManualChange == 0) {
         ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
                       UPDATE control_process 
@@ -1324,10 +1330,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           and   rawfiles_logicalname = ${ReplaceSQLStringNulls(p_RAWFiles_LogicalName)} 
       """)
       
-    var LocalMDM_ManualChange: Integer = -1
+    var LocalMDM_ManualChange: Int = -1
     var Localrawfiles_id: String = null
     if (!ExecResultRawFiles.IsError && ExecResultRawFiles.ResultSet.length == 1) {
-      LocalMDM_ManualChange = ExecResultRawFiles.ResultSet(0).getAs[Long]("mdm_manualchange".toLowerCase()).toInt
+      LocalMDM_ManualChange = ExecResultRawFiles.GetValue("mdm_manualchange",ExecResultRawFiles.ResultSet(0)).toString().toInt
       Localrawfiles_id = ExecResultRawFiles.ResultSet(0).getAs[String]("rawfiles_id".toLowerCase())
       
     }
