@@ -9,11 +9,13 @@ import java.sql.Types
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
+import java.util.Date
 
 class huemul_JDBCResult extends Serializable {
   var ResultSet: Array[Row] = null
   var ErrorDescription: String = ""
   var IsError: Boolean = false
+  var fieldsStruct = new Array[StructField](0);
   
   /**
    * open variable for keep any value
@@ -24,6 +26,49 @@ class huemul_JDBCResult extends Serializable {
    * open variable for keep any value
    */
   var OpenVar2: String = null
+  
+  def GetValue(columnName: String, row: Row): Any = {
+    val rows = fieldsStruct.filter { x => x.name == columnName }
+    var Values: Any = null
+    
+    if (rows.length == 1) {
+      val firstRow = rows.array(0)
+      
+      
+      if (firstRow.dataType == DataTypes.BooleanType)
+        Values = row.getAs[Boolean](columnName)
+      else if (firstRow.dataType == DataTypes.ShortType)
+        Values = row.getAs[Short](columnName)
+      else if (firstRow.dataType == DataTypes.LongType)
+        Values = row.getAs[Long](columnName)
+      else if (firstRow.dataType == DataTypes.BinaryType)
+        Values = row.getAs[BinaryType](columnName)
+      else if (firstRow.dataType == DataTypes.StringType)
+        Values = row.getAs[String](columnName)
+      else if (firstRow.dataType == DataTypes.NullType)
+        Values = row.getAs[NullType](columnName)
+      else if (firstRow.dataType == DecimalType || firstRow.dataType.typeName.toLowerCase().contains("decimal"))
+        Values = row.getAs[BigDecimal](columnName)
+      else if (firstRow.dataType == DataTypes.IntegerType)
+        Values = row.getAs[Integer](columnName)
+      else if (firstRow.dataType == DataTypes.FloatType)
+        Values = row.getAs[Float](columnName)
+      else if (firstRow.dataType == DataTypes.DoubleType)
+        Values = row.getAs[Double](columnName)
+      else if (firstRow.dataType == DataTypes.DateType)
+        Values = row.getAs[Date](columnName)
+      else if (firstRow.dataType == DataTypes.TimestampType)
+        Values = row.getAs[String](columnName)
+      else
+        Values = row.getAs[String](columnName)
+  
+    } else {
+        Values = null
+        sys.error("error: column name not found")
+    }
+    
+    return Values
+  }
 }
 
 class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connectionString: String, driver: String, DebugMode: Boolean) extends Serializable {
@@ -62,7 +107,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
       try {
         
         val Resultado = statement.executeQuery(SQL)
-        var fieldsStruct = new Array[StructField](0);
+        //var fieldsStruct = new Array[StructField](0);
  
         var i:Integer = 1
         val Metadata = Resultado.getMetaData
@@ -80,7 +125,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
                                  else if (DataTypeInt == -1) DataTypes.StringType
                                  else if (DataTypeInt == 0) DataTypes.NullType
                                  else if (DataTypeInt == 1) DataTypes.StringType
-                                 else if (DataTypeInt == 2) DecimalType(Metadata.getPrecision(i), Metadata.getScale(i)) //DataTypes.DoubleType
+                                 else if (DataTypeInt == 2) DataTypes.LongType
                                  else if (DataTypeInt == 3) DecimalType(Metadata.getPrecision(i), Metadata.getScale(i))
                                  else if (DataTypeInt == 4) DataTypes.IntegerType
                                  else if (DataTypeInt == 5) DataTypes.ShortType
@@ -95,9 +140,9 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
                                  else DataTypes.StringType
                                  
         if (toLowerCase)
-          fieldsStruct = fieldsStruct:+ ( StructField(Metadata.getColumnName(i).toLowerCase() , DataType  , false , null))
+          Result.fieldsStruct = Result.fieldsStruct:+ ( StructField(Metadata.getColumnName(i).toLowerCase() , DataType  , false , null))
         else 
-          fieldsStruct = fieldsStruct:+ ( StructField(Metadata.getColumnName(i) , DataType  , false , null))
+          Result.fieldsStruct = Result.fieldsStruct:+ ( StructField(Metadata.getColumnName(i) , DataType  , false , null))
        i+=1
       }
       
@@ -140,7 +185,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
           i+= 1
         }
         
-        val b = new GenericRowWithSchema(Fila,StructType.apply(fieldsStruct)) 
+        val b = new GenericRowWithSchema(Fila,StructType.apply(Result.fieldsStruct)) 
         
         ListaDatos = ListaDatos:+ (b)
         
