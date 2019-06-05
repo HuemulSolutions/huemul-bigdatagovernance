@@ -52,10 +52,17 @@ class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends S
     }
     
     if (ControlError_ClassName == null) {
-      ControlError_ClassName = e.getStackTrace()(0).getClassName
-      ControlError_FileName = e.getStackTrace()(0).getFileName
-      ControlError_LineNumber = e.getStackTrace()(0).getLineNumber
-      ControlError_MethodName = e.getStackTrace()(0).getMethodName  
+      if (e.getStackTrace()(0).getClassName == "scala.sys.package$") {
+        ControlError_ClassName = e.getStackTrace()(1).getClassName
+        ControlError_FileName = e.getStackTrace()(1).getFileName
+        ControlError_LineNumber = e.getStackTrace()(1).getLineNumber
+        ControlError_MethodName = e.getStackTrace()(1).getMethodName
+      } else {
+        ControlError_ClassName = e.getStackTrace()(0).getClassName
+        ControlError_FileName = e.getStackTrace()(0).getFileName
+        ControlError_LineNumber = e.getStackTrace()(0).getLineNumber
+        ControlError_MethodName = e.getStackTrace()(0).getMethodName
+      }
     }
     
     ControlError_Message = e.toString()
