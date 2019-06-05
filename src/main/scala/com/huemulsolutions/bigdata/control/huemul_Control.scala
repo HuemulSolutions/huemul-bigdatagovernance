@@ -806,7 +806,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                 ,mdm_fhcreate            
                                 ,mdm_processname         
                               )
-      SELECT ${ReplaceSQLStringNulls(p_testPlan_Id)}
+      VALUES( ${ReplaceSQLStringNulls(p_testPlan_Id)}
            , ${ReplaceSQLStringNulls(p_testPlanGroup_Id)}
            , ${ReplaceSQLStringNulls(p_processExec_id)}
            , ${ReplaceSQLStringNulls(p_process_id)}
@@ -817,7 +817,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
            , ${if (p_testPlan_IsOK) "1" else "0"}
            , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
            , ${ReplaceSQLStringNulls(p_Executor_Name)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }
+      )
     """)
            
     return ExecResult
@@ -834,11 +834,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                 ,mdm_fhcreate            
                                 ,mdm_processname         
                               )
-      SELECT ${ReplaceSQLStringNulls(p_Feature_Id)}
+      VALUES( ${ReplaceSQLStringNulls(p_Feature_Id)}
            , ${ReplaceSQLStringNulls(p_testPlan_Id)}
            , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
            , ${ReplaceSQLStringNulls(p_Executor_Name)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }
+      )
     """)
            
     return ExecResult             
@@ -908,7 +908,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                          , mdm_manualchange
                         							   , mdm_fhcreate
                         							   , mdm_processname) 	
-            	SELECT ${ReplaceSQLStringNulls(p_process_id)}
+            	VALUES( ${ReplaceSQLStringNulls(p_process_id)}
             		   , '0'
             		   , ${ReplaceSQLStringNulls(p_process_name)}
                    , ${ReplaceSQLStringNulls(p_process_FileName)}
@@ -918,7 +918,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             		   , 0
             		   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
             		   , ${ReplaceSQLStringNulls(p_mdm_processname)}
-              ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }            		   
+              )            		   
             """)
     }
     
@@ -941,11 +941,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                 								   , application_id
                 								   , singleton_name
                 								   , mdm_fhcreate) 	
-  		SELECT ${ReplaceSQLStringNulls(p_singleton_id)}
+  		VALUES( ${ReplaceSQLStringNulls(p_singleton_id)}
   			   , ${ReplaceSQLStringNulls(p_application_Id)}
   			   , ${ReplaceSQLStringNulls(p_singleton_name)}
   			   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }  			   
+      )  			   
       """)
       
       //If error, get application id
@@ -995,12 +995,12 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                   							   , idportmonitoring
                   							   , executor_dtstart
                   							   , executor_name) 	
-    	SELECT ${ReplaceSQLStringNulls(p_application_Id)}
+    	VALUES( ${ReplaceSQLStringNulls(p_application_Id)}
     		   , ${ReplaceSQLStringNulls(p_IdSparkPort)}
     		   , ${ReplaceSQLStringNulls(p_IdPortMonitoring)}
     		   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
     		   , ${ReplaceSQLStringNulls(p_Executor_Name)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }    		   
+      )    		   
     """)
            
     return ExecResult             
@@ -1086,7 +1086,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                               ,error_id
                               ,mdm_fhcreate
                               ,mdm_processname)
-         SELECT ${ReplaceSQLStringNulls(p_processExec_id)}
+         VALUES( ${ReplaceSQLStringNulls(p_processExec_id)}
     			  ,${ReplaceSQLStringNulls(p_processExec_idParent)}
     			  ,${ReplaceSQLStringNulls(p_process_id)}
     			  ,${ReplaceSQLStringNulls(p_Malla_id)}
@@ -1113,7 +1113,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     			  ,null
     			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
     			  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }    			  
+      )    			  
     	
     """)
            
@@ -1197,7 +1197,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       										  ,error_id
                       										  ,mdm_fhcreate
                       										  ,mdm_processname)
-       SELECT  ${ReplaceSQLStringNulls(p_processExecStep_id)}	
+       VALUES(  ${ReplaceSQLStringNulls(p_processExecStep_id)}	
       			  ,${ReplaceSQLStringNulls(p_processExec_id)}	
       			  ,${ReplaceSQLStringNulls(p_processExecStep_Name)}	
       			  ,'RUNNING'
@@ -1209,7 +1209,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       			  ,null
       			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
       			  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}	
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }
+      )
       """)
            
     return ExecResult             
@@ -1283,7 +1283,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                  ,dq_iserror
                                  ,mdm_fhcreate
                                  ,mdm_processname)
-      	SELECT  ${ReplaceSQLStringNulls(p_DQ_Id)}
+      	VALUES(  ${ReplaceSQLStringNulls(p_DQ_Id)}
         			 ,${ReplaceSQLStringNulls(LocalTable_Id)}
         			 ,${ReplaceSQLStringNulls(p_Process_Id)}
         			 ,${ReplaceSQLStringNulls(p_ProcessExec_Id)}
@@ -1305,7 +1305,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                ,${if (p_DQ_IsError) "1" else "0"}
         			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
         			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }        			 
+      )        			 
       """)
            
     return ExecResult             
@@ -1361,7 +1361,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								 ,mdm_manualchange
                       								 ,mdm_fhcreate
                       								 ,mdm_processname)
-        	SELECT ${ReplaceSQLStringNulls(p_RAWFiles_id)}
+        	VALUES( ${ReplaceSQLStringNulls(p_RAWFiles_id)}
         			 ,'0'
         			 ,${ReplaceSQLStringNulls(p_RAWFiles_LogicalName)}
         			 ,${ReplaceSQLStringNulls(p_RAWFiles_GroupName)}
@@ -1371,7 +1371,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         			 ,0 
         			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
         			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }        			 
+      )        			 
         """)
         
       ExecResult.OpenVar = p_RAWFiles_id
@@ -1457,7 +1457,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                     										   ,rawfilesdet_contactname
                     										   ,mdm_fhcreate
                     										   ,mdm_processname)
-        		SELECT  ${ReplaceSQLStringNulls(p_RAWFilesDet_id)}
+        		VALUES(  ${ReplaceSQLStringNulls(p_RAWFilesDet_id)}
           			   ,${ReplaceSQLStringNulls(p_RAWFiles_Id)}
           			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_StartDate_string)}
           			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_EndDate_string)}
@@ -1474,7 +1474,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           			   ,${ReplaceSQLStringNulls(p_RAWFilesDet_ContactName)}
           			   ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           			   ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }          			   
+      )          			   
         """)
       ExecResult.OpenVar = p_RAWFilesDet_id
     }
@@ -1539,7 +1539,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                             											,mdm_active
                             											,mdm_fhcreate
                             											,mdm_processname)
-        	SELECT ${ReplaceSQLStringNulls(p_RAWFilesDet_id)}
+        	VALUES( ${ReplaceSQLStringNulls(p_RAWFilesDet_id)}
           			,${ReplaceSQLStringNulls(p_RAWFilesDetFields_ITName)}
           			,${ReplaceSQLStringNulls(p_RAWFilesDetFields_LogicalName)}
           			,${ReplaceSQLStringNulls(p_RAWFilesDetFields_description)}
@@ -1552,7 +1552,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           			,1
           			,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           			,${ReplaceSQLStringNulls(P_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }          			
+      )          			
         """)
     }
     
@@ -1595,7 +1595,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                           									 ,rawfiles_headerline
                           									 ,mdm_fhcreate
                           									 ,mdm_processname)
-        	SELECT  ${ReplaceSQLStringNulls(p_RAWFilesUse_id)}
+        	VALUES(  ${ReplaceSQLStringNulls(p_RAWFilesUse_id)}
           			 ,${ReplaceSQLStringNulls(p_RAWFiles_Id)}
           			 ,${ReplaceSQLStringNulls(p_Process_Id)}
           			 ,${ReplaceSQLStringNulls(p_ProcessExec_Id)}
@@ -1612,7 +1612,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           			 ,${ReplaceSQLStringNulls(p_RAWFiles_HeaderLine)}
           			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }          			 
+      )          			 
         """)
     
     
@@ -1631,12 +1631,12 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                               								  ,processexecparams_value
                               								  ,mdm_fhcreate
                               								  ,mdm_processname)
-        	SELECT ${ReplaceSQLStringNulls(p_processExec_id)}
+        	VALUES( ${ReplaceSQLStringNulls(p_processExec_id)}
           		  ,${ReplaceSQLStringNulls(p_processExecParams_Name)}
           		  ,${ReplaceSQLStringNulls(p_processExecParams_Value)}
           		  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           		  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }          		  
+      )          		  
         """)
     
     
@@ -1704,7 +1704,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								   ,tableuse_partitionvalue
                       								   ,mdm_fhcreate
                       								   ,mdm_processname)
-        	SELECT  ${ReplaceSQLStringNulls(LocalTable_id)}
+        	VALUES(  ${ReplaceSQLStringNulls(LocalTable_id)}
           		   ,${ReplaceSQLStringNulls(p_Process_Id)}
           		   ,${ReplaceSQLStringNulls(p_ProcessExec_Id)}
                  ,${ReplaceSQLStringNulls(p_ProcessExecStep_Id)}
@@ -1726,7 +1726,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${ReplaceSQLStringNulls(p_TableUse_PartitionValue)}
           		   ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           		   ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }          		   
+      )          		   
         """)
     
     
@@ -1804,7 +1804,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								,table_frequency
                       								,mdm_fhcreate
                       								,mdm_processname) 	
-        	SELECT   ${ReplaceSQLStringNulls(p_Table_id)}
+        	VALUES(   ${ReplaceSQLStringNulls(p_Table_id)}
             			,'0'
             			,${ReplaceSQLStringNulls(p_Table_BBDDName)}
             			,${ReplaceSQLStringNulls(p_Table_Name)}
@@ -1820,7 +1820,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			,${ReplaceSQLStringNulls(p_Table_Frequency)}
             			,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
             			,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }            			
+      )            			
           """)
       ExecResult.OpenVar = p_Table_id
     }
@@ -1933,7 +1933,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								 ,mdm_processname
                                        ,mdm_manualchange
                                        ,mdm_active) 	
-        	SELECT    ${ReplaceSQLStringNulls(p_Column_id)}
+        	VALUES(    ${ReplaceSQLStringNulls(p_Column_id)}
             			 ,${ReplaceSQLStringNulls(p_Table_id)}
             			 ,${p_Column_Position}
             			 ,${ReplaceSQLStringNulls(p_Column_Name)}
@@ -1962,7 +1962,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
             			 ,0
                    ,1
-      ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }
+      )
           """)
           
       ExecResult.OpenVar = p_Column_id
@@ -2032,7 +2032,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                        , mdm_manualchange
                       							   , mdm_fhcreate
                       							   , mdm_processname) 	
-      		SELECT ${ReplaceSQLStringNulls(p_TableRel_id)}
+      		VALUES( ${ReplaceSQLStringNulls(p_TableRel_id)}
       			   , ${ReplaceSQLStringNulls(PK_Id)}
       			   , ${ReplaceSQLStringNulls(p_FK_ID)}
       			   , ${ReplaceSQLStringNulls(p_TableFK_NameRelationship)}
@@ -2040,7 +2040,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       			   , 0
       			   , ${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
       			   , ${ReplaceSQLStringNulls(p_mdm_processname)}
-          ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }      			   
+          )      			   
           """)
         ExecResult.OpenVar = p_TableRel_id
         ExecResult.OpenVar2 = PK_Id
@@ -2097,12 +2097,12 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                         									 ,mdm_fhcreate
                         									 ,mdm_processname
         									 )
-        	SELECT ${ReplaceSQLStringNulls(p_TableRel_id)}
+        	VALUES( ${ReplaceSQLStringNulls(p_TableRel_id)}
           		  ,${ReplaceSQLStringNulls(ColumnFK)}
           		  ,${ReplaceSQLStringNulls(ColumnPK)}
           		  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           		  ,${ReplaceSQLStringNulls(p_mdm_processname)}
-          ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }          		  
+          )          		  
       """)
       
     
@@ -2168,7 +2168,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                     ,error_detail
                                     ,mdm_fhcrea
                                     ,mdm_processname)
-        	SELECT ${ReplaceSQLStringNulls(p_Error_Id)}
+        	VALUES( ${ReplaceSQLStringNulls(p_Error_Id)}
           		  ,${ReplaceSQLStringNulls(p_Error_Message)}
                 ,${p_Error_Code}
           		  ,${ReplaceSQLStringNulls(p_Error_Trace)}
@@ -2179,7 +2179,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		  ,${ReplaceSQLStringNulls(p_Error_Detail)}
           		  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           		  ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
-          ${if (huemulBigDataGov.GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }          		  
+          )          		  
       """)
        
     
