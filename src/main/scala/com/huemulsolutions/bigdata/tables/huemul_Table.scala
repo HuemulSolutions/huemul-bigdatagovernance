@@ -1972,7 +1972,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Error_Number = 1005
     }
     else if (this._DQ_MaxNewRecords_Perc != null && this._DQ_MaxNewRecords_Perc > Decimal.apply(0) && (Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total)) > this._DQ_MaxNewRecords_Perc) {
-      DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(this._NumRows_New / this._NumRows_Total)}) exceeds % max defined (${this._DQ_MaxNewRecords_Perc}) "
+      DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total))}) exceeds % max defined (${this._DQ_MaxNewRecords_Perc}) "
       Error_Number = 1006
     }
 
