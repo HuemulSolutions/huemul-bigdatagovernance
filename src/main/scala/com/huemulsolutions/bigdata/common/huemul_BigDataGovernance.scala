@@ -228,12 +228,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
                   							   , idportmonitoring
                   							   , executor_dtstart
                   							   , executor_name) 	
-                	SELECT ${ReplaceSQLStringNulls(IdApplication)}
+                	VALUES( ${ReplaceSQLStringNulls(IdApplication)}
                 		   , ${ReplaceSQLStringNulls(IdSparkPort)}
                 		   , ${ReplaceSQLStringNulls(IdPortMonitoring)}
                 		   , ${ReplaceSQLStringNulls(getCurrentDateTime())}
                 		   , ${ReplaceSQLStringNulls(appName)}
-                  ${if (GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }
+                  ) 
         """)
   }
                 
@@ -662,7 +662,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
                                     ,error_detail
                                     ,mdm_fhcrea
                                     ,mdm_processname)
-        	SELECT ${ReplaceSQLStringNulls(Error_Id)}
+        	VALUES( ${ReplaceSQLStringNulls(Error_Id)}
           		  ,${ReplaceSQLStringNulls(message.replace("'", "''"))}
                 ,${ErrorCode}
           		  ,${ReplaceSQLStringNulls(trace.replace("'", "''"))}
@@ -673,7 +673,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           		  ,''
           		  ,${ReplaceSQLStringNulls(getCurrentDateTime())}
           		  ,${ReplaceSQLStringNulls(WhoWriteError)}
-          ${if (GlobalSettings.CONTROL_IsOracle) "FROM dual " else "" }
+          )
              """, false)            
      
     }
