@@ -205,7 +205,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     //Ask for definition in date
     val DateProcess = huemulBigDataGov.setDateTime(year, month, day, hour, min, sec)
     var LocalErrorCode: Integer = null
-    if (huemulBigDataGov.DebugMode) println("N° array config: " + this.SettingByDate.length.toString())
+    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug("N° array config: " + this.SettingByDate.length.toString())
     val DataResult = this.SettingByDate.filter { x => DateProcess.getTimeInMillis >= x.StartDate.getTimeInMillis && DateProcess.getTimeInMillis <= x.EndDate.getTimeInMillis  }
     
     if (DataResult.length == 0) {
@@ -232,7 +232,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           LocalErrorCode = 3005
           this.RaiseError_RAW("huemul_DataLake Error: FileName contains incorrect characters {{ or }}: " + this.FileName, LocalErrorCode)
         }
-        println("Reading File: " + this.FileName)
+        huemulBigDataGov.logMessageInfo("Reading File: " + this.FileName)
         
         if (this.SettingInUse.FileType == huemulType_FileType.TEXT_FILE) {
           this.DataRDD = huemulBigDataGov.spark.sparkContext.textFile(this.FileName)
@@ -241,8 +241,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
             LocalErrorCode = 3009
             this.RaiseError_RAW(s"huemul_DataLake Error: File doesn't exist ${FileName}",LocalErrorCode)
           }     
-          println("2 first line example of file: " + this.FileName)
-          this.DataRDD.take(2).foreach { x => println(x) }
+          huemulBigDataGov.logMessageInfo("2 first line example of file: " + this.FileName)
+          this.DataRDD.take(2).foreach { x => huemulBigDataGov.logMessageInfo(x) }
         } else {
           LocalErrorCode = 3006
           this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)
@@ -279,15 +279,15 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
 
           //Create DataFrame
           if (huemulBigDataGov.DebugMode) {
-            println("Demo DF Log: " + this.FileName)
-            println(rowRDD.take(2).foreach { x => println(x) })
+            huemulBigDataGov.logMessageDebug("Demo DF Log: " + this.FileName)
+            huemulBigDataGov.logMessageDebug(rowRDD.take(2).foreach { x => huemulBigDataGov.logMessageDebug(x) })
           }
           this.Log.LogDF = huemulBigDataGov.spark.createDataFrame(rowRDD, this.Log.LogSchema)
           
           if (huemulBigDataGov.DebugMode) this.Log.LogDF.show()
           if (this.SettingInUse.LogNumRows_FieldName != null) {
             this.Log.DataNumRows = this.Log.LogDF.first().getAs[String](this.SettingInUse.LogNumRows_FieldName).toLong 
-            println("N° Rows according Log: " + this.Log.DataNumRows.toString())
+            huemulBigDataGov.logMessageDebug("N° Rows according Log: " + this.Log.DataNumRows.toString())
           }
           
         }
@@ -301,16 +301,16 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
            
         this.DataFramehuemul.SetDataSchema(fieldsDetail)
         if (this.huemulBigDataGov.DebugMode) {
-          println("printing DataSchema from settings: ")
+          huemulBigDataGov.logMessageDebug("printing DataSchema from settings: ")
           this.DataFramehuemul.getDataSchema().printTreeString()
         }
         
-        println("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString())                        
+        huemulBigDataGov.logMessageInfo("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString())                        
     } catch {
       case e: Exception => {
-        println("codigo de error")
-        println(LocalErrorCode)
-        println(e.getMessage)
+        huemulBigDataGov.logMessageError("Error Code")
+        huemulBigDataGov.logMessageError(LocalErrorCode)
+        huemulBigDataGov.logMessageError(e.getMessage)
         
         if (LocalErrorCode == null)
           LocalErrorCode = 3001
@@ -562,7 +562,7 @@ object ${param_ObjectName} {
     while (i <= param_numMonths) {
       param_year = huemulBigDataGov.getYear(Fecha)
       param_month = huemulBigDataGov.getMonth(Fecha)
-      println(s"Procesando Año ${Symbol}param_year, month ${Symbol}param_month (${Symbol}i de ${Symbol}param_numMonths)")
+      huemulBigDataGov.logMessageInfo(s"Procesando Año ${Symbol}param_year, month ${Symbol}param_month (${Symbol}i de ${Symbol}param_numMonths)")
       
       //Ejecuta codigo
       var FinOK = process_master(huemulBigDataGov, null, param_year, param_month)
@@ -570,7 +570,7 @@ object ${param_ObjectName} {
       if (FinOK)
         i+=1
       else {
-        println(s"ERROR Procesando Año ${Symbol}param_year, month ${Symbol}param_month (${Symbol}i de ${Symbol}param_numMonths)")
+        huemulBigDataGov.logMessageError(s"ERROR Procesando Año ${Symbol}param_year, month ${Symbol}param_month (${Symbol}i de ${Symbol}param_numMonths)")
         i = param_numMonths + 1
       }
         
@@ -682,7 +682,7 @@ object ${param_ObjectName}_Migrar {
 */
 
    
-   println(Code)
+   huemulBigDataGov.logMessageInfo(Code)
     
     
   }

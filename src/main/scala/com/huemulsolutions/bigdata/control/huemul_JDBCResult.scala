@@ -94,7 +94,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
     
     var i = 0
     while (i<=2 && connection.isClosed()) {
-      println("CONTROL connection closed, trying to establish new connection")
+      huemulBigDataGob.logMessageWarn("CONTROL connection closed, trying to establish new connection")
       StartConnection()
       i+=1
     }
@@ -201,9 +201,9 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
       case e: Exception  =>  
         huemulBigDataGob.RegisterError(9999,e.getMessage(),s"${e}", "", "ExecuteJDBC_WithResult", getClass().getSimpleName(), 0, "HuemulJDBC")
             
-        if (DebugMode) println(SQL)
-        if (DebugMode) println(s"JDBC Error: $e")
-        if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
+        if (DebugMode) huemulBigDataGob.logMessageError(SQL)
+        if (DebugMode) huemulBigDataGob.logMessageError(s"JDBC Error: $e")
+        if (DebugMode) huemulBigDataGob.logMessageError(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => huemulBigDataGob.logMessageDebug(x) }}")
         Result.ErrorDescription = s"JDBC Error: ${e}"
         Result.IsError = true
     }
@@ -219,7 +219,7 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
    
     var i = 0
     while (i<=2 && connection.isClosed()) {
-      println("CONTROL connection closed, trying to establish new connection")
+      huemulBigDataGob.logMessageWarn("CONTROL connection closed, trying to establish new connection")
       StartConnection()
       i+=1
     }
@@ -239,9 +239,9 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
         if (CallErrorRegister)
           huemulBigDataGob.RegisterError(9999,e.getMessage(),s"${e}", "", "ExecuteJDBC_NoResulSet", getClass().getSimpleName(), 0, "HuemulJDBC")
         
-        if (DebugMode) println(SQL)
-        if (DebugMode) println(s"JDBC Error: $e")
-        if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
+        if (DebugMode) huemulBigDataGob.logMessageError(SQL)
+        if (DebugMode) huemulBigDataGob.logMessageError(s"JDBC Error: $e")
+        if (DebugMode) huemulBigDataGob.logMessageError(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => huemulBigDataGob.logMessageError(x) }}")
         Result.ErrorDescription = s"JDBC Error: ${e}"
         Result.IsError = true
     }

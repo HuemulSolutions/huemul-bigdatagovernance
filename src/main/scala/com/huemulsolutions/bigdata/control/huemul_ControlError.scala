@@ -67,19 +67,19 @@ class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends S
     
     ControlError_Message = e.toString()
     
-    println("***************************************************************")
-    println("huemulBigDataGov: Error Detail")
-    println("***************************************************************")
-    println(s"ControlError_ClassName: $ControlError_ClassName")
-    println(s"ControlError_FileName: $ControlError_FileName")
-    println(s"ControlError_ErrorCode: $ControlError_ErrorCode")
-    println(s"ControlError_LineNumber: $ControlError_LineNumber")
-    println(s"ControlError_MethodName: $ControlError_MethodName")
-    println(s"ControlError_Message: $ControlError_Message")
-    println(s"ControlError_Trace: $ControlError_Trace")
+    huemulBigDataGov.logMessageError("***************************************************************")
+    huemulBigDataGov.logMessageError("huemulBigDataGov: Error Detail")
+    huemulBigDataGov.logMessageError("***************************************************************")
+    huemulBigDataGov.logMessageError(s"ControlError_ClassName: $ControlError_ClassName")
+    huemulBigDataGov.logMessageError(s"ControlError_FileName: $ControlError_FileName")
+    huemulBigDataGov.logMessageError(s"ControlError_ErrorCode: $ControlError_ErrorCode")
+    huemulBigDataGov.logMessageError(s"ControlError_LineNumber: $ControlError_LineNumber")
+    huemulBigDataGov.logMessageError(s"ControlError_MethodName: $ControlError_MethodName")
+    huemulBigDataGov.logMessageError(s"ControlError_Message: $ControlError_Message")
+    huemulBigDataGov.logMessageError(s"ControlError_Trace: $ControlError_Trace")
     
-    println(s"Detalle")
-    println(e)
+    huemulBigDataGov.logMessageError(s"Detail")
+    huemulBigDataGov.logMessageError(e)
    
     
   }

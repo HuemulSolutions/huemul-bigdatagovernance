@@ -36,7 +36,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Table Name
    */
   val TableName : String= this.getClass.getSimpleName.replace("$", "") // ""
-  println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}]    table instance: ${TableName}")
+  huemulBigDataGov.logMessageInfo(s"HuemulControl:    table instance: ${TableName}")
   
   def setDataBase(value: ArrayBuffer[huemul_KeyValuePath]) {
     if (DefinitionIsClose)
@@ -376,7 +376,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   var HasPK: Boolean = false
   
   def ApplyTableDefinition(): Boolean = {
-    if (huemulBigDataGov.DebugMode) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] starting ApplyTableDefinition")
+    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulControl: starting ApplyTableDefinition")
     if (this._PartitionField == null)
       _PartitionField = ""
       
@@ -457,10 +457,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     
-    if (huemulBigDataGov.DebugMode) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] register metadata")
+    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulControl: register metadata")
     //Register TableName and fields
     Control.RegisterMASTER_CREATE_Basic(this)
-    if (huemulBigDataGov.DebugMode) println(s"HuemulControlLog: [${huemulBigDataGov.huemul_getDateForLog()}] end ApplyTableDefinition")
+    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulControl: end ApplyTableDefinition")
     if (!HasPK) this.RaiseError("huemul_Table Error: PK not defined", 1017)
     if (this.getTableType == huemulType_Tables.Transaction && !PartitionFieldValid)
       RaiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional (invalida name ${this.getPartitionField} )",1035)
@@ -563,7 +563,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
     }
-    if (huemulBigDataGov.DebugMode) println(s"N° Total: ${fieldsStruct.length}")
+    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"N° Total: ${fieldsStruct.length}")
     return StructType.apply(fieldsStruct)
   }
   
@@ -1300,7 +1300,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
-      //println(s"${Field.get_MyName()} Field.get_MappedName: ${Field.get_MappedName}, Field.get_SQLForUpdate(): ${Field.get_SQLForUpdate()}, Field.get_SQLForInsert(): ${Field.get_SQLForInsert()}")
+      //huemulBigDataGov.logMessageInfo(s"${Field.get_MyName()} Field.get_MappedName: ${Field.get_MappedName}, Field.get_SQLForUpdate(): ${Field.get_SQLForUpdate()}, Field.get_SQLForInsert(): ${Field.get_SQLForInsert()}")
       
       var isOK: Boolean = false
       if (huemulBigDataGov.HasName(Field.get_MappedName))
@@ -1388,7 +1388,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                  LOCATION '${GetFullNameWithPath()}'"""
                                  
     if (huemulBigDataGov.DebugMode)
-      println(s"Create Table sentence: ${lCreateTableScript} ")
+      huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       
     return lCreateTableScript    
   }
@@ -1409,7 +1409,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                  LOCATION '${GetFullNameWithPath_DQ()}'"""
                                  
     if (huemulBigDataGov.DebugMode)
-      println(s"Create Table sentence: ${lCreateTableScript} ")
+      huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       
     return lCreateTableScript    
   }
@@ -1554,7 +1554,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Aplicar DQ según definición de campos en DataDefDQ: Unique Values   
     //*********************************
     SQL_Unique_FinalTable().foreach { x => 
-      if (huemulBigDataGov.DebugMode) println(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
       
       val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(x, s"UNIQUE Validation ",s"count(1) = count(distinct ${x.get_MyName()} )", 2006, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR )
       DQ_UNIQUE.setTolerance(0, null)
@@ -1563,7 +1563,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //Aplicar DQ según definición de campos en DataDefDQ: Acepta nulos (nullable)
     SQL_NotNull_FinalTable().foreach { x => 
-      if (huemulBigDataGov.DebugMode) println(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD ${x.get_MyName()}")
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD ${x.get_MyName()}")
       
         val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, s"Not Null for field ${x.get_MyName()} ", s"${x.get_MyName()} IS NOT NULL",1023)
         NotNullDQ.setTolerance(0, null)
@@ -1647,7 +1647,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && ResultDQ.DetailErrorsDF != null && this.getSaveDQResult) {
       Control.NewStep("Start Save DQ Error Details ")                
       if (!SavePersist_DQ(Control, ResultDQ.DetailErrorsDF)){
-        println("Warning: DQ error can't save to disk")
+        huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
       }
     }
     
@@ -1721,7 +1721,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Open actual file
         val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(FullPathString)
         val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
-        if (huemulBigDataGov.DebugMode) println(s"copy to temp dir: $tempPath ")
+        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
         if (this.getNumPartitions == null || this.getNumPartitions <= 0)
           DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
         else
@@ -1730,7 +1730,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         DFTempCopy.unpersist()
        
         //Open temp file
-        if (huemulBigDataGov.DebugMode) println(s"open temp old df: $tempPath ")
+        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"open temp old df: $tempPath ")
         val DFTempOpen = if (_TableType == huemulType_Tables.Transaction) 
                             huemulBigDataGov.spark.read.parquet(tempPath).withColumn(_PartitionField.toLowerCase(), lit(PartitionValueForSelectiveUpdate))
                          else huemulBigDataGov.spark.read.parquet(tempPath)
@@ -1807,7 +1807,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep("Transaction: Create Hash Field")
       val SQLFinalTable = SQL_Step0_TXHash(this.DataFramehuemul.Alias, huemulBigDataGov.ProcessNameCall)
       if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery)
-        println(SQLFinalTable)
+        huemulBigDataGov.logMessageDebug(SQLFinalTable)
       //STEP 2: Execute final table //Add debugmode and getnumpartitions in v1.3
       DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
       
@@ -1865,7 +1865,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Open actual file
         val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(this.GetFullNameWithPath())
         val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
-        if (huemulBigDataGov.DebugMode) println(s"copy to temp dir: $tempPath ")
+        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
         if (this.getNumPartitions == null || this.getNumPartitions <= 0)
           DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
         else
@@ -1873,11 +1873,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         DFTempCopy.unpersist()
        
         //Open temp file
-        if (huemulBigDataGov.DebugMode) println(s"open temp old df: $tempPath ")
+        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"open temp old df: $tempPath ")
         val DFTempOpen = huemulBigDataGov.spark.read.parquet(tempPath)        
         DFTempOpen.createOrReplaceTempView(TempAlias)        
       } else {
-          println(s"create empty dataframe because ${this.InternalGetTable()} does not exist")
+          huemulBigDataGov.logMessageInfo(s"create empty dataframe because ${this.InternalGetTable()} does not exist")
           val Schema = GetSchema()
           val SchemaForEmpty = StructType(Schema.map { x => StructField(x.name, x.dataType, x.nullable) })
           val EmptyRDD = huemulBigDataGov.spark.sparkContext.emptyRDD[Row]
@@ -1930,11 +1930,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     //if (this._NumRows_Total < 1000000)
     if (storageLevelOfDF != null) {
-      //println("***** cache")
+      //huemulBigDataGov.logMessageInfo("***** cache")
       this.DataFramehuemul.DataFrame.persist(storageLevelOfDF)
       }
     //else 
-      //println("***** sin cache")
+      //huemulBigDataGov.logMessageInfo("***** sin cache")
   }
   
   private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String) {
@@ -2147,9 +2147,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //Create table persistent
       if (huemulBigDataGov.DebugMode){
-        println(s"Saving ${InternalGetTable()} Table with params: ") 
-        println(s"${_PartitionField} field for partitioning table")
-        println(s"${GetFullNameWithPath()} path")
+        huemulBigDataGov.logMessageDebug(s"Saving ${InternalGetTable()} Table with params: ") 
+        huemulBigDataGov.logMessageDebug(s"${_PartitionField} field for partitioning table")
+        huemulBigDataGov.logMessageDebug(s"${GetFullNameWithPath()} path")
       }
       
       LocalControl.NewStep("Start Save ")                
@@ -2192,7 +2192,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
        
        val DestTableName: String = InternalGetTable(DestEnvironment)
-       println(s"MSCK REPAIR TABLE ${DestTableName}")
+       huemulBigDataGov.logMessageInfo(s"MSCK REPAIR TABLE ${DestTableName}")
        huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${DestTableName}")
               
     } else {
@@ -2265,7 +2265,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           }
           
           LocalControl.NewStep("Save: OverWrite partition with new data")
-          if (huemulBigDataGov.DebugMode) println(s"saving path: ${FullPath} ")     
+          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${FullPath} ")     
           
           DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
                 
@@ -2287,14 +2287,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (CreateInHive ) {
         val sqlDrop01 = s"drop table if exists ${InternalGetTable()}"
         LocalControl.NewStep("Save: Drop Hive table Def")
-        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sqlDrop01)
+        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
           val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetCurrentDataBase()).collect()
           if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase()  }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
             
         } catch {
-          case t: Throwable => println(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+          case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
         }
        
       }
@@ -2311,7 +2311,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         if (CreateInHive && (_PartitionField != null && _PartitionField != "")) {
           LocalControl.NewStep("Save: Repair Hive Metadata")
-          if (huemulBigDataGov.DebugMode) println(s"MSCK REPAIR TABLE ${InternalGetTable()}")
+          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"MSCK REPAIR TABLE ${InternalGetTable()}")
           huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${InternalGetTable()}")
         }
         
@@ -2344,7 +2344,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     try {      
       LocalControl.NewStep("Save DQ Result: Saving new DQ result")
-      if (huemulBigDataGov.DebugMode) println(s"saving path: ${GetFullNameWithPath_DQ()} ")        
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_DQ()} ")        
       DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(GetFullNameWithPath_DQ())
       
     } catch {
@@ -2360,14 +2360,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (CreateInHive ) {
         val sqlDrop01 = s"drop table if exists ${InternalGetTable(true)}"
         LocalControl.NewStep("Save: Drop Hive table Def")
-        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sqlDrop01)
+        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
           val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)).collect()
           if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase() }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
             
         } catch {
-          case t: Throwable => println(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+          case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
         }
        
       }
@@ -2383,7 +2383,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         LocalControl.NewStep("Save: Repair Hive Metadata")
-        if (huemulBigDataGov.DebugMode) println(s"MSCK REPAIR TABLE ${InternalGetTable(true)}")
+        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"MSCK REPAIR TABLE ${InternalGetTable(true)}")
         huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${InternalGetTable(true)}")
         
         if (huemulBigDataGov.ImpalaEnabled) {
@@ -2426,7 +2426,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     Error_isError = true
     Error_Code = code
     Control.Control_Error.ControlError_ErrorCode = code
-    if (huemulBigDataGov.DebugMode) println(txt)
+    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageError(txt)
     Control.RaiseError(txt)
     //sys.error(txt)
   }  

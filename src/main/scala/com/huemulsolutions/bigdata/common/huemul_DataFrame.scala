@@ -91,7 +91,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    Create DF from SQL (equivalent to spark.sql method)
    */
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
-    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(sql)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
     
     //Cambio en v1.3: optimiza tiempo al aplicar repartition para archivos pequeños             
     val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
@@ -289,7 +289,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
             DQResult.Description = s"huemul_DataFrame Error: Column ${x.name} have different values: Total rows ${totalCount}, num OK : ${currentColumn} "
             DQResult.isError = true
             DQResult.Error_Code = 2005
-            println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DQResult.Description}")
+            huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DQResult.Description}")
             DQResult.dqDF.where(s"Equal_${x.name} = 0").show()
             NumColumnsError += 1
           }
@@ -351,8 +351,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       val Res = DQ_StatsByCol(ObjectData, x.name)
       
       if (Res.isError) {
-        println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ERROR DQ")
-        println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${Res.Description}")
+        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ERROR DQ")
+        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${Res.Description}")
       }
       
       if (DQResult.dqDF != null)
@@ -380,7 +380,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     if (Colfield != null) {
       DataType = Colfield(0).dataType
     }
-    if (huemulBigDataGov.DebugMode) println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DataType}")
+    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DataType}")
     var SQL : String = s""" SELECT "$Col"            as ColName
                                   ,cast(Min($Col) as String)        as min_Col
                                   ,cast(Max($Col) as String)         as max_Col
@@ -394,7 +394,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                                   ,sum(CASE WHEN $Col is null then 1 else 0 end)  as count_null
                                   ,${if (huemulBigDataGov.IsNumericType(DataType)) s"cast(sum(CASE WHEN $Col = 0 then 1 else 0 end) as long)" else "cast(-1 as long)" }  as count_cero
                             FROM """ + AliasDF   
-    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(SQL)
     try {
       DQResult.dqDF = huemulBigDataGov.spark.sql(SQL)
             
@@ -440,7 +440,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     
     SQL = SQL + " FROM " + AliasDF   
 
-    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(SQL)
     try {
       DQResult.dqDF = huemulBigDataGov.spark.sql(SQL)
       
@@ -483,7 +483,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                         """   
 
     var DQDup: Long = 0
-    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(SQL)
     try {
       DQResult.dqDF = huemulBigDataGov.spark.sql(SQL) 
       if (huemulBigDataGov.DebugMode) {
@@ -503,7 +503,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         DQResult.Description = s"huemul_DataFrame Error: num Rows Duplicate in $ColDuplicate: " + DQDup.toString()
         DQResult.isError = true
         DQResult.Error_Code = 2006
-        println(DQResult.Description)
+        huemulBigDataGov.logMessageWarn(DQResult.Description)
         DQResult.dqDF.show()
       }
     } catch {
@@ -558,7 +558,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                         """   
 
     var DQDup: Long = 0
-    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) println(SQL)
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(SQL)
     try {
       DQResult.dqDF = huemulBigDataGov.spark.sql(SQL) 
       if (huemulBigDataGov.DebugMode) {
@@ -575,7 +575,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         DQResult.Description = s"huemul_DataFrame Error: num Rows Null in $Col: " + DQDup.toString()
         DQResult.isError = true
         DQResult.Error_Code = 2007
-        println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DQResult.Description}")
+        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DQResult.Description}")
         DQResult.dqDF.show()
       }
     } catch {
@@ -701,8 +701,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     //DataQuality AdHoc
     val SQLDQ = getSQL_DataQualityForRun(OfficialDataQuality, ManualRules, AliasToQuery)
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) {
-      println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DATA QUALITY ADHOC QUERY")
-      println(SQLDQ)
+      huemulBigDataGov.logMessageDebug(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DATA QUALITY ADHOC QUERY")
+      huemulBigDataGov.logMessageDebug(SQLDQ)
     }
     var DF_ErrorDetails: DataFrame = null
     
@@ -746,7 +746,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
           }
         }
         
-        if (huemulBigDataGov.DebugMode || IsError) println(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)")
+        if (huemulBigDataGov.DebugMode || IsError) huemulBigDataGov.logMessageDebug(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)")
                        
         var dfTableName: String = null
         var dfDataBaseName: String = null
@@ -808,7 +808,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     }
     
     if (NumTotalErrors > 0){
-      println (s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] num with errors: ${NumTotalErrors} ")
+      huemulBigDataGov.logMessageWarn (s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] num with errors: ${NumTotalErrors} ")
       ErrorLog.isError = true
       ErrorLog.Description = txtTotalErrors
       ErrorLog.Error_Code = localErrorCode 
