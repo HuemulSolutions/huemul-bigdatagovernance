@@ -57,7 +57,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * logMessageDebug: Send {message} to log4j - Debug
    */
   def logMessageDebug(message: Any)  {
-    log_info.info(message)
+    log_info.debug(message)
   }
   
   /**
