@@ -86,7 +86,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  logMessageInfo("huemul_BigDataGovernance version 2.0.0 - sv1.0") 
+  logMessageWarn("huemul_BigDataGovernance version 2.0.0 - sv1.0") 
        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
@@ -252,7 +252,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   //Process Registry
   if (RegisterInControl) {
     while (application_StillAlive(IdApplication)) {
-      logMessageInfo(s"waiting for singleton Application Id in use: ${IdApplication}, maybe you're creating two times a spark connection")
+      logMessageWarn(s"waiting for singleton Application Id in use: ${IdApplication}, maybe you're creating two times a spark connection")
       Thread.sleep(10000)
     }
     val Result = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
