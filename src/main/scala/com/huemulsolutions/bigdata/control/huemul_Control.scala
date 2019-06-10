@@ -53,7 +53,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   
   //Insert processExcec
-  phuemulBigDataGov.logMessageInfo (s"HuemulControl: processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}")
+  phuemulBigDataGov.logMessageWarn (s"HuemulControl: processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}")
   if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) { 
     control_processExec_add(Control_Id
            ,Control_IdParent
@@ -229,8 +229,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     processExec_dtEnd = huemulBigDataGov.getCurrentDateTimeJava()
     val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
   
-    if (!huemulBigDataGov.HasName(Control_IdParent)) phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH ALL OK")
-    phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
+    if (!huemulBigDataGov.HasName(Control_IdParent)) phuemulBigDataGov.logMessageWarn(s"HuemulControl: FINISH ALL OK")
+    phuemulBigDataGov.logMessageWarn(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
 
     if (huemulBigDataGov.RegisterInControl) {
     
@@ -247,8 +247,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     processExec_dtEnd = huemulBigDataGov.getCurrentDateTimeJava()
     val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
     
-    if (Control_IdParent == null) phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH ERROR")
-    phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
+    if (Control_IdParent == null) phuemulBigDataGov.logMessageWarn(s"HuemulControl: FINISH ERROR")
+    phuemulBigDataGov.logMessageWarn(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
 
       
     if (huemulBigDataGov.RegisterInControl) {
@@ -336,7 +336,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   
   def NewStep(StepName: String) {
-    phuemulBigDataGov.logMessageInfo(s"HuemulControl: Step: $StepName")
+    phuemulBigDataGov.logMessageWarn(s"HuemulControl: Step: $StepName")
     
    
     //New Step add
@@ -376,7 +376,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     //Get TestPlanGroup to use in final check
     _testPlanGroup_Id = p_testPlanGroup_Id
-    phuemulBigDataGov.logMessageInfo(s"HuemulControl: TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
+    phuemulBigDataGov.logMessageWarn(s"HuemulControl: TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
     
     testPlanDetails.append(new huemul_TestPlan(testPlan_Id
                                               ,p_testPlanGroup_Id
