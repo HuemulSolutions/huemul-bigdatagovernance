@@ -133,6 +133,16 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (!this.GlobalSettings.ValidPath(globalSettings.DQError_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_DataBase"
   }
+  
+  if (this.GlobalSettings.MDM_SaveOldValueTrace) {
+    if (!this.GlobalSettings.ValidPath(globalSettings.MDM_OldValueTrace_Path, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_Path"
+    if (!this.GlobalSettings.ValidPath(globalSettings.MDM_OldValueTrace_DataBase, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_DataBase"
+  }
+  
+  
+  
   logMessageInfo("End Validating GlobalSetings..")
   
   if (ErrorGlobalSettings.length()> 0) {
