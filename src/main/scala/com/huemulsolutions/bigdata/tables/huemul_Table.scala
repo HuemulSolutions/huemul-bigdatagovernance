@@ -927,6 +927,39 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   
+  /**
+  CREATE SQL SCRIPT FOR OLD VALUE TRACE INSERT
+   */
+  private def SQL_Step_OldValueTrace(Alias: String, ProcessName: String): String = {
+       
+    //Get PK
+    var StringSQl_PK: String = "SELECT "
+    var coma: String = ""
+    getALLDeclaredFields().filter { x => x.setAccessible(true)
+                                         x.get(this).isInstanceOf[huemul_Columns] &&
+                                         x.get(this).asInstanceOf[huemul_Columns].getIsPK }
+    .foreach { x =>
+      StringSQl_PK += s" ${coma}${x.getName}"
+      coma = ","
+    }
+    
+    //Get SQL for get columns value change
+    var StringSQl: String = ""
+    var StringUnion: String = ""
+    getALLDeclaredFields().filter { x => x.setAccessible(true)
+                                      x.get(this).isInstanceOf[huemul_Columns] && 
+                                      x.get(this).asInstanceOf[huemul_Columns].getMDM_EnableOldValue_FullTrace }
+    .foreach { x =>     
+      //Get field
+      var Field = x.get(this).asInstanceOf[huemul_Columns]
+      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, cast(string as '${x.getName.toUpperCase()}') as column_name, CAST(STRING A new_${x.getName}) AS new_value, CAST(STRING AS old_${x.getName} ) AS old_value, now() as MDM_fhChange, cast(string as '$ProcessName') as MDM_ProcessChange FROM $Alias WHERE new_${x.getName} <> old_${x.getName} "
+      
+      StringUnion = " \n UNION ALL "      
+    }
+    
+    return StringSQl 
+  }
+
   
   /**
   CREATE SQL SCRIPT FULL JOIN MASTER DATA OR REFERENCE DATA
@@ -1894,7 +1927,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val SQLFullJoin_DF = huemulBigDataGov.DF_ExecuteQuery("__FullJoin"
                                               , SQL_Step1_FullJoin(TempAlias, NextAlias, isUpdate, isDelete)
                                              )
-                        
+                                             
+                                             
       //STEP 2: Create Tabla with Update and Insert result
       LocalControl.NewStep("Ref & Master: Update & Insert Logic")
       val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
@@ -1918,6 +1952,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //STEP 2: Execute final table // Add debugmode and getnumpartitions in v1.3 
       DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
+      
+      //CREATE NEW DATAFRAME WITH MDM OLD VALUE FULL TRACE
+      LocalControl.NewStep("Ref & Master: Hash Code")                                         
+      val SQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery("__MDM_OldValueFullTrace"
+                                          , SQL_Step_OldValueTrace("__FullJoin", huemulBigDataGov.ProcessNameCall)
+                                         )
       
       //Unpersist first DF
       SQLHash_p2_DF.unpersist()
