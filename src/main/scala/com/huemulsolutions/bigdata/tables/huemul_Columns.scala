@@ -160,6 +160,18 @@ class huemul_Columns(param_DataType: DataType
   }
   
   /**
+   save all old values trace in other table
+   */
+  private var MDM_EnableOldValue_FullTrace: Boolean = false
+  def getMDM_EnableOldValue_FullTrace: Boolean = {return MDM_EnableOldValue_FullTrace}
+  def setMDM_EnableOldValue_FullTrace(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setMDM_EnableOldValue_FullTrace, definition is close")
+    else
+      MDM_EnableOldValue_FullTrace = value
+  }
+  
+  /**
    save old value when new value arrive 
    */
   private var MDM_EnableOldValue: Boolean = false
