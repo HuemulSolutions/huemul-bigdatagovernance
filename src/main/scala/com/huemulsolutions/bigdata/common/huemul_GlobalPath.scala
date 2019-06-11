@@ -58,6 +58,12 @@ class huemul_GlobalPath() extends Serializable {
     val DQError_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     val DQError_DataBase: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
+    //Save Old Values traceability
+    var MDM_SaveOldValueTrace: Boolean = true
+    val MDM_OldValueTrace_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
+    val MDM_OldValueTrace_DataBase: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
+    
+    
     /**
      Returns true if path has value, otherwise return false
      */
