@@ -273,6 +273,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    *****   F I E L D   P R O P E R T I E S    **************************************** 
    ******************************************************************************** */
   
+  val MDM_columnName = new huemul_Columns (TimestampType, true, "Column Name", false)
+  val MDM_newValue = new huemul_Columns (TimestampType, true, "New value updated in table", false)
+  val MDM_oldValue = new huemul_Columns (TimestampType, true, "Old value", false)
+  
   val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false)
   val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false)
   val MDM_fhChange = new huemul_Columns (TimestampType, false, "fecha / hora de último cambio de valor en los campos de negocio", false)
@@ -499,12 +503,27 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     val a = pClass.getDeclaredFields()  //huemul_table
     
+    
     var c = a
-    if (!OnlyUserDefined){
+    
+    //only PK for save result to old value trace 
+    if (tableType == huemulType_InternalTableType.OldValueTrace) {
+        c = c.filter { x => x.setAccessible(true)
+                            x.get(this).isInstanceOf[huemul_Columns] && 
+                            x.get(this).asInstanceOf[huemul_Columns].getIsPK 
+                            } 
+    } 
+    
+    if (!OnlyUserDefined){ //all columns, including MDM
       var b = pClass.getSuperclass().getDeclaredFields()
       
+      //exclude OldValues trace columns 
+      if (tableType != huemulType_InternalTableType.OldValueTrace) {
+        b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue"   } 
+      }
+      
       if (this._TableType == huemulType_Tables.Transaction) 
-        b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }     
+        b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }   
       
       c = a.union(b)
     }
@@ -515,7 +534,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                       x.get(this).isInstanceOf[huemul_Columns] } 
         
         c = d.union(c)
-    }
+    } 
     
     if (PartitionColumnToEnd) {
       val partitionlast = c.filter { x => x.getName.toUpperCase() == this.getPartitionField.toUpperCase() }
@@ -976,7 +995,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
-      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, cast('${x.getName.toUpperCase()}' as string) as column_name, CAST(new_${x.getName} as string) AS new_value, CAST(old_${x.getName} as string) AS old_value, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange FROM $Alias WHERE new_${x.getName} <> old_${x.getName} "
+      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, cast('${x.getName.toUpperCase()}' as string) as MDM_columnName, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange FROM $Alias WHERE new_${x.getName} <> old_${x.getName} "
       StringUnion = " \n UNION ALL "
       count_fulltrace += 1
     }
