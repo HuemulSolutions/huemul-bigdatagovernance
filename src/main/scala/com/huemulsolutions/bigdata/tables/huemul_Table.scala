@@ -12,13 +12,15 @@ import org.apache.hadoop.fs.permission.FsPermission
 import huemulType_Tables._
 import huemulType_StorageType._
 import com.huemulsolutions.bigdata._
-import com.huemulsolutions.bigdata.dataquality._
+import com.huemulsolutions.bigdata.dataquality.huemul_DataQuality
+import com.huemulsolutions.bigdata.dataquality.huemul_DataQualityResult
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import com.sun.xml.internal.ws.api.pipe.NextAction
-import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
-import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
+import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel
+import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification
 import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
+import com.huemulsolutions.bigdata.control.huemulType_Frequency
 import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
 import com.huemulsolutions.bigdata.tables.huemulType_InternalTableType._
@@ -492,7 +494,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Get all declared fields from class
    */
-  private def getALLDeclaredFields(OnlyUserDefined: Boolean = false, PartitionColumnToEnd: Boolean = false, WithDQColumns: Boolean = false) : Array[java.lang.reflect.Field] = {
+  private def getALLDeclaredFields(OnlyUserDefined: Boolean = false, PartitionColumnToEnd: Boolean = false, tableType: huemulType_InternalTableType = huemulType_InternalTableType.Normal) : Array[java.lang.reflect.Field] = {
     val pClass = getClass()  
     
     val a = pClass.getDeclaredFields()  //huemul_table
@@ -507,7 +509,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       c = a.union(b)
     }
     
-    if (WithDQColumns) {
+    if (tableType == huemulType_InternalTableType.DQ) {
         val DQClass = pClass.getSuperclass().getSuperclass() //huemul_TableDQ
         val d = DQClass.getDeclaredFields.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] } 
@@ -666,8 +668,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    Create schema from DataDef Definition
    */
-  private def GetColumns_CreateTable(ForHive: Boolean = false, ForDQ: Boolean = false): String = {
-    val fieldList = getALLDeclaredFields(false,true,ForDQ)
+  private def GetColumns_CreateTable(ForHive: Boolean = false, tableType: huemulType_InternalTableType = huemulType_InternalTableType.Normal ): String = {
+    val fieldList = getALLDeclaredFields(false,true,tableType)
     val NumFields = fieldList.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }.length
     
@@ -680,7 +682,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       var DataTypeLocal = Field.DataType.sql
       
-      if (ForDQ) {
+      if (tableType == huemulType_InternalTableType.DQ) {
         //create StructType
         if ("dq_control_id".toUpperCase() != x.getName.toUpperCase()) {
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
@@ -1462,7 +1464,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     val lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.DQ)} (${GetColumns_CreateTable(true, true) })
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.DQ)} (${GetColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
                                  PARTITIONED BY (${PartitionForCreateTable})
                                  STORED AS ${_StorageType.toString()}                                  
                                  LOCATION '${GetFullNameWithPath_DQ()}'"""
@@ -1484,7 +1486,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     val lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)} (${GetColumns_CreateTable(true, true) })
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)} (${GetColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
                                  PARTITIONED BY (${PartitionForCreateTable})
                                  STORED AS ${_StorageType.toString()}                                  
                                  LOCATION '${GetFullNameWithPath_DQ()}'"""
