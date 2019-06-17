@@ -527,7 +527,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
        
       if (tableType == huemulType_InternalTableType.OldValueTrace) {
-        b = b.filter { x => x.getName == "MDM_columnName" || x.getName == "MDM_newValue" || x.getName == "MDM_oldValue" || x.getName == "MDM_AutoInc"
+        b = b.filter { x => x.getName == "MDM_columnName" || x.getName == "MDM_newValue" || x.getName == "MDM_oldValue" || x.getName == "MDM_AutoInc" ||
                             x.getName == "MDM_fhChange" || x.getName == "MDM_ProcessChange"  }
       } else {
         //exclude OldValuestrace columns
@@ -560,6 +560,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   private var _SQL_OldValueFullTrace_DF: DataFrame = null 
+  private var _MDM_AutoInc: Long = 0
   private var _NumRows_New: Long = null
   private var _NumRows_Update: Long = null
   private var _NumRows_Updatable: Long = null
@@ -1001,6 +1002,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var StringSQl: String = ""
     var StringUnion: String = ""
     var count_fulltrace = 0
+    
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] && 
                                       x.get(this).asInstanceOf[huemul_Columns].getMDM_EnableOldValue_FullTrace }
@@ -1008,7 +1010,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
-      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, cast('${x.getName.toUpperCase()}' as string) as MDM_columnName, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
+      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, cast('${x.getName.toUpperCase()}' as string) as MDM_columnName, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, ${_MDM_AutoInc} as MDM_AutoInc, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
       StringUnion = " \n UNION ALL "
       count_fulltrace += 1
     }
