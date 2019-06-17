@@ -273,9 +273,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    *****   F I E L D   P R O P E R T I E S    **************************************** 
    ******************************************************************************** */
   
-  val MDM_columnName = new huemul_Columns (TimestampType, true, "Column Name", false)
-  val MDM_newValue = new huemul_Columns (TimestampType, true, "New value updated in table", false)
-  val MDM_oldValue = new huemul_Columns (TimestampType, true, "Old value", false)
+  val MDM_columnName = new huemul_Columns (StringType, true, "Column Name", false)
+  val MDM_newValue = new huemul_Columns (StringType, true, "New value updated in table", false)
+  val MDM_oldValue = new huemul_Columns (StringType, true, "Old value", false)
+  val MDM_AutoInc = new huemul_Columns (LongType, true, "auto incremental for version control", false)
   
   val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false)
   val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false)
@@ -526,11 +527,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
        
       if (tableType == huemulType_InternalTableType.OldValueTrace) {
-        b = b.filter { x => x.getName == "MDM_columnName" || x.getName != "MDM_newValue" || x.getName != "MDM_oldValue" ||
-                            x.getName == "MDM_fhChange" || x.getName != "MDM_ProcessChange"  }
+        b = b.filter { x => x.getName == "MDM_columnName" || x.getName == "MDM_newValue" || x.getName == "MDM_oldValue" || x.getName == "MDM_AutoInc"
+                            x.getName == "MDM_fhChange" || x.getName == "MDM_ProcessChange"  }
       } else {
         //exclude OldValuestrace columns
-        b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue"   }
+        b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue" && x.getName != "MDM_AutoInc"  }
         
         if (this._TableType == huemulType_Tables.Transaction) 
           b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }   
