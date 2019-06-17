@@ -454,8 +454,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           DataField.setNullable(false)
           HasPK = true
           
-          if (DataField.getMDM_EnableDTLog || DataField.getMDM_EnableOldValue || DataField.getMDM_EnableProcessLog) {
-            RaiseError(s"Error column ${x.getName}:, is PK, can't enabled MDM_EnableDTLog, MDM_EnableOldValue or MDM_EnableProcessLog",1040)
+          if (DataField.getMDM_EnableDTLog || DataField.getMDM_EnableOldValue || DataField.getMDM_EnableProcessLog || DataField.getMDM_EnableOldValue_FullTrace ) {
+            RaiseError(s"Error column ${x.getName}:, is PK, can't enabled MDM_EnableDTLog, MDM_EnableOldValue, MDM_EnableOldValue_FullTrace or MDM_EnableProcessLog",1040)
           }
         }
         
@@ -517,13 +517,18 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (!OnlyUserDefined){ //all columns, including MDM
       var b = pClass.getSuperclass().getDeclaredFields()
       
-      //exclude OldValues trace columns 
-      if (tableType != huemulType_InternalTableType.OldValueTrace) {
-        b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue"   } 
+       
+      if (tableType == huemulType_InternalTableType.OldValueTrace) {
+        b = b.filter { x => x.getName == "MDM_columnName" || x.getName != "MDM_newValue" || x.getName != "MDM_oldValue" ||
+                            x.getName == "MDM_fhChange" || x.getName != "MDM_ProcessChange"  }
+      } else {
+        //exclude OldValuestrace columns
+        b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue"   }
+        
+        if (this._TableType == huemulType_Tables.Transaction) 
+          b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }   
       }
       
-      if (this._TableType == huemulType_Tables.Transaction) 
-        b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }   
       
       c = a.union(b)
     }
@@ -916,7 +921,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (huemulBigDataGov.HasName(Field.get_SQLForUpdate()))
           StringSQL_LeftJoin += s",CAST(${Field.get_SQLForUpdate()} as ${Field.DataType.sql} ) as new_update_${x.getName} \n"
           
-        if (Field.getMDM_EnableOldValue || Field.getMDM_EnableDTLog || Field.getMDM_EnableProcessLog) {
+        if (Field.getMDM_EnableOldValue || Field.getMDM_EnableDTLog || Field.getMDM_EnableProcessLog || Field.getMDM_EnableOldValue_FullTrace) {
           //Change field, take update field if exist, otherwise use get_name()
           if (huemulBigDataGov.HasName(Field.get_MappedName())) {
             val NewFieldTXT = ApplyAutoCast(if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),Field.DataType.sql)
@@ -995,7 +1000,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
-      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, cast('${x.getName.toUpperCase()}' as string) as MDM_columnName, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange FROM $Alias WHERE new_${x.getName} <> old_${x.getName} "
+      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, cast('${x.getName.toUpperCase()}' as string) as MDM_columnName, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
       StringUnion = " \n UNION ALL "
       count_fulltrace += 1
     }
@@ -1054,7 +1059,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (huemulBigDataGov.HasName(Field.get_SQLForUpdate()))
           StringSQL_FullJoin += s",CAST(${Field.get_SQLForUpdate()} as ${Field.DataType.sql} ) as new_update_${x.getName} \n"
           
-        if (Field.getMDM_EnableOldValue || Field.getMDM_EnableDTLog || Field.getMDM_EnableProcessLog) {
+        if (Field.getMDM_EnableOldValue || Field.getMDM_EnableDTLog || Field.getMDM_EnableProcessLog || Field.getMDM_EnableOldValue_FullTrace) {
           //Change field, take update field if exist, otherwise use get_name()
           if (huemulBigDataGov.HasName(Field.get_MappedName())) {
             val NewFieldTXT = ApplyAutoCast(if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),Field.DataType.sql)
@@ -2030,10 +2035,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace) {
         LocalControl.NewStep("Ref & Master: MDM Old Value Full Trace")
         val SQL_FullTrace = SQL_Step_OldValueTrace("__FullJoin", huemulBigDataGov.ProcessNameCall)
-       
+        println(SQL_FullTrace)
         
-        if (SQL_FullTrace != null) //if null, doesn't have mdm old value full trace to get
+        if (SQL_FullTrace != null){ //if null, doesn't have mdm old value full trace to get
           _SQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery("__SQL_OldValueFullTrace_DF",SQL_FullTrace)
+          _SQL_OldValueFullTrace_DF.show()
+        }
+          
+        
       }
       //Unpersist first DF
       SQLHash_p2_DF.unpersist()
