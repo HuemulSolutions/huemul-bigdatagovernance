@@ -314,6 +314,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return this.GetPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_dq"
   }
   
+  /**
+   * Get Fullpath hdfs for _oldvalue results = GlobalPaths + DQError_Path + TableName + "_oldvalue"
+   */
+  def GetFullNameWithPath_OldValueTrace() : String = {
+    return this.GetPath(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_oldvalue"
+  }
+  
   def GetFullNameWithPath2(ManualEnvironment: String) : String = {
     return GlobalPath(ManualEnvironment) + _LocalPath + TableName
   }
@@ -2452,6 +2459,84 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           this.Error_isError = true
           this.Error_Text = s"huemul_Table Error: create external table failed. ${e.getMessage}"
           this.Error_Code = 1025
+          Result = false
+          LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
+      }
+    }
+    
+    //Add from 2.0: save Old Value Trace
+    if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace && _SQL_OldValueFullTrace_DF != null) {
+      Result = SavePersist_OldValueTrace(LocalControl,_SQL_OldValueFullTrace_DF)
+    } 
+      
+      
+    return Result
+    
+  }
+  
+  /**
+   * Save DQ Result data to disk
+   */
+  private def SavePersist_OldValueTrace(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
+    var DF_Final = DF
+    var Result: Boolean = true
+      
+    try {      
+      LocalControl.NewStep("Save OldVT Result: Saving Old Value Trace result")
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_OldValueTrace()} ")        
+      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format("csv")save(GetFullNameWithPath_OldValueTrace())
+      
+    } catch {
+      case e: Exception => 
+        this.Error_isError = true
+        this.Error_Text = s"huemul_Table OldVT Error: write in disk failed for Old Value Trace result. ${e.getMessage}"
+        this.Error_Code = 1052
+        Result = false
+        LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
+    }
+    
+    if (Result) {
+      if (CreateInHive ) {
+        val sqlDrop01 = s"drop table if exists ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)}"
+        LocalControl.NewStep("Save: Drop Hive table Def")
+        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
+        try {
+          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)).collect()
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase() }.length > 0) 
+            huemulBigDataGov.spark.sql(sqlDrop01)
+            
+        } catch {
+          case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+        }
+       
+      }
+        
+      try {
+        //create table
+        if (CreateInHive ) {
+          LocalControl.NewStep("Save: Create Table in Hive Metadata")
+          val lscript = DF_CreateTable_OldValueTrace_Script() 
+         
+          huemulBigDataGov.spark.sql(lscript)
+        }
+    
+        //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
+        val _tableNameOldValueTrace: String = InternalGetTable(huemulType_InternalTableType.OldValueTrace)
+        LocalControl.NewStep("Save: Repair Hive Metadata")
+        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}")
+        huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}")
+        
+        if (huemulBigDataGov.ImpalaEnabled) {
+          LocalControl.NewStep("Save: refresh Impala Metadata")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"invalidate metadata ${_tableNameOldValueTrace}")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh ${_tableNameOldValueTrace}")
+        }
+      } catch {
+        case e: Exception => 
+          
+          this.Error_isError = true
+          this.Error_Text = s"huemul_Table OldVT Error: create external table OldValueTrace output failed. ${e.getMessage}"
+          this.Error_Code = 1053
           Result = false
           LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
       }
