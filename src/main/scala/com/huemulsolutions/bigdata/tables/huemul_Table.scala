@@ -87,6 +87,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getStorageType: huemulType_StorageType = {return _StorageType}
   private var _StorageType : huemulType_StorageType = null
   
+  val _StorageType_OldValueTrace: String = "csv"
   /**
     Table description
    */
@@ -344,7 +345,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   private var _TableWasRegistered: Boolean = false
   
-  private def InternalGetTable(internalTableType: huemulType_InternalTableType): String = {
+  private def InternalGetTable(internalTableType: huemulType_InternalTableType, withDataBase: Boolean = true): String = {
     var _getTable: String = ""
     var _database: String = ""
     var _tableName: String = ""
@@ -361,7 +362,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       RaiseError("huemul_Table DQ Error: Type '${Type}' doesn't exist in InternalGetTable method", 1051)
     }
       
-    _getTable = s"${_database}.${_tableName}"
+    if (withDataBase)
+      _getTable = s"${_database}.${_tableName}"
+    else
+      _getTable = s"${_tableName}"    
     
     return _getTable 
   }
@@ -538,7 +542,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
       
-      c = a.union(b)
+      c = c.union(b)
     }
     
     if (tableType == huemulType_InternalTableType.DQ) {
@@ -722,6 +726,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           coma = ","
         }
       }
+      else if (tableType == huemulType_InternalTableType.OldValueTrace) {
+        //create StructType
+        if ("dq_control_id".toUpperCase() != x.getName.toUpperCase()) {
+          ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
+          coma = ","
+        }
+      }
       else {
         //create StructType
         if (_PartitionField != null && _PartitionField.toUpperCase() != x.getName.toUpperCase()) {
@@ -729,13 +740,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           coma = ","
         }
       }
-        
-      if (Field.getMDM_EnableOldValue)
-        ColumnsCreateTable += s"$coma${x.getName}_old ${DataTypeLocal} \n"  
-      if (Field.getMDM_EnableDTLog) 
-        ColumnsCreateTable += s"$coma${x.getName}_fhChange ${TimestampType.sql} \n"  
-      if (Field.getMDM_EnableProcessLog) 
-        ColumnsCreateTable += s"$coma${x.getName}_ProcessLog ${StringType.sql} \n"      
+      
+      if (tableType != huemulType_InternalTableType.OldValueTrace) {
+        if (Field.getMDM_EnableOldValue)
+          ColumnsCreateTable += s"$coma${x.getName}_old ${DataTypeLocal} \n"  
+        if (Field.getMDM_EnableDTLog) 
+          ColumnsCreateTable += s"$coma${x.getName}_fhChange ${TimestampType.sql} \n"  
+        if (Field.getMDM_EnableProcessLog) 
+          ColumnsCreateTable += s"$coma${x.getName}_ProcessLog ${StringType.sql} \n"
+      }
     }
     
     return ColumnsCreateTable
@@ -1516,14 +1529,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   private def DF_CreateTable_OldValueTrace_Script(): String = {
     var coma_partition = ""
-    var PartitionForCreateTable = s"dq_control_id STRING"
     
+    //STORED AS ${_StorageType_OldValueTrace}
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     val lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)} (${GetColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
-                                 PARTITIONED BY (${PartitionForCreateTable})
-                                 STORED AS ${_StorageType.toString()}                                  
-                                 LOCATION '${GetFullNameWithPath_DQ()}'"""
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)} (${GetColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
+                                  ROW FORMAT DELIMITED
+                                  FIELDS TERMINATED BY ','
+                                  STORED AS TEXTFILE
+                                 LOCATION '${GetFullNameWithPath_OldValueTrace()}'"""
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
@@ -2048,26 +2062,34 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         println(SQL_FullTrace)
         
         if (SQL_FullTrace != null){ //if null, doesn't have mdm old value full trace to get
+          
           _SQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery("__SQL_OldValueFullTrace_DF",SQL_FullTrace)
+          
           _SQL_OldValueFullTrace_DF.show()
         }
           
         
       }
       //Unpersist first DF
+      println("uno")
       SQLHash_p2_DF.unpersist()
+      println("dos")
       SQLHash_p1_DF.unpersist()
+      println("tres")
       SQLFullJoin_DF.unpersist()
+      println("cuatro")
       
       
     } else
       RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
       
+      println("cinco")
     //if (this._NumRows_Total < 1000000)
     if (storageLevelOfDF != null) {
       //huemulBigDataGov.logMessageInfo("***** cache")
       this.DataFramehuemul.DataFrame.persist(storageLevelOfDF)
       }
+    println("seis")
     //else 
       //huemulBigDataGov.logMessageInfo("***** sin cache")
   }
@@ -2245,7 +2267,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
       //do work
       DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate, storageLevelOfDF)
-  
+  println("siete")
       //DataQuality by Columns
       LocalControl.NewStep("Start DataQuality")
       val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate)
@@ -2487,7 +2509,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save OldVT Result: Saving Old Value Trace result")
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_OldValueTrace()} ")        
-      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format("csv")save(GetFullNameWithPath_OldValueTrace())
+      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace)save(GetFullNameWithPath_OldValueTrace())
       
     } catch {
       case e: Exception => 
@@ -2501,11 +2523,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (Result) {
       if (CreateInHive ) {
         val sqlDrop01 = s"drop table if exists ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)}"
-        LocalControl.NewStep("Save: Drop Hive table Def")
+        LocalControl.NewStep("Save OldVT Result: Drop Hive table Def")
         if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
           val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)).collect()
-          if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase() }.length > 0) 
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == InternalGetTable(huemulType_InternalTableType.OldValueTrace,false).toUpperCase() }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
             
         } catch {
@@ -2517,20 +2539,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       try {
         //create table
         if (CreateInHive ) {
-          LocalControl.NewStep("Save: Create Table in Hive Metadata")
+          LocalControl.NewStep("Save OldVT Result: Create Table in Hive Metadata")
           val lscript = DF_CreateTable_OldValueTrace_Script() 
-         
+   println(lscript)      
           huemulBigDataGov.spark.sql(lscript)
         }
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         val _tableNameOldValueTrace: String = InternalGetTable(huemulType_InternalTableType.OldValueTrace)
-        LocalControl.NewStep("Save: Repair Hive Metadata")
-        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}")
-        huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}")
+        
+        //LocalControl.NewStep("Save: Repair Hive Metadata")
+        //if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"REFRESH TABLE ${_tableNameOldValueTrace}")
+        //huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}")
         
         if (huemulBigDataGov.ImpalaEnabled) {
-          LocalControl.NewStep("Save: refresh Impala Metadata")
+          LocalControl.NewStep("Save OldVT Result: refresh Impala Metadata")
           huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"invalidate metadata ${_tableNameOldValueTrace}")
           huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh ${_tableNameOldValueTrace}")
         }
@@ -2577,7 +2600,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
           val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)).collect()
-          if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase() }.length > 0) 
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == InternalGetTable(huemulType_InternalTableType.DQ,false).toUpperCase() }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
             
         } catch {
