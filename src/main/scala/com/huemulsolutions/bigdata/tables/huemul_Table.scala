@@ -1537,7 +1537,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                   ROW FORMAT DELIMITED
                                   FIELDS TERMINATED BY ','
                                   STORED AS TEXTFILE
-                                 LOCATION '${GetFullNameWithPath_OldValueTrace()}'"""
+                                 LOCATION '${GetFullNameWithPath_OldValueTrace()}'
+                                  TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+                              """
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
