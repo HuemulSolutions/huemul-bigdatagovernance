@@ -1535,7 +1535,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val lCreateTableScript = s"""
                                  CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)} (${GetColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
                                   ROW FORMAT DELIMITED
-                                  FIELDS TERMINATED BY ','
+                                  FIELDS TERMINATED BY '\t'
                                   STORED AS TEXTFILE
                                  LOCATION '${GetFullNameWithPath_OldValueTrace()}'
                                   TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")
@@ -2061,37 +2061,31 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace) {
         LocalControl.NewStep("Ref & Master: MDM Old Value Full Trace")
         val SQL_FullTrace = SQL_Step_OldValueTrace("__FullJoin", huemulBigDataGov.ProcessNameCall)
-        println(SQL_FullTrace)
+        //println(SQL_FullTrace)
         
         if (SQL_FullTrace != null){ //if null, doesn't have mdm old value full trace to get
           
           _SQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery("__SQL_OldValueFullTrace_DF",SQL_FullTrace)
           
-          _SQL_OldValueFullTrace_DF.show()
+          //_SQL_OldValueFullTrace_DF.show()
         }
           
         
       }
       //Unpersist first DF
-      println("uno")
-      SQLHash_p2_DF.unpersist()
-      println("dos")
-      SQLHash_p1_DF.unpersist()
-      println("tres")
-      SQLFullJoin_DF.unpersist()
-      println("cuatro")
+//      SQLHash_p2_DF.unpersist()
+//      SQLHash_p1_DF.unpersist()
+//      SQLFullJoin_DF.unpersist()
       
       
     } else
       RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
       
-      println("cinco")
     //if (this._NumRows_Total < 1000000)
     if (storageLevelOfDF != null) {
       //huemulBigDataGov.logMessageInfo("***** cache")
       this.DataFramehuemul.DataFrame.persist(storageLevelOfDF)
       }
-    println("seis")
     //else 
       //huemulBigDataGov.logMessageInfo("***** sin cache")
   }
@@ -2269,7 +2263,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
       //do work
       DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate, storageLevelOfDF)
-  println("siete")
+  
       //DataQuality by Columns
       LocalControl.NewStep("Start DataQuality")
       val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate)
@@ -2509,9 +2503,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var Result: Boolean = true
       
     try {      
-      LocalControl.NewStep("Save OldVT Result: Saving Old Value Trace result")
+      LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_OldValueTrace()} ")        
-      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace)save(GetFullNameWithPath_OldValueTrace())
+      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       
     } catch {
       case e: Exception => 
@@ -2525,7 +2519,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (Result) {
       if (CreateInHive ) {
         val sqlDrop01 = s"drop table if exists ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)}"
-        LocalControl.NewStep("Save OldVT Result: Drop Hive table Def")
+        LocalControl.NewStep("Save: OldVT Result: Drop Hive table Def")
         if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
           val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)).collect()
@@ -2541,9 +2535,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       try {
         //create table
         if (CreateInHive ) {
-          LocalControl.NewStep("Save OldVT Result: Create Table in Hive Metadata")
+          LocalControl.NewStep("Save: OldVT Result: Create Table in Hive Metadata")
           val lscript = DF_CreateTable_OldValueTrace_Script() 
-   println(lscript)      
+   //println(lscript)      
           huemulBigDataGov.spark.sql(lscript)
         }
     
@@ -2555,7 +2549,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}")
         
         if (huemulBigDataGov.ImpalaEnabled) {
-          LocalControl.NewStep("Save OldVT Result: refresh Impala Metadata")
+          LocalControl.NewStep("Save: OldVT Result: refresh Impala Metadata")
           huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"invalidate metadata ${_tableNameOldValueTrace}")
           huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh ${_tableNameOldValueTrace}")
         }
