@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.huemulsolutions.bigdata</groupId>
   <artifactId>huemul-bigdatagovernance</artifactId>
-  <version>1.4</version>
+  <version>1.4.1</version>
   <name>HuemulSolutions - BigDataGovernance</name>
   <description>Enable full data quality and data linage for BigData Projects.
   Huemul BigDataGovernance, es una librería que trabaja sobre Spark, Hive y HDFS. Permite la implementación de una **estrategia corporativa de dato único**, basada en buenas prácticas de Gobierno de Datos.

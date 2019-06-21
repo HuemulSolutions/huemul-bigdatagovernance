@@ -1220,7 +1220,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       else if (x.getName == "MDM_ProcessChange")
         StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' AND SameHashKey = 0 THEN '$ProcessName' ELSE old_${x.getName} END as ${x.getName} \n"
       else if (x.getName == "MDM_StatusReg")
-        StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'NEW' THEN CAST(2 as Int) WHEN ___ActionType__ = 'DELETE' THEN CAST(-1 AS Int)  ELSE CAST(old_${x.getName} AS Int) END as ${x.getName} \n"
+        StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' THEN CAST(2 as Int) WHEN ___ActionType__ = 'NEW' THEN CAST(2 as Int) WHEN ___ActionType__ = 'DELETE' THEN CAST(-1 AS Int)  ELSE CAST(old_${x.getName} AS Int) END as ${x.getName} \n"
       else if (x.getName == "MDM_hash")
         StringSQL += s"${coma}MDM_hash \n"
       else 
