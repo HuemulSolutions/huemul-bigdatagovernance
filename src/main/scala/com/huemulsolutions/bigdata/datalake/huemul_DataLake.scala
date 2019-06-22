@@ -152,6 +152,10 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
      
       SchemaConf.ColumnsDef.indices.foreach { i => 
         val dataInfo = SchemaConf.ColumnsDef(i)
+        //#40: allow dynamic last position
+        var lPosFin = dataInfo.getPosFin.toInt
+        if (lPosFin == -1)
+          lPosFin = row.length()        
         var temp1 = row.substring(dataInfo.getPosIni.toInt, dataInfo.getPosFin.toInt) 
         val FieldSchema = SchemaConf.ColumnsDef(i)
         if (ApplyTrim || FieldSchema.getApplyTrim  )
