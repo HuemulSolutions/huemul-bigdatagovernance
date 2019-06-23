@@ -2509,7 +2509,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_OldValueTrace()} ")        
-      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
+      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").option("nullValue", "null").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       
     } catch {
       case e: Exception => 
