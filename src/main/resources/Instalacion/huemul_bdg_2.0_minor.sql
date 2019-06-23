@@ -191,6 +191,7 @@ create table  control_tables (
                                              ,table_globalpath        varchar(1000)
                                              ,table_sqlcreate         varchar(4000)
 											 ,table_frequency		  varchar(200)
+											 ,table_autoincupdate     int
                                              ,mdm_manualchange        int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)                                             

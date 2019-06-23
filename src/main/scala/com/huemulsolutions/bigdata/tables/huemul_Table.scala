@@ -506,6 +506,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return true
   }
   
+  def _setAutoIncUpate(value: Long) = {
+    _MDM_AutoInc = value
+  }
+  
   
   /**
    * Get all declared fields from class

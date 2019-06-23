@@ -670,6 +670,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              )
       
       LocalNewTable_id = ExecResultTable.OpenVar
+      DefMaster._setAutoIncUpate(ExecResultTable.OpenVar2.toLong)
       
       //Insert control_Columns
       var i: Integer = 0
@@ -1749,25 +1750,26 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_Table_Frequency: String
                              ,p_MDM_ProcessName: String
       ): huemul_JDBCResult =  {
-    
+    var table_autoIncUpdate: Integer = 0
      //Get ExecResultRawFiles Id
     val ExecResult_TableId = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
-          SELECT table_id
+          SELECT table_id, table_autoincupdate
 					FROM control_tables 
 					WHERE table_name = ${ReplaceSQLStringNulls(p_Table_Name)}
           and   table_bbddname = ${ReplaceSQLStringNulls(p_Table_BBDDName)}
       """)
     
     var ExecResult: huemul_JDBCResult = null
+    
     var LocalTable_id: String = null
     if (!ExecResult_TableId.IsError && ExecResult_TableId.ResultSet.length == 1){
       LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("table_id".toLowerCase())
-      
+      table_autoIncUpdate = ExecResult_TableId.ResultSet(0).getAs[Int]("table_autoIncUpdate".toLowerCase()) + 1
       
       val ExecResultCol = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           UPDATE control_columns 
           SET mdm_active = 0 
-          WHERE table_id = ${ReplaceSQLStringNulls(p_Table_id)}
+          WHERE table_id = ${ReplaceSQLStringNulls(LocalTable_id)}
           """)
       
       ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
@@ -1782,10 +1784,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         		 ,table_globalpath		  = ${ReplaceSQLStringNulls(p_Table_GlobalPath)}		
         		 ,table_sqlcreate    		= ${ReplaceSQLStringNulls(p_Table_SQLCreate)}		
         		 ,table_frequency		    = ${ReplaceSQLStringNulls(p_Table_Frequency)}
-          WHERE table_id = ${ReplaceSQLStringNulls(p_Table_id)}
+        		 ,table_autoincupdate   = ${ReplaceSQLStringNulls(table_autoIncUpdate.toString())}
+          WHERE table_id = ${ReplaceSQLStringNulls(LocalTable_id)}
           """)
           
+          
       ExecResult.OpenVar = LocalTable_id
+      ExecResult.OpenVar2 = table_autoIncUpdate.toString()
     } else {
       ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           insert into control_tables ( table_id
@@ -1802,6 +1807,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								,table_globalpath
                       								,table_sqlcreate
                       								,table_frequency
+                                      ,table_autoincupdate
                       								,mdm_fhcreate
                       								,mdm_processname) 	
         	VALUES(   ${ReplaceSQLStringNulls(p_Table_id)}
@@ -1818,11 +1824,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			,${ReplaceSQLStringNulls(p_Table_GlobalPath)}
             			,${ReplaceSQLStringNulls(p_Table_SQLCreate)}
             			,${ReplaceSQLStringNulls(p_Table_Frequency)}
+            			,1
             			,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
             			,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
       )            			
           """)
       ExecResult.OpenVar = p_Table_id
+      ExecResult.OpenVar2 = "1"
     }
     
     
