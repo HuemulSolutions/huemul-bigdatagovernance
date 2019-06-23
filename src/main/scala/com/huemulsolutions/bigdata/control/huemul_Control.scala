@@ -689,6 +689,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                  ,x.getMDM_EnableDTLog
                                  ,x.getMDM_EnableOldValue
                                  ,x.getMDM_EnableProcessLog
+                                 ,x.getMDM_EnableOldValue_FullTrace
                                  ,x.getDefaultValue
                                  ,x.getSecurityLevel.toString()
                                  ,x.getEncryptedType
@@ -1849,6 +1850,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_Column_EnableDTLog: Boolean
                              ,p_Column_EnableOldValue: Boolean
                              ,p_Column_EnableProcessLog: Boolean
+                             ,p_Column_EnableOldValueTrace: Boolean
                              ,p_Column_DefaultValue: String
                              ,p_Column_SecurityLevel: String
                              ,p_Column_Encrypted: String
@@ -1891,6 +1893,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         		 ,column_enabledtlog			    = ${if (p_Column_EnableDTLog) "1" else "0"}
         		 ,column_enableoldvalue			  = ${if (p_Column_EnableOldValue) "1" else "0"}
         		 ,column_enableprocesslog		  = ${if (p_Column_EnableProcessLog) "1" else "0"}
+        		 ,column_enableoldvaluetrace  = ${if (p_Column_EnableOldValueTrace) "1" else "0"}
         		 ,column_defaultvalue			    = ${ReplaceSQLStringNulls(p_Column_DefaultValue)}			
         		 ,column_securitylevel			  = CASE WHEN mdm_manualchange = 1 THEN column_securitylevel ELSE ${ReplaceSQLStringNulls(p_Column_SecurityLevel)}	END		
         		 ,column_encrypted				    = ${ReplaceSQLStringNulls(p_Column_Encrypted)}				
@@ -1923,6 +1926,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								 ,column_enabledtlog
                       								 ,column_enableoldvalue
                       								 ,column_enableprocesslog
+                                       ,column_enableoldvaluetrace
                       								 ,column_defaultvalue
                       								 ,column_securitylevel
                       								 ,column_encrypted
@@ -1952,6 +1956,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			 ,${if (p_Column_EnableDTLog) "1" else "0"}
             			 ,${if (p_Column_EnableOldValue) "1" else "0"}
             			 ,${if (p_Column_EnableProcessLog) "1" else "0"}
+            			 ,${if (p_Column_EnableOldValueTrace) "1" else "0"}
             			 ,${ReplaceSQLStringNulls(p_Column_DefaultValue)}
             			 ,${ReplaceSQLStringNulls(p_Column_SecurityLevel)}
             			 ,${ReplaceSQLStringNulls(p_Column_Encrypted)}

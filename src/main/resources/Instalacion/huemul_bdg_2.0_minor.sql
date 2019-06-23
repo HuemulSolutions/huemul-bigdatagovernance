@@ -236,6 +236,7 @@ create table  control_columns (
                                              ,column_enabledtlog         int
                                              ,column_enableoldvalue      int
                                              ,column_enableprocesslog    int
+                                             ,column_enableoldvaluetrace int
                                              ,column_defaultvalue        varchar(1000)
                                              ,column_securitylevel       varchar(200)
                                              ,column_encrypted           varchar(200)

@@ -19,3 +19,4 @@ alter table control_processexecparams alter column processexecparams_value type 
 
 
 alter table control_tables add table_autoincupdate     int;
+alter table control_columns add column_enableoldvaluetrace int;
