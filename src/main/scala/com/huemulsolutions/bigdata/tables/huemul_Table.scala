@@ -24,7 +24,6 @@ import com.huemulsolutions.bigdata.control.huemulType_Frequency
 import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
 import com.huemulsolutions.bigdata.tables.huemulType_InternalTableType._
-
 //import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
 
 
@@ -87,7 +86,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getStorageType: huemulType_StorageType = {return _StorageType}
   private var _StorageType : huemulType_StorageType = null
   
-  val _StorageType_OldValueTrace: String = "csv"
+  val _StorageType_OldValueTrace: String = "parquet"  //csv, json, parquet
   /**
     Table description
    */
@@ -732,7 +731,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       else if (tableType == huemulType_InternalTableType.OldValueTrace) {
         //create StructType
-        if ("dq_control_id".toUpperCase() != x.getName.toUpperCase()) {
+        if ("MDM_columnName".toUpperCase() != x.getName.toUpperCase()) {
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
           coma = ","
         }
@@ -1501,7 +1500,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
-      
+      println(lCreateTableScript)
     return lCreateTableScript    
   }
   
@@ -1522,7 +1521,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
-      
+      println(lCreateTableScript)
     return lCreateTableScript    
   }
   
@@ -1538,13 +1537,26 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     val lCreateTableScript = s"""
                                  CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)} (${GetColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
+                                  ${if (_StorageType_OldValueTrace == "csv") {s"""
                                   ROW FORMAT DELIMITED
                                   FIELDS TERMINATED BY '\t'
-                                  STORED AS TEXTFILE
-                                 LOCATION '${GetFullNameWithPath_OldValueTrace()}'
-                                  TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-                              """
-                                 
+                                  STORED AS TEXTFILE """}
+                                  else if (_StorageType_OldValueTrace == "json") {
+                                    s"""
+                                     ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+                                    """
+                                  }
+                                  else if (_StorageType_OldValueTrace == "parquet") {
+                                   """PARTITIONED BY (MDM_columnName STRING)
+                                    STORED AS PARQUET""" 
+                                  }
+                                  }
+                                 LOCATION '${GetFullNameWithPath_OldValueTrace()}'"""
+                                  //${if (_StorageType_OldValueTrace == "csv") {s"""
+                                  //TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")"""}}"""
+     println("ini")
+     println(lCreateTableScript)
+     println("ini")
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       
@@ -2508,8 +2520,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     try {      
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
-      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_OldValueTrace()} ")        
-      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").option("nullValue", "null").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_OldValueTrace()} ")
+      if (_StorageType_OldValueTrace.toLowerCase() == "parquet")
+        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
+      else
+        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").option("emptyValue", "").option("treatEmptyValuesAsNulls", "false").option("nullValue", "null").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       
     } catch {
       case e: Exception => 
