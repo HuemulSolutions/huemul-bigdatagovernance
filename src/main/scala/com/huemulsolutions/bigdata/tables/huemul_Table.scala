@@ -273,7 +273,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    *****   F I E L D   P R O P E R T I E S    **************************************** 
    ******************************************************************************** */
   
-  val MDM_columnName = new huemul_Columns (StringType, true, "Column Name", false)
+  
   val MDM_newValue = new huemul_Columns (StringType, true, "New value updated in table", false)
   val MDM_oldValue = new huemul_Columns (StringType, true, "Old value", false)
   val MDM_AutoInc = new huemul_Columns (LongType, true, "auto incremental for version control", false)
@@ -285,6 +285,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false)
   val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false)
   
+  val MDM_columnName = new huemul_Columns (StringType, true, "Column Name", false)
   
   var AdditionalRowsForDistint: String = ""
   private var DefinitionIsClose: Boolean = false
@@ -730,7 +731,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
       }
       else if (tableType == huemulType_InternalTableType.OldValueTrace) {
-        //create StructType
+        //create StructType MDM_columnName
         if ("MDM_columnName".toUpperCase() != x.getName.toUpperCase()) {
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
           coma = ","
@@ -1026,7 +1027,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
-      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, cast('${x.getName.toUpperCase()}' as string) as MDM_columnName, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, ${_MDM_AutoInc} as MDM_AutoInc, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
+      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, CAST(${_MDM_AutoInc} AS BIGINT) as MDM_AutoInc, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange, cast('${x.getName.toLowerCase()}' as string) as MDM_columnName FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
       StringUnion = " \n UNION ALL "
       count_fulltrace += 1
     }
@@ -1500,7 +1501,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
-      println(lCreateTableScript)
+      
     return lCreateTableScript    
   }
   
@@ -1521,7 +1522,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
-      println(lCreateTableScript)
+      
     return lCreateTableScript    
   }
   
@@ -1548,15 +1549,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                   }
                                   else if (_StorageType_OldValueTrace == "parquet") {
                                    """PARTITIONED BY (MDM_columnName STRING)
-                                    STORED AS PARQUET""" 
+                                     STORED AS PARQUET""" 
                                   }
                                   }
                                  LOCATION '${GetFullNameWithPath_OldValueTrace()}'"""
                                   //${if (_StorageType_OldValueTrace == "csv") {s"""
                                   //TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")"""}}"""
-     println("ini")
-     println(lCreateTableScript)
-     println("ini")
+     
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       
@@ -2521,8 +2520,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_OldValueTrace()} ")
-      if (_StorageType_OldValueTrace.toLowerCase() == "parquet")
+      if (_StorageType_OldValueTrace.toLowerCase() == "parquet"){
         DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
+        //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
+      }
       else
         DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").option("emptyValue", "").option("treatEmptyValuesAsNulls", "false").option("nullValue", "null").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       
@@ -2563,9 +2564,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         val _tableNameOldValueTrace: String = InternalGetTable(huemulType_InternalTableType.OldValueTrace)
         
-        //LocalControl.NewStep("Save: Repair Hive Metadata")
-        //if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"REFRESH TABLE ${_tableNameOldValueTrace}")
-        //huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}")
+        LocalControl.NewStep("Save: OldVT Result: Repair Hive Metadata")
+        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"REFRESH TABLE ${_tableNameOldValueTrace}")
+        huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}")
         
         if (huemulBigDataGov.ImpalaEnabled) {
           LocalControl.NewStep("Save: OldVT Result: refresh Impala Metadata")
