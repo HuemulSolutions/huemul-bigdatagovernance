@@ -2076,13 +2076,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace) {
         LocalControl.NewStep("Ref & Master: MDM Old Value Full Trace")
         val SQL_FullTrace = SQL_Step_OldValueTrace("__FullJoin", huemulBigDataGov.ProcessNameCall)
-        //println(SQL_FullTrace)
         
-        if (SQL_FullTrace != null){ //if null, doesn't have mdm old value full trace to get
-          
+        if (SQL_FullTrace != null){ //if null, doesn't have the mdm old "value full trace" to get          
           _SQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery("__SQL_OldValueFullTrace_DF",SQL_FullTrace)
           
-          //_SQL_OldValueFullTrace_DF.show()
         }
           
         
@@ -2380,6 +2377,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var DF_Final = DF
     var Result: Boolean = true
     
+    //Add from 2.0: save Old Value Trace
+    if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace && _SQL_OldValueFullTrace_DF != null) {
+      Result = SavePersist_OldValueTrace(LocalControl,_SQL_OldValueFullTrace_DF)
+      if (!Result)
+        return Result 
+    } 
+
     
     if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master || IsSelectiveUpdate) {
       LocalControl.NewStep("Save: Drop ActionType column")
@@ -2500,10 +2504,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
     
-    //Add from 2.0: save Old Value Trace
-    if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace && _SQL_OldValueFullTrace_DF != null) {
-      Result = SavePersist_OldValueTrace(LocalControl,_SQL_OldValueFullTrace_DF)
-    } 
       
       
     return Result
@@ -2556,8 +2556,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //create table
         if (CreateInHive ) {
           LocalControl.NewStep("Save: OldVT Result: Create Table in Hive Metadata")
-          val lscript = DF_CreateTable_OldValueTrace_Script() 
-   //println(lscript)      
+          val lscript = DF_CreateTable_OldValueTrace_Script()       
           huemulBigDataGov.spark.sql(lscript)
         }
     
