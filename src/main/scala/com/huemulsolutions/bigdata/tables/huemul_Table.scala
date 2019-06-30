@@ -277,6 +277,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   val MDM_newValue = new huemul_Columns (StringType, true, "New value updated in table", false)
   val MDM_oldValue = new huemul_Columns (StringType, true, "Old value", false)
   val MDM_AutoInc = new huemul_Columns (LongType, true, "auto incremental for version control", false)
+  val processExec_id = new huemul_Columns (StringType, true, "Process Execution Id (control model)", false)
   
   val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false)
   val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false)
@@ -536,10 +537,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        
       if (tableType == huemulType_InternalTableType.OldValueTrace) {
         b = b.filter { x => x.getName == "MDM_columnName" || x.getName == "MDM_newValue" || x.getName == "MDM_oldValue" || x.getName == "MDM_AutoInc" ||
-                            x.getName == "MDM_fhChange" || x.getName == "MDM_ProcessChange"  }
+                            x.getName == "MDM_fhChange" || x.getName == "MDM_ProcessChange" || x.getName == "processExec_id"  }
       } else {
         //exclude OldValuestrace columns
-        b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue" && x.getName != "MDM_AutoInc"  }
+        b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue" && x.getName != "MDM_AutoInc" && x.getName != "processExec_id"  }
         
         if (this._TableType == huemulType_Tables.Transaction) 
           b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }   
@@ -1032,7 +1033,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
-      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, CAST(${_MDM_AutoInc} AS BIGINT) as MDM_AutoInc, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange, cast('${x.getName.toLowerCase()}' as string) as MDM_columnName FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
+      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, CAST(${_MDM_AutoInc} AS BIGINT) as MDM_AutoInc, '${Control.Control_Id}' as processExec_id, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange, cast('${x.getName.toLowerCase()}' as string) as MDM_columnName FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
       StringUnion = " \n UNION ALL "
       count_fulltrace += 1
     }
