@@ -189,6 +189,10 @@ create table  control_tables (
                                              ,table_storagetype       varchar(50)
                                              ,table_localpath         varchar(1000)
                                              ,table_globalpath        varchar(1000)
+                                             ,table_fullname_dq		  varchar(1200)
+                                             ,table_dq_isused		  int
+                                             ,table_fullname_ovt	  varchar(1200)
+                                             ,table_ovt_isused		  int                                             
                                              ,table_sqlcreate         varchar(4000)
 											 ,table_frequency		  varchar(200)
 											 ,table_autoincupdate     int

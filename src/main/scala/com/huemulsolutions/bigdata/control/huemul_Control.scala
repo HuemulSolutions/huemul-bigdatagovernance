@@ -643,6 +643,18 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
      
     }
   }
+  
+  def RegisterMASTER_UPDATE_isused(DefMaster: huemul_Table) {
+    if (huemulBigDataGov.RegisterInControl) {
+      //Table
+      val ExecResultTable = control_Tables_UpdateAtEnd( DefMaster.GetCurrentDataBase()
+                                                       ,DefMaster.TableName
+                                                      , DefMaster._getTable_dq_isused()
+                                                      , DefMaster._getTable_ovt_isused()
+                                                      , DefMaster._getMDM_AutoInc()) 
+     
+    }
+  }
 
   def RegisterMASTER_CREATE_Basic(DefMaster: huemul_Table) {
     if (huemulBigDataGov.IsTableRegistered(DefMaster.TableName))
@@ -664,6 +676,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,DefMaster.getStorageType.toString()
                              ,DefMaster.getLocalPath
                              ,DefMaster.GetPath(DefMaster.getGlobalPaths)
+                             ,DefMaster.GetFullNameWithPath_DQ
+                             ,DefMaster.GetFullNameWithPath_OldValueTrace
                              ,"" //--as Table_SQLCreate
                              ,DefMaster.getFrequency.toString()
                              ,Control_ClassName
@@ -1735,6 +1749,42 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     return ExecResult             
   }
   
+  /**
+   * New from 2.0
+   * Used to update fields at the end of process
+   */
+  private def control_Tables_UpdateAtEnd (p_Table_BBDDName: String
+                             ,p_Table_Name: String
+                             ,p_table_dq_isused: Int
+                             ,p_table_ovt_isused: Int
+                             ,p_table_autoIncUpdate: Long
+      ): huemul_JDBCResult =  {
+    
+    val ExecResult_TableId = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          SELECT table_id
+					FROM control_tables 
+					WHERE table_name = ${ReplaceSQLStringNulls(p_Table_Name)}
+          and   table_bbddname = ${ReplaceSQLStringNulls(p_Table_BBDDName)}
+      """)
+    
+    var ExecResult: huemul_JDBCResult = null
+    
+    var LocalTable_id: String = null
+    if (!ExecResult_TableId.IsError && ExecResult_TableId.ResultSet.length == 1){
+      LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("table_id".toLowerCase())
+      
+      ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
+          UPDATE control_tables 
+          SET table_autoincupdate   = ${p_table_autoIncUpdate}
+             ,table_dq_isused       = case when table_dq_isused = 1 then 1 else ${p_table_dq_isused} end             
+             ,table_ovt_isused      = case when table_ovt_isused = 1 then 1 else ${p_table_ovt_isused} end
+          WHERE table_id = ${ReplaceSQLStringNulls(LocalTable_id)}
+          """)
+    }
+                    
+    
+    return ExecResult             
+  }
   
   private def control_Tables_addOrUpd (p_Table_id: String
                              ,p_Table_BBDDName: String
@@ -1747,6 +1797,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_Table_StorageType: String
                              ,p_Table_LocalPath: String
                              ,p_Table_GlobalPath: String
+                             ,p_table_fullname_dq: String
+                             ,p_table_fullname_ovt: String
                              ,p_Table_SQLCreate: String
                              ,p_Table_Frequency: String
                              ,p_MDM_ProcessName: String
@@ -1782,13 +1834,21 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         		 ,table_tabletype		    = ${ReplaceSQLStringNulls(p_Table_TableType)}		
         		 ,table_storagetype		  = ${ReplaceSQLStringNulls(p_Table_StorageType)}		
         		 ,table_localpath		    = ${ReplaceSQLStringNulls(p_Table_LocalPath)}		
-        		 ,table_globalpath		  = ${ReplaceSQLStringNulls(p_Table_GlobalPath)}		
+        		 ,table_globalpath		  = ${ReplaceSQLStringNulls(p_Table_GlobalPath)}
+             ,table_fullname_dq     = ${ReplaceSQLStringNulls(p_table_fullname_dq)}            
+             ,table_fullname_ovt    = ${ReplaceSQLStringNulls(p_table_fullname_ovt)}
         		 ,table_sqlcreate    		= ${ReplaceSQLStringNulls(p_Table_SQLCreate)}		
         		 ,table_frequency		    = ${ReplaceSQLStringNulls(p_Table_Frequency)}
-        		 ,table_autoincupdate   = ${ReplaceSQLStringNulls(table_autoIncUpdate.toString())}
           WHERE table_id = ${ReplaceSQLStringNulls(LocalTable_id)}
           """)
           
+/*excluded, the fields are updated at the end
+             ,table_dq_isused       = ${p_table_dq_isused}             
+             ,table_ovt_isused      = ${p_table_ovt_isused}
+             ,table_autoincupdate   = ${ReplaceSQLStringNulls(table_autoIncUpdate.toString())}
+             *              
+             */
+
           
       ExecResult.OpenVar = LocalTable_id
       ExecResult.OpenVar2 = table_autoIncUpdate.toString()
@@ -1806,6 +1866,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								,table_storagetype
                       								,table_localpath
                       								,table_globalpath
+                                      ,table_fullname_dq
+                                      ,table_dq_isused
+                                      ,table_fullname_ovt
+                                      ,table_ovt_isused
                       								,table_sqlcreate
                       								,table_frequency
                                       ,table_autoincupdate
@@ -1822,7 +1886,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			,${ReplaceSQLStringNulls(p_Table_TableType)}
             			,${ReplaceSQLStringNulls(p_Table_StorageType)}
             			,${ReplaceSQLStringNulls(p_Table_LocalPath)}
-            			,${ReplaceSQLStringNulls(p_Table_GlobalPath)}
+            			,${ReplaceSQLStringNulls(p_Table_GlobalPath)}            			
+                  ,${ReplaceSQLStringNulls(p_table_fullname_dq)}
+                  ,0
+                  ,${ReplaceSQLStringNulls(p_table_fullname_ovt)}
+                  ,0
             			,${ReplaceSQLStringNulls(p_Table_SQLCreate)}
             			,${ReplaceSQLStringNulls(p_Table_Frequency)}
             			,1

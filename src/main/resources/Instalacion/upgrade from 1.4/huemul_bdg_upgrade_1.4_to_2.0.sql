@@ -20,3 +20,8 @@ alter table control_processexecparams alter column processexecparams_value type 
 
 alter table control_tables add table_autoincupdate     int;
 alter table control_columns add column_enableoldvaluetrace int;
+
+alter table control_tables add table_dq_isused int;
+alter table control_tables add table_fullname_dq varchar(1200);
+alter table control_tables add table_ovt_isused int;
+alter table control_tables add table_fullname_ovt varchar(1200);

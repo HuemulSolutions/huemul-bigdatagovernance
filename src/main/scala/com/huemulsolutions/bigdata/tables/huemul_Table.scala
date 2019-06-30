@@ -569,6 +569,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   private var _SQL_OldValueFullTrace_DF: DataFrame = null 
   private var _MDM_AutoInc: Long = 0
+  def _getMDM_AutoInc(): Long = {return _MDM_AutoInc}
+  private var _table_dq_isused: Int = 0
+  def _getTable_dq_isused(): Int = {return _table_dq_isused}
+  private var _table_ovt_isused: Int = 0
+  def _getTable_ovt_isused(): Int = {return _table_ovt_isused}
   private var _NumRows_New: Long = null
   private var _NumRows_Update: Long = null
   private var _NumRows_Updatable: Long = null
@@ -2504,6 +2509,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
     
+    //from 2.0: update dq and ovt used
+    LocalControl.RegisterMASTER_UPDATE_isused(this)
+    
       
       
     return Result
@@ -2516,6 +2524,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def SavePersist_OldValueTrace(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
+    this._table_ovt_isused = 1
       
     try {      
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
@@ -2593,6 +2602,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def SavePersist_DQ(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
+    this._table_dq_isused = 1
       
     try {      
       LocalControl.NewStep("Save DQ Result: Saving new DQ result")
