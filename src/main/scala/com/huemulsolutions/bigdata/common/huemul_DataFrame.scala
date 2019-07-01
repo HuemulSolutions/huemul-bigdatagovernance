@@ -127,7 +127,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /**
    * DQ_NumRowsInterval: Test DQ for num Rows in DF
    */
-  def DQ_NumRowsInterval(ObjectData: Object, NumMin: Long, NumMax: Long): huemul_DataQualityResult = {
+  def DQ_NumRowsInterval(ObjectData: Object, NumMin: Long, NumMax: Long, DQ_ExternalCode:String = null): huemul_DataQualityResult = {
 
     val DQResult = new huemul_DataQualityResult()
     //var Rows = NumRows
@@ -165,6 +165,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
+    Values.DQ_ExternalCode = DQ_ExternalCode
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
     Values.DQ_NumRowsTotal =getNumRows
@@ -179,7 +180,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /****
    * DQ_NumRowsInterval: Test DQ for num Rows in DF
    */
-  def DQ_NumRows(ObjectData: Object, NumRowsExpected: Long): huemul_DataQualityResult = {
+  def DQ_NumRows(ObjectData: Object, NumRowsExpected: Long, DQ_ExternalCode:String = null): huemul_DataQualityResult = {
     val DQResult = new huemul_DataQualityResult()
     //var Rows = NumRows
     if (getNumRows == NumRowsExpected ) {
@@ -217,6 +218,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
+    Values.DQ_ExternalCode = DQ_ExternalCode
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
     Values.DQ_NumRowsTotal =getNumRows
@@ -232,7 +234,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /**
    * Compare actual DF with other DF (only columns exist in Actual DF and other DF)
    */
-  def DQ_CompareDF(ObjectData: Object, DF_to_Compare: DataFrame, PKFields: String) : huemul_DataQualityResult = {
+  def DQ_CompareDF(ObjectData: Object, DF_to_Compare: DataFrame, PKFields: String, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
     if (!huemulBigDataGov.HasName(PKFields)) {
       sys.error("HuemulError: PKFields must be set ")
     }
@@ -329,6 +331,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
+    Values.DQ_ExternalCode = DQ_ExternalCode
     Values.DQ_NumRowsOK =NumColumns - NumColumnsError
     Values.DQ_NumRowsError =NumColumnsError
     Values.DQ_NumRowsTotal =NumColumns
@@ -464,7 +467,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * DQ_DuplicateValues: validate duplicate rows for ColDuplicate
    *  
    */
-  def DQ_DuplicateValues2(ObjectData: Object, ColDuplicate: String, colMaxMin: String, TempFileName: String = null) : huemul_DataQualityResult = {
+  def DQ_DuplicateValues2(ObjectData: Object, ColDuplicate: String, colMaxMin: String, TempFileName: String = null, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
     var colMaxMin_local = colMaxMin
     if (colMaxMin_local == null)
       colMaxMin_local = "0"
@@ -534,6 +537,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
+    Values.DQ_ExternalCode = DQ_ExternalCode
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =DQDup
     Values.DQ_NumRowsTotal =getNumRows
@@ -548,7 +552,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * DQ_NotNullValues: validate nulls rows
    *  
    */
-  def DQ_NotNullValues(ObjectData: Object, Col: String) : huemul_DataQualityResult = {
+  def DQ_NotNullValues(ObjectData: Object, Col: String, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
     val DQResult = new huemul_DataQualityResult()
     val talias = AliasDF
     DQResult.isError = false
@@ -607,6 +611,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_toleranceError_Percent =Decimal.apply(0)
     Values.DQ_ResultDQ =DQResult.Description
     Values.DQ_ErrorCode = DQResult.Error_Code
+    Values.DQ_ExternalCode = DQ_ExternalCode
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =DQDup
     Values.DQ_NumRowsTotal =0
@@ -768,6 +773,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         Values.DQ_toleranceError_Rows =x.getToleranceError_Rows
         Values.DQ_toleranceError_Percent =x.getToleranceError_Percent
         Values.DQ_ResultDQ =x.ResultDQ
+        Values.DQ_ExternalCode = x.getDQ_ExternalCode()
         Values.DQ_ErrorCode = if (IsError) x.getErrorCode() else null 
         Values.DQ_NumRowsOK =x.NumRowsOK
         Values.DQ_NumRowsError =DQWithError
@@ -835,6 +841,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         , DQ.DQ_toleranceError_Percent
         , DQ.DQ_ResultDQ
         , DQ.DQ_ErrorCode
+        , DQ.DQ_ExternalCode
         , DQ.DQ_NumRowsOK
         , DQ.DQ_NumRowsError
         , DQ.DQ_NumRowsTotal 
