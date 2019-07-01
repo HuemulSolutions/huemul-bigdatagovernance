@@ -483,6 +483,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              , DQ_toleranceError_Percent: Decimal
                              , DQ_ResultDQ: String
                              , DQ_ErrorCode: Integer
+                             , DQ_ExternalCode: String
                              , DQ_NumRowsOK: java.lang.Long
                              , DQ_NumRowsError: java.lang.Long
                              , DQ_NumRowsTotal: java.lang.Long
@@ -509,6 +510,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , DQ_toleranceError_Percent
                          , DQ_ResultDQ
                          , DQ_ErrorCode
+                         , DQ_ExternalCode
                          , DQ_NumRowsOK
                          , DQ_NumRowsError
                          , DQ_NumRowsTotal
@@ -1248,6 +1250,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_DQ_toleranceError_Percent: Decimal
                              ,p_DQ_ResultDQ: String
                              ,p_DQ_ErrorCode: Integer
+                             ,p_DQ_ExternalCode: String
                              ,p_DQ_NumRowsOK: java.lang.Long
                              ,p_DQ_NumRowsError: java.lang.Long
                              ,p_DQ_NumRowsTotal: java.lang.Long
@@ -1293,6 +1296,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                  ,dq_dq_toleranceerror_percent
                                  ,dq_resultdq
                                  ,dq_errorcode
+                                 ,dq_externalcode
                                  ,dq_numrowsok
                                  ,dq_numrowserror
                                  ,dq_numrowstotal
@@ -1315,6 +1319,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         			 ,${p_DQ_toleranceError_Percent}
         			 ,${ReplaceSQLStringNulls(p_DQ_ResultDQ)}
                ,${p_DQ_ErrorCode}
+               ,${ReplaceSQLStringNulls(p_DQ_ExternalCode)}
         			 ,${p_DQ_NumRowsOK}
         			 ,${p_DQ_NumRowsError}
         			 ,${p_DQ_NumRowsTotal}
