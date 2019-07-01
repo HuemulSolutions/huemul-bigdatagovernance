@@ -309,6 +309,7 @@ create table  control_dq (
                                              ,dq_dq_toleranceerror_percent     decimal(30,10)
                                              ,dq_resultdq             varchar(4000)
                                              ,dq_errorcode            int
+                                             ,dq_externalcode         varchar(200)
                                              ,dq_numrowsok            int
                                              ,dq_numrowserror         int
                                              ,dq_numrowstotal         int
