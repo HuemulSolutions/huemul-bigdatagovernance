@@ -26,6 +26,7 @@ class huemul_DataQuality(FieldName: huemul_Columns
             ,DQ_ExternalCode: String = null
             ) extends Serializable {
   
+  private var _DQ_ExternalCode: String = DQ_ExternalCode
   private var ToleranceError_Percent: Decimal = null
   /**% of total for refuse validation. Example: 0.15 = 15% (null to not use)
    */
@@ -50,7 +51,8 @@ class huemul_DataQuality(FieldName: huemul_Columns
   def getNotification(): huemulType_DQNotification = {return Notification}
   def getSaveErrorDetails(): Boolean = {return if (QueryLevel == huemulType_DQQueryLevel.Row) SaveErrorDetails else false}
   def getErrorCode(): Integer = {return Error_Code}
-  def getDQ_ExternalCode(): String = {return DQ_ExternalCode}
+  def setDQ_ExternalCode(value: String) {_DQ_ExternalCode = value }
+  def getDQ_ExternalCode(): String = {return _DQ_ExternalCode}
   var NumRowsOK: java.lang.Long = null
   var NumRowsTotal: java.lang.Long = null
   
