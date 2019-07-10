@@ -74,6 +74,11 @@ Finalmente, también automatiza la generación de código a partir de las defini
 
   <dependencies>
     <dependency>
+      <groupId>com.huemulsolutions.bigdata</groupId>
+      <artifactId>huemul-sql-decode</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
