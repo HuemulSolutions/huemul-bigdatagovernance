@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.DecimalType
 import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
 import com.huemulsolutions.bigdata.tables.huemul_Table
 import org.apache.spark.sql.catalyst.expressions.Coalesce
+import com.huemulsolutions.bigdata.sql_decode._
 
         
       
@@ -52,6 +53,56 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
   @transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"com.huemulsolutions")
+  
+  
+  private val excludeWords:ArrayBuffer[String]  = new ArrayBuffer[String]() 
+  val huemul_SQL_decode: huemul_SQL_Decode = new huemul_SQL_Decode(excludeWords,1)
+  def getColumnsAndTables: ArrayBuffer[huemul_sql_tables_and_columns] = {
+    val inicio = this.getCurrentDateTimeJava()
+    val Result = new ArrayBuffer[huemul_sql_tables_and_columns]()
+    //spark.catalog.listTables().show(10000)
+    //spark.catalog.listDatabases().show()
+    var numRowDatabase = 0
+    spark.catalog.listDatabases().collect().foreach { x_database =>
+      numRowDatabase += 1
+      //println(s"x_database.name: ${x_database.name}")
+      var resTables = spark.catalog.listTables(x_database.name).collect()
+      if (numRowDatabase > 1)
+        resTables = resTables.filter { x_fil => x_fil.database != null }
+        //resTables.foreach { x_prin => println(x_prin) }
+      
+      resTables.foreach { x => 
+        //get all columns
+        //println(s"database: ${x.database}, table: ${x.name}")
+        //spark.catalog.listColumns(x.database, x.name).show(10000)
+        var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
+  
+        if (x.database == null)
+          listcols = spark.catalog.listColumns(x.name)
+        else
+          listcols = spark.catalog.listColumns(x.database, x.name)
+          
+        listcols.collect().foreach { y =>
+          //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
+          val newRow = new huemul_sql_tables_and_columns()
+          newRow.column_name = y.name
+          newRow.database_name = if (x.database == null) "temporary" else x.database
+          newRow.table_name = x.name
+          Result.append(newRow)
+        }  
+      }
+    }
+    
+    val duracion = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
+    println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
+    return Result
+    
+  }
+  
+  private var isEnableSQLDecode: Boolean = true
+  def enableSQLDecode() { isEnableSQLDecode = true }
+  def disableSQLDecode() {isEnableSQLDecode = false}
+  def getIsEnableSQLDecode(): Boolean = {return isEnableSQLDecode}
   
   /**
    * logMessageDebug: Send {message} to log4j - Debug
