@@ -101,14 +101,18 @@ create table control_query 		(query_id			     varchar(50)
 								,processexecstep_id      varchar(50)
                                 ,processexec_id          varchar(50)      
                                 ,rawfiles_id             varchar(50)
+                                ,rawfilesdet_id		     varchar(50)
                                 ,table_id                varchar(50)
                                 ,query_alias			 varchar(200)
                                 ,query_sql_from		     varchar(4000)
                                 ,query_sql_where		 varchar(4000)
-                                ,query_numErrors	     int
+                                ,query_numerrors	     int
                                 ,query_autoinc			 int
                                 ,query_israw			 int
                                 ,query_isfinaltable	     int
+                                ,query_numrows_real		 int
+                                ,query_numrows_expected  int
+                                ,query_duration			 varchar(10)			 
                                 ,error_id                varchar(50)
                                 ,mdm_fhcreate            varchar(30)
                                 ,mdm_processname         varchar(200)    
@@ -116,14 +120,17 @@ create table control_query 		(query_id			     varchar(50)
                                 );
                                 
 create table control_querycolumn 	  (querycol_id					varchar(50)
-									  ,query_id						varchar(50
+									  ,query_id						varchar(50)
 									  ,rawfilesdet_id               varchar(50)
 									  ,column_id                  	varchar(50)
+									  ,querycol_pos					int
 									  ,querycol_name				varchar(200)
 									  ,querycol_sql					varchar(4000)
 									  ,querycol_posstart			int
 									  ,querycol_posend				int
 									  ,querycol_line				int
+									  ,mdm_fhcreate            varchar(30)
+                                	  ,mdm_processname         varchar(200)    
 									  ,primary key (querycol_id)
                                 );
                                 
@@ -140,6 +147,8 @@ create table control_querycolumnori		(querycolori_id					varchar(50)
 										,querycolori_iswhere			int
 										,querycolori_ishaving			int
 										,querycolori_isorder			int
+										,mdm_fhcreate            varchar(30)
+                                		,mdm_processname         varchar(200)    
 										,primary key (querycolori_id)
                                 );				                 
 									                                                                     
