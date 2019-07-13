@@ -99,7 +99,53 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       
     
     setDataFrame(DFTemp, Alias, SaveInTemp)
+    
+    if (huemulBigDataGov.getIsEnableSQLDecode()) {
+      val TablesAndColumns = huemulBigDataGov.getColumnsAndTables(true)
+      val res = huemulBigDataGov.huemul_SQL_decode.decodeSQL(sql, TablesAndColumns)
+      print_result(res,res.AutoIncSubQuery)
+    }
         
+  }
+  
+  def print_result(resfinal: com.huemulsolutions.bigdata.sql_decode.huemul_sql_decode_result, numciclo: Int) {
+    println(s"RESULTADO CICLO ${numciclo} ${resfinal.AliasQuery} ***************************************")
+     println("************ SQL FROM ************ ")
+     println(resfinal.from_sql)
+     println("************ SQL WHERE ************ ")
+     println(resfinal.where_sql)
+     
+     println("   ")
+     println("************ COLUMNS ************ ")
+     resfinal.columns.foreach { x => 
+           println (s"*** COLUMN NAME: ${x.column_name}")
+           println (s"    column_sql: ${x.column_sql}")
+           println ("     columns used:")
+           x.column_origin.foreach { y => println(s"     ---- column_database: ${y.trace_database_name}, trace_table_name: ${y.trace_table_name}, trace_tableAlias_name: ${y.trace_tableAlias_name}, trace_column_name: ${y.trace_column_name}") }
+    }
+    
+    println("   ")
+    println("************ TABLES ************ ")
+    resfinal.tables.foreach { x => println (s"*** DATABASE NAME: ${x.database_name}, TABLE NAME: ${x.table_name}, ALIAS: ${x.tableAlias_name}") }
+   
+    println("   ")
+    println("************ COLUMNS WHERE ************ ")
+    resfinal.columns_where.foreach { x => println(s"Columns: ${x.trace_column_name}, Table: ${x.trace_table_name}, Database: ${x.trace_database_name}") }
+    
+    println("   ")
+    println("************ FINAL RESULTS ************ ")
+    println(s"N° Errores: ${resfinal.NumErrors}")
+    println(s"N° subquerys: ${resfinal.AutoIncSubQuery}")
+    println(s"AliasDatabase: ${resfinal.AliasDatabase}")
+    println(s"AliasQuery: ${resfinal.AliasQuery}")
+    
+    
+    var numciclo_2 = numciclo
+    resfinal.subquery_result.foreach { x =>  
+      numciclo_2 += 1
+      print_result(x,  numciclo_2)
+    }
+    
   }
     
   /**
