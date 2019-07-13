@@ -103,7 +103,9 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     if (huemulBigDataGov.getIsEnableSQLDecode()) {
       val TablesAndColumns = huemulBigDataGov.getColumnsAndTables(true)
       val res = huemulBigDataGov.huemul_SQL_decode.decodeSQL(sql, TablesAndColumns)
-      print_result(res,res.AutoIncSubQuery)
+      
+      if (huemulBigDataGov.DebugMode)
+        print_result(res,res.AutoIncSubQuery)
     }
         
   }
