@@ -86,6 +86,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    */
   def DF_from_RAW(rowRDD: RDD[Row], Alias: String) {
     DataFramehuemul.DF_from_RAW(rowRDD, Alias)
+    this.StopRead_dt = huemulBigDataGov.getCurrentDateTimeJava()
     //Register use in control
     Control.RegisterRAW_USE(this)
     
@@ -225,7 +226,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     this.SettingInUse.SetParamsInUse(year, month, day, hour, min, sec, AdditionalParams)
     
     try {
-        this.StartRead_dt = Calendar.getInstance()
+        this.StartRead_dt = huemulBigDataGov.getCurrentDateTimeJava()
         /************************************************************************/
         /********   OPEN FILE   *********************************/
         /************************************************************************/
