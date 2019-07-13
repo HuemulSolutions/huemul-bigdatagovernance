@@ -57,19 +57,40 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   private val excludeWords:ArrayBuffer[String]  = new ArrayBuffer[String]() 
   val huemul_SQL_decode: huemul_SQL_Decode = new huemul_SQL_Decode(excludeWords,1)
-  def getColumnsAndTables: ArrayBuffer[huemul_sql_tables_and_columns] = {
+  
+  private var _ColumnsAndTables: ArrayBuffer[huemul_sql_tables_and_columns] = new ArrayBuffer[huemul_sql_tables_and_columns]()
+  def getColumnsAndTables(OnlyRefreshTempTables: Boolean): ArrayBuffer[huemul_sql_tables_and_columns] = {
     val inicio = this.getCurrentDateTimeJava()
-    val Result = new ArrayBuffer[huemul_sql_tables_and_columns]()
+    
+    if (OnlyRefreshTempTables)
+      _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "temporary" }
+    else 
+      _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
+    
     //spark.catalog.listTables().show(10000)
     //spark.catalog.listDatabases().show()
     var numRowDatabase = 0
-    spark.catalog.listDatabases().collect().foreach { x_database =>
+    var allDatabases = spark.catalog.listDatabases().collect()
+    
+    //only get the first one
+    if (OnlyRefreshTempTables)
+      allDatabases = allDatabases.filter { x => x == allDatabases(0)  }
+    
+      
+    allDatabases.foreach { x_database =>
       numRowDatabase += 1
       //println(s"x_database.name: ${x_database.name}")
       var resTables = spark.catalog.listTables(x_database.name).collect()
       if (numRowDatabase > 1)
         resTables = resTables.filter { x_fil => x_fil.database != null }
+      else {
+        //only get temp tables (null database)
+        if (OnlyRefreshTempTables)
+          resTables = resTables.filter { x_fil => x_fil.database == null }
+      }
         //resTables.foreach { x_prin => println(x_prin) }
+      
+      
       
       resTables.foreach { x => 
         //get all columns
@@ -88,14 +109,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           newRow.column_name = y.name
           newRow.database_name = if (x.database == null) "temporary" else x.database
           newRow.table_name = x.name
-          Result.append(newRow)
+          _ColumnsAndTables.append(newRow)
         }  
       }
     }
     
     val duracion = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
     println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
-    return Result
+    return _ColumnsAndTables
     
   }
   
@@ -191,11 +212,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (!this.GlobalSettings.ValidPath(globalSettings.MDM_OldValueTrace_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_DataBase"
   }
-  
-  
-  
   logMessageInfo("End Validating GlobalSetings..")
   
+  
+    
   if (ErrorGlobalSettings.length()> 0) {
     sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
   }
@@ -293,6 +313,15 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   val IdApplication = if (!TestPlanMode) spark.sparkContext.applicationId else ""
   logMessageInfo(s"application_Id: ${IdApplication}")  
   logMessageInfo(s"URL Monitoring: ${IdPortMonitoring}")
+  
+  /*********************
+   * GET HIVE METADATA FOR COLUMNS TRACEABILITY
+   *************************/
+  if (!TestPlanMode) {
+    logMessageInfo("Start get hive table metadata..")
+    getColumnsAndTables(false)
+    logMessageInfo("End get hive table metadata..")
+  }
 
   /*
   if (!TestPlanMode) {
