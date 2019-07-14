@@ -92,13 +92,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    */
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
-    
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
     //Cambio en v1.3: optimiza tiempo al aplicar repartition para archivos pequeños             
     val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
       
     
     setDataFrame(DFTemp, Alias, SaveInTemp)
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
     if (huemulBigDataGov.getIsEnableSQLDecode()) {
       val TablesAndColumns = huemulBigDataGov.getColumnsAndTables(true)
@@ -106,6 +107,11 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       
       if (huemulBigDataGov.DebugMode)
         print_result(res,res.AutoIncSubQuery)
+        
+      val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
+      Control.RegisterTrace_DECODE(res
+                                  , -1 //NumRows
+                                  , s"${duration.hour}:${duration.minute}:${duration.second}")
     }
         
   }
