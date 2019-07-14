@@ -511,6 +511,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     _MDM_AutoInc = value
   }
   
+  def _setControlTableId(value: String) {
+    _ControlTableId = value
+  }
+  
+  def _getControlTableId(): String = {return _ControlTableId}
   
   /**
    * Get all declared fields from class
@@ -570,6 +575,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   private var _SQL_OldValueFullTrace_DF: DataFrame = null 
   private var _MDM_AutoInc: Long = 0
+  private var _ControlTableId: String = null
   def _getMDM_AutoInc(): Long = {return _MDM_AutoInc}
   private var _table_dq_isused: Int = 0
   def _getTable_dq_isused(): Int = {return _table_dq_isused}
@@ -1902,6 +1908,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep("Selective Update: Left Join")
       val SQLLeftJoin_DF = huemulBigDataGov.DF_ExecuteQuery("__LeftJoin"
                                               , SQL_Step2_LeftJoin(TempAlias, this.DataFramehuemul.Alias)
+                                              , Control //parent control 
                                              )
                                              
                                              
@@ -1912,6 +1919,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep("Selective Update: Update Logic")
       val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
                                           , SQL_Step4_Update("__LeftJoin", huemulBigDataGov.ProcessNameCall)
+                                          , Control //parent control 
                                          )
                                          
       //**************************************************//
@@ -1920,6 +1928,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep("Selective Update: Hash Code")                                         
       val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p2"
                                           , SQL_Step3_Hash_p1("__Hash_p1", isSelectiveUpdate)
+                                          , Control //parent control 
                                          )
                                          
       this.UpdateStatistics(LocalControl, "Selective Update")
@@ -1936,7 +1945,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
 
      
       //STEP 2: Execute final table  //Add this.getNumPartitions param in v1.3
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
+      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
         
       //Unpersist first DF
@@ -1965,7 +1974,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery)
         huemulBigDataGov.logMessageDebug(SQLFinalTable)
       //STEP 2: Execute final table //Add debugmode and getnumpartitions in v1.3
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
+      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this)
       
       LocalControl.NewStep("Transaction: Get Statistics info")
       this._NumRows_Total = this.DataFramehuemul.getNumRows
@@ -2004,6 +2013,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         LocalControl.NewStep("Ref & Master: Select distinct")
         val SQLDistinct_DF = huemulBigDataGov.DF_ExecuteQuery("__Distinct"
                                                 , SQL_Step0_Distinct(this.DataFramehuemul.Alias)
+                                                , Control //parent control 
                                                )
         NextAlias = "__Distinct"
       }
@@ -2049,6 +2059,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep("Ref & Master: Full Join")
       val SQLFullJoin_DF = huemulBigDataGov.DF_ExecuteQuery("__FullJoin"
                                               , SQL_Step1_FullJoin(TempAlias, NextAlias, isUpdate, isDelete)
+                                              , Control //parent control 
                                              )
                                              
                                              
@@ -2056,12 +2067,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep("Ref & Master: Update & Insert Logic")
       val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
                                           , SQL_Step2_UpdateAndInsert("__FullJoin", huemulBigDataGov.ProcessNameCall, isInsert)
+                                          , Control //parent control 
                                          )
      
       //STEP 3: Create Hash
       LocalControl.NewStep("Ref & Master: Hash Code")                                         
       val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p2"
                                           , SQL_Step3_Hash_p1("__Hash_p1", false)
+                                          , Control //parent control 
                                          )
                                          
                                         
@@ -2073,7 +2086,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
 
      
       //STEP 2: Execute final table // Add debugmode and getnumpartitions in v1.3 
-      DataFramehuemul.DF_from_SQL(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions)
+      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
       
       
