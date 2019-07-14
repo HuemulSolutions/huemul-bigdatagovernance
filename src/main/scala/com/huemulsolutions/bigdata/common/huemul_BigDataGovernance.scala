@@ -63,7 +63,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     val inicio = this.getCurrentDateTimeJava()
     
     if (OnlyRefreshTempTables)
-      _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "temporary" }
+      _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
     else 
       _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
     
@@ -107,7 +107,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
           val newRow = new huemul_sql_tables_and_columns()
           newRow.column_name = y.name
-          newRow.database_name = if (x.database == null) "temporary" else x.database
+          newRow.database_name = if (x.database == null) "__temporary" else x.database
           newRow.table_name = x.name
           _ColumnsAndTables.append(newRow)
         }  
