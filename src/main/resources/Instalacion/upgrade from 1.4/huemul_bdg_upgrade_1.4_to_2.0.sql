@@ -66,11 +66,16 @@ create table control_querycolumn 	  (querycol_id					varchar(50)
 									  ,primary key (querycol_id)
                                 );
                                 
+create index idx_control_querycolumn_i01 on control_querycolumn (query_id, querycol_name)                                
+                                
 create table control_querycolumnori		(querycolori_id					varchar(50)       
 										,querycol_id					varchar(50)
 										,table_idori                	varchar(50)
-										,rawfiles_idori             	varchar(50)
+										,column_idori					varchar(50)
+										,rawfilesdet_idori             	varchar(50)
+										,rawfilesdetfields_idori		varchar(50)
 										,query_idori					varchar(50)
+										,querycol_idori					varchar(50)
 										,querycolori_dbname				varchar(200)
 										,querycolori_tabname			varchar(200)
 										,querycolori_tabalias		 	varchar(200)
@@ -82,4 +87,5 @@ create table control_querycolumnori		(querycolori_id					varchar(50)
 										,mdm_fhcreate            varchar(30)
                                 		,mdm_processname         varchar(200)    
 										,primary key (querycolori_id)
-                                );	                                 
+                                );				                 
+                                
