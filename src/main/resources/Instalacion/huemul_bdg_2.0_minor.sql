@@ -277,7 +277,8 @@ create table  control_tablesrel (
                                              ,mdm_processname         varchar(200)                                             
                                              ,primary key (tablerel_id) 
                                             );
-											
+
+create index idx_control_tablesrel_i01 on control_tablesrel (table_idpk, table_idfk, tablefk_namerelationship) 											
                     
 create table  control_tablesrelcol ( 
                                               tablerel_id                varchar(50)
@@ -433,6 +434,8 @@ create table  control_testplan (
                                              ,mdm_processname         varchar(200)
                                              ,primary key (testplan_id) 
                                             );
+                                            
+create index idx_control_testplan_i01 on control_testplan (testplangroup_id, testplan_name)
                              
 
 create table  control_testplanfeature ( 

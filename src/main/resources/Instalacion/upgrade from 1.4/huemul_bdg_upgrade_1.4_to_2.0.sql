@@ -28,6 +28,8 @@ alter table control_tables add table_fullname_ovt varchar(1200);
 
 alter table control_dq add dq_externalcode         varchar(200);
 
+create index idx_control_testplan_i01 on control_testplan (testplangroup_id, testplan_name)
+create index idx_control_tablesrel_i01 on control_tablesrel (table_idpk, table_idfk, tablefk_namerelationship)
                                         
 create table control_query 		(query_id			     varchar(50)
 								,processexecstep_id      varchar(50)
