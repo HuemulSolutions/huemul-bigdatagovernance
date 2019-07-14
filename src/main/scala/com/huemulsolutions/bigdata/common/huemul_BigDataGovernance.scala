@@ -26,6 +26,7 @@ import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
 import com.huemulsolutions.bigdata.tables.huemul_Table
 import org.apache.spark.sql.catalyst.expressions.Coalesce
 import com.huemulsolutions.bigdata.sql_decode._
+import com.huemulsolutions.bigdata.control.huemul_Control
 
         
       
@@ -730,6 +731,62 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   * 
   */
   
+  def print_result(resfinal: com.huemulsolutions.bigdata.sql_decode.huemul_sql_decode_result, numciclo: Int) {
+    println(s"RESULTADO CICLO ${numciclo} ${resfinal.AliasQuery} ***************************************")
+     println("************ SQL FROM ************ ")
+     println(resfinal.from_sql)
+     println("************ SQL WHERE ************ ")
+     println(resfinal.where_sql)
+     
+     println("   ")
+     println("************ COLUMNS ************ ")
+     resfinal.columns.foreach { x => 
+           println (s"*** COLUMN NAME: ${x.column_name}")
+           println (s"    column_sql: ${x.column_sql}")
+           println ("     columns used:")
+           x.column_origin.foreach { y => println(s"     ---- column_database: ${y.trace_database_name}, trace_table_name: ${y.trace_table_name}, trace_tableAlias_name: ${y.trace_tableAlias_name}, trace_column_name: ${y.trace_column_name}") }
+    }
+    
+    println("   ")
+    println("************ TABLES ************ ")
+    resfinal.tables.foreach { x => println (s"*** DATABASE NAME: ${x.database_name}, TABLE NAME: ${x.table_name}, ALIAS: ${x.tableAlias_name}") }
+   
+    println("   ")
+    println("************ COLUMNS WHERE ************ ")
+    resfinal.columns_where.foreach { x => println(s"Columns: ${x.trace_column_name}, Table: ${x.trace_table_name}, Database: ${x.trace_database_name}") }
+    
+    println("   ")
+    println("************ FINAL RESULTS ************ ")
+    println(s"N° Errores: ${resfinal.NumErrors}")
+    println(s"N° subquerys: ${resfinal.AutoIncSubQuery}")
+    println(s"AliasDatabase: ${resfinal.AliasDatabase}")
+    println(s"AliasQuery: ${resfinal.AliasQuery}")
+    
+    
+    var numciclo_2 = numciclo
+    resfinal.subquery_result.foreach { x =>  
+      numciclo_2 += 1
+      print_result(x,  numciclo_2)
+    }
+    
+  }
+  
+  def DF_SaveLinage(Alias: String, sql: String,dt_start: java.util.Calendar, dt_end: java.util.Calendar, Control: huemul_Control, FinalTable: huemul_Table ) {
+    if (getIsEnableSQLDecode()) {
+      val TablesAndColumns = getColumnsAndTables(true)
+      val res = huemul_SQL_decode.decodeSQL(sql, TablesAndColumns)
+      
+      if (DebugMode)
+        print_result(res,res.AutoIncSubQuery)
+        
+      val duration = getDateTimeDiff(dt_start, dt_end)
+      Control.RegisterTrace_DECODE(res
+                                  , Alias
+                                  , -1 //NumRows
+                                  , s"${duration.hour}:${duration.minute}:${duration.second}"
+                                  , FinalTable)
+    }
+  }
   
   /**
    * Execute a SQL sentence, create a new alias and save de DF result into HDFS
@@ -743,6 +800,16 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
 
     this.CreateTempTable(SQL_DF, Alias, this.DebugMode, null)      //crea tabla temporal para debug
     return SQL_DF
+  }
+  
+  def DF_ExecuteQuery(Alias: String, SQL: String, Control: huemul_Control ): DataFrame = {
+    val dt_start = getCurrentDateTimeJava()
+    val Result = DF_ExecuteQuery(Alias, SQL)
+    val dt_end = getCurrentDateTimeJava()
+    
+    DF_SaveLinage(Alias, SQL, dt_start, dt_end, Control, null)
+    
+    return Result
   }
   
   def RegisterError(ErrorCode: Integer, Message: String, Trace: String, FileName: String, MethodName: String, ClassName: String, LineNumber: Integer, WhoWriteError: String ) {
