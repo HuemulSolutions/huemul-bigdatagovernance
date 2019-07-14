@@ -10,6 +10,15 @@ import com.huemulsolutions.bigdata.dataquality._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import huemulType_Frequency._
+import scala.collection.mutable.ArrayBuffer
+
+class huemul_sql_tables extends com.huemulsolutions.bigdata.sql_decode.huemul_sql_tables {
+  var query_id: String = null
+  var rawFilesDet_Id: String = null
+  var isRAW: Boolean = false
+  var isTable: Boolean = false
+  var isTemp: Boolean = false
+}
 
 class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrequency: huemulType_Frequency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulBigDataGov = phuemulBigDataGov
@@ -38,6 +47,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   private val testPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = new scala.collection.mutable.ListBuffer[huemul_TestPlan]() 
   def getTestPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = {return testPlanDetails}
+  
+  //import com.huemulsolutions.bigdata.
+  private var control_QueryArray: ArrayBuffer[huemul_sql_tables] = new ArrayBuffer[huemul_sql_tables]()
   
   //Find process name in control_process
   
@@ -802,6 +814,111 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     }
   }
   
+  def RegisterTrace_DECODE(defQuery: com.huemulsolutions.bigdata.sql_decode.huemul_sql_decode_result, NumRows: Long, Duration: String) {     
+      
+    if (huemulBigDataGov.RegisterInControl) {
+      val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+      val query_id = huemulBigDataGov.huemul_GetUniqueId()
+      //Insert control_TablesUse
+      control_Query_add(query_id
+                      , this.LocalIdStep // p_processexecstep_id
+                      , this.Control_Id // p_processexec_id
+                      , null //p_rawfiles_id
+                      , null //p_rawFilesDet_id
+                      , null //p_table_id
+                      , defQuery.AliasQuery // p_query_alias
+                      , defQuery.from_sql // p_query_sql_from
+                      , defQuery.where_sql // p_query_sql_where
+                      , defQuery.NumErrors // p_query_numErrors
+                      , defQuery.AutoIncSubQuery // p_query_autoinc
+                      , false //p_query_israw
+                      , false //p_query_isfinaltable
+                      , NumRows // p_query_numrows_real
+                      , -1 //p_query_numrows_expected
+                      , Duration // p_query_duration
+                      , "" //p_error_id
+                      , Control_ClassName)
+      
+      var numPos: Int = 0
+      defQuery.columns.foreach { x => 
+        val querycol_id = huemulBigDataGov.huemul_GetUniqueId()
+        control_QueryColumn_add(querycol_id
+                              , query_id
+                              , null //p_rawfilesdet_id
+                              , null //p_column_id
+                              , numPos // p_querycol_pos
+                              , x.column_name // p_querycol_name
+                              , x.column_sql // p_querycol_sql
+                              , x.sql_pos_start //p_querycol_posstart
+                              , x.sql_pos_end //p_querycol_posend
+                              , 0
+                              , Control_ClassName)
+        numPos += 1
+        
+        //Add dependencies
+        x.column_origin.foreach { y => 
+          val querycolori_id = huemulBigDataGov.huemul_GetUniqueId()
+          
+          var query_idori: String = null
+          var querycol_idori: String = null
+          var table_idori: String = null
+          var column_idori: String = null
+          var rawfilesdet_idori: String = null
+          var rawfilesdetfields_idori: String = null
+          if (y.trace_database_name == null || y.trace_database_name == "__temporary") {
+            //doesn't have DB, origin is query or rawfiles, search in Control Array
+            val QueryResult =  control_QueryArray.filter { z_query => z_query.table_name == y.trace_table_name }
+            
+            if (QueryResult.length > 0) {
+              //get last temp query inserted in the array (the newest one)
+              val rowQuery = QueryResult(QueryResult.length-1)
+              query_idori = rowQuery.query_id
+              rawfilesdet_idori = rowQuery.rawFilesDet_Id
+              
+              if (query_idori != null) 
+                querycol_idori = control_querycol_getId(query_idori, y.trace_column_name)
+
+              
+              //if not null, is raw
+              if (rawfilesdet_idori != null)
+                rawfilesdetfields_idori = y.trace_column_name
+            }
+            
+          } else {
+            //Id from Table, search in catalog
+            table_idori = control_tables_getId(y.trace_database_name, y.trace_table_name)
+            column_idori = control_columns_getId(table_idori, y.trace_column_name)
+          }
+          
+          control_QueryColumnOri_add(querycolori_id
+              , querycol_id //p_querycol_id
+              , table_idori
+              , column_idori
+              , rawfilesdet_idori
+              , rawfilesdetfields_idori
+              , query_idori
+              , querycol_idori
+              , y.trace_database_name //p_querycolori_dbname
+              , y.trace_table_name //p_querycolori_tabname
+              , y.trace_tableAlias_name // p_querycolori_tabalias
+              , y.trace_column_name // p_querycolori_colname
+              , true //p_querycolori_isselect
+              , false //p_querycolori_iswhere
+              , false //p_querycolori_ishaving
+              , false //p_querycolori_isorder
+              , Control_ClassName)
+          
+        }
+        
+      }
+    
+      val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+      val dif = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
+      println(s"insert sql decode time: ${dif.hour}:${dif.minute}:${dif.second}")
+    }
+                        
+  }
+  
   def RegisterMASTER_CREATE_Use(DefMaster: huemul_Table) {     
       
     if (huemulBigDataGov.RegisterInControl) {
@@ -1320,6 +1437,45 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       """)
            
     return ExecResult             
+  }
+  
+  private def control_tables_getId(p_BBDD_name: String, p_Table_name: String): String = {
+    //Get Table Id
+    val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          select table_id 
+          from control_tables 
+          where table_bbddname = ${ReplaceSQLStringNulls(p_BBDD_name)} 
+          and   table_name     = ${ReplaceSQLStringNulls(p_Table_name)}	
+      """)
+    val LocalTable_Id: String = if (ExecResultTable.IsError || ExecResultTable.ResultSet.length == 0) null else ExecResultTable.ResultSet(0).getAs[String]("table_id".toLowerCase()) 
+    
+    return LocalTable_Id
+  }
+  
+  private def control_columns_getId(p_Table_id: String, p_column_name: String): String = {
+    //Get Table Id
+    val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          select column_id 
+          from control_columns 
+          where table_id = ${ReplaceSQLStringNulls(p_Table_id)} 
+          and   column_name     = ${ReplaceSQLStringNulls(p_column_name)}	
+      """)
+    val column_id: String = if (ExecResultTable.IsError || ExecResultTable.ResultSet.length == 0) null else ExecResultTable.ResultSet(0).getAs[String]("column_id".toLowerCase()) 
+    
+    return column_id
+  }
+  
+  private def control_querycol_getId(p_query_id: String, p_querycol_name: String): String = {
+    //Get Table Id
+    val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          select querycol_id 
+          from control_querycolumn 
+          where query_id = ${ReplaceSQLStringNulls(p_query_id)} 
+          and   querycol_name     = ${ReplaceSQLStringNulls(p_querycol_name)}	
+      """)
+    val querycol_id: String = if (ExecResultTable.IsError || ExecResultTable.ResultSet.length == 0) null else ExecResultTable.ResultSet(0).getAs[String]("querycol_id".toLowerCase()) 
+    
+    return querycol_id
   }
   
   
@@ -2306,7 +2462,15 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_error_id: String
                              ,p_MDM_ProcessName: String
       ): huemul_JDBCResult =  {
-    
+    val newQuerys = new huemul_sql_tables()
+    newQuerys.query_id = p_query_id
+    newQuerys.tableAlias_name = p_query_alias
+    newQuerys.table_name = p_query_alias
+    newQuerys.rawFilesDet_Id = p_rawFilesDet_id
+    newQuerys.isRAW = p_query_israw
+    newQuerys.isTable = p_query_isfinaltable
+    newQuerys.isTemp = !p_query_israw && !p_query_isfinaltable
+    control_QueryArray.append(newQuerys)
     
     var ExecResult: huemul_JDBCResult = null
     
@@ -2406,8 +2570,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private def control_QueryColumnOri_add ( p_querycolori_id: String       
                       										,p_querycol_id: String
                       										,p_table_idori: String
-                      										,p_rawfiles_idori: String
+                      										,p_column_idori: String
+                      										,p_rawfilesdet_idori: String
+                      										,p_rawfilesdetfields_idori: String
                       										,p_query_idori: String
+                      										,p_querycol_idori: String
                       										,p_querycolori_dbname: String
                       										,p_querycolori_tabname: String
                       										,p_querycolori_tabalias: String
@@ -2426,8 +2593,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           insert into control_querycolumnori  ( querycolori_id       
                         										,querycol_id
                         										,table_idori
-                        										,rawfiles_idori
+                                            ,column_idori
+                        										,rawfilesdet_idori
+                                            ,rawfilesdetfields_idori
                         										,query_idori
+                                            ,querycol_idori
                         										,querycolori_dbname
                         										,querycolori_tabname
                         										,querycolori_tabalias
@@ -2441,8 +2611,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         	VALUES(  ${ReplaceSQLStringNulls(p_querycolori_id)}
             			,${ReplaceSQLStringNulls(p_querycol_id)}
             			,${ReplaceSQLStringNulls(p_table_idori)}
-            			,${ReplaceSQLStringNulls(p_rawfiles_idori)}
+            			,${ReplaceSQLStringNulls(p_column_idori)}
+            			,${ReplaceSQLStringNulls(p_rawfilesdet_idori)}
+            			,${ReplaceSQLStringNulls(p_rawfilesdetfields_idori)}
             			,${ReplaceSQLStringNulls(p_query_idori)}
+            			,${ReplaceSQLStringNulls(p_querycol_idori)}
             			,${ReplaceSQLStringNulls(p_querycolori_dbname)}
             			,${ReplaceSQLStringNulls(p_querycolori_tabname)}
             			,${ReplaceSQLStringNulls(p_querycolori_tabalias)}
