@@ -87,10 +87,16 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       huemulBigDataGov.CreateTempTable(DataDF, AliasDF, huemulBigDataGov.DebugMode, null)
   }
   
+  
+  
   /**   
    Create DF from SQL (equivalent to spark.sql method)
    */
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
+    //WARNING: ANY CHANGE ON THIS METHOD MUST BE REPLIATES TO _CreateFinalQuery
+    //THE ONLY DIFFERENCE IS IN 
+    //huemulBigDataGov.DF_SaveLinage(Alias, sql,dt_start, dt_end, Control)
+    
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
     val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
     //Cambio en v1.3: optimiza tiempo al aplicar repartition para archivos pequeños             
@@ -101,60 +107,29 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     setDataFrame(DFTemp, Alias, SaveInTemp)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
-    if (huemulBigDataGov.getIsEnableSQLDecode()) {
-      val TablesAndColumns = huemulBigDataGov.getColumnsAndTables(true)
-      val res = huemulBigDataGov.huemul_SQL_decode.decodeSQL(sql, TablesAndColumns)
-      
-      if (huemulBigDataGov.DebugMode)
-        print_result(res,res.AutoIncSubQuery)
-        
-      val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
-      Control.RegisterTrace_DECODE(res
-                                  , -1 //NumRows
-                                  , s"${duration.hour}:${duration.minute}:${duration.second}")
-    }
+    huemulBigDataGov.DF_SaveLinage(Alias, sql,dt_start, dt_end, Control, null)
         
   }
   
-  def print_result(resfinal: com.huemulsolutions.bigdata.sql_decode.huemul_sql_decode_result, numciclo: Int) {
-    println(s"RESULTADO CICLO ${numciclo} ${resfinal.AliasQuery} ***************************************")
-     println("************ SQL FROM ************ ")
-     println(resfinal.from_sql)
-     println("************ SQL WHERE ************ ")
-     println(resfinal.where_sql)
-     
-     println("   ")
-     println("************ COLUMNS ************ ")
-     resfinal.columns.foreach { x => 
-           println (s"*** COLUMN NAME: ${x.column_name}")
-           println (s"    column_sql: ${x.column_sql}")
-           println ("     columns used:")
-           x.column_origin.foreach { y => println(s"     ---- column_database: ${y.trace_database_name}, trace_table_name: ${y.trace_table_name}, trace_tableAlias_name: ${y.trace_tableAlias_name}, trace_column_name: ${y.trace_column_name}") }
-    }
+  /**   
+   Create DF from SQL (equivalent to spark.sql method)
+   */
+  def _CreateFinalQuery(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null, finalTable: huemul_Table) {
+    //WARNING: ANY CHANGE ON DF_from_SQL MUST BE REPLIATE IN THIS METHOD
     
-    println("   ")
-    println("************ TABLES ************ ")
-    resfinal.tables.foreach { x => println (s"*** DATABASE NAME: ${x.database_name}, TABLE NAME: ${x.table_name}, ALIAS: ${x.tableAlias_name}") }
-   
-    println("   ")
-    println("************ COLUMNS WHERE ************ ")
-    resfinal.columns_where.foreach { x => println(s"Columns: ${x.trace_column_name}, Table: ${x.trace_table_name}, Database: ${x.trace_database_name}") }
+    if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+    //Cambio en v1.3: optimiza tiempo al aplicar repartition para archivos pequeños             
+    val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
+                 else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
+      
     
-    println("   ")
-    println("************ FINAL RESULTS ************ ")
-    println(s"N° Errores: ${resfinal.NumErrors}")
-    println(s"N° subquerys: ${resfinal.AutoIncSubQuery}")
-    println(s"AliasDatabase: ${resfinal.AliasDatabase}")
-    println(s"AliasQuery: ${resfinal.AliasQuery}")
+    setDataFrame(DFTemp, Alias, SaveInTemp)
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
-    
-    var numciclo_2 = numciclo
-    resfinal.subquery_result.foreach { x =>  
-      numciclo_2 += 1
-      print_result(x,  numciclo_2)
-    }
-    
+    huemulBigDataGov.DF_SaveLinage(Alias, sql,dt_start, dt_end, Control, finalTable)
   }
+  
     
   /**
    * RAW_to_DF: Create DF from RDD, save at Data.DataDF
