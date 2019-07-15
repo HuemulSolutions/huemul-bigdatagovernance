@@ -2689,8 +2689,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   
-  def DF_from_DF(Alias: String, DF: DataFrame, SaveInTemp: Boolean = true) {
-    this.DataFramehuemul.setDataFrame(DF, Alias, SaveInTemp)  
+  def DF_from_DF(AliasFrom: String, AliasTo: String, DFFrom: DataFrame, SaveInTemp: Boolean = true) {
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+    this.DataFramehuemul.setDataFrame(DFFrom, AliasTo, SaveInTemp)
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    huemulBigDataGov.DF_SaveLinage(AliasTo, s"SELECT * FROM ${AliasFrom}", dt_start, dt_end, Control, null)
   }
   
   
