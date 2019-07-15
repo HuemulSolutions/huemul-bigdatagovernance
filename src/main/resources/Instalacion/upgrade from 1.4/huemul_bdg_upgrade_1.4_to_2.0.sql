@@ -30,7 +30,7 @@ alter table control_dq add dq_externalcode         varchar(200);
 
 create index idx_control_testplan_i01 on control_testplan (testplangroup_id, testplan_name)
 create index idx_control_tablesrel_i01 on control_tablesrel (table_idpk, table_idfk, tablefk_namerelationship)
-                                        
+                               
 create table control_query 		(query_id			     varchar(50)
 								,processexecstep_id      varchar(50)
                                 ,processexec_id          varchar(50)      
@@ -44,9 +44,13 @@ create table control_query 		(query_id			     varchar(50)
                                 ,query_autoinc			 int
                                 ,query_israw			 int
                                 ,query_isfinaltable	     int
+                                ,query_isquery			 int
+                                ,query_isreference		 int
                                 ,query_numrows_real		 int
                                 ,query_numrows_expected  int
-                                ,query_duration			 varchar(10)			 
+                                ,query_duration_hour	 int
+                                ,query_duration_min		 int
+                                ,query_duration_sec		 int			 
                                 ,error_id                varchar(50)
                                 ,mdm_fhcreate            varchar(30)
                                 ,mdm_processname         varchar(200)    

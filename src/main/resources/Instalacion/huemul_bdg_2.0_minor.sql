@@ -110,9 +110,13 @@ create table control_query 		(query_id			     varchar(50)
                                 ,query_autoinc			 int
                                 ,query_israw			 int
                                 ,query_isfinaltable	     int
+                                ,query_isquery			 int
+                                ,query_isreference		 int
                                 ,query_numrows_real		 int
                                 ,query_numrows_expected  int
-                                ,query_duration			 varchar(10)			 
+                                ,query_duration_hour	 int
+                                ,query_duration_min		 int
+                                ,query_duration_sec		 int			 
                                 ,error_id                varchar(50)
                                 ,mdm_fhcreate            varchar(30)
                                 ,mdm_processname         varchar(200)    
