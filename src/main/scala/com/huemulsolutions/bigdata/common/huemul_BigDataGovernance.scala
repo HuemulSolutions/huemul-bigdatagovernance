@@ -785,8 +785,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   def DF_SaveLinage(Alias: String, sql: String,dt_start: java.util.Calendar, dt_end: java.util.Calendar, Control: huemul_Control, FinalTable: huemul_Table ) {
     if (getIsEnableSQLDecode()) {
-      val TablesAndColumns = _ColumnsAndTables//getColumnsAndTables(true)
-      val res = huemul_SQL_decode.decodeSQL(sql, TablesAndColumns)
+      val res = huemul_SQL_decode.decodeSQL(sql, _ColumnsAndTables)
       
       if (DebugMode)
         print_result(res,res.AutoIncSubQuery)
@@ -797,6 +796,9 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
                                   , -1 //NumRows
                                   , s"${duration.hour}:${duration.minute}:${duration.second}"
                                   , FinalTable)
+                                  
+      //Add my result to __temporary                            
+      addColumnsAndTablesFromQuery(Alias, res)
     }
   }
   
