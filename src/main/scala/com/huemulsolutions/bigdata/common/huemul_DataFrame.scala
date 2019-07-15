@@ -70,7 +70,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   private var DQ_Result: ArrayBuffer[huemul_DQRecord] = new ArrayBuffer[huemul_DQRecord]()
   def getDQResult(): ArrayBuffer[huemul_DQRecord] = {return DQ_Result}
   
-  def setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean = true) {
+  private def local_setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean, createLinage: Boolean ) {
     //DF.persist(MEMORY_ONLY_SER)
     DataDF = DF
     DataSchema = DF.schema
@@ -82,9 +82,17 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     NumCols = DataDF.columns.length
     //Data_isRead = true
     //TODO: ver como poner la fecha de término de lectura StopRead_dt = Calendar.getInstance()
+    
+    if (createLinage) {
+      
+    }
         
     if (SaveInTemp)
       huemulBigDataGov.CreateTempTable(DataDF, AliasDF, huemulBigDataGov.DebugMode, null)
+  }
+  
+  def setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean = true) {
+    local_setDataFrame(DF, Alias, SaveInTemp, true /*create linage*/)
   }
   
   
@@ -104,7 +112,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
       
     
-    setDataFrame(DFTemp, Alias, SaveInTemp)
+    local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
     huemulBigDataGov.DF_SaveLinage(Alias, sql,dt_start, dt_end, Control, null)
@@ -124,7 +132,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
       
     
-    setDataFrame(DFTemp, Alias, SaveInTemp)
+    local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
     huemulBigDataGov.DF_SaveLinage(Alias, sql,dt_start, dt_end, Control, finalTable)
@@ -140,7 +148,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val DF = huemulBigDataGov.spark.createDataFrame(rowRDD, DataSchema)
     
     //Assign DataFrame to LocalDataFrame
-    setDataFrame(DF, Alias)
+    local_setDataFrame(DF, Alias, huemulBigDataGov.DebugMode, false)
     
     //Unpersisnt unused data
     rowRDD.unpersist(false)
