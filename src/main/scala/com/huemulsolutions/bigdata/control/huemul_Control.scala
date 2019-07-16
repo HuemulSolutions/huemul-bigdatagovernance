@@ -551,10 +551,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
            
   }
   
-  def RegisterRAW_USE(dapi_raw: huemul_DataLake) {        
+  def RegisterRAW_USE(dapi_raw: huemul_DataLake, Alias: String) {        
     dapi_raw.setrawFiles_id(huemulBigDataGov.huemul_GetUniqueId())
     
     if (huemulBigDataGov.RegisterInControl) {
+      
       //Insert processExcec
       val ExecResult = control_rawFiles_add(dapi_raw.getrawFiles_id
                          , dapi_raw.LogicalName
@@ -568,7 +569,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       //dapi_raw.getrawFiles_id if new, otherwise take Id from DataBase                   
       val LocalRawFiles_id = ExecResult.OpenVar
       
-      
+      val columnsSQLDecode: ArrayBuffer[com.huemulsolutions.bigdata.sql_decode.huemul_sql_columns] = new ArrayBuffer[com.huemulsolutions.bigdata.sql_decode.huemul_sql_columns]()
       
       //Insert Config Details
       dapi_raw.SettingByDate.foreach { x => 
@@ -616,9 +617,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                               , 0
                                               , true
                                               , false
+                                              , false  //isquery
+                                              , false  //isreference
                                               , dapi_raw.DataFramehuemul.getNumRows()
                                               , dapi_raw.Log.DataNumRows
-                                              , s"${rawDuration.hour}:${rawDuration.minute}:${rawDuration.second}"
+                                              , rawDuration.hour
+                                              , rawDuration.minute
+                                              , rawDuration.second
                                               , ""
                                               , Control_ClassName)
       }
@@ -643,23 +648,31 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                           
                                           
              //add QueryColumns
-            if (InsertInQueryCol) {
-              control_QueryColumn_add(huemulBigDataGov.huemul_GetUniqueId()
-                  , rawQuery_Id
-                  , RAWFilesDet_id
-                  , null
-                  , pos
-                  , y.getcolumnName_Business
-                  , y.getcolumnName_Business
-                  , y.getPosIni
-                  , y.getPosFin
-                  , 0
-                  , Control_ClassName)
+              if (InsertInQueryCol) {
+                control_QueryColumn_add(huemulBigDataGov.huemul_GetUniqueId()
+                    , rawQuery_Id
+                    , RAWFilesDet_id
+                    , null
+                    , pos
+                    , y.getcolumnName_Business
+                    , y.getcolumnName_Business
+                    , y.getPosIni
+                    , y.getPosFin
+                    , 0
+                    , Control_ClassName)
+                    
+                val newSQLCol = new com.huemulsolutions.bigdata.sql_decode.huemul_sql_columns()
+                newSQLCol.column_name = y.getcolumnName_Business
+                newSQLCol.column_sql = y.getcolumnName_Business
+                columnsSQLDecode.append(newSQLCol)
+              }
+              pos += 1
             }
-                pos += 1
-             }
          }
       }
+      
+      //Register in __temporary
+      huemulBigDataGov.addColumnsAndTablesFromQuery(Alias, columnsSQLDecode)
     
       //Insert control_rawFilesUse
       val rawfilesuse_id = huemulBigDataGov.huemul_GetUniqueId()
@@ -826,7 +839,15 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     }
   }
   
-  def RegisterTrace_DECODE(defQuery: com.huemulsolutions.bigdata.sql_decode.huemul_sql_decode_result, Alias: String, NumRows: Long, Duration: String, finalTable: huemul_Table) {     
+  def RegisterTrace_DECODE(defQuery: com.huemulsolutions.bigdata.sql_decode.huemul_sql_decode_result
+                          , Alias: String
+                          , NumRows: Long
+                          , Duration_Hour: Long
+                          , Duration_Minute: Long
+                          , Duration_Second: Long
+                          , finalTable: huemul_Table
+                          , isQuery: Boolean
+                          , isReferenced: Boolean) {     
       
     if (huemulBigDataGov.RegisterInControl) {
       //todo: invocar recursivamente los resultados de subqueries
@@ -855,9 +876,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       , defQuery.AutoIncSubQuery // p_query_autoinc
                       , false //p_query_israw
                       , isFinalTable //p_query_isfinaltable
+                      , isQuery
+                      , isReferenced
                       , NumRows // p_query_numrows_real
                       , -1 //p_query_numrows_expected
-                      , Duration // p_query_duration
+                      , Duration_Hour // p_query_duration
+                      , Duration_Minute
+                      , Duration_Second
                       , "" //p_error_id
                       , Control_ClassName)
       
@@ -2478,9 +2503,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_query_autoinc: Integer
                              ,p_query_israw: Boolean
                              ,p_query_isfinaltable: Boolean
+                             ,p_query_isquery: Boolean
+                             ,p_query_isreference: Boolean
                              ,p_query_numrows_real: Long
                              ,p_query_numrows_expected: Long
-                             ,p_query_duration: String
+                             ,p_query_duration_hour: Long
+                             ,p_query_duration_min: Long
+                             ,p_query_duration_sec: Long
                              ,p_error_id: String
                              ,p_MDM_ProcessName: String
       ): huemul_JDBCResult =  {
@@ -2510,9 +2539,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                       ,query_autoinc
                                       ,query_israw	
                                       ,query_isfinaltable	
+                                      ,query_isquery
+                                      ,query_isreferenced
                                       ,query_numrows_real
                                       ,query_numrows_expected 
-                                      ,query_duration				 
+                                      ,query_duration_hour
+                                      ,query_duration_min	
+                                      ,query_duration_sec						 
                                       ,error_id 
                                       ,mdm_fhcreate
                                       ,mdm_processname  ) 	
@@ -2529,9 +2562,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			,${p_query_autoinc}
             			,${if (p_query_israw) "1" else "0"}
             			,${if (p_query_isfinaltable) "1" else "0"}
+            			,${if (p_query_isquery) "1" else "0"}
+                  ,${if (p_query_isreference) "1" else "0"}
             			,${p_query_numrows_real}
             			,${p_query_numrows_expected}            			
-                  ,${ReplaceSQLStringNulls(p_query_duration)}
+                  ,${p_query_duration_hour}
+                  ,${p_query_duration_min}
+                  ,${p_query_duration_sec}						 
                   ,${ReplaceSQLStringNulls(p_error_id)}
             			,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
             			,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
