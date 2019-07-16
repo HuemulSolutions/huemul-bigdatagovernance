@@ -88,7 +88,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     DataFramehuemul.DF_from_RAW(rowRDD, Alias)
     this.StopRead_dt = huemulBigDataGov.getCurrentDateTimeJava()
     //Register use in control
-    Control.RegisterRAW_USE(this)
+    Control.RegisterRAW_USE(this, Alias)
     
   }
   
