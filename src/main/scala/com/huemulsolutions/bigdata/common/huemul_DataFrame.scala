@@ -115,7 +115,15 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
-    huemulBigDataGov.DF_SaveLinage(Alias, sql,dt_start, dt_end, Control, null)
+    huemulBigDataGov.DF_SaveLinage(Alias
+                                 , sql
+                                 , dt_start
+                                 , dt_end
+                                 , Control
+                                 , null //FinalTable
+                                 , true //isQuery
+                                 , false //isReferenced
+                                 )
         
   }
   
@@ -135,7 +143,16 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
-    huemulBigDataGov.DF_SaveLinage(Alias, sql,dt_start, dt_end, Control, finalTable)
+    huemulBigDataGov.DF_SaveLinage(Alias
+                                 , sql
+                                 , dt_start
+                                 , dt_end
+                                 , Control
+                                 , finalTable
+                                 , false //isQuery
+                                 , false //isReferenced
+                                 )
+    
   }
   
     
