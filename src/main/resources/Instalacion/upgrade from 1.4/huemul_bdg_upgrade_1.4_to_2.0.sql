@@ -45,7 +45,7 @@ create table control_query 		(query_id			     varchar(50)
                                 ,query_israw			 int
                                 ,query_isfinaltable	     int
                                 ,query_isquery			 int
-                                ,query_isreference		 int
+                                ,query_isreferenced		 int
                                 ,query_numrows_real		 int
                                 ,query_numrows_expected  int
                                 ,query_duration_hour	 int
