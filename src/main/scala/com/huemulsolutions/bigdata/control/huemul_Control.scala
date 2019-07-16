@@ -2,6 +2,7 @@ package com.huemulsolutions.bigdata.control
 
 
 import org.apache.spark.sql.types._
+import org.apache.spark.sql._
 import java.util.Calendar;
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
 import com.huemulsolutions.bigdata.common._
@@ -854,10 +855,16 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       
       var isFinalTable: Boolean = false 
       var table_id: String = null
-      
+      var ColumnList: List[Row] = null
+    
       if (finalTable != null) {
         isFinalTable = true
         table_id = finalTable._getControlTableId()
+        
+        //Get columns
+        val ColumnsInfo = control_columns_getByTable(table_id)
+        ColumnList = ColumnsInfo.ResultSet.toList
+          //val column_id: String = if (ExecResultTable.IsError || ExecResultTable.ResultSet.length == 0) null else ExecResultTable.ResultSet(0).getAs[String]("column_id".toLowerCase())
       }
       
       val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
@@ -887,12 +894,22 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       , Control_ClassName)
       
       var numPos: Int = 0
-      defQuery.columns.foreach { x => 
+      defQuery.columns.foreach { x =>        
+        
+        var column_id: String = null
+        if (table_id != null && ColumnList != null && x.column_name != null) {
+          //Get column_id
+          val resColumn = ColumnList.filter { x_colByTable => x_colByTable.getAs[String]("column_name").toUpperCase() == x.column_name.toUpperCase()  }
+          if (resColumn.length > 0) {
+            column_id = resColumn(0).getAs[String]("column_id")
+          }
+        }
+        
         val querycol_id = huemulBigDataGov.huemul_GetUniqueId()
         control_QueryColumn_add(querycol_id
                               , query_id
                               , null //p_rawfilesdet_id
-                              , null //p_column_id
+                              , column_id //null //p_column_id
                               , numPos // p_querycol_pos
                               , x.column_name // p_querycol_name
                               , x.column_sql // p_querycol_sql
@@ -1510,6 +1527,17 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     val column_id: String = if (ExecResultTable.IsError || ExecResultTable.ResultSet.length == 0) null else ExecResultTable.ResultSet(0).getAs[String]("column_id".toLowerCase()) 
     
     return column_id
+  }
+  
+  private def control_columns_getByTable(p_Table_id: String): huemul_JDBCResult = {
+    //Get Table Id
+    val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          select column_id, column_name 
+          from control_columns 
+          where table_id = ${ReplaceSQLStringNulls(p_Table_id)}	
+      """)
+        
+    return ExecResultTable
   }
   
   private def control_querycol_getId(p_query_id: String, p_querycol_name: String): String = {
