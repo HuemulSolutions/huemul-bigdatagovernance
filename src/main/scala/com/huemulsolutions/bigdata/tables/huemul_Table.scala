@@ -2693,7 +2693,16 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
     this.DataFramehuemul.setDataFrame(DFFrom, AliasTo, SaveInTemp)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
-    huemulBigDataGov.DF_SaveLinage(AliasTo, s"SELECT * FROM ${AliasFrom}", dt_start, dt_end, Control, null)
+    
+    huemulBigDataGov.DF_SaveLinage(AliasTo
+                                 , s"SELECT * FROM ${AliasFrom}" //sql
+                                 , dt_start
+                                 , dt_end
+                                 , Control
+                                 , null //FinalTable
+                                 , false //isQuery
+                                 , true //isReferenced
+                                 )
   }
   
   

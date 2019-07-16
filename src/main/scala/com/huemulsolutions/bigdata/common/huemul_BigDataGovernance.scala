@@ -120,11 +120,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     return _ColumnsAndTables 
   }
   
-  def addColumnsAndTablesFromQuery(Alias: String, queryRes: com.huemulsolutions.bigdata.sql_decode.huemul_sql_decode_result) {
-    //filter alias
+  def addColumnsAndTablesFromQuery(Alias: String, queryRes: ArrayBuffer[com.huemulsolutions.bigdata.sql_decode.huemul_sql_columns]) {
+    //filter alias if exists before
     _ColumnsAndTables = _ColumnsAndTables.filter { x => !(x.database_name == "__temporary" && x.table_name.toUpperCase() == Alias.toUpperCase())}
     
-    queryRes.columns.foreach { x => 
+    queryRes.foreach { x => 
       val newRow = new huemul_sql_tables_and_columns()
           newRow.column_name = x.column_name
           newRow.database_name = "__temporary" 
@@ -783,7 +783,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
   }
   
-  def DF_SaveLinage(Alias: String, sql: String,dt_start: java.util.Calendar, dt_end: java.util.Calendar, Control: huemul_Control, FinalTable: huemul_Table ) {
+  def DF_SaveLinage(Alias: String, sql: String,dt_start: java.util.Calendar, dt_end: java.util.Calendar, Control: huemul_Control, FinalTable: huemul_Table, isQuery: Boolean, isReferenced: Boolean ) {
     if (getIsEnableSQLDecode()) {
       val res = huemul_SQL_decode.decodeSQL(sql, _ColumnsAndTables)
       
@@ -792,13 +792,18 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         
       val duration = getDateTimeDiff(dt_start, dt_end)
       Control.RegisterTrace_DECODE(res
-                                  , Alias
-                                  , -1 //NumRows
-                                  , s"${duration.hour}:${duration.minute}:${duration.second}"
-                                  , FinalTable)
+                                 , Alias
+                                 , -1 //NumRows
+                                 , duration.hour // Duration_Hour
+                                 , duration.minute //Duration_Minute
+                                 , duration.second // Duration_Second
+                                 , FinalTable
+                                 , isQuery
+                                 , isReferenced)
+      
                                   
       //Add my result to __temporary                            
-      addColumnsAndTablesFromQuery(Alias, res)
+      addColumnsAndTablesFromQuery(Alias, res.columns)
     }
   }
   
@@ -821,7 +826,15 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     val Result = DF_ExecuteQuery(Alias, SQL)
     val dt_end = getCurrentDateTimeJava()
     
-    DF_SaveLinage(Alias, SQL, dt_start, dt_end, Control, null)
+    DF_SaveLinage(Alias
+                , SQL
+                , dt_start
+                , dt_end
+                , Control
+                , null //FinalTable
+                , true //isQuery
+                , false //isReferenced)
+                  )
     
     return Result
   }
