@@ -24,6 +24,8 @@ import com.huemulsolutions.bigdata.control.huemulType_Frequency
 import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
 import com.huemulsolutions.bigdata.tables.huemulType_InternalTableType._
+import com.huemulsolutions.bigdata.datalake.huemul_DataLake
+
 //import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
 
 
@@ -2730,6 +2732,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                  )
   }
   
+  def DF_from_RAW(dataLake_RAW: huemul_DataLake, AliasTo: String) {
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+    this.DataFramehuemul.setDataFrame(dataLake_RAW.DataFramehuemul.DataFrame , AliasTo, huemulBigDataGov.DebugMode)
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    
+    huemulBigDataGov.DF_SaveLinage(AliasTo
+                                 , s"SELECT * FROM ${dataLake_RAW.DataFramehuemul.Alias}" //sql
+                                 , dt_start
+                                 , dt_end
+                                 , Control
+                                 , null //FinalTable
+                                 , false //isQuery
+                                 , true //isReferenced
+                                 )
+  }
   
   
   /**
