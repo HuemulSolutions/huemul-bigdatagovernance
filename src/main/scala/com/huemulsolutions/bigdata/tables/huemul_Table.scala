@@ -1879,7 +1879,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       if (fs.exists(FullPath)){
         //Exist, copy for use
-        
+        val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
         //Open actual file
         val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(FullPathString)
         val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
@@ -1897,7 +1897,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                             huemulBigDataGov.spark.read.parquet(tempPath).withColumn(_PartitionField.toLowerCase(), lit(PartitionValueForSelectiveUpdate))
                          else huemulBigDataGov.spark.read.parquet(tempPath)
         NumRowsOldDataFrame = DFTempOpen.count()
-        DFTempOpen.createOrReplaceTempView(TempAlias)        
+        DFTempOpen.createOrReplaceTempView(TempAlias)  
+        
+        val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+        huemulBigDataGov.DF_SaveLinage(TempAlias
+                                    , s"""SELECT * FROM ${this.InternalGetTable(huemulType_InternalTableType.Normal)} ${if (_TableType == huemulType_Tables.Transaction) 
+                                                                                                                      s" WHERE ${_PartitionField.toLowerCase()}='${PartitionValueForSelectiveUpdate}'"}""" //sql
+                                    , dt_start
+                                    , dt_end
+                                    , Control
+                                    , null  //FinalTable
+                                    , false //isQuery
+                                    , true //isReferenced
+                                    )
       } else 
         RaiseError(s"huemul_Table Error: Table ${FullPathString} doesn't exists",1043)
         
@@ -2022,7 +2034,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //**************************************************//
       //STEP 0.1: CREATE TEMP TABLE IF MASTER TABLE DOES NOT EXIST
       //**************************************************//
-      LocalControl.NewStep("Ref & Master: Select Old Table")                                             
+      LocalControl.NewStep("Ref & Master: Select Old Table")      
+      val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
       val TempAlias: String = s"__${this.TableName}_old"
       val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
       if (fs.exists(new org.apache.hadoop.fs.Path(this.GetFullNameWithPath()))){
@@ -2051,6 +2064,18 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           EmptyDF.createOrReplaceTempView(TempAlias)
           if (huemulBigDataGov.DebugMode) EmptyDF.show()
       }
+      val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+      
+      huemulBigDataGov.DF_SaveLinage(TempAlias
+                                    , s"SELECT * FROM ${this.InternalGetTable(huemulType_InternalTableType.Normal)} " //sql
+                                    , dt_start
+                                    , dt_end
+                                    , Control
+                                    , null  //FinalTable
+                                    , false //isQuery
+                                    , true //isReferenced
+                                    )
+      
                                              
         
       //**************************************************//
