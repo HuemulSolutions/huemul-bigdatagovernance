@@ -849,9 +849,21 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                           , finalTable: huemul_Table
                           , isQuery: Boolean
                           , isReferenced: Boolean) {     
-      
+    
     if (huemulBigDataGov.RegisterInControl) {
-      //todo: invocar recursivamente los resultados de subqueries
+      //Add subquerys
+      defQuery.subquery_result.foreach { x => 
+        RegisterTrace_DECODE(x //huemul_sql_decode_result
+                            ,x.AliasQuery //Alias
+                            ,-1 //NumRows
+                            ,0 //Duration_Hour
+                            ,0 //Duration_Minute
+                            ,0 //Duration_Second
+                            ,null //finalTable
+                            ,true //isQuery
+                            ,false //isReferenced
+                            )
+      }
       
       var isFinalTable: Boolean = false 
       var table_id: String = null
