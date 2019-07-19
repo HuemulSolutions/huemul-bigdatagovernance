@@ -847,14 +847,15 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails()) {
           //Query to get detail errors
           //Control.NewStep(s"Step: DQ Result: Get detales for (Id ${x.getId}) ${x.getDescription} ") 
-          val SQL_Detail = s"""SELECT '${Control.Control_Id }' as dq_control_id
-                                     ,'${if (x.getFieldName == null) "all" else x.getFieldName.get_MyName()}' as dq_error_columnname
-                                     ,'${x.getNotification()}' as dq_error_notification 
-                                     ,'${x.getErrorCode()}' as dq_error_code
-                                     ,'(Id ${x.getId}) ${x.getDescription}' as dq_error_descripcion
-                                     , *
-                               FROM  ${AliasToQuery}
-                               WHERE not (${x.getSQLFormula()})  """
+          val SQL_Detail = DQ_GenQuery(AliasToQuery
+                                      ,!(x.getFieldName == null) //asField
+                                      ,x.getFieldName.get_MyName() //fieldName
+                                      ,x.getNotification()
+                                      ,x.getErrorCode()
+                                      ,x.getId
+                                      ,x.getDescription
+                                      ,x.getSQLFormula()
+                                      )
                                
           //Execute query
           var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
@@ -878,6 +879,25 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     
     
     return ErrorLog
+  }
+  
+  def DQ_GenQuery(AliasToQuery: String
+                  ,asField: Boolean
+                  ,fieldName: String
+                  ,dq_error_notification: huemulType_DQNotification.huemulType_DQNotification
+                  ,error_code: Integer
+                  ,getId: Integer
+                  ,getDescription: String
+                  ,whereClause: String
+                  ): String = {
+    return s"""SELECT '${Control.Control_Id }' as dq_control_id
+                                     ,'${if (asField) "all" else fieldName}' as dq_error_columnname
+                                     ,'${dq_error_notification}' as dq_error_notification 
+                                     ,'${error_code}' as dq_error_code
+                                     ,'(Id ${getId}) ${getDescription}' as dq_error_descripcion
+                                     , *
+                               FROM  ${AliasToQuery}
+                               ${if (whereClause == null) "" else "WHERE not (${whereClause})" }"""
   }
   
   def DQ_Register(DQ: huemul_DQRecord) {
