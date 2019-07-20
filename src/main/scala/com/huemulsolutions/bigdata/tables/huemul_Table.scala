@@ -270,6 +270,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var PartitionValue: String = null
   def getPartitionValue(): String = {return PartitionValue}
   var _tablesUseId: String = null
+  private var DF_DQErrorDetails: DataFrame = null
   
   /*  ********************************************************************************
    *****   F I E L D   P R O P E R T I E S    **************************************** 
@@ -1636,9 +1637,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Step2: left join with TABLE MASTER DATA
       val AliasLeft: String = s"___${x.MyName}_FKRuleLeft__"
       val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
+      val fk_table_name = InstanceTable.InternalGetTable(huemulType_InternalTableType.Normal)
       val SQLLeft: String = s"""SELECT FK.* 
                                  FROM ${AliasDistinct_B} FK 
-                                   LEFT JOIN ${InstanceTable.InternalGetTable(huemulType_InternalTableType.Normal)} PK
+                                   LEFT JOIN ${fk_table_name} PK
                                      ON ${SQLLeftJoin} 
                                  WHERE ${FirstRowPK} IS NULL
                               """
@@ -1655,6 +1657,25 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         Result.dqDF = DF_Left
         Result.profilingResult.count_all_Col = TotalLeft
         DF_Left.show()
+        
+        //get SQL to save error details to DQ_Error_Table
+        val SQL_ErrorDetail = this.DataFramehuemul.DQ_GenQuery( AliasDistinct   //sqlfrom
+                                                              , null           //sqlwhere
+                                                              , true            //haveField
+                                                              , FirstRowFK      //fieldname
+                                                              , huemulType_DQNotification.ERROR //dq_error_notification 
+                                                              , Result.Error_Code //error_code
+                                                              , s"(${Result.Error_Code}) FK ERROR ON ${fk_table_name}"// dq_error_description
+                                                              )
+        val DetailErrorsDF = huemulBigDataGov.DF_ExecuteQuery("__error_dq_detail_fk", SQL_ErrorDetail)
+        
+        //Save errors to disk
+        if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DetailErrorsDF != null && this.getSaveDQResult) {
+          Control.NewStep("Start Save DQ Error Details for FK ")                
+          if (!SavePersist_DQ(Control, DetailErrorsDF)){
+            huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
+          }
+        }
       }
       
       
@@ -1664,7 +1685,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.Table_Name =TableName
       Values.BBDD_Name =DataBaseName
       Values.DF_Alias = DataFramehuemul.Alias
-      Values.ColumnName =null
+      Values.ColumnName =FirstRowFK
       Values.DQ_Name =s"FK - ${SQLFields}"
       Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.InternalGetTable(huemulType_InternalTableType.Normal)} "
       Values.DQ_QueryLevel = huemulType_DQQueryLevel.Row // IsAggregate =false
