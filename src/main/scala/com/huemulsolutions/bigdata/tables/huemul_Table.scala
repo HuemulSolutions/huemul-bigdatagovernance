@@ -1828,6 +1828,60 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.GetDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this)
     
+    if (ResultDQ.isError){
+      Result.isError = true
+      Result.Description += s"\n${ResultDQ.Description}"
+      Result.Error_Code = ResultDQ.Error_Code
+      
+      //version 2.0: add PK error detail
+      val NumReg = ResultDQ.getDQResult().filter { dqres => dqres.DQ_ErrorCode == 1018 }.length
+      if (NumReg == 1) {
+        //get on sentence
+        var SQL_PK_on: String = ""   
+        var SQL_PK_firstCol: String = ""
+        GetColumns().filter { x_cols => x_cols.getIsPK == true }.foreach { x_cols => 
+            if (SQL_PK_on.length() > 0) 
+              SQL_PK_on = s"${SQL_PK_on} and "
+            
+            if (SQL_PK_firstCol.length() == 0)
+              SQL_PK_firstCol = x_cols.get_MyName()
+        
+            SQL_PK_on = s"${SQL_PK_on} PK.${x_cols.get_MyName()} = dup.${x_cols.get_MyName()} "
+        }    
+        
+        //PK error found, get PK duplicated
+        val df_detail_01 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_01", s""" SELECT ${SQL_PK}, COUNT(1) as Cantidad
+                                                                                   FROM ${this.DataFramehuemul.Alias}
+                                                                                   GROUP BY ${SQL_PK}
+                                                                                   HAVING COUNT(1) > 1
+                                                                                """)
+        df_detail_01.cache()
+        //get rows duplicated
+        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT PK.*
+                                                                                   FROM ${this.DataFramehuemul.Alias} PK
+                                                                                     INNER JOIN ___temp_pk_det_01 dup
+                                                                                        ON ${SQL_PK_on}
+                                                                                """)   
+
+        val SQL_Detail = this.DataFramehuemul.DQ_GenQuery( "___temp_pk_det_02"   //sqlfrom
+                                                          , null           //sqlwhere
+                                                          , true            //haveField
+                                                          , SQL_PK_firstCol      //fieldname
+                                                          , huemulType_DQNotification.ERROR //dq_error_notification 
+                                                          , 1018 //error_code
+                                                          , s"(1018) PK ERROR ON ${SQL_PK_on}"// dq_error_description
+                                                          )
+                             
+        //Execute query
+        var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ_PK", SQL_Detail)
+                             
+        if (ResultDQ.DetailErrorsDF == null)
+          ResultDQ.DetailErrorsDF = DF_EDetail
+        else
+          ResultDQ.DetailErrorsDF = ResultDQ.DetailErrorsDF.union(DF_EDetail)
+      }
+    }
+    
     //Save errors to disk
     if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && ResultDQ.DetailErrorsDF != null && this.getSaveDQResult) {
       Control.NewStep("Start Save DQ Error Details ")                
@@ -1836,11 +1890,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
     
-    if (ResultDQ.isError){
-      Result.isError = true
-      Result.Description += s"\n${ResultDQ.Description}"
-      Result.Error_Code = ResultDQ.Error_Code
-    }
+    
     
     return Result
   }
