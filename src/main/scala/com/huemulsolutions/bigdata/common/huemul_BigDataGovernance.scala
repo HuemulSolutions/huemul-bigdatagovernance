@@ -225,6 +225,13 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (!this.GlobalSettings.ValidPath(globalSettings.MDM_OldValueTrace_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_DataBase"
   }
+  
+  if (this.GlobalSettings.MDM_SaveBackup) {
+    if (!this.GlobalSettings.ValidPath(globalSettings.MDM_Backup_Path, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_Backup_Path"
+    if (!this.GlobalSettings.ValidPath(globalSettings.MDM_Backup_DataBase, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_Backup_DataBase"
+  }
   logMessageInfo("End Validating GlobalSetings..")
   
   
