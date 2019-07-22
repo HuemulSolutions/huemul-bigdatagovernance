@@ -339,6 +339,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return this.GetPath(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_oldvalue"
   }
   
+   /**
+   * Get Fullpath hdfs for backpu  = Backup_Path + database + TableName + "_backup"
+   */
+  def GetFullNameWithPath_Backup(control_id: String) : String = {
+    return this.GetPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + '/' + 'c' + control_id + '/' + TableName + "_backup"
+  }
+  
   def GetFullNameWithPath2(ManualEnvironment: String) : String = {
     return GlobalPath(ManualEnvironment) + _LocalPath + TableName
   }
@@ -2131,8 +2138,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         //Open actual file
         val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(this.GetFullNameWithPath())
-        val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
-        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
+        
+        //2.0: save previous to backup
+        var tempPath: String = null
+        if (huemulBigDataGov.GlobalSettings.MDM_SaveBackup && this._SaveBackup){
+          tempPath = this.GetFullNameWithPath_Backup(Control.Control_Id )
+          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to backup dir: $tempPath ")
+        } else {
+          tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
+          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
+        }
+        
         if (this.getNumPartitions == null || this.getNumPartitions <= 0)
           DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
         else
