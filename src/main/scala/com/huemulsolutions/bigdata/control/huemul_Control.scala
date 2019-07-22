@@ -724,6 +724,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,DefMaster.NumRows_Delete()
                              ,DefMaster.NumRows_Total()
                              ,DefMaster.getPartitionValue
+                             ,DefMaster._getBackupPath()
                              ,Control_ClassName
                                   )
      
@@ -1023,6 +1024,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,DefMaster.NumRows_Delete()
                              ,DefMaster.NumRows_Total()
                              ,DefMaster.getPartitionValue
+                             ,DefMaster._getBackupPath()
                              ,Control_ClassName
                             ) 
     }
@@ -1058,6 +1060,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,DefMaster.NumRows_Delete()
                              ,DefMaster.NumRows_Total()
                              ,DefMaster.getPartitionValue
+                             ,DefMaster._getBackupPath()
                              ,Control_ClassName
                                   )
      
@@ -2018,6 +2021,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_TableUse_numRowsMarkDelete: java.lang.Long
                              ,p_TableUse_numRowsTotal: java.lang.Long
                              ,p_TableUse_PartitionValue: String
+                             ,p_Tableuse_pathbackup: String
                              ,p_MDM_ProcessName: String
       ): huemul_JDBCResult =  {
     
@@ -2056,6 +2060,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								   ,tableuse_numrowsmarkdelete
                       								   ,tableuse_numrowstotal
                       								   ,tableuse_partitionvalue
+                                         ,tableuse_pathbackup
                       								   ,mdm_fhcreate
                       								   ,mdm_processname)
         	VALUES(  ${ReplaceSQLStringNulls(LocalTable_id)}
@@ -2078,6 +2083,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${p_TableUse_numRowsMarkDelete}
           		   ,${p_TableUse_numRowsTotal}
           		   ,${ReplaceSQLStringNulls(p_TableUse_PartitionValue)}
+          		   ,${ReplaceSQLStringNulls(p_Tableuse_pathbackup)}
           		   ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
           		   ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
       )          		   
