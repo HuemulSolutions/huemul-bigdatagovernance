@@ -75,6 +75,18 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getSaveDQResult: Boolean = {return _SaveDQResult}
   private var _SaveDQResult : Boolean = true
   
+  /**
+   Save Backup to disk, only if MDM_SaveBackup in GlobalPath is false
+   */
+  def setSaveBackup(value: Boolean) {
+    if (DefinitionIsClose)
+      this.RaiseError("You can't change value of SaveBackup, definition is close", 1033)
+    else
+      _SaveBackup = value
+  }
+  def getSaveBackup: Boolean = {return _SaveBackup}
+  private var _SaveBackup : Boolean = false
+  
   
   /**
    Type of Persistent storage (parquet, csv, json)
@@ -441,6 +453,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       RaiseError(s"huemul_Table Error: DataBase must be defined",1037)
     if (this._Frequency == null)
       RaiseError(s"huemul_Table Error: Frequency must be defined",1047)
+      
+    if (this._SaveBackup == true && this._TableType == huemulType_Tables.Transaction)
+      RaiseError(s"huemul_Table Error: SaveBackup can't be true for transactional tables",1054)
         
       
     var PartitionFieldValid: Boolean = false
