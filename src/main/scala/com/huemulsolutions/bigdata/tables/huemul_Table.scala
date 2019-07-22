@@ -343,7 +343,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * Get Fullpath hdfs for backpu  = Backup_Path + database + TableName + "_backup"
    */
   def GetFullNameWithPath_Backup(control_id: String) : String = {
-    return this.GetPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + '/' + 'c' + control_id + '/' + TableName + "_backup"
+    return this.GetPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + 'c' + control_id + '/' + TableName + "_backup"
   }
   
   def GetFullNameWithPath2(ManualEnvironment: String) : String = {

@@ -262,6 +262,7 @@ create table  control_tables (
                                              ,table_sqlcreate         varchar(4000)
 											 ,table_frequency		  varchar(200)
 											 ,table_autoincupdate     int
+											 ,table_backup		 	  int
                                              ,mdm_manualchange        int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)                                             
@@ -354,6 +355,7 @@ create table  control_tablesuse (
                                              ,tableuse_numrowsmarkdelete  int
                                              ,tableuse_numrowstotal   int
 											 ,tableuse_partitionvalue varchar(200)
+											 ,tableuse_pathbackup	  varchar(1000)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
                                              ,primary key (process_id, table_id, processexec_id, processexecstep_id) 

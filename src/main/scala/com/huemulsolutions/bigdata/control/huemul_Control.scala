@@ -766,6 +766,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,DefMaster.GetFullNameWithPath_OldValueTrace
                              ,"" //--as Table_SQLCreate
                              ,DefMaster.getFrequency.toString()
+                             ,DefMaster.getSaveBackup
                              ,Control_ClassName
                              )
       
@@ -2138,6 +2139,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_table_fullname_ovt: String
                              ,p_Table_SQLCreate: String
                              ,p_Table_Frequency: String
+                             ,p_table_backup: Boolean
                              ,p_MDM_ProcessName: String
       ): huemul_JDBCResult =  {
     var table_autoIncUpdate: Integer = 0
@@ -2176,6 +2178,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
              ,table_fullname_ovt    = ${ReplaceSQLStringNulls(p_table_fullname_ovt)}
         		 ,table_sqlcreate    		= ${ReplaceSQLStringNulls(p_Table_SQLCreate)}		
         		 ,table_frequency		    = ${ReplaceSQLStringNulls(p_Table_Frequency)}
+        		 ,table_backup          = ${if (p_table_backup) "1" else "0"}
           WHERE table_id = ${ReplaceSQLStringNulls(LocalTable_id)}
           """)
           
@@ -2210,6 +2213,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								,table_sqlcreate
                       								,table_frequency
                                       ,table_autoincupdate
+                                      ,table_backup
                       								,mdm_fhcreate
                       								,mdm_processname) 	
         	VALUES(   ${ReplaceSQLStringNulls(p_Table_id)}
@@ -2231,6 +2235,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			,${ReplaceSQLStringNulls(p_Table_SQLCreate)}
             			,${ReplaceSQLStringNulls(p_Table_Frequency)}
             			,1
+                  ,${if (p_table_backup) "1" else "0"}
             			,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
             			,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
       )            			
