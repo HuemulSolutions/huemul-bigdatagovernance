@@ -86,7 +86,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   def getSaveBackup: Boolean = {return _SaveBackup}
   private var _SaveBackup : Boolean = false
-  def _getBackupPath(): String = {return _getBackupPath }
+  def _getBackupPath(): String = {return _BackupPath }
   private var _BackupPath: String = ""
   
   /**
@@ -2144,7 +2144,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         var tempPath: String = null
         if (huemulBigDataGov.GlobalSettings.MDM_SaveBackup && this._SaveBackup){
           tempPath = this.GetFullNameWithPath_Backup(Control.Control_Id )
-          _BackupPath = _BackupPath
+          _BackupPath = tempPath
           if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to backup dir: $tempPath ")
         } else {
           tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
