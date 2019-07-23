@@ -116,7 +116,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     }
     
     val duracion = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
-    println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
+    //println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
     return _ColumnsAndTables 
   }
   

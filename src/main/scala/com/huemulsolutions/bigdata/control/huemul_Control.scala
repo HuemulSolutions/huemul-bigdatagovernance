@@ -992,7 +992,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
       val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
       val dif = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
-      println(s"insert sql decode time: ${dif.hour}:${dif.minute}:${dif.second}")
+      //println(s"insert sql decode time: ${dif.hour}:${dif.minute}:${dif.second}")
     }
                         
   }
