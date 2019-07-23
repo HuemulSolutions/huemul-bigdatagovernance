@@ -2814,6 +2814,18 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
   }
   
+  /**
+   * Return an Empty table with all columns
+   */
+  def getEmptyTable(Alias: String): DataFrame = {
+    val Schema = GetSchema()
+    val SchemaForEmpty = StructType(Schema.map { x => StructField(x.name, x.dataType, x.nullable) })
+    val EmptyRDD = huemulBigDataGov.spark.sparkContext.emptyRDD[Row]
+    val EmptyDF = huemulBigDataGov.spark.createDataFrame(EmptyRDD, SchemaForEmpty)
+    EmptyDF.createOrReplaceTempView(Alias)
+    
+    return EmptyDF
+  }
   
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
     this.DataFramehuemul.DF_from_SQL(Alias, sql, SaveInTemp, NumPartitions) 
