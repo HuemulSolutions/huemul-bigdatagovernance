@@ -904,54 +904,33 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   /**
-   * Valid if Hive is alive
+   * return true if path exists
    */
-  def testHive(): Boolean = {
-    var Resultado:Boolean = false
-    try {
-      val DFNow = this.spark.sql("select now() as IsAlive")
-      this.spark.sql("show tables")
-      
-      if (DFNow.first().getAs[String]("IsAlive").length() >= 10)
-        Resultado = true
-        
-    } catch {
-      case e: Exception => e.printStackTrace() // TODO: handle error
-      Resultado = false
-    }
-           
-    return Resultado
+  def hdfsPath_exists(path: String): Boolean = {
+    val fs = FileSystem.get(this.spark.sparkContext.hadoopConfiguration)
+    return fs.exists(new org.apache.hadoop.fs.Path(path))
   }
   
   /**
-   * Valid if HDFS is alive
+   * hiveTable_exists: return true if database.table exists
    */
-  def testHDFS(path: String): Boolean = {
-    var Resultado:Boolean = false
+  def hiveTable_exists(database_name: String, table_name: String): Boolean = {
+    var Result: Boolean = false
     try {
-      val DFWrite = this.spark.sql("select now() as IsAlive")
-      val WriteValue = DFWrite.first().getAs[String]("IsAlive")
-      
-      val fullpath = s"${path}/testHDFS_IsAlive.parquet"
-      logMessageInfo(s"test: save HDFS to path: ${fullpath}")
-      
-      DFWrite.write.mode(SaveMode.Overwrite).format("parquet").save(fullpath)
-      DFWrite.unpersist()
-      
-      //try to open data and read
-      val DFRead = this.spark.read.format("parquet").load(fullpath)
-      val ReadValue = DFWrite.first().getAs[String]("IsAlive")
-     
-      if (ReadValue == WriteValue)
-        Resultado = true
-        
+      val df_Result = this.spark.sql(s"select 1 from ${database_name}.${table_name} limit 1")
+      if (df_Result == null)
+        Result = false
+      else 
+        Result = true
     } catch {
-      case e: Exception => e.printStackTrace() // TODO: handle error
-      Resultado = false
+      case e: Exception => 
+        Result = false
     }
-           
-    return Resultado
+    
+    return Result
   }
+  
+  
   
   
 }
