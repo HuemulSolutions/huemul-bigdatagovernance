@@ -31,5 +31,9 @@ drop table  control_error ;
 drop table  control_date ;                                              
                  
 drop table  control_testplan ;
-
 drop table  control_testplanfeature ;
+
+drop table  control_query;
+drop table  control_querycolumn;
+drop table  control_querycolumnori;
+
