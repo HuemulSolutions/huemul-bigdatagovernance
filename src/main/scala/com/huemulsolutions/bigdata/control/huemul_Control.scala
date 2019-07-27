@@ -1689,7 +1689,42 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     return ExecResult             
   }
   
-  
+  def control_getDQResult(): huemul_JDBCResult = {
+    //Get Table Id
+    val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          select  dq_id
+                 ,table_id
+                 ,process_id
+                 ,processexec_id
+                 ,column_id
+                 ,column_name
+                 ,dq_aliasdf
+                 ,dq_name
+                 ,dq_description
+                 ,dq_querylevel
+                 ,dq_notification
+                 ,dq_sqlformula
+                 ,dq_dq_toleranceerror_rows
+                 ,dq_dq_toleranceerror_percent
+                 ,dq_resultdq
+                 ,dq_errorcode
+                 ,dq_externalcode
+                 ,dq_numrowsok
+                 ,dq_numrowserror
+                 ,dq_numrowstotal
+                 ,dq_iserror
+                 ,dq_iswarning
+                 ,dq_duration_hour
+                 ,dq_duration_minute
+                 ,dq_duration_second
+                 ,mdm_fhcreate
+                 ,mdm_processname 
+          from control_dq
+          where processexec_id = ${ReplaceSQLStringNulls(this.Control_Id)}	
+      """)
+    
+    return ExecResultTable
+  }
   
   private def control_rawFiles_add (p_RAWFiles_id: String
                              ,p_RAWFiles_LogicalName: String
@@ -2773,7 +2808,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   
   
-  
+ 
   
   
   
@@ -2850,4 +2885,6 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     return ExecResult             
   }
+  
+  
 }
