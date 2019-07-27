@@ -202,7 +202,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetCurrentDataBase()
+      BBDDName = Data.getCurrentDataBase()
     }
     
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
@@ -263,7 +263,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetCurrentDataBase()
+      BBDDName = Data.getCurrentDataBase()
     }
     
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
@@ -384,7 +384,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetCurrentDataBase()
+      BBDDName = Data.getCurrentDataBase()
     }
     
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
@@ -598,7 +598,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetCurrentDataBase()
+      BBDDName = Data.getCurrentDataBase()
     }
     
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
@@ -680,7 +680,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     if (ObjectData.isInstanceOf[huemul_Table]) {
       val Data = ObjectData.asInstanceOf[huemul_Table]
       TableName = Data.TableName
-      BBDDName = Data.GetCurrentDataBase()
+      BBDDName = Data.getCurrentDataBase()
     }
     
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
@@ -849,7 +849,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         var dfDataBaseName: String = null
         if (dMaster != null) {
           dfTableName = dMaster.TableName
-          dfDataBaseName = dMaster.GetCurrentDataBase()
+          dfDataBaseName = dMaster.getCurrentDataBase()
         }
         
         

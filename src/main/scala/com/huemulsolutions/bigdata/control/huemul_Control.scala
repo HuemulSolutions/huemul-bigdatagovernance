@@ -713,7 +713,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       DefMaster._tablesUseId = LocalIdStep
       
       control_TablesUse_add(  DefMaster.TableName
-                             ,DefMaster.GetCurrentDataBase()  
+                             ,DefMaster.getCurrentDataBase()  
                              ,Control_ClassName
                              ,Control_Id
                              ,DefMaster._tablesUseId
@@ -743,7 +743,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   def RegisterMASTER_UPDATE_isused(DefMaster: huemul_Table) {
     if (huemulBigDataGov.RegisterInControl) {
       //Table
-      val ExecResultTable = control_Tables_UpdateAtEnd( DefMaster.GetCurrentDataBase()
+      val ExecResultTable = control_Tables_UpdateAtEnd( DefMaster.getCurrentDataBase()
                                                        ,DefMaster.TableName
                                                       , DefMaster._getTable_dq_isused()
                                                       , DefMaster._getTable_ovt_isused()
@@ -762,7 +762,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     if (huemulBigDataGov.RegisterInControl) {
       //Table
       val ExecResultTable = control_Tables_addOrUpd(LocalNewTable_id
-                             ,DefMaster.GetCurrentDataBase()
+                             ,DefMaster.getCurrentDataBase()
                              ,DefMaster.TableName
                              ,DefMaster.getDescription
                              ,DefMaster.getBusiness_ResponsibleName
@@ -771,9 +771,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,DefMaster.getTableType.toString()
                              ,DefMaster.getStorageType.toString()
                              ,DefMaster.getLocalPath
-                             ,DefMaster.GetPath(DefMaster.getGlobalPaths)
-                             ,DefMaster.GetFullNameWithPath_DQ
-                             ,DefMaster.GetFullNameWithPath_OldValueTrace
+                             ,DefMaster.getPath(DefMaster.getGlobalPaths)
+                             ,DefMaster.getFullNameWithPath_DQ
+                             ,DefMaster.getFullNameWithPath_OldValueTrace
                              ,"" //--as Table_SQLCreate
                              ,DefMaster.getFrequency.toString()
                              ,DefMaster.getSaveBackup
@@ -786,8 +786,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       
       //Insert control_Columns
       var i: Integer = 0
-      var localDatabaseName = DefMaster.GetCurrentDataBase()
-      DefMaster.GetColumns().foreach { x => 
+      var localDatabaseName = DefMaster.getCurrentDataBase()
+      DefMaster.getColumns().foreach { x => 
         val Column_Id = huemulBigDataGov.huemul_GetUniqueId()
     
         control_Columns_addOrUpd( LocalNewTable_id
@@ -822,10 +822,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         }
       
       //Insert control_tablesrel_add
-      DefMaster.GetForeingKey().foreach { x =>       
+      DefMaster.getForeingKey().foreach { x =>       
         val p_tablerel_id = huemulBigDataGov.huemul_GetUniqueId()
         val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
-        val localDatabaseName = InstanceTable.GetCurrentDataBase()
+        val localDatabaseName = InstanceTable.getCurrentDataBase()
         
         val ResultExecRel = control_TablesRel_add(p_tablerel_id
                              ,LocalNewTable_id 
@@ -1013,7 +1013,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       DefMaster._tablesUseId = LocalIdStep
       
        control_TablesUse_add(  DefMaster.TableName
-                             ,DefMaster.GetCurrentDataBase()  
+                             ,DefMaster.getCurrentDataBase()  
                              ,Control_ClassName
                              ,Control_Id
                              ,DefMaster._tablesUseId
@@ -1049,7 +1049,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       DefMaster._tablesUseId = LocalIdStep
       
       control_TablesUse_add(  DefMaster.TableName
-                             ,DefMaster.GetCurrentDataBase()  
+                             ,DefMaster.getCurrentDataBase()  
                              ,Control_ClassName
                              ,Control_Id
                              ,DefMaster._tablesUseId

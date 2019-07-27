@@ -44,7 +44,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   def setDataBase(value: ArrayBuffer[huemul_KeyValuePath]) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of DataBase, definition is close", 1033)
+      this.raiseError("You can't change value of DataBase, definition is close", 1033)
     else
       _DataBase = value
   }
@@ -55,7 +55,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setTableType(value: huemulType_Tables) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of TableType, definition is close", 1033)
+      this.raiseError("You can't change value of TableType, definition is close", 1033)
     else
       _TableType = value
   }
@@ -68,7 +68,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setSaveDQResult(value: Boolean) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of SaveDQResult, definition is close", 1033)
+      this.raiseError("You can't change value of SaveDQResult, definition is close", 1033)
     else
       _SaveDQResult = value
   }
@@ -80,7 +80,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setSaveBackup(value: Boolean) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of SaveBackup, definition is close", 1033)
+      this.raiseError("You can't change value of SaveBackup, definition is close", 1033)
     else
       _SaveBackup = value
   }
@@ -94,7 +94,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setStorageType(value: huemulType_StorageType) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of StorageType, definition is close", 1033)
+      this.raiseError("You can't change value of StorageType, definition is close", 1033)
     else
       _StorageType = value
   }
@@ -107,7 +107,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setDescription(value: String) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of Description, definition is close", 1033)
+      this.raiseError("You can't change value of Description, definition is close", 1033)
     else
       _Description = value
   }
@@ -119,7 +119,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setIT_ResponsibleName(value: String) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of IT_ResponsibleName, definition is close", 1033)
+      this.raiseError("You can't change value of IT_ResponsibleName, definition is close", 1033)
     else
       _IT_ResponsibleName = value
   }
@@ -131,7 +131,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setBusiness_ResponsibleName(value: String) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of Business_ResponsibleName, definition is close", 1033)
+      this.raiseError("You can't change value of Business_ResponsibleName, definition is close", 1033)
     else
       _Business_ResponsibleName = value
   }
@@ -143,7 +143,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setPartitionField(value: String) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of PartitionField, definition is close", 1033)
+      this.raiseError("You can't change value of PartitionField, definition is close", 1033)
     else
       _PartitionField = value
   }
@@ -155,7 +155,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setLocalPath(value: String) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of LocalPath, definition is close", 1033)
+      this.raiseError("You can't change value of LocalPath, definition is close", 1033)
     else
       _LocalPath = value
   }
@@ -164,7 +164,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   def setGlobalPaths(value: ArrayBuffer[huemul_KeyValuePath]) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of GlobalPaths, definition is close", 1033)
+      this.raiseError("You can't change value of GlobalPaths, definition is close", 1033)
     else
       _GlobalPaths = value
   }
@@ -173,7 +173,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   def WhoCanRun_executeFull_addAccess(ClassName: String, PackageName: String) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of WhoCanRun_executeFull, definition is close", 1033)
+      this.raiseError("You can't change value of WhoCanRun_executeFull, definition is close", 1033)
     else
       _WhoCanRun_executeFull.AddAccess(ClassName, PackageName)
   }
@@ -182,7 +182,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   def WhoCanRun_executeOnlyInsert_addAccess(ClassName: String, PackageName: String) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of WhoCanRun_executeOnlyInsert, definition is close", 1033)
+      this.raiseError("You can't change value of WhoCanRun_executeOnlyInsert, definition is close", 1033)
     else
       _WhoCanRun_executeOnlyInsert.AddAccess(ClassName, PackageName)
   }
@@ -191,7 +191,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   def WhoCanRun_executeOnlyUpdate_addAccess(ClassName: String, PackageName: String) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of WhoCanRun_executeOnlyUpdate, definition is close", 1033)
+      this.raiseError("You can't change value of WhoCanRun_executeOnlyUpdate, definition is close", 1033)
     else
       _WhoCanRun_executeOnlyUpdate.AddAccess(ClassName, PackageName)
   }
@@ -203,7 +203,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setFrequency(value: huemulType_Frequency) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of Frequency, definition is close", 1033)
+      this.raiseError("You can't change value of Frequency, definition is close", 1033)
     else
       _Frequency = value
   }
@@ -232,7 +232,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setDQ_MaxNewRecords_Num(value: Long) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of DQ_MaxNewRecords_Num, definition is close", 1033)
+      this.raiseError("You can't change value of DQ_MaxNewRecords_Num, definition is close", 1033)
     else
       _DQ_MaxNewRecords_Num = value
   }
@@ -243,7 +243,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setDQ_MaxNewRecords_Perc(value: Decimal) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of DQ_MaxNewRecords_Perc, definition is close", 1033)
+      this.raiseError("You can't change value of DQ_MaxNewRecords_Perc, definition is close", 1033)
     else
       _DQ_MaxNewRecords_Perc = value
   }
@@ -256,7 +256,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def setNumPartitions(value: Integer) {
     if (DefinitionIsClose)
-      this.RaiseError("You can't change value of NumPartitions, definition is close", 1033)
+      this.raiseError("You can't change value of NumPartitions, definition is close", 1033)
     else
       _NumPartitions = value
   }
@@ -310,80 +310,80 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /***
    * from Global path (small files, large files, DataBase, etc)
    */
-  def GlobalPath()  : String= {
-    return GetPath(_GlobalPaths)
+  def globalPath()  : String= {
+    return getPath(_GlobalPaths)
   }
   
-  def GlobalPath(ManualEnvironment: String)  : String= {
-    return GetPath(_GlobalPaths, ManualEnvironment)
+  def globalPath(ManualEnvironment: String)  : String= {
+    return getPath(_GlobalPaths, ManualEnvironment)
   }
   
   
   /**
    * Get Fullpath hdfs = GlobalPaths + LocalPaths + TableName  
    */
-  def GetFullNameWithPath() : String = {
-    return GlobalPath + _LocalPath + TableName
+  def getFullNameWithPath() : String = {
+    return globalPath + _LocalPath + TableName
   }
   
   /**
    * Get Fullpath hdfs for DQ results = GlobalPaths + DQError_Path + TableName + "_dq"
    */
-  def GetFullNameWithPath_DQ() : String = {
-    return this.GetPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_dq"
+  def getFullNameWithPath_DQ() : String = {
+    return this.getPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.getDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_dq"
   }
   
   /**
    * Get Fullpath hdfs for _oldvalue results = GlobalPaths + DQError_Path + TableName + "_oldvalue"
    */
-  def GetFullNameWithPath_OldValueTrace() : String = {
-    return this.GetPath(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_oldvalue"
+  def getFullNameWithPath_OldValueTrace() : String = {
+    return this.getPath(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_Path) + this.getDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_oldvalue"
   }
   
    /**
    * Get Fullpath hdfs for backpu  = Backup_Path + database + TableName + "_backup"
    */
-  def GetFullNameWithPath_Backup(control_id: String) : String = {
-    return this.GetPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.GetDataBase(this._DataBase) + '/' + _LocalPath + 'c' + control_id + '/' + TableName + "_backup"
+  def getFullNameWithPath_Backup(control_id: String) : String = {
+    return this.getPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.getDataBase(this._DataBase) + '/' + _LocalPath + 'c' + control_id + '/' + TableName + "_backup"
   }
   
-  def GetFullNameWithPath2(ManualEnvironment: String) : String = {
-    return GlobalPath(ManualEnvironment) + _LocalPath + TableName
+  def getFullNameWithPath2(ManualEnvironment: String) : String = {
+    return globalPath(ManualEnvironment) + _LocalPath + TableName
   }
     
-  def GetFullPath() : String = {
-    return GlobalPath + _LocalPath 
+  def getFullPath() : String = {
+    return globalPath + _LocalPath 
   }
   
   
   /**
    * Return DataBaseName.TableName
    */
-  def GetTable(): String = {
+  def getTable(): String = {
     if (!_TableWasRegistered) {
       Control.RegisterMASTER_USE(this)
       _TableWasRegistered = true
     }
     
-    return InternalGetTable(huemulType_InternalTableType.Normal)
+    return internalGetTable(huemulType_InternalTableType.Normal)
   }
   private var _TableWasRegistered: Boolean = false
   
-  private def InternalGetTable(internalTableType: huemulType_InternalTableType, withDataBase: Boolean = true): String = {
+  private def internalGetTable(internalTableType: huemulType_InternalTableType, withDataBase: Boolean = true): String = {
     var _getTable: String = ""
     var _database: String = ""
     var _tableName: String = ""
     if (internalTableType == huemulType_InternalTableType.DQ) {
-      _database = GetDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)
+      _database = getDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)
       _tableName = TableName + "_dq"
     } else if (internalTableType == huemulType_InternalTableType.Normal) { 
-      _database = GetDataBase(_DataBase)
+      _database = getDataBase(_DataBase)
       _tableName = TableName
     } else if (internalTableType == huemulType_InternalTableType.OldValueTrace) { 
-      _database = GetDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)
+      _database = getDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)
       _tableName = TableName + "_oldvalue"
     } else {
-      RaiseError("huemul_Table DQ Error: Type '${Type}' doesn't exist in InternalGetTable method", 1051)
+      raiseError("huemul_Table DQ Error: Type '${Type}' doesn't exist in InternalGetTable method", 1051)
     }
       
     if (withDataBase)
@@ -394,31 +394,31 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return _getTable 
   }
    
-  def GetCurrentDataBase(): String = {
-    return s"${GetDataBase(_DataBase)}"
+  def getCurrentDataBase(): String = {
+    return s"${getDataBase(_DataBase)}"
   }
   
   /**
    * Return DataBaseName.TableName
    */
   private def InternalGetTable(ManualEnvironment: String): String = {
-    return s"${GetDataBase(this._DataBase, ManualEnvironment)}.${TableName}"
+    return s"${getDataBase(this._DataBase, ManualEnvironment)}.${TableName}"
   }
   
   
-  def GetDataBase(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
+  def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
     return huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)  
   }
   
-  def GetDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
+  def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
     return huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)  
   }
   
-  def GetPath(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
+  def getPath(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
     return huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)  
   }
   
-  def GetPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
+  def getPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
     return huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)  
   }
   
@@ -442,28 +442,28 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       _PartitionField = ""
       
     if (this._GlobalPaths == null)
-      RaiseError(s"huemul_Table Error: GlobalPaths must be defined",1000)
+      raiseError(s"huemul_Table Error: GlobalPaths must be defined",1000)
       
     if (this._LocalPath == null)
-      RaiseError(s"huemul_Table Error: LocalPath must be defined",1001)
+      raiseError(s"huemul_Table Error: LocalPath must be defined",1001)
       
     if (this._StorageType == null)
-      RaiseError(s"huemul_Table Error: StorageType must be defined",1002)
+      raiseError(s"huemul_Table Error: StorageType must be defined",1002)
       
     if (this._TableType == null)
-      RaiseError(s"huemul_Table Error: TableType must be defined",1034)
+      raiseError(s"huemul_Table Error: TableType must be defined",1034)
     else if (this._TableType == huemulType_Tables.Transaction && _PartitionField == "")
-      RaiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional",1035)
+      raiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional",1035)
     else if (this._TableType != huemulType_Tables.Transaction && _PartitionField != "")
-      RaiseError(s"huemul_Table Error: PartitionField shouldn't be defined if TableType is ${this._TableType}",1036)
+      raiseError(s"huemul_Table Error: PartitionField shouldn't be defined if TableType is ${this._TableType}",1036)
       
     if (this._DataBase == null)
-      RaiseError(s"huemul_Table Error: DataBase must be defined",1037)
+      raiseError(s"huemul_Table Error: DataBase must be defined",1037)
     if (this._Frequency == null)
-      RaiseError(s"huemul_Table Error: Frequency must be defined",1047)
+      raiseError(s"huemul_Table Error: Frequency must be defined",1047)
       
     if (this._SaveBackup == true && this._TableType == huemulType_Tables.Transaction)
-      RaiseError(s"huemul_Table Error: SaveBackup can't be true for transactional tables",1054)
+      raiseError(s"huemul_Table Error: SaveBackup can't be true for transactional tables",1054)
         
       
     var PartitionFieldValid: Boolean = false
@@ -479,22 +479,22 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         DataField.Set_MyName(x.getName)
         
         if (DataField.getDQ_MaxLen != null && DataField.getDQ_MaxLen < 0)
-          RaiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive",1003)
+          raiseError(s"Error column ${x.getName}: DQ_MaxLen must be positive",1003)
         else if (DataField.getDQ_MaxLen != null && DataField.getDQ_MinLen != null && DataField.getDQ_MaxLen < DataField.getDQ_MinLen)
-          RaiseError(s"Error column ${x.getName}: DQ_MinLen(${DataField.getDQ_MinLen}) must be less than DQ_MaxLen(${DataField.getDQ_MaxLen})",1028)
+          raiseError(s"Error column ${x.getName}: DQ_MinLen(${DataField.getDQ_MinLen}) must be less than DQ_MaxLen(${DataField.getDQ_MaxLen})",1028)
         else if (DataField.getDQ_MaxDecimalValue != null && DataField.getDQ_MinDecimalValue != null && DataField.getDQ_MaxDecimalValue < DataField.getDQ_MinDecimalValue)
-          RaiseError(s"Error column ${x.getName}: DQ_MinDecimalValue(${DataField.getDQ_MinDecimalValue}) must be less than DQ_MaxDecimalValue(${DataField.getDQ_MaxDecimalValue})",1029)
+          raiseError(s"Error column ${x.getName}: DQ_MinDecimalValue(${DataField.getDQ_MinDecimalValue}) must be less than DQ_MaxDecimalValue(${DataField.getDQ_MaxDecimalValue})",1029)
         else if (DataField.getDQ_MaxDateTimeValue != null && DataField.getDQ_MinDateTimeValue != null && DataField.getDQ_MaxDateTimeValue < DataField.getDQ_MinDateTimeValue)
-          RaiseError(s"Error column ${x.getName}: DQ_MinDateTimeValue(${DataField.getDQ_MinDateTimeValue}) must be less than DQ_MaxDateTimeValue(${DataField.getDQ_MaxDateTimeValue})",1030)
+          raiseError(s"Error column ${x.getName}: DQ_MinDateTimeValue(${DataField.getDQ_MinDateTimeValue}) must be less than DQ_MaxDateTimeValue(${DataField.getDQ_MaxDateTimeValue})",1030)
         else if (DataField.getDefaultValue != null && DataField.DataType == StringType && DataField.getDefaultValue.toUpperCase() != "NULL" && !DataField.getDefaultValue.contains("'"))
-          RaiseError(s"Error column ${x.getName}: DefaultValue  must be like this: 'something', not something wihtout ')",1031)
+          raiseError(s"Error column ${x.getName}: DefaultValue  must be like this: 'something', not something wihtout ')",1031)
           
         if (DataField.getIsPK) {
           DataField.setNullable(false)
           HasPK = true
           
           if (DataField.getMDM_EnableDTLog || DataField.getMDM_EnableOldValue || DataField.getMDM_EnableProcessLog || DataField.getMDM_EnableOldValue_FullTrace ) {
-            RaiseError(s"Error column ${x.getName}:, is PK, can't enabled MDM_EnableDTLog, MDM_EnableOldValue, MDM_EnableOldValue_FullTrace or MDM_EnableProcessLog",1040)
+            raiseError(s"Error column ${x.getName}:, is PK, can't enabled MDM_EnableDTLog, MDM_EnableOldValue, MDM_EnableOldValue_FullTrace or MDM_EnableProcessLog",1040)
           }
         }
         
@@ -525,9 +525,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Register TableName and fields
     Control.RegisterMASTER_CREATE_Basic(this)
     if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulControl: end ApplyTableDefinition")
-    if (!HasPK) this.RaiseError("huemul_Table Error: PK not defined", 1017)
+    if (!HasPK) this.raiseError("huemul_Table Error: PK not defined", 1017)
     if (this.getTableType == huemulType_Tables.Transaction && !PartitionFieldValid)
-      RaiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional (invalida name ${this.getPartitionField} )",1035)
+      raiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional (invalida name ${this.getPartitionField} )",1035)
       
     DefinitionIsClose = true
     return true
@@ -640,7 +640,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    /*  ********************************************************************************
    *****   F I E L D   M E T H O D S    **************************************** 
    ******************************************************************************** */
-  private def GetSchema(): StructType = {        
+  def getSchema(): StructType = {        
     val fieldsStruct = new ArrayBuffer[StructField]();
     
     var i:Integer = 0
@@ -668,7 +668,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return StructType.apply(fieldsStruct)
   }
   
-  def GetDataQuality(): ArrayBuffer[huemul_DataQuality] = {
+  def getDataQuality(): ArrayBuffer[huemul_DataQuality] = {
     val GetDeclaredfields = getALLDeclaredFields()
     val Result = new ArrayBuffer[huemul_DataQuality]()
      
@@ -685,7 +685,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  def GetForeingKey(): ArrayBuffer[huemul_Table_Relationship] = {
+  def getForeingKey(): ArrayBuffer[huemul_Table_Relationship] = {
     val GetDeclaredfields = getALLDeclaredFields()
     val Result = new ArrayBuffer[huemul_Table_Relationship]()
      
@@ -705,7 +705,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    Create schema from DataDef Definition
    */
-  def GetColumns(): ArrayBuffer[huemul_Columns] = {    
+  def getColumns(): ArrayBuffer[huemul_Columns] = {    
     var Result: ArrayBuffer[huemul_Columns] = new ArrayBuffer[huemul_Columns]()
     val fieldList = getALLDeclaredFields()
     val NumFields = fieldList.filter { x => x.setAccessible(true)
@@ -747,7 +747,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    Create schema from DataDef Definition
    */
-  private def GetColumns_CreateTable(ForHive: Boolean = false, tableType: huemulType_InternalTableType = huemulType_InternalTableType.Normal ): String = {
+  private def getColumns_CreateTable(ForHive: Boolean = false, tableType: huemulType_InternalTableType = huemulType_InternalTableType.Normal ): String = {
     val fieldList = getALLDeclaredFields(false,true,tableType)
     val NumFields = fieldList.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }.length
@@ -1438,7 +1438,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   GET ALL REQUIRED ATTRIBUTES
   Return all fields missing that have been required 
    */
-  private def MissingRequiredFields(IsSelectiveUpdate: Boolean): ArrayBuffer[String] = {
+  private def missingRequiredFields(IsSelectiveUpdate: Boolean): ArrayBuffer[String] = {
     var StringSQL: ArrayBuffer[String] = new ArrayBuffer[String]()
     if (IsSelectiveUpdate) return StringSQL
     
@@ -1472,7 +1472,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   GET ALL REQUIRED ATTRIBUTES
   Return all fields missing that have been required 
    */
-  private def MissingRequiredFields_SelectiveUpdate(): String = {
+  private def missingRequiredFields_SelectiveUpdate(): String = {
     var PKNotMapped: String = ""
     var OneColumnMapped: Boolean = false
     //STEP 1: validate name setting
@@ -1503,7 +1503,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     if (!OneColumnMapped)
-        RaiseError(s"huemul_Table Error: Only PK mapped, no columns mapped for update",1042)
+        raiseError(s"huemul_Table Error: Only PK mapped, no columns mapped for update",1042)
     
     return PKNotMapped
   }
@@ -1532,10 +1532,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     val lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.Normal)} (${GetColumns_CreateTable(true) })
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
                                  ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
                                  STORED AS ${_StorageType.toString()}                                  
-                                 LOCATION '${GetFullNameWithPath()}'"""
+                                 LOCATION '${getFullNameWithPath()}'"""
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
@@ -1553,10 +1553,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     val lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.DQ)} (${GetColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)} (${getColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
                                  PARTITIONED BY (${PartitionForCreateTable})
                                  STORED AS ${_StorageType.toString()}                                  
-                                 LOCATION '${GetFullNameWithPath_DQ()}'"""
+                                 LOCATION '${getFullNameWithPath_DQ()}'"""
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
@@ -1575,7 +1575,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //STORED AS ${_StorageType_OldValueTrace}
     //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
     val lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)} (${GetColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.OldValueTrace)} (${getColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
                                   ${if (_StorageType_OldValueTrace == "csv") {s"""
                                   ROW FORMAT DELIMITED
                                   FIELDS TERMINATED BY '\t'
@@ -1590,7 +1590,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                      STORED AS PARQUET""" 
                                   }
                                   }
-                                 LOCATION '${GetFullNameWithPath_OldValueTrace()}'"""
+                                 LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
                                   //${if (_StorageType_OldValueTrace == "csv") {s"""
                                   //TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")"""}}"""
      
@@ -1631,8 +1631,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   private def DF_ForeingKeyMasterAuto(): huemul_DataQualityResult = {
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
-    val ArrayFK = this.GetForeingKey()
-    val DataBaseName = this.GetDataBase(this._DataBase)
+    val ArrayFK = this.getForeingKey()
+    val DataBaseName = this.getDataBase(this._DataBase)
     //For Each Foreing Key Declared
     ArrayFK.foreach { x =>
       
@@ -1660,7 +1660,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Step2: left join with TABLE MASTER DATA
       val AliasLeft: String = s"___${x.MyName}_FKRuleLeft__"
       val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
-      val fk_table_name = InstanceTable.InternalGetTable(huemulType_InternalTableType.Normal)
+      val fk_table_name = InstanceTable.internalGetTable(huemulType_InternalTableType.Normal)
       val SQLLeft: String = s"""SELECT FK.* 
                                  FROM ${AliasDistinct_B} FK 
                                    LEFT JOIN ${fk_table_name} PK
@@ -1696,7 +1696,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Save errors to disk
         if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DetailErrorsDF != null && this.getSaveDQResult) {
           Control.NewStep("Start Save DQ Error Details for FK ")                
-          if (!SavePersist_DQ(Control, DetailErrorsDF)){
+          if (!savePersist_DQ(Control, DetailErrorsDF)){
             huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
           }
         }
@@ -1713,7 +1713,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DF_Alias = DataFramehuemul.Alias
       Values.ColumnName =FirstRowFK
       Values.DQ_Name =s"FK - ${SQLFields}"
-      Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.InternalGetTable(huemulType_InternalTableType.Normal)} "
+      Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.internalGetTable(huemulType_InternalTableType.Normal)} "
       Values.DQ_QueryLevel = huemulType_DQQueryLevel.Row // IsAggregate =false
       Values.DQ_Notification = huemulType_DQNotification.ERROR// RaiseError =true
       Values.DQ_SQLFormula =SQLLeft
@@ -1744,7 +1744,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val ArrayDQ: ArrayBuffer[huemul_DataQuality] = new ArrayBuffer[huemul_DataQuality]()
     
     //All required fields have been set
-    val SQL_Missing = MissingRequiredFields(IsSelectiveUpdate)
+    val SQL_Missing = missingRequiredFields(IsSelectiveUpdate)
     if (SQL_Missing.length > 0) {
       Result.isError = true
       Result.Description += "\nhuemul_Table Error: requiered columns missing "
@@ -1787,7 +1787,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //VAlidación DQ_RegExp
-    GetColumns().filter { x => x.getDQ_RegExp != null}.foreach { x => 
+    getColumns().filter { x => x.getDQ_RegExp != null}.foreach { x => 
         var SQLFormula : String = s"""${x.get_MyName()} rlike "${x.getDQ_RegExp}" """
 
         var tand = ""
@@ -1801,7 +1801,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
    
     //VAlidación DQ máximo y mínimo largo de texto
-    GetColumns().filter { x => x.getDQ_MinLen != null || x.getDQ_MaxLen != null  }.foreach { x => 
+    getColumns().filter { x => x.getDQ_MinLen != null || x.getDQ_MaxLen != null  }.foreach { x => 
         var SQLFormula : String = ""
 
         var tand = ""
@@ -1820,7 +1820,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //VAlidación DQ máximo y mínimo de números
-    GetColumns().filter { x => x.getDQ_MinDecimalValue != null || x.getDQ_MaxDecimalValue != null  }.foreach { x => 
+    getColumns().filter { x => x.getDQ_MinDecimalValue != null || x.getDQ_MaxDecimalValue != null  }.foreach { x => 
         
         var SQLFormula : String = ""
         var tand = ""
@@ -1839,7 +1839,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //VAlidación DQ máximo y mínimo de fechas
-    GetColumns().filter { x => x.getDQ_MinDateTimeValue != null || x.getDQ_MaxDateTimeValue != null  }.foreach { x => 
+    getColumns().filter { x => x.getDQ_MinDateTimeValue != null || x.getDQ_MaxDateTimeValue != null  }.foreach { x => 
         
         var SQLFormula : String = ""
         var tand = ""
@@ -1857,7 +1857,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         ArrayDQ.append(MinMaxDT)
     }
     
-    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.GetDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this)
+    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.getDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this)
     
     if (ResultDQ.isError){
       Result.isError = true
@@ -1870,7 +1870,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //get on sentence
         var SQL_PK_on: String = ""   
         var SQL_PK_firstCol: String = ""
-        GetColumns().filter { x_cols => x_cols.getIsPK == true }.foreach { x_cols => 
+        getColumns().filter { x_cols => x_cols.getIsPK == true }.foreach { x_cols => 
             if (SQL_PK_on.length() > 0) 
               SQL_PK_on = s"${SQL_PK_on} and "
             
@@ -1916,7 +1916,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Save errors to disk
     if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && ResultDQ.DetailErrorsDF != null && this.getSaveDQResult) {
       Control.NewStep("Start Save DQ Error Details ")                
-      if (!SavePersist_DQ(Control, ResultDQ.DetailErrorsDF)){
+      if (!savePersist_DQ(Control, ResultDQ.DetailErrorsDF)){
         huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
       }
     }
@@ -1926,7 +1926,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  def GetOrderByColumn(): String = {
+  def getOrderByColumn(): String = {
     var ColumnName: String = null
     
     
@@ -1955,10 +1955,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       LocalControl.NewStep("Selective Update: Validating fields ")
       
-      val PKNotMapped = this.MissingRequiredFields_SelectiveUpdate()
+      val PKNotMapped = this.missingRequiredFields_SelectiveUpdate()
       
       if (PKNotMapped != "")
-        RaiseError(s"huemul_Table Error: PK not defined: ${PKNotMapped}",1017)
+        raiseError(s"huemul_Table Error: PK not defined: ${PKNotMapped}",1017)
       
       //Get N° rows from user dataframe
       val NumRowsUserData: Long = this.DataFramehuemul.DataFrame.count()
@@ -1971,13 +1971,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
       
       if (!huemulBigDataGov.HasName(PartitionValueForSelectiveUpdate) && _TableType == huemulType_Tables.Transaction)
-        RaiseError(s"huemul_Table Error: Partition Value not defined", 1044)
+        raiseError(s"huemul_Table Error: Partition Value not defined", 1044)
         
       
       val FullPathString = if (_TableType == huemulType_Tables.Transaction) 
-                      s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValueForSelectiveUpdate}"
+                      s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValueForSelectiveUpdate}"
                     else
-                      this.GetFullNameWithPath()
+                      this.getFullNameWithPath()
       
       val FullPath = new org.apache.hadoop.fs.Path(FullPathString)
       
@@ -2005,7 +2005,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
         huemulBigDataGov.DF_SaveLinage(TempAlias
-                                    , s"""SELECT * FROM ${this.InternalGetTable(huemulType_InternalTableType.Normal)} ${if (_TableType == huemulType_Tables.Transaction) 
+                                    , s"""SELECT * FROM ${this.internalGetTable(huemulType_InternalTableType.Normal)} ${if (_TableType == huemulType_Tables.Transaction) 
                                                                                                                       s" WHERE ${_PartitionField.toLowerCase()}='${PartitionValueForSelectiveUpdate}'"}""" //sql
                                     , dt_start
                                     , dt_end
@@ -2015,7 +2015,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                     , true //isReferenced
                                     )
       } else 
-        RaiseError(s"huemul_Table Error: Table ${FullPathString} doesn't exists",1043)
+        raiseError(s"huemul_Table Error: Table ${FullPathString} doesn't exists",1043)
         
       
       //**************************************************//
@@ -2051,9 +2051,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //N° Rows Updated == NumRowsUserData
       if (NumRowsUserData != this._NumRows_Updatable) {
-        RaiseError(s"huemul_Table Error: it was expected to update ${NumRowsUserData} rows, only ${_NumRows_Updatable} was found", 1045)
+        raiseError(s"huemul_Table Error: it was expected to update ${NumRowsUserData} rows, only ${_NumRows_Updatable} was found", 1045)
       } else if (this._NumRows_Total != NumRowsOldDataFrame ) {
-        RaiseError(s"huemul_Table Error: Different number of rows in dataframes, original: ${NumRowsOldDataFrame}, new: ${this._NumRows_Total}, check your dataframe, maybe have duplicate keys", 1046)
+        raiseError(s"huemul_Table Error: Different number of rows in dataframes, original: ${NumRowsOldDataFrame}, new: ${this._NumRows_Total}, check your dataframe, maybe have duplicate keys", 1046)
       }
       
       LocalControl.NewStep("Selective Update: Final Table")
@@ -2080,7 +2080,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         //New value (from field or compute column )
         if (!huemulBigDataGov.HasName(Field.get_MappedName()) ){
-          RaiseError(s"${x.getName()} MUST have an assigned local name",1004)
+          raiseError(s"${x.getName()} MUST have an assigned local name",1004)
         }                 
       }
       
@@ -2112,11 +2112,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val OnlyInsert: Boolean = isInsert && !isUpdate
       
       //All required fields have been set
-      val SQL_Missing = MissingRequiredFields(isSelectiveUpdate)
+      val SQL_Missing = missingRequiredFields(isSelectiveUpdate)
       if (SQL_Missing.length > 0) {
         var ColumnsMissing: String = ""
         SQL_Missing.foreach { x => ColumnsMissing +=  s",$x " }
-        this.RaiseError(s"huemul_Table Error: requiered fields missing ${ColumnsMissing}", 1016)
+        this.raiseError(s"huemul_Table Error: requiered fields missing ${ColumnsMissing}", 1016)
          
       }
     
@@ -2142,16 +2142,16 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
       val TempAlias: String = s"__${this.TableName}_old"
       val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
-      if (fs.exists(new org.apache.hadoop.fs.Path(this.GetFullNameWithPath()))){
+      if (fs.exists(new org.apache.hadoop.fs.Path(this.getFullNameWithPath()))){
         //Exist, copy for use
         
         //Open actual file
-        val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(this.GetFullNameWithPath())
+        val DFTempCopy = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(this.getFullNameWithPath())
         
         //2.0: save previous to backup
         var tempPath: String = null
         if (huemulBigDataGov.GlobalSettings.MDM_SaveBackup && this._SaveBackup){
-          tempPath = this.GetFullNameWithPath_Backup(Control.Control_Id )
+          tempPath = this.getFullNameWithPath_Backup(Control.Control_Id )
           _BackupPath = tempPath
           if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to backup dir: $tempPath ")
         } else {
@@ -2170,8 +2170,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val DFTempOpen = huemulBigDataGov.spark.read.parquet(tempPath)        
         DFTempOpen.createOrReplaceTempView(TempAlias)        
       } else {
-          huemulBigDataGov.logMessageInfo(s"create empty dataframe because ${this.InternalGetTable(huemulType_InternalTableType.Normal)} does not exist")
-          val Schema = GetSchema()
+          huemulBigDataGov.logMessageInfo(s"create empty dataframe because ${this.internalGetTable(huemulType_InternalTableType.Normal)} does not exist")
+          val Schema = getSchema()
           val SchemaForEmpty = StructType(Schema.map { x => StructField(x.name, x.dataType, x.nullable) })
           val EmptyRDD = huemulBigDataGov.spark.sparkContext.emptyRDD[Row]
           val EmptyDF = huemulBigDataGov.spark.createDataFrame(EmptyRDD, SchemaForEmpty)
@@ -2181,7 +2181,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
       
       huemulBigDataGov.DF_SaveLinage(TempAlias
-                                    , s"SELECT * FROM ${this.InternalGetTable(huemulType_InternalTableType.Normal)} " //sql
+                                    , s"SELECT * FROM ${this.internalGetTable(huemulType_InternalTableType.Normal)} " //sql
                                     , dt_start
                                     , dt_end
                                     , Control
@@ -2249,7 +2249,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       
     } else
-      RaiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
+      raiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
       
     //if (this._NumRows_Total < 1000000)
     if (storageLevelOfDF != null) {
@@ -2300,12 +2300,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
 
     if (DQ_Error != "")
-      RaiseError(DQ_Error, Error_Number)
+      raiseError(DQ_Error, Error_Number)
       
     DQ_ReferenceData.unpersist()
   }
   
-  private def GetClassAndPackage(): huemul_AuthorizationPair = {
+  private def getClassAndPackage(): huemul_AuthorizationPair = {
     val Invoker = new Exception().getStackTrace()(2)
     val InvokerName: String = Invoker.getClassName().replace("$", "")
     
@@ -2319,11 +2319,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   def executeFull(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
     var Result: Boolean = false
-    val whoExecute = GetClassAndPackage()  
+    val whoExecute = getClassAndPackage()  
     if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, true, true, true, false, null, storageLevelOfDF)      
+      Result = this.executeSave(NewAlias, true, true, true, false, null, storageLevelOfDF)      
     else {
-      RaiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
+      raiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
       
     }
     
@@ -2333,13 +2333,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def executeOnlyInsert(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
     var Result: Boolean = false
     if (this._TableType == huemulType_Tables.Transaction)
-      RaiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
+      raiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
 
-    val whoExecute = GetClassAndPackage()  
+    val whoExecute = getClassAndPackage()  
     if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, true, false, false, false, null, storageLevelOfDF) 
+      Result = this.executeSave(NewAlias, true, false, false, false, null, storageLevelOfDF) 
     else {
-      RaiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
+      raiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
     }
          
     return Result
@@ -2348,13 +2348,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def executeOnlyUpdate(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {   
     var Result: Boolean = false
     if (this._TableType == huemulType_Tables.Transaction)
-      RaiseError("huemul_Table Error: DoOnlyUpdatehuemul is not available for Transaction Tables", 1011)
+      raiseError("huemul_Table Error: DoOnlyUpdatehuemul is not available for Transaction Tables", 1011)
       
-    val whoExecute = GetClassAndPackage()  
+    val whoExecute = getClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, false, true, false, false, null, storageLevelOfDF)  
+      Result = this.executeSave(NewAlias, false, true, false, false, null, storageLevelOfDF)  
     else {
-      RaiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+      raiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
     
     return Result
@@ -2364,11 +2364,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {   
     var Result: Boolean = false
       
-    val whoExecute = GetClassAndPackage()  
+    val whoExecute = getClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.ExecuteSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate, storageLevelOfDF)  
+      Result = this.executeSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate, storageLevelOfDF)  
     else {
-      RaiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
     
     return Result
@@ -2383,9 +2383,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val ColumnNames = x.get_MyName()
         val ColumnInSchema = Schema.filter { y => y.name == ColumnNames }
         if (ColumnInSchema == null || ColumnInSchema.length == 0)
-          RaiseError(s"huemul_Table Error: column missing in Schema ${ColumnNames}", 1038)
+          raiseError(s"huemul_Table Error: column missing in Schema ${ColumnNames}", 1038)
         if (ColumnInSchema.length != 1)
-          RaiseError(s"huemul_Table Error: multiples columns found in Schema with name ${ColumnNames}", 1039)
+          raiseError(s"huemul_Table Error: multiples columns found in Schema with name ${ColumnNames}", 1039)
         
           val dataType = ColumnInSchema(0).dataType
         if (dataType != x.DataType) {
@@ -2402,9 +2402,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Master & Reference: update and Insert
    Transactional: Delete and Insert new data
    */
-  private def ExecuteSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel): Boolean = {
+  private def executeSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel): Boolean = {
     if (!this.DefinitionIsClose)
-      this.RaiseError(s"huemul_Table Error: MUST call ApplyTableDefinition ${this.TableName}", 1048)
+      this.raiseError(s"huemul_Table Error: MUST call ApplyTableDefinition ${this.TableName}", 1048)
     
     var LocalControl = new huemul_Control(huemulBigDataGov, Control ,huemulType_Frequency.ANY_MOMENT, false )
     LocalControl.AddParamInformation("AliasNewData", AliasNewData)
@@ -2423,11 +2423,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Compare schemas
       if (!autoCast) {
         LocalControl.NewStep("Compare Schema")
-        val ResultCompareSchema = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
+        val ResultCompareSchema = CompareSchema(this.getColumns(), this.DataFramehuemul.DataFrame.schema) 
         if (ResultCompareSchema != "") {
           result = false
           ErrorCode = 1013
-          RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchema}", ErrorCode)
+          raiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchema}", ErrorCode)
         }
       }
     
@@ -2457,26 +2457,26 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
               
         
-        RaiseError(ErrorDetail, localErrorCode)
+        raiseError(ErrorDetail, localErrorCode)
       }
       
       //Compare schemas final table
       LocalControl.NewStep("Compare Schema Final DF")
-      val ResultCompareSchemaFinal = CompareSchema(this.GetColumns(), this.DataFramehuemul.DataFrame.schema) 
+      val ResultCompareSchemaFinal = CompareSchema(this.getColumns(), this.DataFramehuemul.DataFrame.schema) 
       if (ResultCompareSchemaFinal != "") {
         ErrorCode = 1014
-        RaiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchemaFinal}",ErrorCode)
+        raiseError(s"huemul_Table Error: User Error: incorrect DataType: \n${ResultCompareSchemaFinal}",ErrorCode)
       }
       
       //Create table persistent
       if (huemulBigDataGov.DebugMode){
-        huemulBigDataGov.logMessageDebug(s"Saving ${InternalGetTable(huemulType_InternalTableType.Normal)} Table with params: ") 
+        huemulBigDataGov.logMessageDebug(s"Saving ${internalGetTable(huemulType_InternalTableType.Normal)} Table with params: ") 
         huemulBigDataGov.logMessageDebug(s"${_PartitionField} field for partitioning table")
-        huemulBigDataGov.logMessageDebug(s"${GetFullNameWithPath()} path")
+        huemulBigDataGov.logMessageDebug(s"${getFullNameWithPath()} path")
       }
       
       LocalControl.NewStep("Start Save ")                
-      if (SavePersist(LocalControl, DataFramehuemul.DataFrame, OnlyInsert, IsSelectiveUpdate)){
+      if (savePersist(LocalControl, DataFramehuemul.DataFrame, OnlyInsert, IsSelectiveUpdate)){
         LocalControl.NewStep("Register Master Information ")
         Control.RegisterMASTER_CREATE_Use(this)
       
@@ -2506,10 +2506,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return result
   }
   
-  def CopyToDest(PartitionValue: String, DestEnvironment: String) {
+  def copyToDest(PartitionValue: String, DestEnvironment: String) {
     if (huemulBigDataGov.HasName(_PartitionField)) {
-       val ProdFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValue}")
-       val ManualFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}=${PartitionValue}")
+       val ProdFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValue}")
+       val ManualFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}=${PartitionValue}")
        
        val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
        org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
@@ -2519,8 +2519,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${DestTableName}")
               
     } else {
-       val ProdFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}")
-       val ManualFullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}")
+       val ProdFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}")
+       val ManualFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}")
        
        val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
        org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
@@ -2531,13 +2531,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Save data to disk
    */
-  private def SavePersist(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean): Boolean = {
+  private def savePersist(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
     
     //Add from 2.0: save Old Value Trace
     if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace && _SQL_OldValueFullTrace_DF != null) {
-      Result = SavePersist_OldValueTrace(LocalControl,_SQL_OldValueFullTrace_DF)
+      Result = savePersist_OldValueTrace(LocalControl,_SQL_OldValueFullTrace_DF)
       if (!Result)
         return Result 
     } 
@@ -2565,11 +2565,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                 
         if (OnlyInsert) {
           LocalControl.NewStep("Save: Append Master & Ref Data")
-          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(getFullNameWithPath())
         }
         else {
           LocalControl.NewStep("Save: Overwrite Master & Ref Data")
-          DF_Final.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(getFullNameWithPath())
         }
         
         //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
@@ -2580,10 +2580,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         LocalControl.NewStep("Save: Validating N° partitions")
         val DFDistinct = DF_Final.select(_PartitionField).distinct().withColumn(_PartitionField, DF_Final.col(_PartitionField).cast(StringType)).collect()
         if (DFDistinct.length != 1){
-          RaiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.length}",1015)
+          raiseError(s"huemul_Table Error: N° values in partition wrong!, expected: 1, real: ${DFDistinct.length}",1015)
         } else {
           this.PartitionValue = DFDistinct(0).getAs[String](_PartitionField)
-          val FullPath = new org.apache.hadoop.fs.Path(s"${GetFullNameWithPath()}/${_PartitionField.toLowerCase()}=${this.PartitionValue}")
+          val FullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}=${this.PartitionValue}")
           
           LocalControl.NewStep("Save: Drop old partition")
           val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
@@ -2597,7 +2597,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           LocalControl.NewStep("Save: OverWrite partition with new data")
           if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${FullPath} ")     
           
-          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(GetFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy(_PartitionField).save(getFullNameWithPath())
                 
           //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
   
@@ -2615,11 +2615,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     if (Result) {
       if (CreateInHive ) {
-        val sqlDrop01 = s"drop table if exists ${InternalGetTable(huemulType_InternalTableType.Normal)}"
+        val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.Normal)}"
         LocalControl.NewStep("Save: Drop Hive table Def")
         if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
-          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetCurrentDataBase()).collect()
+          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getCurrentDataBase()).collect()
           if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase()  }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
             
@@ -2639,7 +2639,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
-        val _tableName : String = InternalGetTable(huemulType_InternalTableType.Normal)
+        val _tableName : String = internalGetTable(huemulType_InternalTableType.Normal)
         if (CreateInHive && (_PartitionField != null && _PartitionField != "")) {
           LocalControl.NewStep("Save: Repair Hive Metadata")
           if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"MSCK REPAIR TABLE ${_tableName}")
@@ -2674,20 +2674,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Save DQ Result data to disk
    */
-  private def SavePersist_OldValueTrace(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
+  private def savePersist_OldValueTrace(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
     this._table_ovt_isused = 1
       
     try {      
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
-      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_OldValueTrace()} ")
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_OldValueTrace()} ")
       if (_StorageType_OldValueTrace.toLowerCase() == "parquet"){
-        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
+        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(_StorageType_OldValueTrace).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       }
       else
-        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").option("emptyValue", "").option("treatEmptyValuesAsNulls", "false").option("nullValue", "null").format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
+        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").option("emptyValue", "").option("treatEmptyValuesAsNulls", "false").option("nullValue", "null").format(_StorageType_OldValueTrace).save(getFullNameWithPath_OldValueTrace())
       
     } catch {
       case e: Exception => 
@@ -2700,12 +2700,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     if (Result) {
       if (CreateInHive ) {
-        val sqlDrop01 = s"drop table if exists ${InternalGetTable(huemulType_InternalTableType.OldValueTrace)}"
+        val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.OldValueTrace)}"
         LocalControl.NewStep("Save: OldVT Result: Drop Hive table Def")
         if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
-          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)).collect()
-          if (TablesListFromHive.filter { x => x.name.toUpperCase() == InternalGetTable(huemulType_InternalTableType.OldValueTrace,false).toUpperCase() }.length > 0) 
+          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)).collect()
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == internalGetTable(huemulType_InternalTableType.OldValueTrace,false).toUpperCase() }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
             
         } catch {
@@ -2723,7 +2723,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
-        val _tableNameOldValueTrace: String = InternalGetTable(huemulType_InternalTableType.OldValueTrace)
+        val _tableNameOldValueTrace: String = internalGetTable(huemulType_InternalTableType.OldValueTrace)
         
         LocalControl.NewStep("Save: OldVT Result: Repair Hive Metadata")
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"REFRESH TABLE ${_tableNameOldValueTrace}")
@@ -2752,15 +2752,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Save DQ Result data to disk
    */
-  private def SavePersist_DQ(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
+  private def savePersist_DQ(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
     this._table_dq_isused = 1
       
     try {      
       LocalControl.NewStep("Save DQ Result: Saving new DQ result")
-      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${GetFullNameWithPath_DQ()} ")        
-      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(GetFullNameWithPath_DQ())
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_DQ()} ")        
+      DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this._StorageType.toString()).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
       
     } catch {
       case e: Exception => 
@@ -2773,12 +2773,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     if (Result) {
       if (CreateInHive ) {
-        val sqlDrop01 = s"drop table if exists ${InternalGetTable(huemulType_InternalTableType.DQ)}"
+        val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.DQ)}"
         LocalControl.NewStep("Save: Drop Hive table Def")
         if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
-          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(GetDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)).collect()
-          if (TablesListFromHive.filter { x => x.name.toUpperCase() == InternalGetTable(huemulType_InternalTableType.DQ,false).toUpperCase() }.length > 0) 
+          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)).collect()
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == internalGetTable(huemulType_InternalTableType.DQ,false).toUpperCase() }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
             
         } catch {
@@ -2797,7 +2797,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
-        val _tableNameDQ: String = InternalGetTable(huemulType_InternalTableType.DQ)
+        val _tableNameDQ: String = internalGetTable(huemulType_InternalTableType.DQ)
         LocalControl.NewStep("Save: Repair Hive Metadata")
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"MSCK REPAIR TABLE ${_tableNameDQ}")
         huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${_tableNameDQ}")
@@ -2826,7 +2826,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * Return an Empty table with all columns
    */
   def getEmptyTable(Alias: String): DataFrame = {
-    val Schema = GetSchema()
+    val Schema = getSchema()
     val SchemaForEmpty = StructType(Schema.map { x => StructField(x.name, x.dataType, x.nullable) })
     val EmptyRDD = huemulBigDataGov.spark.sparkContext.emptyRDD[Row]
     val EmptyDF = huemulBigDataGov.spark.createDataFrame(EmptyRDD, SchemaForEmpty)
@@ -2876,7 +2876,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Raise Error
    */
-  def RaiseError(txt: String, code: Integer) {
+  def raiseError(txt: String, code: Integer) {
     Error_Text = txt
     Error_isError = true
     Error_Code = code

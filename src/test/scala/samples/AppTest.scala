@@ -83,7 +83,7 @@ class AppTest {
     try {
        TestTable = new tbl_demo_test(huemulBigDataGov, Control)  
        println("***************************************TestTable.GetOrderByColumn()")
-       println(TestTable.GetOrderByColumn())
+       println(TestTable.getOrderByColumn())
     } catch {
       case t: Throwable => t.printStackTrace() // TODO: handle error
     }

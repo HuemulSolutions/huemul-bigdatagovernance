@@ -385,6 +385,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * START METHOD
    *************************/
   
+  def GetPath(pathFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
+    return GlobalSettings.GetPath(this, pathFromGlobal)
+  }
+  
+  def GetDataBase(dataBaseFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
+    return GlobalSettings.GetDataBase(this, dataBaseFromGlobal)
+  }
+  
   def close() {
     application_closeAll(this.IdApplication)
     this.spark.catalog.clearCache()
