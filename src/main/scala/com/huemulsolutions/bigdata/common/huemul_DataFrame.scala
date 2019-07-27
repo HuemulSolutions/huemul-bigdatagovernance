@@ -968,7 +968,10 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         , DQ.DQ_NumRowsError
         , DQ.DQ_NumRowsTotal 
         , DQ.DQ_IsError
-        , DQ.DQ_IsWarning)
+        , DQ.DQ_IsWarning
+        , DQ.DQ_duration_hour
+        , DQ.DQ_duration_minute
+        , DQ.DQ_duration_second)
   }
   
 }
