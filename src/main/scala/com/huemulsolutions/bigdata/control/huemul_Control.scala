@@ -512,7 +512,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              , DQ_NumRowsError: java.lang.Long
                              , DQ_NumRowsTotal: java.lang.Long
                              , DQ_IsError: Boolean
-                             , DQ_IsWarning: Boolean) {
+                             , DQ_IsWarning: Boolean
+                             , DQ_duration_hour: Integer
+                             , DQ_duration_minute: Integer
+                             , DQ_duration_second: Integer) {
                 
     //Create New Id
     val DQId = huemulBigDataGov.huemul_GetUniqueId()
@@ -541,7 +544,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , DQ_NumRowsTotal
                          , DQ_IsError
                          , DQ_IsWarning
+                         ,DQ_duration_hour
+                         ,DQ_duration_minute
+                         ,DQ_duration_second
                          , Control_ClassName
+                         
                          )
      
     }
@@ -1594,6 +1601,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_DQ_NumRowsTotal: java.lang.Long
                              ,p_DQ_IsError: Boolean
                              ,p_DQ_IsWarning: Boolean
+                             ,p_DQ_duration_hour: Integer
+                             ,p_DQ_duration_minute: Integer
+                             ,p_DQ_duration_second: Integer
                              ,p_MDM_ProcessName: String
                              
       ): huemul_JDBCResult =  {
@@ -1641,6 +1651,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                  ,dq_numrowstotal
                                  ,dq_iserror
                                  ,dq_iswarning
+                                 ,dq_duration_hour
+                                 ,dq_duration_minute
+                                 ,dq_duration_second
                                  ,mdm_fhcreate
                                  ,mdm_processname)
       	VALUES(  ${ReplaceSQLStringNulls(p_DQ_Id)}
@@ -1665,6 +1678,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         			 ,${p_DQ_NumRowsTotal}
                ,${if (p_DQ_IsError) "1" else "0"}
                ,${if (p_DQ_IsWarning) "1" else "0"}
+               ,${p_DQ_duration_hour}
+               ,${p_DQ_duration_minute}
+               ,${p_DQ_duration_second}
         			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
         			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
       )        			 
