@@ -27,7 +27,7 @@ import com.huemulsolutions.bigdata.tables.huemul_Table
 import org.apache.spark.sql.catalyst.expressions.Coalesce
 import com.huemulsolutions.bigdata.sql_decode._
 import com.huemulsolutions.bigdata.control.huemul_Control
-
+import org.apache.log4j.Level
         
       
 /*
@@ -54,7 +54,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
   @transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"com.huemulsolutions")
-  
+  log_info.setLevel(Level.ALL)
   
   private val excludeWords:ArrayBuffer[String]  = new ArrayBuffer[String]() 
   val huemul_SQL_decode: huemul_SQL_Decode = new huemul_SQL_Decode(excludeWords,1)
@@ -115,9 +115,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       }
     }
     
-    val duracion = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
+    val duration = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
+    logMessageInfo(s"duration (hh:mm:ss): ${"%02d".format(duration.hour)}:${"%02d".format(duration.minute)}:${"%02d".format(duration.second)}")
     //println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
     return _ColumnsAndTables 
+  }
+  
+  def num_to_text(text_format: String, value: Any): String = {
+    return text_format.format(value)
   }
   
   def addColumnsAndTablesFromQuery(Alias: String, queryRes: ArrayBuffer[com.huemulsolutions.bigdata.sql_decode.huemul_sql_columns]) {
@@ -171,7 +176,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  logMessageWarn("huemul_BigDataGovernance version 2.0.0 - sv1.0") 
+  logMessageInfo("huemul_BigDataGovernance version 2.0.0 - sv1.0") 
        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
@@ -385,11 +390,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * START METHOD
    *************************/
   
-  def GetPath(pathFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
+  def getPath(pathFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
     return GlobalSettings.GetPath(this, pathFromGlobal)
   }
   
-  def GetDataBase(dataBaseFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
+  def getDataBase(dataBaseFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
     return GlobalSettings.GetDataBase(this, dataBaseFromGlobal)
   }
   
@@ -427,7 +432,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
       //Get Id App from Spark URL Monitoring          
       try {
-        IdAppFromAPI = this.GetIdFromExecution(URLMonitor)    
+        IdAppFromAPI = this.getIdFromExecution(URLMonitor)    
       } catch {
         case f: Exception => {
           StillAlive = false
@@ -682,12 +687,18 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     //return this.spark.sql(s"select data_control.fabric_GetUniqueId(${this.IdSparkPort}) as NewId ").first().getAs[String]("NewId")
   }
   
+  private var _huemul_showDemoLines: Boolean = true
+  def gethuemul_showDemoLines(): Boolean = {return _huemul_showDemoLines}
+  def huemul_showDemoLines(value: Boolean) {
+    _huemul_showDemoLines = value
+  }
+  
  
   /**
    * Get execution Id from spark monitoring url
    */
  
-  def GetIdFromExecution(url: String): String = {
+  def getIdFromExecution(url: String): String = {
     import spark.implicits._
     val html = Source.fromURL(url)
     val vals = spark.sparkContext.parallelize(

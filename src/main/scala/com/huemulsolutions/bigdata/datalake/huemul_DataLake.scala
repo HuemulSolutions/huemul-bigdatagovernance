@@ -246,8 +246,12 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
             LocalErrorCode = 3009
             this.RaiseError_RAW(s"huemul_DataLake Error: File doesn't exist ${FileName}",LocalErrorCode)
           }     
-          huemulBigDataGov.logMessageInfo("2 first line example of file: " + this.FileName)
-          this.DataRDD.take(2).foreach { x => huemulBigDataGov.logMessageInfo(x) }
+          
+          if (huemulBigDataGov.gethuemul_showDemoLines() ) huemulBigDataGov.logMessageInfo("2 first line example of file: " + this.FileName)
+          this.DataRDD.take(2).foreach { x =>
+            if (huemulBigDataGov.gethuemul_showDemoLines() )
+              huemulBigDataGov.logMessageInfo(x) 
+            }
         } else {
           LocalErrorCode = 3006
           this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)

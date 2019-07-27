@@ -361,7 +361,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
             DQResult.Description = s"huemul_DataFrame Error: Column ${x.name} have different values: Total rows ${totalCount}, num OK : ${currentColumn} "
             DQResult.isError = true
             DQResult.Error_Code = 2005
-            huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DQResult.Description}")
+            huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: ${DQResult.Description}")
             DQResult.dqDF.where(s"Equal_${x.name} = 0").show()
             NumColumnsError += 1
           }
@@ -431,8 +431,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       val Res = DQ_StatsByCol(ObjectData, x.name)
       
       if (Res.isError) {
-        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ERROR DQ")
-        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${Res.Description}")
+        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: ERROR DQ")
+        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: ${Res.Description}")
       }
       
       if (DQResult.dqDF != null)
@@ -460,7 +460,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     if (Colfield != null) {
       DataType = Colfield(0).dataType
     }
-    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DataType}")
+    if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulDataFrameLog: ${DataType}")
     var SQL : String = s""" SELECT "$Col"            as ColName
                                   ,cast(Min($Col) as String)        as min_Col
                                   ,cast(Max($Col) as String)         as max_Col
@@ -665,7 +665,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         DQResult.Description = s"huemul_DataFrame Error: num Rows Null in $Col: " + DQDup.toString()
         DQResult.isError = true
         DQResult.Error_Code = 2007
-        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] ${DQResult.Description}")
+        huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: ${DQResult.Description}")
         DQResult.dqDF.show()
       }
     } catch {
@@ -800,7 +800,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     //DataQuality AdHoc
     val SQLDQ = getSQL_DataQualityForRun(OfficialDataQuality, ManualRules, AliasToQuery)
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) {
-      huemulBigDataGov.logMessageDebug(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DATA QUALITY ADHOC QUERY")
+      huemulBigDataGov.logMessageDebug(s"HuemulDataFrameLog: DATA QUALITY ADHOC QUERY")
       huemulBigDataGov.logMessageDebug(SQLDQ)
     }
     var DF_ErrorDetails: DataFrame = null
@@ -918,7 +918,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     
     ErrorLog.isWarning = NumTotalWarnings > 0 
     if (NumTotalErrors > 0){
-      huemulBigDataGov.logMessageWarn (s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] num with errors: ${NumTotalErrors} ")
+      huemulBigDataGov.logMessageWarn (s"HuemulDataFrameLog: num with errors: ${NumTotalErrors} ")
       ErrorLog.isError = true
       ErrorLog.Description = txtTotalErrors
       ErrorLog.Error_Code = localErrorCode 
