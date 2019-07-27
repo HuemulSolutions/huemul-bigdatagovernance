@@ -224,6 +224,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_NumRowsError =0
     Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
+    Values.DQ_IsWarning = DQResult.isWarning
     
     this.DQ_Register(Values)    
     
@@ -277,6 +278,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_NumRowsError =0
     Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
+    Values.DQ_IsWarning = DQResult.isWarning
       
     this.DQ_Register(Values)
     
@@ -390,6 +392,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_NumRowsError =NumColumnsError
     Values.DQ_NumRowsTotal =NumColumns
     Values.DQ_IsError = DQResult.isError
+    Values.DQ_IsWarning = DQResult.isWarning
 
     this.DQ_Register(Values)
       
@@ -596,6 +599,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_NumRowsError =DQDup
     Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
+    Values.DQ_IsWarning = DQResult.isWarning
 
     this.DQ_Register(Values)
     
@@ -670,6 +674,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_NumRowsError =DQDup
     Values.DQ_NumRowsTotal =0
     Values.DQ_IsError = DQResult.isError
+    Values.DQ_IsWarning = DQResult.isWarning
 
     this.DQ_Register(Values)
     
@@ -753,6 +758,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     /*****************************************************************/
     
     var NumTotalErrors: Integer = 0
+    var NumTotalWarnings: Integer = 0
     var txtTotalErrors: String = ""
     var ErrorLog: huemul_DataQualityResult = new huemul_DataQualityResult()
     var localErrorCode : Integer = null
@@ -788,24 +794,19 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         
         //Validate max num rows with error vs definition 
         if (x.getToleranceError_Rows != null) {
-           
-          if (DQWithError > x.getToleranceError_Rows){
-            x.ResultDQ = s"DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
+          if (DQWithError > x.getToleranceError_Rows)
             IsError = true
-          }
-            
         } 
         
         //Validate % rows with error vs definition
         if (x.getToleranceError_Percent != null) {
-           
-          if (DQWithErrorPerc > x.getToleranceError_Percent) {
-            x.ResultDQ = s"DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
+          if (DQWithErrorPerc > x.getToleranceError_Percent) 
             IsError = true
-          }
         }
         
-        if (huemulBigDataGov.DebugMode || IsError) huemulBigDataGov.logMessageDebug(s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DQ Name ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)")
+        //set user message
+        x.ResultDQ = s"DQ ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}, Name: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
+        if (huemulBigDataGov.DebugMode || IsError) huemulBigDataGov.logMessageDebug(x.ResultDQ)
                        
         var dfTableName: String = null
         var dfDataBaseName: String = null
@@ -832,13 +833,17 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         Values.DQ_NumRowsOK =x.NumRowsOK
         Values.DQ_NumRowsError =DQWithError
         Values.DQ_NumRowsTotal =x.NumRowsTotal    
-        Values.DQ_IsError = IsError 
+        Values.DQ_IsError = x.getNotification() == huemulType_DQNotification.ERROR && IsError //IsError 
+        Values.DQ_IsWarning = x.getNotification() == huemulType_DQNotification.WARNING && IsError
        
         ErrorLog.appendDQResult(Values)
         this.DQ_Register(Values)
         
-        if (x.getNotification() == huemulType_DQNotification.ERROR && IsError) {
-          txtTotalErrors += s"\nHuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] DQ Name (${x.getErrorCode()}): ${x.getMyName} with error: ${x.ResultDQ}"
+        if (Values.DQ_IsWarning)
+          NumTotalWarnings += 1
+          
+        if (Values.DQ_IsError) {
+          txtTotalErrors += s"\nHuemulDataFrameLog: DQ Name (${x.getErrorCode()}): ${x.getMyName} with error: ${x.ResultDQ}"
           NumTotalErrors += 1
           localErrorCode = x.getErrorCode()
         }
@@ -867,6 +872,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       }
     }
     
+    
+    ErrorLog.isWarning = NumTotalWarnings > 0 
     if (NumTotalErrors > 0){
       huemulBigDataGov.logMessageWarn (s"HuemulDataFrameLog: [${huemulBigDataGov.huemul_getDateForLog()}] num with errors: ${NumTotalErrors} ")
       ErrorLog.isError = true
@@ -917,7 +924,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         , DQ.DQ_NumRowsOK
         , DQ.DQ_NumRowsError
         , DQ.DQ_NumRowsTotal 
-        , DQ.DQ_IsError)
+        , DQ.DQ_IsError
+        , DQ.DQ_IsWarning)
   }
   
 }
