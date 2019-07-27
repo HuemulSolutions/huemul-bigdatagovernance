@@ -383,6 +383,7 @@ create table  control_dq (
                                              ,dq_numrowserror         int
                                              ,dq_numrowstotal         int
                                              ,dq_iserror              int
+                                             ,dq_iswarning			  int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
                                              ,primary key (dq_id) 
