@@ -151,12 +151,16 @@ class huemul_Columns(param_DataType: DataType
    /** Validate Regular Expression
    */
   private var DQ_RegExp: String = null //none, sha2,
+  private var DQ_RegExp_externalCode: String = null
   def getDQ_RegExp: String = {return DQ_RegExp}
-  def setDQ_RegExp(value: String) {
+  def getDQ_RegExp_externalCode: String = {return DQ_RegExp_externalCode}
+  def setDQ_RegExp(value: String, dq_externalCode: String = null) {
     if (DefinitionIsClose)
       sys.error("You can't change value of setDQ_RegExp, definition is close")
-    else
+    else {
       DQ_RegExp = value
+      DQ_RegExp_externalCode = dq_externalCode
+    }
   }
   
   /**
