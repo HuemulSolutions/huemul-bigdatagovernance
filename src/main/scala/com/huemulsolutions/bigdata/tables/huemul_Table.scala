@@ -1656,7 +1656,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //val FKRuleName: String = GetFieldName[DAPI_MASTER_FK](this, x)
       val AliasDistinct_B: String = s"___${x.MyName}_FKRuleDistB__"
       val DF_Distinct = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct_B, s"SELECT DISTINCT ${SQLFields} FROM ${this.DataFramehuemul.Alias} ${if (x.AllowNull) s" WHERE ${FirstRowFK} is not null " else "" }")
-           
+        
       //Step2: left join with TABLE MASTER DATA
       val AliasLeft: String = s"___${x.MyName}_FKRuleLeft__"
       val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
@@ -1669,6 +1669,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                               """
                                  
       val AliasDistinct: String = s"___${x.MyName}_FKRuleDist__"
+      val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
       val DF_Left = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct, SQLLeft)
       
       //Step3: Return DQ Validation
@@ -1703,6 +1704,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       
       val NumTotalDistinct = DF_Distinct.count()
+      val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+      val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
       
       val Values = new huemul_DQRecord()
       Values.Table_Name =TableName
@@ -1722,6 +1725,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DQ_NumRowsError =TotalLeft
       Values.DQ_NumRowsTotal =NumTotalDistinct
       Values.DQ_IsError = Result.isError
+      Values.DQ_IsWarning = false
+      Values.DQ_ExternalCode = "HML_001"
+      Values.DQ_duration_hour = duration.hour.toInt
+      Values.DQ_duration_minute = duration.minute.toInt
+      Values.DQ_duration_second = duration.second.toInt
 
       this.DataFramehuemul.DQ_Register(Values) 
       
