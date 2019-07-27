@@ -384,6 +384,9 @@ create table  control_dq (
                                              ,dq_numrowstotal         int
                                              ,dq_iserror              int
                                              ,dq_iswarning			  int
+                                             ,dq_duration_hour		  int
+                                             ,dq_duration_minute	  int
+                                             ,dq_duration_second	  int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
                                              ,primary key (dq_id) 

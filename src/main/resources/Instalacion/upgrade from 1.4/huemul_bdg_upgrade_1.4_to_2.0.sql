@@ -18,7 +18,10 @@ alter table control_error alter column error_trace         type varchar(4000);
 alter table control_processexecparams alter column processexecparams_value type varchar(4000);
 
 alter table control_dq add dq_iswarning			  int;
-
+alter table control_dq add dq_duration_hour		  int;
+alter table control_dq add dq_duration_minute	  int;
+alter table control_dq add dq_duration_second	  int;
+ 
 alter table control_tables add table_autoincupdate     int;
 alter table control_columns add column_enableoldvaluetrace int;
 
