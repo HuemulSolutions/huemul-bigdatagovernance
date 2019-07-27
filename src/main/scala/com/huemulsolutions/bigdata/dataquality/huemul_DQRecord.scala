@@ -23,4 +23,5 @@ class huemul_DQRecord extends Serializable {
   var DQ_NumRowsError: Long= 0
   var DQ_NumRowsTotal: Long= 0
   var DQ_IsError: Boolean = false
+  var DQ_IsWarning: Boolean = false
 }
