@@ -511,7 +511,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              , DQ_NumRowsOK: java.lang.Long
                              , DQ_NumRowsError: java.lang.Long
                              , DQ_NumRowsTotal: java.lang.Long
-                             , DQ_IsError: Boolean) {
+                             , DQ_IsError: Boolean
+                             , DQ_IsWarning: Boolean) {
                 
     //Create New Id
     val DQId = huemulBigDataGov.huemul_GetUniqueId()
@@ -539,6 +540,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , DQ_NumRowsError
                          , DQ_NumRowsTotal
                          , DQ_IsError
+                         , DQ_IsWarning
                          , Control_ClassName
                          )
      
@@ -1591,6 +1593,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_DQ_NumRowsError: java.lang.Long
                              ,p_DQ_NumRowsTotal: java.lang.Long
                              ,p_DQ_IsError: Boolean
+                             ,p_DQ_IsWarning: Boolean
                              ,p_MDM_ProcessName: String
                              
       ): huemul_JDBCResult =  {
@@ -1637,6 +1640,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                  ,dq_numrowserror
                                  ,dq_numrowstotal
                                  ,dq_iserror
+                                 ,dq_iswarning
                                  ,mdm_fhcreate
                                  ,mdm_processname)
       	VALUES(  ${ReplaceSQLStringNulls(p_DQ_Id)}
@@ -1660,6 +1664,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         			 ,${p_DQ_NumRowsError}
         			 ,${p_DQ_NumRowsTotal}
                ,${if (p_DQ_IsError) "1" else "0"}
+               ,${if (p_DQ_IsWarning) "1" else "0"}
         			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
         			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
       )        			 
