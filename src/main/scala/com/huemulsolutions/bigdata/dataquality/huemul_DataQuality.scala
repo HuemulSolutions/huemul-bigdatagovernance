@@ -15,6 +15,8 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
  *  @param Error_Code codigo de error, debe usar códigos que vayan entre 1 y 999
  *  @param QueryLevel indica si es por fila (row) o agrupado (aggregate). por default es Row
  *  @param Notification nivel de notificación, ERROR gatilla error y fuerza salida, WARNING es solo una alerta. por default es ERROR
+ *  @param SaveErrorDetails (default true) indica si guarda el detalle del error o warning de DQ en tabla de detalle
+ *  @param DQ_ExternalCode (Default null) indica el código externo de tabla de DQ
  */
 class huemul_DataQuality(FieldName: huemul_Columns
             ,Description: String
