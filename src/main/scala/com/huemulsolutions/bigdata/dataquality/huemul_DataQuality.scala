@@ -69,10 +69,8 @@ class huemul_DataQuality(FieldName: huemul_Columns
   def getMyName(): String = {return MyName}
   
   def setTolerance(toleranceRows: java.lang.Long, tolerancePercent: Decimal) {
-    if (toleranceRows == null)
-      sys.error("Error in setTolerance: toleranceRows can't be null")
-    if (tolerancePercent == null)
-      sys.error("Error in setTolerance: tolerancePercent can't be null")
+    if (toleranceRows == null && tolerancePercent == null)
+      sys.error("Error in setTolerance: toleranceRows or tolerancePercent must have a value")
     ToleranceError_Rows = toleranceRows
     ToleranceError_Percent = tolerancePercent
   }
