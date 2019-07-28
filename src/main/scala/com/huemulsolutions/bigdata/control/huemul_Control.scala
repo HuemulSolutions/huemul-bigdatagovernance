@@ -816,6 +816,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                  ,x.getDQ_MinDateTimeValue
                                  ,x.getDQ_MaxDateTimeValue
                                  ,x.getDQ_RegExp
+                                 ,x.getBusinessGlossary_Id
                                  ,Control_ClassName
                                  )     
           i += 1
@@ -2337,6 +2338,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_Column_DQ_MinDateTimeValue: String
                              ,p_Column_DQ_MaxDateTimeValue: String
                              ,p_Column_DQ_RegExp: String
+                             ,p_Column_BusinessGlosary: String
                              ,p_MDM_ProcessName: String
 
                              
@@ -2379,7 +2381,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         		 ,column_dq_maxdecimalvalue		= ${p_Column_DQ_MaxDecimalValue}		
         		 ,column_dq_mindatetimevalue	= ${ReplaceSQLStringNulls(p_Column_DQ_MinDateTimeValue)}	
         		 ,column_dq_maxdatetimevalue	= ${ReplaceSQLStringNulls(p_Column_DQ_MaxDateTimeValue)}	
-        		 ,Column_dq_regexp            = ${ReplaceSQLStringNulls(p_Column_DQ_RegExp)}
+        		 ,column_dq_regexp            = ${ReplaceSQLStringNulls(p_Column_DQ_RegExp)}
+        		 ,column_businessglosary      = CASE WHEN mdm_manualchange = 1 THEN column_businessglosary ELSE ${ReplaceSQLStringNulls(p_Column_BusinessGlosary)}	END
         		 ,mdm_active					        = 1
           WHERE column_id = ${ReplaceSQLStringNulls(Localcolumn_id)}
           """)
@@ -2413,6 +2416,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								 ,column_dq_mindatetimevalue
                       								 ,column_dq_maxdatetimevalue
                       								 ,column_dq_regexp
+                                       ,column_businessglosary
                       								 ,mdm_fhcreate
                       								 ,mdm_processname
                                        ,mdm_manualchange
@@ -2443,6 +2447,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			 ,${ReplaceSQLStringNulls(p_Column_DQ_MinDateTimeValue)}
             			 ,${ReplaceSQLStringNulls(p_Column_DQ_MaxDateTimeValue)}
             			 ,${ReplaceSQLStringNulls(p_Column_DQ_RegExp)}
+            			 ,${ReplaceSQLStringNulls(p_Column_BusinessGlosary)}
             			 ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
             			 ,${ReplaceSQLStringNulls(p_MDM_ProcessName)}
             			 ,0

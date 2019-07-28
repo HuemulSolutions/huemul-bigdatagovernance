@@ -90,6 +90,17 @@ class huemul_Columns(param_DataType: DataType
       ARCO_Data = value
   }
   
+  /** associate an external id to link with business glossary concepts 
+   */
+  private var BusinessGlossary_Id: String = ""
+  def getBusinessGlossary_Id: String = {return BusinessGlossary_Id}
+  def setBusinessGlossary_Id(value: String) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setBusinessGlossary_Id, definition is close")
+    else
+      BusinessGlossary_Id = value
+  }
+  
   private var DQ_MinLen: Integer = null
   def getDQ_MinLen: Integer = {return DQ_MinLen}
   def setDQ_MinLen(value: Integer) {

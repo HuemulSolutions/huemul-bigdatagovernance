@@ -21,9 +21,12 @@ alter table control_dq add dq_iswarning			  int;
 alter table control_dq add dq_duration_hour		  int;
 alter table control_dq add dq_duration_minute	  int;
 alter table control_dq add dq_duration_second	  int;
- 
+
+
 alter table control_tables add table_autoincupdate     int;
 alter table control_columns add column_enableoldvaluetrace int;
+
+alter table control_columns add column_businessglosary	 varchar(100);
 
 alter table control_tables add table_dq_isused int;
 alter table control_tables add table_fullname_dq varchar(1200);

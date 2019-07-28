@@ -323,6 +323,7 @@ create table  control_columns (
                                              ,column_dq_mindatetimevalue varchar(50) 
                                              ,column_dq_maxdatetimevalue varchar(50)
 											 ,column_dq_regexp           varchar(1000)
+											 ,column_businessglosary	 varchar(100)
                                              ,column_responsible         varchar(100)
                                              ,mdm_active                 int
                                              ,mdm_manualchange           int
