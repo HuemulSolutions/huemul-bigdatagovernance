@@ -70,7 +70,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   private var DQ_Result: ArrayBuffer[huemul_DQRecord] = new ArrayBuffer[huemul_DQRecord]()
   def getDQResult(): ArrayBuffer[huemul_DQRecord] = {return DQ_Result}
   
-  private def local_setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean, createLinage: Boolean ) {
+  private def local_setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean, createLineage: Boolean ) {
     //DF.persist(MEMORY_ONLY_SER)
     DataDF = DF
     DataSchema = DF.schema
@@ -83,7 +83,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     //Data_isRead = true
     //TODO: ver como poner la fecha de término de lectura StopRead_dt = Calendar.getInstance()
     
-    if (createLinage) {
+    if (createLineage) {
       
     }
         
@@ -92,7 +92,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   }
   
   def setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean = true) {
-    local_setDataFrame(DF, Alias, SaveInTemp, true /*create linage*/)
+    local_setDataFrame(DF, Alias, SaveInTemp, true /*create Lineage*/)
   }
   
   
@@ -103,7 +103,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
     //WARNING: ANY CHANGE ON THIS METHOD MUST BE REPLIATES TO _CreateFinalQuery
     //THE ONLY DIFFERENCE IS IN 
-    //huemulBigDataGov.DF_SaveLinage(Alias, sql,dt_start, dt_end, Control)
+    //huemulBigDataGov.DF_SaveLineage(Alias, sql,dt_start, dt_end, Control)
     
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
     val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
@@ -115,7 +115,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
-    huemulBigDataGov.DF_SaveLinage(Alias
+    huemulBigDataGov.DF_SaveLineage(Alias
                                  , sql
                                  , dt_start
                                  , dt_end
@@ -143,7 +143,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
-    huemulBigDataGov.DF_SaveLinage(Alias
+    huemulBigDataGov.DF_SaveLineage(Alias
                                  , sql
                                  , dt_start
                                  , dt_end

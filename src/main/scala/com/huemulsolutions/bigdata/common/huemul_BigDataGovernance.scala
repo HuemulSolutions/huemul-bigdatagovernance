@@ -807,7 +807,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
   }
   
-  def DF_SaveLinage(Alias: String, sql: String,dt_start: java.util.Calendar, dt_end: java.util.Calendar, Control: huemul_Control, FinalTable: huemul_Table, isQuery: Boolean, isReferenced: Boolean ) {
+  def DF_SaveLineage(Alias: String, sql: String,dt_start: java.util.Calendar, dt_end: java.util.Calendar, Control: huemul_Control, FinalTable: huemul_Table, isQuery: Boolean, isReferenced: Boolean ) {
     if (getIsEnableSQLDecode()) {
       val res = huemul_SQL_decode.decodeSQL(sql, _ColumnsAndTables)
       
@@ -850,7 +850,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     val Result = DF_ExecuteQuery(Alias, SQL)
     val dt_end = getCurrentDateTimeJava()
     
-    DF_SaveLinage(Alias
+    DF_SaveLineage(Alias
                 , SQL
                 , dt_start
                 , dt_end

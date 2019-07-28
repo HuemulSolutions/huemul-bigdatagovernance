@@ -2004,7 +2004,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         DFTempOpen.createOrReplaceTempView(TempAlias)  
         
         val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
-        huemulBigDataGov.DF_SaveLinage(TempAlias
+        huemulBigDataGov.DF_SaveLineage(TempAlias
                                     , s"""SELECT * FROM ${this.internalGetTable(huemulType_InternalTableType.Normal)} ${if (_TableType == huemulType_Tables.Transaction) 
                                                                                                                       s" WHERE ${_PartitionField.toLowerCase()}='${PartitionValueForSelectiveUpdate}'"}""" //sql
                                     , dt_start
@@ -2180,7 +2180,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
       
-      huemulBigDataGov.DF_SaveLinage(TempAlias
+      huemulBigDataGov.DF_SaveLineage(TempAlias
                                     , s"SELECT * FROM ${this.internalGetTable(huemulType_InternalTableType.Normal)} " //sql
                                     , dt_start
                                     , dt_end
@@ -2845,7 +2845,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     this.DataFramehuemul.setDataFrame(DFFrom, AliasTo, SaveInTemp)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
-    huemulBigDataGov.DF_SaveLinage(AliasTo
+    huemulBigDataGov.DF_SaveLineage(AliasTo
                                  , s"SELECT * FROM ${AliasFrom}" //sql
                                  , dt_start
                                  , dt_end
@@ -2861,7 +2861,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     this.DataFramehuemul.setDataFrame(dataLake_RAW.DataFramehuemul.DataFrame , AliasTo, huemulBigDataGov.DebugMode)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
-    huemulBigDataGov.DF_SaveLinage(AliasTo
+    huemulBigDataGov.DF_SaveLineage(AliasTo
                                  , s"SELECT * FROM ${dataLake_RAW.DataFramehuemul.Alias}" //sql
                                  , dt_start
                                  , dt_end
