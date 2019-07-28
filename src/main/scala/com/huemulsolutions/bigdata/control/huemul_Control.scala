@@ -254,7 +254,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
   
     if (!huemulBigDataGov.HasName(Control_IdParent)) phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH ALL OK")
-    phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
+    phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${"%02d".format(DiffDate.hour + (DiffDate.days*24))}:${"%02d".format(DiffDate.minute)}:${"%02d".format(DiffDate.second)} ")
 
     if (huemulBigDataGov.RegisterInControl) {
     
@@ -272,7 +272,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
     
     if (Control_IdParent == null) phuemulBigDataGov.logMessageWarn(s"HuemulControl: FINISH ERROR")
-    phuemulBigDataGov.logMessageError(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${DiffDate.hour + (DiffDate.days*24)}:${DiffDate.minute}:${DiffDate.second} ")
+    phuemulBigDataGov.logMessageError(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${"%02d".format(DiffDate.hour + (DiffDate.days*24))}:${"%02d".format(DiffDate.minute)}:${"%02d".format(DiffDate.second)} ")
 
       
     if (huemulBigDataGov.RegisterInControl) {
