@@ -36,10 +36,10 @@ alter table control_tables add table_fullname_ovt varchar(1200);
 alter table control_tables add table_backup		 	  int;
 alter table control_tablesuse add tableuse_pathbackup	  varchar(1000);
 
-alter table control_dq add dq_externalcode         type varchar(200);
+alter table control_dq add dq_externalcode         varchar(200);
 
-create index idx_control_testplan_i01 on control_testplan (testplangroup_id, testplan_name)
-create index idx_control_tablesrel_i01 on control_tablesrel (table_idpk, table_idfk, tablefk_namerelationship)
+create index idx_control_testplan_i01 on control_testplan (testplangroup_id, testplan_name);
+create index idx_control_tablesrel_i01 on control_tablesrel (table_idpk, table_idfk, tablefk_namerelationship);
                                
 create table control_query 		(query_id			     varchar(50)
 								,processexecstep_id      varchar(50)
@@ -82,7 +82,7 @@ create table control_querycolumn 	  (querycol_id					varchar(50)
 									  ,primary key (querycol_id)
                                 );
                                 
-create index idx_control_querycolumn_i01 on control_querycolumn (query_id, querycol_name)                                
+create index idx_control_querycolumn_i01 on control_querycolumn (query_id, querycol_name);                                
                                 
 create table control_querycolumnori		(querycolori_id					varchar(50)       
 										,querycol_id					varchar(50)
@@ -103,5 +103,5 @@ create table control_querycolumnori		(querycolori_id					varchar(50)
 										,mdm_fhcreate            varchar(30)
                                 		,mdm_processname         varchar(200)    
 										,primary key (querycolori_id)
-                                );				                 
+                                );	
                                 
