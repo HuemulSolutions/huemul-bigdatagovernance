@@ -259,7 +259,7 @@ class huemul_Columns(param_DataType: DataType
    ReplaceOldValueOnUpdate: true (default) for replace values in table <br>
    SQLForUpdate: example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)  <br>
    SQLForInsert: example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)  <br>
-  <b> in both case, don't iunclude "as Namefield". "old" is reference to table, new is reference to your DataFrame </b> 
+  <b> in both cases, don't include "as Namefield". "old" is a reference to the table, new is reference to your DataFrame </b> 
    */
   def SetMapping(param_name: String, ReplaceValueOnUpdate: Boolean = true, SQLForUpdate: String = null, SQLForInsert: String = null) {
     this.MappedName = param_name
