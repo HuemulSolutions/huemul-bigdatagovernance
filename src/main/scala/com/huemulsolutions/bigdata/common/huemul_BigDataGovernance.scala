@@ -661,12 +661,17 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     return Fecha
   }
   
+  private var _autoIncId: Int = 0
   /**
    * Get UniqueId from datetime, random and arbitrary value
    */
   def huemul_GetUniqueId (): String = {
     val MyId: String = this.IdSparkPort
-      
+    
+    _autoIncId += 1
+    if (_autoIncId > 999)
+      _autoIncId = 0
+    
     //Get DateTime
     val dateTimeFormat: DateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSSS")  
     val ActualDateTime: Calendar  = Calendar.getInstance()
@@ -677,11 +682,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
     //Generate random
     val randomNum: Int  = ThreadLocalRandom.current().nextInt(1, 999998 + 1)
-    var Random: String  = ("000000".concat(Integer.toString(randomNum)))
+    //var Random: String  = ("000000".concat(Integer.toString(randomNum)))
+    var Random: String  = "%06d".format(randomNum)
+    var autoIncString: String = "%03d".format(_autoIncId)
     //System.out.logMessage(Random);
-    Random = Random.substring(Random.length()-6, Random.length())
+    //Random = Random.substring(Random.length()-3, Random.length())
+    
     //System.out.logMessage(Random);
-    val Final: String  = Fecha.concat(Random.concat(MyId))
+    val Final: String  = Fecha.concat(autoIncString.concat(Random.concat(MyId)))
     return Final;
     
     //return this.spark.sql(s"select data_control.fabric_GetUniqueId(${this.IdSparkPort}) as NewId ").first().getAs[String]("NewId")

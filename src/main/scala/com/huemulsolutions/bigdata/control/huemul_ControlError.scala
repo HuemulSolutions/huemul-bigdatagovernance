@@ -52,7 +52,13 @@ class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends S
     }
     
     if (ControlError_ClassName == null) {
-      if (e.getStackTrace()(0).getClassName == "scala.sys.package$") {
+      if (e.getStackTrace() == null || e.getStackTrace().length == 0 ) {
+        println(e.getStackTrace())
+        ControlError_ClassName = "NO INFORMATION AVAILABLE"
+        ControlError_FileName = "NO INFORMATION AVAILABLE"
+        ControlError_LineNumber = -1
+        ControlError_MethodName = "NO INFORMATION AVAILABLE"
+      } else if (e.getStackTrace()(0).getClassName == "scala.sys.package$") {
         ControlError_ClassName = e.getStackTrace()(1).getClassName
         ControlError_FileName = e.getStackTrace()(1).getFileName
         ControlError_LineNumber = e.getStackTrace()(1).getLineNumber
