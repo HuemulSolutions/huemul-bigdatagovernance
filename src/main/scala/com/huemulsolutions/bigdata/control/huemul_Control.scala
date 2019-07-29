@@ -1,5 +1,8 @@
 package com.huemulsolutions.bigdata.control
 
+/**
+ * en vez de getAs se usa esto: .GetValue("table_autoIncUpdate".toLowerCase(),ExecResult_TableId.ResultSet(0)).toString().toInt
+ */
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql._
@@ -2219,7 +2222,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     var LocalTable_id: String = null
     if (!ExecResult_TableId.IsError && ExecResult_TableId.ResultSet.length == 1){
       LocalTable_id = ExecResult_TableId.ResultSet(0).getAs[String]("table_id".toLowerCase())
-      table_autoIncUpdate = ExecResult_TableId.ResultSet(0).getAs[Int]("table_autoIncUpdate".toLowerCase()) + 1
+      table_autoIncUpdate = ExecResult_TableId.GetValue("table_autoIncUpdate".toLowerCase(),ExecResult_TableId.ResultSet(0)).toString().toInt + 1  //.ResultSet(0).getAs[Int]("table_autoIncUpdate".toLowerCase()) + 1
       
       val ExecResultCol = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           UPDATE control_columns 
