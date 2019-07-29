@@ -138,7 +138,7 @@ create table control_querycolumn 	  (querycol_id					varchar(50)
 									  ,primary key (querycol_id)
                                 );
                                 
-create index idx_control_querycolumn_i01 on control_querycolumn (query_id, querycol_name)
+create index idx_control_querycolumn_i01 on control_querycolumn (query_id, querycol_name);
                                 
 create table control_querycolumnori		(querycolori_id					varchar(50)       
 										,querycol_id					varchar(50)
@@ -283,7 +283,7 @@ create table  control_tablesrel (
                                              ,primary key (tablerel_id) 
                                             );
 
-create index idx_control_tablesrel_i01 on control_tablesrel (table_idpk, table_idfk, tablefk_namerelationship) 											
+create index idx_control_tablesrel_i01 on control_tablesrel (table_idpk, table_idfk, tablefk_namerelationship); 											
                     
 create table  control_tablesrelcol ( 
                                               tablerel_id                varchar(50)
@@ -446,7 +446,7 @@ create table  control_testplan (
                                              ,primary key (testplan_id) 
                                             );
                                             
-create index idx_control_testplan_i01 on control_testplan (testplangroup_id, testplan_name)
+create index idx_control_testplan_i01 on control_testplan (testplangroup_id, testplan_name);
                              
 
 create table  control_testplanfeature ( 
@@ -457,4 +457,3 @@ create table  control_testplanfeature (
                                              ,primary key (feature_id, testplan_id) 
                                             );
                              
-
