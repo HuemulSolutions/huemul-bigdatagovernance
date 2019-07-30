@@ -80,7 +80,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   
   //Insert processExcec
-  phuemulBigDataGov.logMessageInfo(s"HuemulControl: processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}")
+  phuemulBigDataGov.logMessageInfo(s"processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}")
   if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) { 
     control_processExec_add(Control_Id
            ,Control_IdParent
@@ -128,7 +128,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       if (!Ejec.IsError && ApplicationInUse == null)
         ContinueInLoop = false
       else {      
-        if (huemulBigDataGov.DebugMode) phuemulBigDataGov.logMessageDebug(s"HuemulControl: waiting for Singleton... (class: $Control_ClassName, appId: ${huemulBigDataGov.IdApplication} )")
+        if (huemulBigDataGov.DebugMode) phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, appId: ${huemulBigDataGov.IdApplication} )")
         //if has error, verify other process still alive
         if (NumCycle == 1) //First cicle don't wait
           Thread.sleep(10000)
@@ -238,7 +238,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     }
 
     if (huemulBigDataGov.DebugMode){
-      phuemulBigDataGov.logMessageDebug(s"HuemulControl: Param num: ${Control_Params.length}, name: $name, value: $value")
+      phuemulBigDataGov.logMessageDebug(s"Param num: ${Control_Params.length}, name: $name, value: $value")
     }
    
  }
@@ -256,8 +256,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     processExec_dtEnd = huemulBigDataGov.getCurrentDateTimeJava()
     val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
   
-    if (!huemulBigDataGov.HasName(Control_IdParent)) phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH ALL OK")
-    phuemulBigDataGov.logMessageInfo(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${"%02d".format(DiffDate.hour + (DiffDate.days*24))}:${"%02d".format(DiffDate.minute)}:${"%02d".format(DiffDate.second)} ")
+    if (!huemulBigDataGov.HasName(Control_IdParent)) phuemulBigDataGov.logMessageInfo(s"FINISH ALL OK")
+    phuemulBigDataGov.logMessageInfo(s"FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${"%02d".format(DiffDate.hour + (DiffDate.days*24))}:${"%02d".format(DiffDate.minute)}:${"%02d".format(DiffDate.second)} ")
 
     if (huemulBigDataGov.RegisterInControl) {
     
@@ -274,8 +274,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     processExec_dtEnd = huemulBigDataGov.getCurrentDateTimeJava()
     val DiffDate = huemulBigDataGov.getDateTimeDiff(processExec_dtStart, processExec_dtEnd)
     
-    if (Control_IdParent == null) phuemulBigDataGov.logMessageWarn(s"HuemulControl: FINISH ERROR")
-    phuemulBigDataGov.logMessageError(s"HuemulControl: FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${"%02d".format(DiffDate.hour + (DiffDate.days*24))}:${"%02d".format(DiffDate.minute)}:${"%02d".format(DiffDate.second)} ")
+    if (Control_IdParent == null) phuemulBigDataGov.logMessageWarn(s"FINISH ERROR")
+    phuemulBigDataGov.logMessageError(s"FINISH processName: ${Control_ClassName}, ProcessExec_Id: ${Control_Id}, Time Elapsed: ${"%02d".format(DiffDate.hour + (DiffDate.days*24))}:${"%02d".format(DiffDate.minute)}:${"%02d".format(DiffDate.second)} ")
 
       
     if (huemulBigDataGov.RegisterInControl) {
@@ -363,7 +363,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   
   def NewStep(StepName: String) {
-    phuemulBigDataGov.logMessageInfo(s"HuemulControl: Step: $StepName")
+    phuemulBigDataGov.logMessageInfo(s"Step: $StepName")
     
    
     //New Step add
@@ -403,7 +403,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     //Get TestPlanGroup to use in final check
     _testPlanGroup_Id = p_testPlanGroup_Id
-    phuemulBigDataGov.logMessageDebug(s"HuemulControl: TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
+    phuemulBigDataGov.logMessageDebug(s"TestPlan ${if (p_testPlan_IsOK) "OK " else "ERROR " }: testPlan_name: ${p_testPlan_name}, resultExpected: ${p_testPlan_resultExpected}, resultReal: ${p_testPlan_resultReal} ")
     
     testPlanDetails.append(new huemul_TestPlan(testPlan_Id
                                               ,p_testPlanGroup_Id
@@ -450,11 +450,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         TotalOK = 0
          
       if (TotalProcess != TotalOK) {
-        phuemulBigDataGov.logMessageDebug(s"HuemulControl: TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+        phuemulBigDataGov.logMessageDebug(s"TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
       } else if (TotalProcess != TotalProcessExpected) {
-        phuemulBigDataGov.logMessageDebug(s"HuemulControl: TestPlan_IsOkById doesn't have the expected process: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+        phuemulBigDataGov.logMessageDebug(s"TestPlan_IsOkById doesn't have the expected process: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
       } else
-        phuemulBigDataGov.logMessageDebug(s"HuemulControl: TestPlan_IsOkById OK: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
+        phuemulBigDataGov.logMessageDebug(s"TestPlan_IsOkById OK: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
         IsOK = true
     }
     
@@ -482,14 +482,14 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         IsOK = true
     
       RegisterTestPlan(_testPlanGroup_Id, "TestPlan_IsOK", "FINAL CHECK", "All test plan OK && TestPlan > 0", s"N° Total ($NumTotal) = N° OK ($NumOK)",IsOK)
-      phuemulBigDataGov.logMessageDebug(s"HuemulControl: TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK} ")
+      phuemulBigDataGov.logMessageDebug(s"TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK} ")
     } else {
        if (NumOK == TotalOkExpected)
          IsOK = true
          
        
        RegisterTestPlan(_testPlanGroup_Id, "TestPlan_IsOK", "FINAL CHECK", "User Expected OK = TestPlan OK", s"N° Total ($NumTotal) = N° OK Expected ($TotalOkExpected)",IsOK)
-       phuemulBigDataGov.logMessageDebug(s"HuemulControl: TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK}, N° User Expected OK: ${TotalOkExpected} ")
+       phuemulBigDataGov.logMessageDebug(s"TestPlan FINISH: ${if (IsOK) "OK " else "ERROR " }: N° Total: ${NumTotal}, N° OK: ${NumOK}, N° Error: ${NumTotal - NumOK}, N° User Expected OK: ${TotalOkExpected} ")
     }
     
     
@@ -759,7 +759,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     if (huemulBigDataGov.IsTableRegistered(DefMaster.TableName))
       return
       
-    if (huemulBigDataGov.DebugMode) phuemulBigDataGov.logMessageDebug(s"HuemulControl:    Register Table&Columns in Control")
+    if (huemulBigDataGov.DebugMode) phuemulBigDataGov.logMessageDebug(s"   Register Table&Columns in Control")
     var LocalNewTable_id = huemulBigDataGov.huemul_GetUniqueId()
 
     if (huemulBigDataGov.RegisterInControl) {
@@ -1045,7 +1045,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   }
   
   
-  
+  /*
   def RegisterMASTER_Query(DefMaster: huemul_Table) {
     
     //Insert control_TablesUse
@@ -1081,7 +1081,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   }
   
   
-  
+  */
   
   
   
