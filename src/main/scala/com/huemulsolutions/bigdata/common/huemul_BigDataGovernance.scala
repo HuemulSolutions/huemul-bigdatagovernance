@@ -496,8 +496,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * ReplaceSQLStringNulls: returns text for SQL
    * from version 1.1
    */
-  def ReplaceSQLStringNulls(ColumnName: String): String = {
-    return if (ColumnName == null) "null" else s"'${ColumnName.replace("'", "''")}'"
+  def ReplaceSQLStringNulls(text: String, len: Integer = null): String = {
+    var result = text
+    if (len != null && result != null && result.length() > len)
+      result = result.substring(0,len)
+      
+    result = if (result == null) "null" else s"'${result.replace("'", "''")}'"
+    
+    return result
   }
   
   /***

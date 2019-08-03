@@ -199,7 +199,10 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
      
     } catch {
       case e: Exception  =>  
-        huemulBigDataGob.RegisterError(9999,e.getMessage(),s"${e}", SQL, "ExecuteJDBC_WithResult", getClass().getSimpleName(), 0, "HuemulJDBC")
+        var l_trace = s"${e} (${SQL})"
+        if (l_trace.length() > 3999)
+          l_trace = l_trace.substring(3999)
+        huemulBigDataGob.RegisterError(9999,e.getMessage(),l_trace, "", "ExecuteJDBC_WithResult", getClass().getSimpleName(), 0, "HuemulJDBC")
             
         if (DebugMode) huemulBigDataGob.logMessageError(SQL)
         if (DebugMode) huemulBigDataGob.logMessageError(s"JDBC Error: $e")
@@ -236,8 +239,19 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
      
     } catch {
       case e: Exception  =>  
-        if (CallErrorRegister)
-          huemulBigDataGob.RegisterError(9999,e.getMessage(),s"${e}", SQL, "ExecuteJDBC_NoResulSet", getClass().getSimpleName(), 0, "HuemulJDBC")
+        if (CallErrorRegister){
+          var l_trace = s"${e} (${SQL})"
+          if (l_trace.length() > 3999)
+            l_trace = l_trace.substring(3999)
+          huemulBigDataGob.RegisterError(9999
+              ,e.getMessage()
+              ,l_trace
+              , ""
+              , "ExecuteJDBC_NoResulSet"
+              , getClass().getSimpleName()
+              , 0
+              , "HuemulJDBC")
+        }
         
         if (DebugMode) huemulBigDataGob.logMessageError(SQL)
         if (DebugMode) huemulBigDataGob.logMessageError(s"JDBC Error: $e")

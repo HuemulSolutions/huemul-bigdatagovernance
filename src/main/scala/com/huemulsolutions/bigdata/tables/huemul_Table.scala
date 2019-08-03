@@ -359,6 +359,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Return DataBaseName.TableName
    */
+  private var _TableWasRegistered: Boolean = false
   def getTable(): String = {
     if (!_TableWasRegistered) {
       Control.RegisterMASTER_USE(this)
@@ -367,7 +368,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     return internalGetTable(huemulType_InternalTableType.Normal)
   }
-  private var _TableWasRegistered: Boolean = false
+  
   
   private def internalGetTable(internalTableType: huemulType_InternalTableType, withDataBase: Boolean = true): String = {
     var _getTable: String = ""
@@ -1512,7 +1513,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /*  ********************************************************************************
    *****   T A B L E   M E T H O D S    **************************************** 
    ******************************************************************************** */
-  
+  def getSQLCreateTableScript(): String = {return DF_CreateTableScript}
   private def DF_CreateTableScript(): String = {
               
     var coma_partition = ""

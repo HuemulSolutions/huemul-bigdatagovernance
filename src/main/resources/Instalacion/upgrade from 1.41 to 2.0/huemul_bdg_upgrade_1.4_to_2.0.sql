@@ -26,7 +26,7 @@ alter table control_dq add dq_duration_second	  int;
 alter table control_tables add table_autoincupdate     int;
 alter table control_columns add column_enableoldvaluetrace int;
 
-alter table control_columns add column_businessglosary	 varchar(100);
+alter table control_columns add column_businessglossary	 varchar(100);
 
 alter table control_tables add table_dq_isused int;
 alter table control_tables add table_fullname_dq varchar(1200);
@@ -34,7 +34,6 @@ alter table control_tables add table_ovt_isused int;
 alter table control_tables add table_fullname_ovt varchar(1200);
 
 alter table control_tables add table_backup		 	  int;
-alter table control_tablesuse add tableuse_pathbackup	  varchar(1000);
 
 alter table control_dq add dq_externalcode         varchar(200);
 
@@ -105,3 +104,87 @@ create table control_querycolumnori		(querycolori_id					varchar(50)
 										,primary key (querycolori_id)
                                 );	
                                 
+                                
+                                
+ ALTER TABLE control_tablesuse RENAME TO control_tablesuse_old;
+ 
+ create table  control_tablesuse (			  tablesuse_id            varchar(50)  
+                                             ,table_id                varchar(50)
+                                             ,process_id              varchar(200)
+                                             ,processexec_id          varchar(50)
+                                             ,processexecstep_id      varchar(50)
+                                             ,tableuse_year        int
+                                             ,tableuse_month       int
+                                             ,tableuse_day         int
+                                             ,tableuse_hour        int
+                                             ,tableuse_minute       int
+                                             ,tableuse_second      int
+                                             ,tableuse_params      varchar(1000)
+                                             ,tableuse_read           int
+                                             ,tableuse_write          int
+                                             ,tableuse_numrowsnew     int
+                                             ,tableuse_numrowsupdate  int
+											 ,tableuse_numrowsupdatable  int
+											 ,tableuse_numrowsnochange  int
+                                             ,tableuse_numrowsmarkdelete  int
+                                             ,tableuse_numrowstotal   int
+											 ,tableuse_partitionvalue varchar(200)
+											 ,tableuse_pathbackup	  varchar(1000)
+                                             ,mdm_fhcreate            varchar(30)
+                                             ,mdm_processname         varchar(200)
+                                             ,primary key (tablesuse_id) 
+                                            );
+ 
+ insert into control_tablesuse (  tablesuse_id
+                                 ,table_id
+                                 ,process_id
+                                 ,processexec_id
+                                 ,processexecstep_id
+                                 ,tableuse_year
+                                 ,tableuse_month
+                                 ,tableuse_day
+                                 ,tableuse_hour
+                                 ,tableuse_minute
+                                 ,tableuse_second
+                                 ,tableuse_params
+                                 ,tableuse_read
+                                 ,tableuse_write
+                                 ,tableuse_numrowsnew
+                                 ,tableuse_numrowsupdate
+								 ,tableuse_numrowsupdatable 
+								 ,tableuse_numrowsnochange  
+                                 ,tableuse_numrowsmarkdelete
+                                 ,tableuse_numrowstotal 
+								 ,tableuse_partitionvalue
+								 ,tableuse_pathbackup
+                                 ,mdm_fhcreate
+                                 ,mdm_processname)
+ select  row_number() over(order by table_id) as tablesuse_id
+         ,table_id
+         ,process_id
+         ,processexec_id
+         ,processexecstep_id
+         ,tableuse_year
+         ,tableuse_month
+         ,tableuse_day
+         ,tableuse_hour
+         ,tableuse_minute
+         ,tableuse_second
+         ,tableuse_params
+         ,tableuse_read
+         ,tableuse_write
+         ,tableuse_numrowsnew
+         ,tableuse_numrowsupdate
+		 ,tableuse_numrowsupdatable 
+		 ,tableuse_numrowsnochange  
+         ,tableuse_numrowsmarkdelete
+         ,tableuse_numrowstotal 
+		 ,tableuse_partitionvalue
+		 ,null as tableuse_pathbackup
+         ,mdm_fhcreate
+         ,mdm_processname
+FROM control_tablesuse_old;
+
+drop table control_tablesuse_old;
+ 
+ 

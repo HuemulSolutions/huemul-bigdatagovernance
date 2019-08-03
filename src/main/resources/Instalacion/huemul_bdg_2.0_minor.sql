@@ -323,7 +323,7 @@ create table  control_columns (
                                              ,column_dq_mindatetimevalue varchar(50) 
                                              ,column_dq_maxdatetimevalue varchar(50)
 											 ,column_dq_regexp           varchar(1000)
-											 ,column_businessglosary	 varchar(100)
+											 ,column_businessglossary	 varchar(100)
                                              ,column_responsible         varchar(100)
                                              ,mdm_active                 int
                                              ,mdm_manualchange           int
@@ -335,8 +335,8 @@ create table  control_columns (
 create index idx_control_columns_i01 on control_columns (table_id, column_name);
                                                                        
                    
-create table  control_tablesuse ( 
-                                              table_id                varchar(50)
+create table  control_tablesuse (			  tablesuse_id            varchar(50)  
+                                             ,table_id                varchar(50)
                                              ,process_id              varchar(200)
                                              ,processexec_id          varchar(50)
                                              ,processexecstep_id      varchar(50)
@@ -359,7 +359,7 @@ create table  control_tablesuse (
 											 ,tableuse_pathbackup	  varchar(1000)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             ,primary key (process_id, table_id, processexec_id, processexecstep_id) 
+                                             ,primary key (tablesuse_id) 
                                             );
                     
 create table  control_dq (
