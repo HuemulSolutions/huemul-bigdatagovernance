@@ -2034,7 +2034,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //**************************************************//
 
       LocalControl.NewStep("Selective Update: Update Logic")
-      val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
+      val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__update_p1"
                                           , SQL_Step4_Update("__LeftJoin", huemulBigDataGov.ProcessNameCall)
                                           , Control //parent control 
                                          )
@@ -2043,12 +2043,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //STEP 5: Create Hash
       //**************************************************//
       LocalControl.NewStep("Selective Update: Hash Code")                                         
-      val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p2"
-                                          , SQL_Step3_Hash_p1("__Hash_p1", isSelectiveUpdate)
+      val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
+                                          , SQL_Step3_Hash_p1("__update_p1", isSelectiveUpdate)
                                           , Control //parent control 
                                          )
                                          
-      this.UpdateStatistics(LocalControl, "Selective Update")
+      this.UpdateStatistics(LocalControl, "Selective Update", "__Hash_p1")
       
       //N° Rows Updated == NumRowsUserData
       if (NumRowsUserData != this._NumRows_Updatable) {
@@ -2058,7 +2058,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
       LocalControl.NewStep("Selective Update: Final Table")
-      val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall, true)
+      val SQLFinalTable = SQL_Step4_Final("__Hash_p1", huemulBigDataGov.ProcessNameCall, true)
 
      
       //STEP 2: Execute final table  //Add this.getNumPartitions param in v1.3
@@ -2205,24 +2205,24 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                              
       //STEP 2: Create Tabla with Update and Insert result
       LocalControl.NewStep("Ref & Master: Update & Insert Logic")
-      val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
+      val SQLHash_p1_DF = huemulBigDataGov.DF_ExecuteQuery("__logic_p1"
                                           , SQL_Step2_UpdateAndInsert("__FullJoin", huemulBigDataGov.ProcessNameCall, isInsert)
                                           , Control //parent control 
                                          )
      
       //STEP 3: Create Hash
       LocalControl.NewStep("Ref & Master: Hash Code")                                         
-      val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p2"
-                                          , SQL_Step3_Hash_p1("__Hash_p1", false)
+      val SQLHash_p2_DF = huemulBigDataGov.DF_ExecuteQuery("__Hash_p1"
+                                          , SQL_Step3_Hash_p1("__logic_p1", false)
                                           , Control //parent control 
                                          )
                                          
                                         
-      this.UpdateStatistics(LocalControl, "Ref & Master")
+      this.UpdateStatistics(LocalControl, "Ref & Master", "__Hash_p1")
       
                                          
       LocalControl.NewStep("Ref & Master: Final Table")
-      val SQLFinalTable = SQL_Step4_Final("__Hash_p2", huemulBigDataGov.ProcessNameCall, if (OnlyInsert) true else false)
+      val SQLFinalTable = SQL_Step4_Final("__Hash_p1", huemulBigDataGov.ProcessNameCall, if (OnlyInsert) true else false)
 
      
       //STEP 2: Execute final table // Add debugmode and getnumpartitions in v1.3 
@@ -2261,7 +2261,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //huemulBigDataGov.logMessageInfo("***** sin cache")
   }
   
-  private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String) {
+  private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String, Alias: String) {
     LocalControl.NewStep(s"${TypeOfCall}: Statistics")
     //DQ for Reference and Master Data
     val DQ_ReferenceData: DataFrame = huemulBigDataGov.spark.sql(
@@ -2272,7 +2272,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                 ,CAST(SUM(CASE WHEN ___ActionType__ = 'EQUAL' OR
                                               (___ActionType__ = 'UPDATE' and SameHashKey <> 0) then 1 else 0 end) as Long) as __NoChange
                                 ,CAST(count(1) AS Long) as __Total
-                          FROM __Hash_p2 temp 
+                          FROM ${Alias} temp 
                        """)
     
     if (huemulBigDataGov.DebugMode) DQ_ReferenceData.show()
