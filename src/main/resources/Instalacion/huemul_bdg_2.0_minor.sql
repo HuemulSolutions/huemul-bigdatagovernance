@@ -1,38 +1,32 @@
 
 
-create table if not exists control_executors (
+create table  control_executors (
                                               application_id         varchar(100)
                                              ,idsparkport            varchar(50)
                                              ,idportmonitoring       varchar(500)
                                              ,executor_dtstart       varchar(30)
                                              ,executor_name          varchar(100)
-                                             
-                                            )
-											clustered by(application_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (application_id)
+                                            );
 
-create table if not exists control_singleton (
+create table  control_singleton (
                                               singleton_id         varchar(100)
                                              ,application_id       varchar(100)
                                              ,singleton_name       varchar(100)
                                              ,mdm_fhcreate         varchar(30)
-                                             
-                                            )
-											clustered by(singleton_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (singleton_id)
+                                            );
         
-create table if not exists control_area (
+create table  control_area (
                                               area_id              varchar(50)
 											 ,area_idpadre		   varchar(50)
                                              ,area_name            varchar(100)
                                              ,mdm_fhcreate         varchar(30)
                                              ,mdm_processname      varchar(200)
-                                             
-                                            )
-											clustered by(area_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (area_id)
+                                            );
                              
-create table if not exists control_process ( 
+create table  control_process ( 
                                               process_id           varchar(200)
                                              ,area_id              varchar(50)
                                              ,process_name         varchar(200)
@@ -43,12 +37,10 @@ create table if not exists control_process (
                                              ,mdm_manualchange     int
                                              ,mdm_fhcreate         varchar(30)
                                              ,mdm_processname      varchar(200)
-                                             
-                                            )
-											clustered by(process_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (process_id)
+                                            );
                              
-create table if not exists control_processexec ( 
+create table  control_processexec ( 
                                               processexec_id          varchar(50)
                                              ,processexec_idparent    varchar(50)
                                              ,process_id              varchar(200)
@@ -76,23 +68,19 @@ create table if not exists control_processexec (
                                              ,error_id                varchar(50)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             
-                                            )
-											clustered by(processexec_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (processexec_id) 
+                                            );
                              
-create table if not exists control_processexecparams ( 
+create table  control_processexecparams ( 
                                               processexec_id          varchar(50)
                                              ,processexecparams_name  varchar(500)
-                                             ,processexecparams_value varchar(8000)
+                                             ,processexecparams_value varchar(4000)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                           
-                                            )
-											clustered by(processexec_id, processexecparams_name) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (processexec_id, processexecparams_name) 
+                                            );
                    
-create table if not exists control_processexecstep ( 
+create table  control_processexecstep ( 
                                               processexecstep_id      varchar(50)
                                              ,processexec_id          varchar(50)
                                              ,processexecstep_name        varchar(200)
@@ -105,12 +93,76 @@ create table if not exists control_processexecstep (
                                              ,error_id                varchar(50)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                  
-                                            )
-											clustered by(processexecstep_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (processexecstep_id) 
+                                            );
+                                            
+                                            
+create table control_query 		(query_id			     varchar(50)
+								,processexecstep_id      varchar(50)
+                                ,processexec_id          varchar(50)      
+                                ,rawfiles_id             varchar(50)
+                                ,rawfilesdet_id		     varchar(50)
+                                ,table_id                varchar(50)
+                                ,query_alias			 varchar(200)
+                                ,query_sql_from		     varchar(4000)
+                                ,query_sql_where		 varchar(4000)
+                                ,query_numerrors	     int
+                                ,query_autoinc			 int
+                                ,query_israw			 int
+                                ,query_isfinaltable	     int
+                                ,query_isquery			 int
+                                ,query_isreferenced		 int
+                                ,query_numrows_real		 int
+                                ,query_numrows_expected  int
+                                ,query_duration_hour	 int
+                                ,query_duration_min		 int
+                                ,query_duration_sec		 int			 
+                                ,error_id                varchar(50)
+                                ,mdm_fhcreate            varchar(30)
+                                ,mdm_processname         varchar(200)    
+                                ,primary key (query_id)
+                                );
+                                
+create table control_querycolumn 	  (querycol_id					varchar(50)
+									  ,query_id						varchar(50)
+									  ,rawfilesdet_id               varchar(50)
+									  ,column_id                  	varchar(50)
+									  ,querycol_pos					int
+									  ,querycol_name				varchar(200)
+									  ,querycol_sql					varchar(4000)
+									  ,querycol_posstart			int
+									  ,querycol_posend				int
+									  ,querycol_line				int
+									  ,mdm_fhcreate            varchar(30)
+                                	  ,mdm_processname         varchar(200)    
+									  ,primary key (querycol_id)
+                                );
+                                
+create index idx_control_querycolumn_i01 on control_querycolumn (query_id, querycol_name);
+                                
+create table control_querycolumnori		(querycolori_id					varchar(50)       
+										,querycol_id					varchar(50)
+										,table_idori                	varchar(50)
+										,column_idori					varchar(50)
+										,rawfilesdet_idori             	varchar(50)
+										,rawfilesdetfields_idori		varchar(50)
+										,query_idori					varchar(50)
+										,querycol_idori					varchar(50)
+										,querycolori_dbname				varchar(200)
+										,querycolori_tabname			varchar(200)
+										,querycolori_tabalias		 	varchar(200)
+										,querycolori_colname			varchar(200)	
+										,querycolori_isselect			int
+										,querycolori_iswhere			int
+										,querycolori_ishaving			int
+										,querycolori_isorder			int
+										,mdm_fhcreate            varchar(30)
+                                		,mdm_processname         varchar(200)    
+										,primary key (querycolori_id)
+                                );				                 
+									                                                                     
                     
-create table if not exists control_rawfiles ( 
+create table  control_rawfiles ( 
                                               rawfiles_id             varchar(50)
                                              ,area_id                 varchar(50)
                                              ,rawfiles_logicalname    varchar(500)
@@ -121,13 +173,13 @@ create table if not exists control_rawfiles (
                                              ,mdm_manualchange        int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             
-                                            )
-											clustered by(rawfiles_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (rawfiles_id) 
+                                            );
 
-
-create table if not exists control_rawfilesdet ( 
+create index idx_control_rawfiles_i01 on control_rawfiles (rawfiles_logicalname, rawfiles_groupname);
+create unique index idx_control_rawfiles_i02 on control_rawfiles (rawfiles_logicalname);
+                                    
+create table  control_rawfilesdet ( 
                                               rawfilesdet_id                            varchar(50)
                                              ,rawfiles_id                               varchar(50)
                                              ,rawfilesdet_startdate                     varchar(30)
@@ -135,23 +187,22 @@ create table if not exists control_rawfilesdet (
                                              ,rawfilesdet_filename                      varchar(1000)
                                              ,rawfilesdet_localpath                     varchar(1000)
                                              ,rawfilesdet_globalpath                    varchar(1000)
-                                             ,rawfilesdet_data_colseparatortype         varchar(50)
-                                             ,rawfilesdet_data_colseparator             varchar(50)
-                                             ,rawfilesdet_data_headercolumnsstring      varchar(8000)
-                                             ,rawfilesdet_log_colseparatortype          varchar(50)
-                                             ,rawfilesdet_log_colseparator              varchar(50)
-                                             ,rawfilesdet_log_headercolumnsstring       varchar(8000)
-                                             ,rawfilesdet_log_numrowsfieldname          varchar(200)
+                                             ,rawfilesdet_data_colseptype         varchar(50)
+                                             ,rawfilesdet_data_colsep             varchar(50)
+                                             ,rawfilesdet_data_headcolstring      varchar(4000)
+                                             ,rawfilesdet_log_colseptype          varchar(50)
+                                             ,rawfilesdet_log_colsep              varchar(50)
+                                             ,rawfilesdet_log_headcolstring       varchar(4000)
+                                             ,rawfilesdet_log_numrowsfield         varchar(200)
                                              ,rawfilesdet_contactname                   varchar(200)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             
-                                            )
-											clustered by(rawfilesdet_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (rawfilesdet_id) 
+                                            );
 
+create index idx_control_rawfilesdet_i01 on control_rawfilesdet (rawfiles_id, rawfilesdet_startdate);
                                                        
-create table if not exists control_rawfilesdetfields ( 
+create table  control_rawfilesdetfields ( 
                                               rawfilesdet_id                  varchar(50)
 											 ,rawfilesdetfields_logicalname          varchar(200)
                                              ,rawfilesdetfields_itname          varchar(200)
@@ -165,13 +216,11 @@ create table if not exists control_rawfilesdetfields (
 											 ,mdm_active			  int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             
-                                            )
-											clustered by(rawfilesdet_id, rawfilesdetfields_logicalname) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (rawfilesdet_id, rawfilesdetfields_logicalname) 
+                                            );
 											
                   
-create table if not exists control_rawfilesuse ( 
+create table  control_rawfilesuse ( 
                                               rawfilesuse_id          varchar(50)
                                              ,rawfiles_id             varchar(50)
                                              ,process_id              varchar(200)
@@ -186,15 +235,13 @@ create table if not exists control_rawfilesuse (
                                              ,rawfiles_fullname       varchar(1000)
                                              ,rawfiles_fullpath       varchar(1000)
                                              ,rawfiles_numrows        varchar(50)
-                                             ,rawfiles_headerline     varchar(8000)
+                                             ,rawfiles_headerline     varchar(4000)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                            
-                                            )
-											clustered by(rawfilesuse_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (rawfilesuse_id) 
+                                            );
                    
-create table if not exists control_tables ( 
+create table  control_tables ( 
                                               table_id                varchar(50)
                                              ,area_id                 varchar(50)
                                              ,table_bbddname          varchar(200)
@@ -208,18 +255,23 @@ create table if not exists control_tables (
                                              ,table_storagetype       varchar(50)
                                              ,table_localpath         varchar(1000)
                                              ,table_globalpath        varchar(1000)
-                                             ,table_sqlcreate         varchar(8000)
+                                             ,table_fullname_dq		  varchar(1200)
+                                             ,table_dq_isused		  int
+                                             ,table_fullname_ovt	  varchar(1200)
+                                             ,table_ovt_isused		  int                                             
+                                             ,table_sqlcreate         varchar(4000)
 											 ,table_frequency		  varchar(200)
+											 ,table_autoincupdate     int
+											 ,table_backup		 	  int
                                              ,mdm_manualchange        int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)                                             
-                                             
-                                            )
-											clustered by(table_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (table_id) 
+                                            );
 
-                  
-create table if not exists control_tablesrel (                   
+create unique index idx_control_tables_i01 on control_tables (table_bbddname, table_name );
+                   
+create table  control_tablesrel (                   
                                               tablerel_id               varchar(50)
                                              ,table_idpk                varchar(50)
                                              ,table_idfk                varchar(50)
@@ -228,26 +280,23 @@ create table if not exists control_tablesrel (
                                              ,mdm_manualchange          int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)                                             
-                                             
-                                            )
-											clustered by(tablerel_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
-											
+                                             ,primary key (tablerel_id) 
+                                            );
+
+create index idx_control_tablesrel_i01 on control_tablesrel (table_idpk, table_idfk, tablefk_namerelationship); 											
                     
-create table if not exists control_tablesrelcol ( 
+create table  control_tablesrelcol ( 
                                               tablerel_id                varchar(50)
                                              ,column_idfk                varchar(50)
                                              ,column_idpk                varchar(50)
                                              ,mdm_manualchange           int
                                              ,mdm_fhcreate               varchar(30)
                                              ,mdm_processname            varchar(200)
-                                             
-                                            )
-											clustered by(tablerel_id, column_idfk) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (tablerel_id, column_idfk) 
+                                            );
                                                                        
                     
-create table if not exists control_columns ( 
+create table  control_columns ( 
                                               column_id                  varchar(50)
                                              ,table_id                   varchar(50)
                                              ,column_position            int
@@ -259,6 +308,7 @@ create table if not exists control_columns (
                                              ,column_enabledtlog         int
                                              ,column_enableoldvalue      int
                                              ,column_enableprocesslog    int
+                                             ,column_enableoldvaluetrace int
                                              ,column_defaultvalue        varchar(1000)
                                              ,column_securitylevel       varchar(200)
                                              ,column_encrypted           varchar(200)
@@ -273,20 +323,20 @@ create table if not exists control_columns (
                                              ,column_dq_mindatetimevalue varchar(50) 
                                              ,column_dq_maxdatetimevalue varchar(50)
 											 ,column_dq_regexp           varchar(1000)
+											 ,column_businessglossary	 varchar(100)
                                              ,column_responsible         varchar(100)
                                              ,mdm_active                 int
                                              ,mdm_manualchange           int
                                              ,mdm_fhcreate               varchar(30)
                                              ,mdm_processname            varchar(200)
-                                             
-                                            )
-											clustered by(column_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (column_id) 
+                                            );
 
+create index idx_control_columns_i01 on control_columns (table_id, column_name);
                                                                        
                    
-create table if not exists control_tablesuse ( 
-                                              table_id                varchar(50)
+create table  control_tablesuse (			  tablesuse_id            varchar(50)  
+                                             ,table_id                varchar(50)
                                              ,process_id              varchar(200)
                                              ,processexec_id          varchar(50)
                                              ,processexecstep_id      varchar(50)
@@ -306,14 +356,13 @@ create table if not exists control_tablesuse (
                                              ,tableuse_numrowsmarkdelete  int
                                              ,tableuse_numrowstotal   int
 											 ,tableuse_partitionvalue varchar(200)
+											 ,tableuse_pathbackup	  varchar(1000)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             
-                                            )
-											clustered by(process_id, table_id, processexec_id, processexecstep_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (tablesuse_id) 
+                                            );
                     
-create table if not exists control_dq (
+create table  control_dq (
                                               dq_id                   varchar(50) 
                                              ,table_id                varchar(50) 
                                              ,process_id              varchar(200)
@@ -325,28 +374,31 @@ create table if not exists control_dq (
                                              ,dq_description          varchar(1000)
                                              ,dq_querylevel           varchar(50)
                                              ,dq_notification         varchar(50)
-                                             ,dq_sqlformula           varchar(8000)
+                                             ,dq_sqlformula           varchar(4000)
                                              ,dq_dq_toleranceerror_rows     int
                                              ,dq_dq_toleranceerror_percent     decimal(30,10)
-                                             ,dq_resultdq             varchar(8000)
+                                             ,dq_resultdq             varchar(4000)
                                              ,dq_errorcode            int
+                                             ,dq_externalcode         varchar(200)
                                              ,dq_numrowsok            int
                                              ,dq_numrowserror         int
                                              ,dq_numrowstotal         int
                                              ,dq_iserror              int
+                                             ,dq_iswarning			  int
+                                             ,dq_duration_hour		  int
+                                             ,dq_duration_minute	  int
+                                             ,dq_duration_second	  int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             
-                                            )
-											clustered by(dq_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (dq_id) 
+                                            );
                     
                    
-create table if not exists control_error ( 
+create table  control_error ( 
                                               error_id          varchar(50)
-                                             ,error_message                varchar(8000)
+                                             ,error_message                varchar(4000)
                                              ,error_code           int
-                                             ,error_trace                varchar(8000)
+                                             ,error_trace                varchar(4000)
                                              ,error_classname                varchar(100)
                                              ,error_filename                varchar(500)
                                              ,error_linenumber                varchar(100)
@@ -354,13 +406,11 @@ create table if not exists control_error (
                                              ,error_detail                varchar(500)
                                              ,mdm_fhcrea            varchar(30)
                                              ,mdm_processname         varchar(1000)
-                                             
-                                            )
-											clustered by(error_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (error_id)
+                                            );
                                                                        
                   
-create table if not exists control_date ( 
+create table  control_date ( 
                                       date_id		varchar(10)
                                       ,date_year	int
                                       ,date_month	int
@@ -377,13 +427,11 @@ create table if not exists control_date (
                                       ,date_numworkdayrev	int
                                       ,mdm_fhcreate            varchar(30)
                                       ,mdm_processname         varchar(200) 
-                                      
-                                      )
-									  clustered by(date_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                      ,primary key (date_id) 
+                                      );
                                                                        
                  
-create table if not exists control_testplan ( 
+create table  control_testplan ( 
                                               testplan_id             varchar(200)
                                              ,testplangroup_id        varchar(200)
                                              ,processexec_id          varchar(200)
@@ -395,20 +443,17 @@ create table if not exists control_testplan (
                                              ,testplan_isok           int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             
-                                            )
-											clustered by(testplan_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (testplan_id) 
+                                            );
+                                            
+create index idx_control_testplan_i01 on control_testplan (testplangroup_id, testplan_name);
                              
 
-create table if not exists control_testplanfeature ( 
+create table  control_testplanfeature ( 
                                               feature_id              varchar(200)
                                              ,testplan_id             varchar(200)
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
-                                             
-                                            )
-											clustered by(feature_id, testplan_id) into 3 buckets
-											stored as orc tblproperties ('transactional'='true');
+                                             ,primary key (feature_id, testplan_id) 
+                                            );
                              
-

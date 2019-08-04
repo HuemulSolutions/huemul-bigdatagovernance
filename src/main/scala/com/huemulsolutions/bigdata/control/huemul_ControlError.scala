@@ -52,27 +52,40 @@ class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends S
     }
     
     if (ControlError_ClassName == null) {
-      ControlError_ClassName = e.getStackTrace()(0).getClassName
-      ControlError_FileName = e.getStackTrace()(0).getFileName
-      ControlError_LineNumber = e.getStackTrace()(0).getLineNumber
-      ControlError_MethodName = e.getStackTrace()(0).getMethodName  
+      if (e.getStackTrace() == null || e.getStackTrace().length == 0 ) {
+        println(e.getStackTrace())
+        ControlError_ClassName = "NO INFORMATION AVAILABLE"
+        ControlError_FileName = "NO INFORMATION AVAILABLE"
+        ControlError_LineNumber = -1
+        ControlError_MethodName = "NO INFORMATION AVAILABLE"
+      } else if (e.getStackTrace()(0).getClassName == "scala.sys.package$") {
+        ControlError_ClassName = e.getStackTrace()(1).getClassName
+        ControlError_FileName = e.getStackTrace()(1).getFileName
+        ControlError_LineNumber = e.getStackTrace()(1).getLineNumber
+        ControlError_MethodName = e.getStackTrace()(1).getMethodName
+      } else {
+        ControlError_ClassName = e.getStackTrace()(0).getClassName
+        ControlError_FileName = e.getStackTrace()(0).getFileName
+        ControlError_LineNumber = e.getStackTrace()(0).getLineNumber
+        ControlError_MethodName = e.getStackTrace()(0).getMethodName
+      }
     }
     
     ControlError_Message = e.toString()
     
-    println("***************************************************************")
-    println("huemulBigDataGov: Error Detail")
-    println("***************************************************************")
-    println(s"ControlError_ClassName: $ControlError_ClassName")
-    println(s"ControlError_FileName: $ControlError_FileName")
-    println(s"ControlError_ErrorCode: $ControlError_ErrorCode")
-    println(s"ControlError_LineNumber: $ControlError_LineNumber")
-    println(s"ControlError_MethodName: $ControlError_MethodName")
-    println(s"ControlError_Message: $ControlError_Message")
-    println(s"ControlError_Trace: $ControlError_Trace")
+    huemulBigDataGov.logMessageError("***************************************************************")
+    huemulBigDataGov.logMessageError("huemulBigDataGov: Error Detail")
+    huemulBigDataGov.logMessageError("***************************************************************")
+    huemulBigDataGov.logMessageError(s"ControlError_ClassName: $ControlError_ClassName")
+    huemulBigDataGov.logMessageError(s"ControlError_FileName: $ControlError_FileName")
+    huemulBigDataGov.logMessageError(s"ControlError_ErrorCode: $ControlError_ErrorCode")
+    huemulBigDataGov.logMessageError(s"ControlError_LineNumber: $ControlError_LineNumber")
+    huemulBigDataGov.logMessageError(s"ControlError_MethodName: $ControlError_MethodName")
+    huemulBigDataGov.logMessageError(s"ControlError_Message: $ControlError_Message")
+    huemulBigDataGov.logMessageError(s"ControlError_Trace: $ControlError_Trace")
     
-    println(s"Detalle")
-    println(e)
+    huemulBigDataGov.logMessageError(s"Detail")
+    huemulBigDataGov.logMessageError(e)
    
     
   }

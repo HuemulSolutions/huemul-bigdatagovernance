@@ -11,6 +11,9 @@ hdfs dfs -mkdir /user/data/production/dim
 hdfs dfs -mkdir /user/data/production/analytics
 hdfs dfs -mkdir /user/data/production/reporting
 hdfs dfs -mkdir /user/data/production/sandbox
+hdfs dfs -mkdir /user/data/production/dqerror
+hdfs dfs -mkdir /user/data/production/mdm_oldvalue
+hdfs dfs -mkdir /user/data/production/backup
 hdfs dfs -mkdir /user/data/experimental
 hdfs dfs -mkdir /user/data/experimental/temp
 hdfs dfs -mkdir /user/data/experimental/raw
@@ -19,6 +22,9 @@ hdfs dfs -mkdir /user/data/experimental/dim
 hdfs dfs -mkdir /user/data/experimental/analytics
 hdfs dfs -mkdir /user/data/experimental/reporting
 hdfs dfs -mkdir /user/data/experimental/sandbox
+hdfs dfs -mkdir /user/data/experimental/dqerror
+hdfs dfs -mkdir /user/data/experimental/mdm_oldvalue
+hdfs dfs -mkdir /user/data/experimental/backup
 echo "Creating HDFS Paths: FINISH"
 echo "STARTING HIVE SETUP"
 hive -e "CREATE DATABASE production_master"
@@ -31,4 +37,8 @@ hive -e "CREATE DATABASE production_reporting"
 hive -e "CREATE DATABASE experimental_reporting"
 hive -e "CREATE DATABASE production_sandbox"
 hive -e "CREATE DATABASE experimental_sandbox"
+hive -e "CREATE DATABASE production_DQError"
+hive -e "CREATE DATABASE experimental_DQError"
+hive -e "CREATE DATABASE production_mdm_oldvalue"
+hive -e "CREATE DATABASE experimental_mdm_oldvalue"
 echo "STARTING HIVE SETUP"

@@ -7,6 +7,7 @@ import com.huemulsolutions.bigdata.tables._
 
 class huemul_DataQualityResult extends Serializable {
   var isError: Boolean = false
+  var isWarning: Boolean = false
   var Error_Code: Integer = null
   var Description: String = ""
   var dqDF : DataFrame = null
@@ -31,5 +32,7 @@ class huemul_DataQualityResult extends Serializable {
       e.printStackTrace()
     }
   }
+  
+  
   
 }

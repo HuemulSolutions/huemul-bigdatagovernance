@@ -5,6 +5,7 @@ import Assert._
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import com.huemulsolutions.bigdata.control.huemulType_Frequency
+import org.apache.derby.impl.services.locks.Control
 
 
 @Test
@@ -57,6 +58,18 @@ class AppTest {
      
     }
     
+    //println(Control.ReplaceSQLStringNulls("1234", 3))
+    
+    @Test
+    def test_replaceSQLStringNulls_OK() = assertTrue(Control.ReplaceSQLStringNulls("1234", 3) == "'123'" )
+    
+    @Test
+    def test_replaceSQLStringNulls_null_OK() = assertTrue(Control.ReplaceSQLStringNulls("1234", null) == "'1234'" )
+    
+    @Test
+    def test_replaceSQLStringNulls_ISnull_OK() = assertTrue(Control.ReplaceSQLStringNulls(null, null) == "null" )
+    
+    
     @Test
     def test_HasName_OK() = assertTrue(huemulBigDataGov.HasName("si tiene"))
     
@@ -83,7 +96,7 @@ class AppTest {
     try {
        TestTable = new tbl_demo_test(huemulBigDataGov, Control)  
        println("***************************************TestTable.GetOrderByColumn()")
-       println(TestTable.GetOrderByColumn())
+       println(TestTable.getOrderByColumn())
     } catch {
       case t: Throwable => t.printStackTrace() // TODO: handle error
     }

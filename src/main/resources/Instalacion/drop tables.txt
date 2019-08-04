@@ -1,0 +1,39 @@
+
+
+drop table  control_executors ;
+
+drop table  control_singleton ;
+drop table  control_area ;     
+drop table  control_process ;
+                             
+drop table  control_processexec ;
+drop table  control_processexecparams ;
+drop table  control_processexecstep ;
+drop table  control_rawfiles ;
+                              
+drop table  control_rawfilesdet ;
+                                                 
+drop table  control_rawfilesdetfields ;	
+                  
+drop table  control_rawfilesuse ;
+drop table  control_tables ;
+                   
+drop table  control_tablesrel ;			
+                    
+drop table  control_tablesrelcol ;                                      
+                    
+drop table  control_columns ;                   
+drop table  control_tablesuse ;
+drop table  control_dq ;
+                   
+drop table  control_error ;                                             
+                  
+drop table  control_date ;                                              
+                 
+drop table  control_testplan ;
+drop table  control_testplanfeature ;
+
+drop table  control_query;
+drop table  control_querycolumn;
+drop table  control_querycolumnori;
+

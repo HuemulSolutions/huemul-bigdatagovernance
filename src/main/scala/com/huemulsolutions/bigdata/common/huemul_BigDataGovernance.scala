@@ -25,7 +25,9 @@ import org.apache.spark.sql.types.DecimalType
 import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
 import com.huemulsolutions.bigdata.tables.huemul_Table
 import org.apache.spark.sql.catalyst.expressions.Coalesce
-
+import com.huemulsolutions.bigdata.sql_decode._
+import com.huemulsolutions.bigdata.control.huemul_Control
+import org.apache.log4j.Level
         
       
 /*
@@ -50,11 +52,131 @@ import org.apache.spark.sql.catalyst.expressions.Coalesce
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
+  //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
+  @transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"com.huemulsolutions")
+  log_info.setLevel(Level.ALL)
+  
+  private val excludeWords:ArrayBuffer[String]  = new ArrayBuffer[String]() 
+  val huemul_SQL_decode: huemul_SQL_Decode = new huemul_SQL_Decode(excludeWords,1)
+  
+  private var _ColumnsAndTables: ArrayBuffer[huemul_sql_tables_and_columns] = new ArrayBuffer[huemul_sql_tables_and_columns]()
+  def getColumnsAndTables(OnlyRefreshTempTables: Boolean): ArrayBuffer[huemul_sql_tables_and_columns] = {
+    val inicio = this.getCurrentDateTimeJava()
+    
+    if (OnlyRefreshTempTables)
+      _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
+    else 
+      _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
+    
+    //spark.catalog.listTables().show(10000)
+    //spark.catalog.listDatabases().show()
+    var numRowDatabase = 0
+    var allDatabases = spark.catalog.listDatabases().collect()
+    
+    //only get the first one
+    if (OnlyRefreshTempTables)
+      allDatabases = allDatabases.filter { x => x == allDatabases(0)  }
+    
+      
+    allDatabases.foreach { x_database =>
+      numRowDatabase += 1
+      //println(s"x_database.name: ${x_database.name}")
+      var resTables = spark.catalog.listTables(x_database.name).collect()
+      if (numRowDatabase > 1)
+        resTables = resTables.filter { x_fil => x_fil.database != null }
+      else {
+        //only get temp tables (null database)
+        if (OnlyRefreshTempTables)
+          resTables = resTables.filter { x_fil => x_fil.database == null }
+      }
+        //resTables.foreach { x_prin => println(x_prin) }
+      
+      
+      
+      resTables.foreach { x => 
+        //get all columns
+        //println(s"database: ${x.database}, table: ${x.name}")
+        //spark.catalog.listColumns(x.database, x.name).show(10000)
+        var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
+  
+        if (x.database == null)
+          listcols = spark.catalog.listColumns(x.name)
+        else
+          listcols = spark.catalog.listColumns(x.database, x.name)
+          
+        listcols.collect().foreach { y =>
+          //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
+          val newRow = new huemul_sql_tables_and_columns()
+          newRow.column_name = y.name
+          newRow.database_name = if (x.database == null) "__temporary" else x.database
+          newRow.table_name = x.name
+          _ColumnsAndTables.append(newRow)
+        }  
+      }
+    }
+    
+    val duration = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
+    logMessageInfo(s"duration (hh:mm:ss): ${"%02d".format(duration.hour)}:${"%02d".format(duration.minute)}:${"%02d".format(duration.second)}")
+    //println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
+    return _ColumnsAndTables 
+  }
+  
+  def num_to_text(text_format: String, value: Any): String = {
+    return text_format.format(value)
+  }
+  
+  def addColumnsAndTablesFromQuery(Alias: String, queryRes: ArrayBuffer[com.huemulsolutions.bigdata.sql_decode.huemul_sql_columns]) {
+    //filter alias if exists before
+    _ColumnsAndTables = _ColumnsAndTables.filter { x => !(x.database_name == "__temporary" && x.table_name.toUpperCase() == Alias.toUpperCase())}
+    
+    queryRes.foreach { x => 
+      val newRow = new huemul_sql_tables_and_columns()
+          newRow.column_name = x.column_name
+          newRow.database_name = "__temporary" 
+          newRow.table_name = Alias
+      _ColumnsAndTables.append(newRow)
+    }
+  }
+  
+  private var isEnableSQLDecode: Boolean = true
+  def enableSQLDecode() { isEnableSQLDecode = true }
+  def disableSQLDecode() {isEnableSQLDecode = false}
+  def getIsEnableSQLDecode(): Boolean = {return isEnableSQLDecode}
+  
+  /**
+   * logMessageDebug: Send {message} to log4j - Debug
+   */
+  def logMessageDebug(message: Any)  {
+    log_info.debug(message)
+  }
+  
+  /**
+   * logMessageInfo: Send {message} to log4j - Info
+   */
+  def logMessageInfo(message: Any)  {
+    log_info.info(message)
+  }
+  
+  /**
+   * logMessageWarn: Send {message} to log4j - Warning
+   */
+  def logMessageWarn(message: Any)  {
+    log_info.warn(message)
+  }
+  
+  /**
+   * logMessageError: Send {message} to log4j - Error
+   */
+  def logMessageError(message: Any)  {
+    log_info.error(message)
+  }
+  
+  
   
   /*********************
    * ARGUMENTS
    *************************/
-  println("huemul_BigDataGovernance version 1.4.1 - sv1.0") 
+  logMessageInfo("huemul_BigDataGovernance version 2.0.0 - sv1.0") 
        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
@@ -62,7 +184,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   
    //Validating GlobalSettings
-  println("Start Validating GlobalSetings..")
+  logMessageInfo("Start Validating GlobalSetings..")
   var ErrorGlobalSettings: String = ""
   if (!this.GlobalSettings.ValidPath(globalSettings.RAW_SmallFiles_Path, this.Environment))
     ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_SmallFiles_Path"
@@ -101,8 +223,22 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (!this.GlobalSettings.ValidPath(globalSettings.DQError_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_DataBase"
   }
-  println("End Validating GlobalSetings..")
   
+  if (this.GlobalSettings.MDM_SaveOldValueTrace) {
+    if (!this.GlobalSettings.ValidPath(globalSettings.MDM_OldValueTrace_Path, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_Path"
+    if (!this.GlobalSettings.ValidPath(globalSettings.MDM_OldValueTrace_DataBase, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_DataBase"
+  }
+  
+  if (this.GlobalSettings.MDM_SaveBackup) {
+    if (!this.GlobalSettings.ValidPath(globalSettings.MDM_Backup_Path, this.Environment))
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_Backup_Path"
+  }
+  logMessageInfo("End Validating GlobalSetings..")
+  
+  
+    
   if (ErrorGlobalSettings.length()> 0) {
     sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
   }
@@ -113,20 +249,20 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   try {
     HideLibQuery = arguments.GetValue("HideLibQuery", "false" ).toBoolean
   } catch {    
-    case e: Exception => println("HideLibQuery: error values (true or false)")
+    case e: Exception => logMessageError("HideLibQuery: error values (true or false)")
   }
   var SaveTempDF: Boolean = true
   try {
     SaveTempDF = arguments.GetValue("SaveTempDF", "true" ).toBoolean
   } catch {    
-    case e: Exception => println("SaveTempDF: error values (true or false)")
+    case e: Exception => logMessageError("SaveTempDF: error values (true or false)")
   }
   
   var ImpalaEnabled: Boolean = GlobalSettings.ImpalaEnabled
   try {
     ImpalaEnabled = arguments.GetValue("ImpalaEnabled", s"${GlobalSettings.ImpalaEnabled}" ).toBoolean
   } catch {    
-    case e: Exception => println("ImpalaEnabled: error values (true or false)")
+    case e: Exception => logMessageError("ImpalaEnabled: error values (true or false)")
   }
   
   
@@ -137,7 +273,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   try {
     RegisterInControl = arguments.GetValue("RegisterInControl", "true" ).toBoolean
   } catch {    
-    case e: Exception => println("RegisterInControl: error values (true or false)")
+    case e: Exception => logMessageError("RegisterInControl: error values (true or false)")
   }
   
   val TestPlanMode = arguments.GetValue("TestPlanMode", "false" ).toBoolean
@@ -182,8 +318,9 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
                             else null
 
   if (!TestPlanMode) {
-     //spark.conf.getAll.foreach(println)
-    spark.sparkContext.setLogLevel("ERROR")  
+     //spark.conf.getAll.foreach(logMessage)
+    spark.sparkContext.setLogLevel("WARN")  
+    //spark.debug.maxToStringFields
   }
   
   val IdPortMonitoring = if (!TestPlanMode) spark.sparkContext.uiWebUrl.get else "" 
@@ -197,29 +334,38 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    *************************/
   
   val IdApplication = if (!TestPlanMode) spark.sparkContext.applicationId else ""
-  println(s"application_Id: ${IdApplication}")  
-  println(s"URL Monitoring: ${IdPortMonitoring}")
+  logMessageInfo(s"application_Id: ${IdApplication}")  
+  logMessageInfo(s"URL Monitoring: ${IdPortMonitoring}")
+  
+  /*********************
+   * GET HIVE METADATA FOR COLUMNS TRACEABILITY
+   *************************/
+  if (!TestPlanMode) {
+    logMessageInfo("Start get hive table metadata..")
+    getColumnsAndTables(false)
+    logMessageInfo("End get hive table metadata..")
+  }
 
   /*
   if (!TestPlanMode) {
-    println(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
+    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
     spark.sql("set").show()
-    println(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
+    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
     spark.sql("set").filter("key='spark.driver.port'").show()
-    println(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
+    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
     spark.sql("set").filter("key='spark.driver.port'").select("value").show()
-    println(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
+    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
   }
   * 
   */
   
   val IdSparkPort = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").collectAsList().get(0).getAs[String]("value") else ""
-  println(s"Port_Id: ${IdSparkPort}")
+  logMessageInfo(s"Port_Id: ${IdSparkPort}")
   
   //Process Registry
   if (RegisterInControl) {
     while (application_StillAlive(IdApplication)) {
-      println(s"waiting for singleton Application Id in use: ${IdApplication}, maybe you're creating two times a spark connection")
+      logMessageWarn(s"waiting for singleton Application Id in use: ${IdApplication}, maybe you're creating two times a spark connection")
       Thread.sleep(10000)
     }
     val Result = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
@@ -228,11 +374,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
                   							   , idportmonitoring
                   							   , executor_dtstart
                   							   , executor_name) 	
-                	SELECT ${ReplaceSQLStringNulls(IdApplication)}
+                	VALUES( ${ReplaceSQLStringNulls(IdApplication)}
                 		   , ${ReplaceSQLStringNulls(IdSparkPort)}
                 		   , ${ReplaceSQLStringNulls(IdPortMonitoring)}
                 		   , ${ReplaceSQLStringNulls(getCurrentDateTime())}
                 		   , ${ReplaceSQLStringNulls(appName)}
+                  ) 
         """)
   }
                 
@@ -242,6 +389,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * START METHOD
    *************************/
+  
+  def getPath(pathFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
+    return GlobalSettings.GetPath(this, pathFromGlobal)
+  }
+  
+  def getDataBase(dataBaseFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
+    return GlobalSettings.GetDataBase(this, dataBaseFromGlobal)
+  }
   
   def close() {
     application_closeAll(this.IdApplication)
@@ -277,7 +432,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
       //Get Id App from Spark URL Monitoring          
       try {
-        IdAppFromAPI = this.GetIdFromExecution(URLMonitor)    
+        IdAppFromAPI = this.getIdFromExecution(URLMonitor)    
       } catch {
         case f: Exception => {
           StillAlive = false
@@ -341,8 +496,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * ReplaceSQLStringNulls: returns text for SQL
    * from version 1.1
    */
-  def ReplaceSQLStringNulls(ColumnName: String): String = {
-    return if (ColumnName == null) "null" else s"'${ColumnName.replace("'", "''")}'"
+  def ReplaceSQLStringNulls(text: String, len: Integer = null): String = {
+    var result = text
+    if (len != null && result != null && result.length() > len)
+      result = result.substring(0,len)
+      
+    result = if (result == null) "null" else s"'${result.replace("'", "''")}'"
+    
+    return result
   }
   
   /***
@@ -404,7 +565,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     //Create parquet in temp folder
     if (CreateTable && SaveTempDF){
       val FileToTemp: String = GlobalSettings.GetDebugTempPath(this, ProcessNameCall, Alias) + ".parquet"      
-      println(s"path result for table alias $Alias: $FileToTemp ")
+      logMessageInfo(s"path result for table alias $Alias: $FileToTemp ")
       //version 1.3 --> prueba para optimizar escritura temporal
       //Se aplica coalesce en vez de repartition para evitar el shuffle interno
       if (NumPartitionCoalesce == null || NumPartitionCoalesce == 0)
@@ -506,12 +667,17 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     return Fecha
   }
   
+  private var _autoIncId: Int = 0
   /**
    * Get UniqueId from datetime, random and arbitrary value
    */
   def huemul_GetUniqueId (): String = {
     val MyId: String = this.IdSparkPort
-      
+    
+    _autoIncId += 1
+    if (_autoIncId > 999)
+      _autoIncId = 0
+    
     //Get DateTime
     val dateTimeFormat: DateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSSS")  
     val ActualDateTime: Calendar  = Calendar.getInstance()
@@ -522,14 +688,23 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
     //Generate random
     val randomNum: Int  = ThreadLocalRandom.current().nextInt(1, 999998 + 1)
-    var Random: String  = ("000000".concat(Integer.toString(randomNum)))
-    //System.out.println(Random);
-    Random = Random.substring(Random.length()-6, Random.length())
-    //System.out.println(Random);
-    val Final: String  = Fecha.concat(Random.concat(MyId))
+    //var Random: String  = ("000000".concat(Integer.toString(randomNum)))
+    var Random: String  = "%06d".format(randomNum)
+    var autoIncString: String = "%03d".format(_autoIncId)
+    //System.out.logMessage(Random);
+    //Random = Random.substring(Random.length()-3, Random.length())
+    
+    //System.out.logMessage(Random);
+    val Final: String  = Fecha.concat(autoIncString.concat(Random.concat(MyId)))
     return Final;
     
     //return this.spark.sql(s"select data_control.fabric_GetUniqueId(${this.IdSparkPort}) as NewId ").first().getAs[String]("NewId")
+  }
+  
+  private var _huemul_showDemoLines: Boolean = true
+  def gethuemul_showDemoLines(): Boolean = {return _huemul_showDemoLines}
+  def huemul_showDemoLines(value: Boolean) {
+    _huemul_showDemoLines = value
   }
   
  
@@ -537,7 +712,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * Get execution Id from spark monitoring url
    */
  
-  def GetIdFromExecution(url: String): String = {
+  def getIdFromExecution(url: String): String = {
     import spark.implicits._
     val html = Source.fromURL(url)
     val vals = spark.sparkContext.parallelize(
@@ -594,9 +769,9 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         //sqlResult.show()
       } catch {
         case e: Exception  =>  
-          if (DebugMode) println(SQL)
-          if (DebugMode) println(s"JDBC Error: $e")
-          if (DebugMode) println(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => println(x) }}")
+          if (DebugMode) logMessage(SQL)
+          if (DebugMode) logMessage(s"JDBC Error: $e")
+          if (DebugMode) logMessage(s"JDBC Error TRACE: ${e.getStackTrace.foreach { x => logMessage(x) }}")
           Result.ErrorDescription = s"JDBC Error: ${e}"
           Result.IsError = true
       }
@@ -606,12 +781,75 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   * 
   */
   
+  def print_result(resfinal: com.huemulsolutions.bigdata.sql_decode.huemul_sql_decode_result, numciclo: Int) {
+    println(s"RESULTADO CICLO ${numciclo} ${resfinal.AliasQuery} ***************************************")
+     println("************ SQL FROM ************ ")
+     println(resfinal.from_sql)
+     println("************ SQL WHERE ************ ")
+     println(resfinal.where_sql)
+     
+     println("   ")
+     println("************ COLUMNS ************ ")
+     resfinal.columns.foreach { x => 
+           println (s"*** COLUMN NAME: ${x.column_name}")
+           println (s"    column_sql: ${x.column_sql}")
+           println ("     columns used:")
+           x.column_origin.foreach { y => println(s"     ---- column_database: ${y.trace_database_name}, trace_table_name: ${y.trace_table_name}, trace_tableAlias_name: ${y.trace_tableAlias_name}, trace_column_name: ${y.trace_column_name}") }
+    }
+    
+    println("   ")
+    println("************ TABLES ************ ")
+    resfinal.tables.foreach { x => println (s"*** DATABASE NAME: ${x.database_name}, TABLE NAME: ${x.table_name}, ALIAS: ${x.tableAlias_name}") }
+   
+    println("   ")
+    println("************ COLUMNS WHERE ************ ")
+    resfinal.columns_where.foreach { x => println(s"Columns: ${x.trace_column_name}, Table: ${x.trace_table_name}, Database: ${x.trace_database_name}") }
+    
+    println("   ")
+    println("************ FINAL RESULTS ************ ")
+    println(s"N° Errores: ${resfinal.NumErrors}")
+    println(s"N° subquerys: ${resfinal.AutoIncSubQuery}")
+    println(s"AliasDatabase: ${resfinal.AliasDatabase}")
+    println(s"AliasQuery: ${resfinal.AliasQuery}")
+    
+    
+    var numciclo_2 = numciclo
+    resfinal.subquery_result.foreach { x =>  
+      numciclo_2 += 1
+      print_result(x,  numciclo_2)
+    }
+    
+  }
+  
+  def DF_SaveLineage(Alias: String, sql: String,dt_start: java.util.Calendar, dt_end: java.util.Calendar, Control: huemul_Control, FinalTable: huemul_Table, isQuery: Boolean, isReferenced: Boolean ) {
+    if (getIsEnableSQLDecode()) {
+      val res = huemul_SQL_decode.decodeSQL(sql, _ColumnsAndTables)
+      
+      if (DebugMode)
+        print_result(res,res.AutoIncSubQuery)
+        
+      val duration = getDateTimeDiff(dt_start, dt_end)
+      Control.RegisterTrace_DECODE(res
+                                 , Alias
+                                 , -1 //NumRows
+                                 , duration.hour // Duration_Hour
+                                 , duration.minute //Duration_Minute
+                                 , duration.second // Duration_Second
+                                 , FinalTable
+                                 , isQuery
+                                 , isReferenced)
+      
+                                  
+      //Add my result to __temporary                            
+      addColumnsAndTablesFromQuery(Alias, res.columns)
+    }
+  }
   
   /**
    * Execute a SQL sentence, create a new alias and save de DF result into HDFS
    */
   def DF_ExecuteQuery(Alias: String, SQL: String): DataFrame = {
-    if (this.DebugMode && !HideLibQuery) println(SQL)        
+    if (this.DebugMode && !HideLibQuery) logMessageDebug(SQL)        
     val SQL_DF = this.spark.sql(SQL)            //Ejecuta Query
     if (this.DebugMode) SQL_DF.show()
     //Change alias name
@@ -619,6 +857,24 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
 
     this.CreateTempTable(SQL_DF, Alias, this.DebugMode, null)      //crea tabla temporal para debug
     return SQL_DF
+  }
+  
+  def DF_ExecuteQuery(Alias: String, SQL: String, Control: huemul_Control ): DataFrame = {
+    val dt_start = getCurrentDateTimeJava()
+    val Result = DF_ExecuteQuery(Alias, SQL)
+    val dt_end = getCurrentDateTimeJava()
+    
+    DF_SaveLineage(Alias
+                , SQL
+                , dt_start
+                , dt_end
+                , Control
+                , null //FinalTable
+                , true //isQuery
+                , false //isReferenced)
+                  )
+    
+    return Result
   }
   
   def RegisterError(ErrorCode: Integer, Message: String, Trace: String, FileName: String, MethodName: String, ClassName: String, LineNumber: Integer, WhoWriteError: String ) {
@@ -661,7 +917,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
                                     ,error_detail
                                     ,mdm_fhcrea
                                     ,mdm_processname)
-        	SELECT ${ReplaceSQLStringNulls(Error_Id)}
+        	VALUES( ${ReplaceSQLStringNulls(Error_Id)}
           		  ,${ReplaceSQLStringNulls(message.replace("'", "''"))}
                 ,${ErrorCode}
           		  ,${ReplaceSQLStringNulls(trace.replace("'", "''"))}
@@ -672,6 +928,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           		  ,''
           		  ,${ReplaceSQLStringNulls(getCurrentDateTime())}
           		  ,${ReplaceSQLStringNulls(WhoWriteError)}
+          )
              """, false)            
      
     }
@@ -680,54 +937,33 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   /**
-   * Valid if Hive is alive
+   * return true if path exists
    */
-  def testHive(): Boolean = {
-    var Resultado:Boolean = false
-    try {
-      val DFNow = this.spark.sql("select now() as IsAlive")
-      this.spark.sql("show tables")
-      
-      if (DFNow.first().getAs[String]("IsAlive").length() >= 10)
-        Resultado = true
-        
-    } catch {
-      case e: Exception => e.printStackTrace() // TODO: handle error
-      Resultado = false
-    }
-           
-    return Resultado
+  def hdfsPath_exists(path: String): Boolean = {
+    val fs = FileSystem.get(this.spark.sparkContext.hadoopConfiguration)
+    return fs.exists(new org.apache.hadoop.fs.Path(path))
   }
   
   /**
-   * Valid if HDFS is alive
+   * hiveTable_exists: return true if database.table exists
    */
-  def testHDFS(path: String): Boolean = {
-    var Resultado:Boolean = false
+  def hiveTable_exists(database_name: String, table_name: String): Boolean = {
+    var Result: Boolean = false
     try {
-      val DFWrite = this.spark.sql("select now() as IsAlive")
-      val WriteValue = DFWrite.first().getAs[String]("IsAlive")
-      
-      val fullpath = s"${path}/testHDFS_IsAlive.parquet"
-      println(s"test: save HDFS to path: ${fullpath}")
-      
-      DFWrite.write.mode(SaveMode.Overwrite).format("parquet").save(fullpath)
-      DFWrite.unpersist()
-      
-      //try to open data and read
-      val DFRead = this.spark.read.format("parquet").load(fullpath)
-      val ReadValue = DFWrite.first().getAs[String]("IsAlive")
-     
-      if (ReadValue == WriteValue)
-        Resultado = true
-        
+      val df_Result = this.spark.sql(s"select 1 from ${database_name}.${table_name} limit 1")
+      if (df_Result == null)
+        Result = false
+      else 
+        Result = true
     } catch {
-      case e: Exception => e.printStackTrace() // TODO: handle error
-      Resultado = false
+      case e: Exception => 
+        Result = false
     }
-           
-    return Resultado
+    
+    return Result
   }
+  
+  
   
   
 }

@@ -90,6 +90,17 @@ class huemul_Columns(param_DataType: DataType
       ARCO_Data = value
   }
   
+  /** associate an external id to link with business glossary concepts 
+   */
+  private var BusinessGlossary_Id: String = ""
+  def getBusinessGlossary_Id: String = {return BusinessGlossary_Id}
+  def setBusinessGlossary_Id(value: String) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setBusinessGlossary_Id, definition is close")
+    else
+      BusinessGlossary_Id = value
+  }
+  
   private var DQ_MinLen: Integer = null
   def getDQ_MinLen: Integer = {return DQ_MinLen}
   def setDQ_MinLen(value: Integer) {
@@ -151,12 +162,28 @@ class huemul_Columns(param_DataType: DataType
    /** Validate Regular Expression
    */
   private var DQ_RegExp: String = null //none, sha2,
+  private var DQ_RegExp_externalCode: String = null
   def getDQ_RegExp: String = {return DQ_RegExp}
-  def setDQ_RegExp(value: String) {
+  def getDQ_RegExp_externalCode: String = {return DQ_RegExp_externalCode}
+  def setDQ_RegExp(value: String, dq_externalCode: String = null) {
     if (DefinitionIsClose)
       sys.error("You can't change value of setDQ_RegExp, definition is close")
-    else
+    else {
       DQ_RegExp = value
+      DQ_RegExp_externalCode = dq_externalCode
+    }
+  }
+  
+  /**
+   save all old values trace in other table
+   */
+  private var MDM_EnableOldValue_FullTrace: Boolean = false
+  def getMDM_EnableOldValue_FullTrace: Boolean = {return MDM_EnableOldValue_FullTrace}
+  def setMDM_EnableOldValue_FullTrace(value: Boolean) {
+    if (DefinitionIsClose)
+      sys.error("You can't change value of setMDM_EnableOldValue_FullTrace, definition is close")
+    else
+      MDM_EnableOldValue_FullTrace = value
   }
   
   /**
@@ -232,7 +259,7 @@ class huemul_Columns(param_DataType: DataType
    ReplaceOldValueOnUpdate: true (default) for replace values in table <br>
    SQLForUpdate: example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)  <br>
    SQLForInsert: example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)  <br>
-  <b> in both case, don't iunclude "as Namefield". "old" is reference to table, new is reference to your DataFrame </b> 
+  <b> in both cases, don't include "as Namefield". "old" is a reference to the table, new is reference to your DataFrame </b> 
    */
   def SetMapping(param_name: String, ReplaceValueOnUpdate: Boolean = true, SQLForUpdate: String = null, SQLForInsert: String = null) {
     this.MappedName = param_name

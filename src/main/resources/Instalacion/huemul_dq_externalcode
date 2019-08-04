@@ -1,0 +1,8 @@
+HUEMUL_DQ_001: foreing key
+HUEMUL_DQ_002: primary key
+HUEMUL_DQ_003: unique column
+HUEMUL_DQ_004: not null column
+HUEMUL_DQ_005: reg_exp validation  for Column
+HUEMUL_DQ_006: string length DQ for Column
+HUEMUL_DQ_007: number range
+HUEMUL_DQ_008: DateTime range

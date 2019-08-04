@@ -18,8 +18,13 @@ class huemul_DQRecord extends Serializable {
   var DQ_toleranceError_Percent: Decimal= null
   var DQ_ResultDQ: String= null
   var DQ_ErrorCode: Integer = null
+  var DQ_ExternalCode: String = null
   var DQ_NumRowsOK: Long = 0
   var DQ_NumRowsError: Long= 0
   var DQ_NumRowsTotal: Long= 0
   var DQ_IsError: Boolean = false
+  var DQ_IsWarning: Boolean = false
+  var DQ_duration_hour: Integer = null
+  var DQ_duration_minute: Integer = null
+  var DQ_duration_second: Integer = null
 }
