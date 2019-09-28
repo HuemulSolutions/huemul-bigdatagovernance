@@ -1672,38 +1672,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val AliasDistinct: String = s"___${x.MyName}_FKRuleDist__"
       val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
       val DF_Left = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct, SQLLeft)
-      
-      //Step3: Return DQ Validation
       val TotalLeft = DF_Left.count()
-      if (TotalLeft > 0) {
-        Result.isError = true
-        Result.Description = s"huemul_Table Error: Foreing Key DQ Error, ${TotalLeft} records not found"
-        Result.Error_Code = 1024
-        Result.dqDF = DF_Left
-        Result.profilingResult.count_all_Col = TotalLeft
-        DF_Left.show()
-        
-        //get SQL to save error details to DQ_Error_Table
-        val SQL_ErrorDetail = this.DataFramehuemul.DQ_GenQuery( AliasDistinct   //sqlfrom
-                                                              , null           //sqlwhere
-                                                              , true            //haveField
-                                                              , FirstRowFK      //fieldname
-                                                              , huemulType_DQNotification.ERROR //dq_error_notification 
-                                                              , Result.Error_Code //error_code
-                                                              , s"(${Result.Error_Code}) FK ERROR ON ${fk_table_name}"// dq_error_description
-                                                              )
-        val DetailErrorsDF = huemulBigDataGov.DF_ExecuteQuery("__error_dq_detail_fk", SQL_ErrorDetail)
-        
-        //Save errors to disk
-        if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DetailErrorsDF != null && this.getSaveDQResult) {
-          Control.NewStep("Start Save DQ Error Details for FK ")                
-          if (!savePersist_DQ(Control, DetailErrorsDF)){
-            huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
-          }
-        }
-      }
-      
-      
+         
       val NumTotalDistinct = DF_Distinct.count()
       val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
       val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
@@ -1733,6 +1703,37 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DQ_duration_second = duration.second.toInt
 
       this.DataFramehuemul.DQ_Register(Values) 
+      
+      //Step3: Return DQ Validation
+      if (TotalLeft > 0) {
+        Result.isError = true
+        Result.Description = s"huemul_Table Error: Foreing Key DQ Error, ${TotalLeft} records not found"
+        Result.Error_Code = 1024
+        Result.dqDF = DF_Left
+        Result.profilingResult.count_all_Col = TotalLeft
+        DF_Left.show()
+        
+        //get SQL to save error details to DQ_Error_Table
+        val SQL_ErrorDetail = this.DataFramehuemul.DQ_GenQuery( AliasDistinct   //sqlfrom
+                                                              , null           //sqlwhere
+                                                              , true            //haveField
+                                                              , FirstRowFK      //fieldname
+                                                              , Values.DQ_Id
+                                                              , huemulType_DQNotification.ERROR //dq_error_notification 
+                                                              , Result.Error_Code //error_code
+                                                              , s"(${Result.Error_Code}) FK ERROR ON ${fk_table_name}"// dq_error_description
+                                                              )
+        val DetailErrorsDF = huemulBigDataGov.DF_ExecuteQuery("__error_dq_detail_fk", SQL_ErrorDetail)
+        
+        //Save errors to disk
+        if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DetailErrorsDF != null && this.getSaveDQResult) {
+          Control.NewStep("Start Save DQ Error Details for FK ")                
+          if (!savePersist_DQ(Control, DetailErrorsDF)){
+            huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
+          }
+        }
+      }
+      
       
       DF_Distinct.unpersist()
     }
@@ -1895,10 +1896,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                                                         ON ${SQL_PK_on}
                                                                                 """)   
 
+                                                                              
+        val DQ_Id_PK = ResultDQ.getDQResult().filter { dqres => dqres.DQ_ErrorCode == 1018 }(0).DQ_Id
         val SQL_Detail = this.DataFramehuemul.DQ_GenQuery( "___temp_pk_det_02"   //sqlfrom
                                                           , null           //sqlwhere
                                                           , true            //haveField
                                                           , SQL_PK_firstCol      //fieldname
+                                                          , DQ_Id_PK
                                                           , huemulType_DQNotification.ERROR //dq_error_notification 
                                                           , 1018 //error_code
                                                           , s"(1018) PK ERROR ON ${SQL_PK_on}"// dq_error_description
