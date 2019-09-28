@@ -1708,7 +1708,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
       val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
       
-      val Values = new huemul_DQRecord()
+      val Values = new huemul_DQRecord(huemulBigDataGov)
       Values.Table_Name =TableName
       Values.BBDD_Name =DataBaseName
       Values.DF_Alias = DataFramehuemul.Alias
