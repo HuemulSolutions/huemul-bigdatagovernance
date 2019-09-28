@@ -501,6 +501,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              , BBDD_Name: String
                              , DF_Alias: String
                              , ColumnName: String
+                             , DQ_Id: String
                              , DQ_Name: String
                              , DQ_Description: String
                              , DQ_QueryLevel: huemulType_DQQueryLevel //DQ_IsAggregate: Boolean
@@ -521,11 +522,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              , DQ_duration_second: Integer) {
                 
     //Create New Id
-    val DQId = huemulBigDataGov.huemul_GetUniqueId()
+    //val DQId = huemulBigDataGov.huemul_GetUniqueId() //version 2.1, issue 60
 
     if (huemulBigDataGov.RegisterInControl) {
       //Insert processExcec
-      control_DQ_add(   DQId
+      control_DQ_add(   DQ_Id //DQId
                          , Table_Name
                          , BBDD_Name
                          , this.Control_ClassName
