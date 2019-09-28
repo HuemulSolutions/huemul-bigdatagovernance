@@ -208,7 +208,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
       
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -269,7 +269,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -390,7 +390,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -604,7 +604,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -686,7 +686,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)    
     
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -854,7 +854,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         
         
         
-        val Values = new huemul_DQRecord()
+        val Values = new huemul_DQRecord(huemulBigDataGov)
         Values.Table_Name =dfTableName
         Values.BBDD_Name =dfDataBaseName
         Values.DF_Alias =AliasToQuery
@@ -954,6 +954,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         , DQ.BBDD_Name
         , DQ.DF_Alias
         , DQ.ColumnName
+        , DQ.DQ_Id
         , DQ.DQ_Name
         , DQ.DQ_Description
         , DQ.DQ_QueryLevel
