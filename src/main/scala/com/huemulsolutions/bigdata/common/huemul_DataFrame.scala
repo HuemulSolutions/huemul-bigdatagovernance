@@ -899,6 +899,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                                       ,s"not (${x.getSQLFormula()})"
                                       ,!(x.getFieldName == null) //asField
                                       ,if (x.getFieldName == null) "all" else x.getFieldName.get_MyName() //fieldName
+                                      ,Values.DQ_Id
                                       ,x.getNotification()
                                       ,x.getErrorCode()
                                       ,s"(Id ${x.getId}) ${x.getDescription}"
@@ -934,11 +935,13 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                   ,whereSQL: String
                   ,haveField: Boolean
                   ,fieldName: String
+                  ,dq_id: String
                   ,dq_error_notification: huemulType_DQNotification.huemulType_DQNotification
                   ,error_code: Integer
                   ,dq_error_description: String
                   ): String = {
     return s"""SELECT '${Control.Control_Id }' as dq_control_id
+                                     ,'${dq_id }' as dq_error_id
                                      ,'${if (haveField) fieldName else "all"}' as dq_error_columnname
                                      ,'${dq_error_notification}' as dq_error_notification 
                                      ,'${error_code}' as dq_error_code
