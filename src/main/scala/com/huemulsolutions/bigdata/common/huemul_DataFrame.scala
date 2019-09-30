@@ -130,8 +130,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /**   
    Create DF from SQL (equivalent to spark.sql method)
    */
-  def _CreateFinalQuery(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null, finalTable: huemul_Table) {
-    //WARNING: ANY CHANGE ON DF_from_SQL MUST BE REPLIATE IN THIS METHOD
+  def _CreateFinalQuery(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null, finalTable: huemul_Table, storageLevelOfDF: org.apache.spark.storage.StorageLevel) {
+    //WARNING: ANY CHANGE ON DF_from_SQL MUST BE REPLICATE IN THIS METHOD
     
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
     val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
@@ -139,6 +139,10 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
       
+    if (storageLevelOfDF != null) {
+      huemulBigDataGov.logMessageDebug(s"DF to ${storageLevelOfDF}")
+      DFTemp.persist(storageLevelOfDF)
+    }
     
     local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()

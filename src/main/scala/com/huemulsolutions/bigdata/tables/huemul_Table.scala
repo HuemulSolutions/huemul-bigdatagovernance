@@ -2070,7 +2070,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
 
      
       //STEP 2: Execute final table  //Add this.getNumPartitions param in v1.3
-      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this)
+      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this, storageLevelOfDF)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
         
       //Unpersist first DF
@@ -2099,7 +2099,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery)
         huemulBigDataGov.logMessageDebug(SQLFinalTable)
       //STEP 2: Execute final table //Add debugmode and getnumpartitions in v1.3
-      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this)
+      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this, storageLevelOfDF)
       
       LocalControl.NewStep("Transaction: Get Statistics info")
       this._NumRows_Total = this.DataFramehuemul.getNumRows
@@ -2234,7 +2234,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
 
      
       //STEP 2: Execute final table // Add debugmode and getnumpartitions in v1.3 
-      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this)
+      DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this, storageLevelOfDF)
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
       
       
@@ -2260,13 +2260,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     } else
       raiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
       
-    //if (this._NumRows_Total < 1000000)
-    if (storageLevelOfDF != null) {
-      //huemulBigDataGov.logMessageInfo("***** cache")
-      this.DataFramehuemul.DataFrame.persist(storageLevelOfDF)
-      }
-    //else 
-      //huemulBigDataGov.logMessageInfo("***** sin cache")
+    
+    
   }
   
   private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String, Alias: String) {
