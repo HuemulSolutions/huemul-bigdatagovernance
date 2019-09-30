@@ -820,6 +820,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       //import java.util.Calendar;
       //Get DQ Result from DF
       
+      Control.NewStep(s"Step: DQ Result: Start analyzing the DQ result") 
       getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
         x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId}")
         x.NumRowsTotal = if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) 1 else DQTotalRows
@@ -894,7 +895,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         //Save details to DF with errors
         if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails()) {
           //Query to get detail errors
-          //Control.NewStep(s"Step: DQ Result: Get detales for (Id ${x.getId}) ${x.getDescription} ") 
+          Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}) ") 
           val SQL_Detail = DQ_GenQuery(AliasToQuery
                                       ,s"not (${x.getSQLFormula()})"
                                       ,!(x.getFieldName == null) //asField
@@ -906,6 +907,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                                       )
                                
           //Execute query
+          Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}, save to DF) ") 
           var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
                                
           if (DF_ErrorDetails == null)

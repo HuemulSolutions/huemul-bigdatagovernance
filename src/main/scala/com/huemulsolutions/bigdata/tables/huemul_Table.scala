@@ -1741,7 +1741,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
-  private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean): huemul_DataQualityResult = {
+  private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean, LocalControl: huemul_Control): huemul_DataQualityResult = {
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayDQ: ArrayBuffer[huemul_DataQuality] = new ArrayBuffer[huemul_DataQuality]()
     
@@ -1882,6 +1882,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             SQL_PK_on = s"${SQL_PK_on} PK.${x_cols.get_MyName()} = dup.${x_cols.get_MyName()} "
         }    
         
+        
+        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step1)")
         //PK error found, get PK duplicated
         val df_detail_01 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_01", s""" SELECT ${SQL_PK}, COUNT(1) as Cantidad
                                                                                    FROM ${this.DataFramehuemul.Alias}
@@ -1890,6 +1892,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                                                 """)
         df_detail_01.cache()
         //get rows duplicated
+        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step2)")
         val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT PK.*
                                                                                    FROM ${this.DataFramehuemul.Alias} PK
                                                                                      INNER JOIN ___temp_pk_det_01 dup
@@ -1909,6 +1912,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                           )
                              
         //Execute query
+        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (save to disk)")
         var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ_PK", SQL_Detail)
                              
         if (ResultDQ.DetailErrorsDF == null)
@@ -2441,7 +2445,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
       //DataQuality by Columns
       LocalControl.NewStep("Start DataQuality")
-      val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate)
+      val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate, LocalControl)
       //Foreing Keys by Columns
       LocalControl.NewStep("Start ForeingKey ")
       val FKResult = DF_ForeingKeyMasterAuto()
