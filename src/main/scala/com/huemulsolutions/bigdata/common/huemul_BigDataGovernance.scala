@@ -848,9 +848,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /**
    * Execute a SQL sentence, create a new alias and save de DF result into HDFS
    */
-  def DF_ExecuteQuery(Alias: String, SQL: String): DataFrame = {
+  def DF_ExecuteQuery(Alias: String, SQL: String, numPartitions: Integer = 0): DataFrame = {
     if (this.DebugMode && !HideLibQuery) logMessageDebug(SQL)        
-    val SQL_DF = this.spark.sql(SQL)            //Ejecuta Query
+    var SQL_DF = this.spark.sql(SQL)            //Ejecuta Query
+    if (numPartitions != null && numPartitions > 0)
+      SQL_DF = SQL_DF.repartition(numPartitions)      
+      
     if (this.DebugMode) SQL_DF.show()
     //Change alias name
     SQL_DF.createOrReplaceTempView(Alias)         //crea vista sql
@@ -859,9 +862,16 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     return SQL_DF
   }
   
+  /**
+   * Execute a SQL sentence, create a new alias and save de DF result into HDFS
+   */
+  def DF_ExecuteQuery(Alias: String, SQL: String): DataFrame = {
+    return DF_ExecuteQuery(Alias, SQL, 0)
+  }
+  
   def DF_ExecuteQuery(Alias: String, SQL: String, Control: huemul_Control ): DataFrame = {
     val dt_start = getCurrentDateTimeJava()
-    val Result = DF_ExecuteQuery(Alias, SQL)
+    val Result = DF_ExecuteQuery(Alias, SQL, 0)
     val dt_end = getCurrentDateTimeJava()
     
     DF_SaveLineage(Alias
