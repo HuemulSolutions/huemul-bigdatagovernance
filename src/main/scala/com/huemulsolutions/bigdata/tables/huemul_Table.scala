@@ -1673,6 +1673,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
       val DF_Left = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct, SQLLeft)
       val TotalLeft = DF_Left.count()
+      
+      if (TotalLeft > 0) {
+        Result.isError = true
+        Result.Description = s"huemul_Table Error: Foreing Key DQ Error, ${TotalLeft} records not found"
+        Result.Error_Code = 1024
+        Result.dqDF = DF_Left
+        Result.profilingResult.count_all_Col = TotalLeft
+        DF_Left.show()
+      }
          
       val NumTotalDistinct = DF_Distinct.count()
       val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
@@ -1706,12 +1715,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //Step3: Return DQ Validation
       if (TotalLeft > 0) {
-        Result.isError = true
-        Result.Description = s"huemul_Table Error: Foreing Key DQ Error, ${TotalLeft} records not found"
-        Result.Error_Code = 1024
-        Result.dqDF = DF_Left
-        Result.profilingResult.count_all_Col = TotalLeft
-        DF_Left.show()
         
         //get SQL to save error details to DQ_Error_Table
         val SQL_ErrorDetail = this.DataFramehuemul.DQ_GenQuery( AliasDistinct   //sqlfrom
