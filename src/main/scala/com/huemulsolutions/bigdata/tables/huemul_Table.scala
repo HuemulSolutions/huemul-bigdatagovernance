@@ -2759,7 +2759,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Save DQ Result data to disk
    */
-  private def savePersist_DQ(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
+  def savePersist_DQ(LocalControl: huemul_Control, DF: DataFrame): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
     this._table_dq_isused = 1

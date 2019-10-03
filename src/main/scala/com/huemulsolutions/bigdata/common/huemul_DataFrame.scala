@@ -914,10 +914,22 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
           Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}, save to DF) ") 
           var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
                                
-          if (DF_ErrorDetails == null)
-            DF_ErrorDetails = DF_EDetail
-          else
-            DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
+          if (dMaster == null) {
+            //acumulate DF, if call is outside huemul_Table
+            if (DF_ErrorDetails == null)
+              DF_ErrorDetails = DF_EDetail
+            else
+              DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
+          } else {
+            //if call is from huemul_Table, save detail to disk
+            //Save errors to disk
+            if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DF_EDetail != null && dMaster.getSaveDQResult) {
+              Control.NewStep("Start Save DQ Error Details ")                
+              if (!dMaster.savePersist_DQ(Control, DF_EDetail)){
+                huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
+              }
+            }
+          }
         }
       }
     }
