@@ -1901,7 +1901,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                                                      INNER JOIN ___temp_pk_det_01 dup
                                                                                         ON ${SQL_PK_on}
                                                                                 """)   
-
+        val numReg = df_detail_02.count()                                                                                 
                                                                               
         val DQ_Id_PK = ResultDQ.getDQResult().filter { dqres => dqres.DQ_ErrorCode == 1018 }(0).DQ_Id
         val SQL_Detail = this.DataFramehuemul.DQ_GenQuery( "___temp_pk_det_02"   //sqlfrom
@@ -1911,11 +1911,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                           , DQ_Id_PK
                                                           , huemulType_DQNotification.ERROR //dq_error_notification 
                                                           , 1018 //error_code
-                                                          , s"(1018) PK ERROR ON ${SQL_PK_on}"// dq_error_description
+                                                          , s"(1018) PK ERROR ON ${SQL_PK_on} ($numReg reg)"// dq_error_description
                                                           )
                              
         //Execute query
-        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (save to disk)")
+        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step3, $numReg rows)")
         var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ_PK", SQL_Detail)
                              
         if (ResultDQ.DetailErrorsDF == null)
