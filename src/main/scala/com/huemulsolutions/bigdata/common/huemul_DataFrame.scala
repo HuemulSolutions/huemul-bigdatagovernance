@@ -789,6 +789,10 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    Run DataQuality defined in Master
    */
   def DF_RunDataQuality(OfficialDataQuality: ArrayBuffer[huemul_DataQuality], ManualRules: ArrayBuffer[huemul_DataQuality], DF_to_Query: String, dMaster: huemul_Table): huemul_DataQualityResult = {
+    DF_RunDataQuality(OfficialDataQuality, ManualRules, DF_to_Query, dMaster, true)  
+  }
+  
+  def DF_RunDataQuality(OfficialDataQuality: ArrayBuffer[huemul_DataQuality], ManualRules: ArrayBuffer[huemul_DataQuality], DF_to_Query: String, dMaster: huemul_Table, registerDQOnce: Boolean ): huemul_DataQualityResult = {
     val AliasToQuery = if (DF_to_Query == null) this.AliasDF else DF_to_Query
      
     /*****************************************************************/
@@ -914,13 +918,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
           //Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}, save to DF) ") 
           var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
                                
-          if (dMaster == null) {
-            //acumulate DF, if call is outside huemul_Table
-            if (DF_ErrorDetails == null)
-              DF_ErrorDetails = DF_EDetail
-            else
-              DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
-          } else {
+          if (dMaster != null && !registerDQOnce) {
             //if call is from huemul_Table, save detail to disk
             //Save errors to disk
             if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DF_EDetail != null && dMaster.getSaveDQResult) {
@@ -929,6 +927,12 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                 huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
               }
             }
+          } else {
+            //acumulate DF, if call is outside huemul_Table
+            if (DF_ErrorDetails == null)
+              DF_ErrorDetails = DF_EDetail
+            else
+              DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
           }
         }
       }

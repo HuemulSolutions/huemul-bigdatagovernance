@@ -208,7 +208,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       _Frequency = value
   }
   private var _Frequency: huemulType_Frequency = null
-  def getFrequency: huemulType_Frequency = {return _Frequency} 
+  def getFrequency: huemulType_Frequency = {return _Frequency}
+  
+  /**
+   * SaveDQErrorOnce: true (default value) to save DQ result to disk only once (all together)
+   * false to save DQ result to disk independently (each DQ error or warning)
+  */
+  def setSaveDQErrorOnce(value: Boolean) {
+    if (DefinitionIsClose)
+      this.raiseError("You can't change value of SaveDQErrorOnce, definition is close", 1033)
+    else
+      _SaveDQErrorOnce = value
+  }
+  private var _SaveDQErrorOnce: Boolean = true
+  def getSaveDQErrorOnce: Boolean = {return _SaveDQErrorOnce}
+  
   
   /**
    * Automatically map query names
@@ -225,7 +239,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
   }
     
-
+  
   /**
    DataQuality: max N° records, null does'nt apply  DQ , 0 value doesn't accept new records (raiseError if new record found)
    If table is empty, DQ doesn't apply
@@ -1862,7 +1876,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         ArrayDQ.append(MinMaxDT)
     }
     
-    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.getDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this)
+    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.getDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this, this.getSaveDQErrorOnce)
     
     if (ResultDQ.isError){
       Result.isError = true
@@ -1893,10 +1907,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                                                    GROUP BY ${SQL_PK}
                                                                                    HAVING COUNT(1) > 1
                                                                                 """)
-        val numReg_01 = df_detail_01.count()
+        //val numReg_01 = df_detail_01.count()
         //get rows duplicated
-        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step2, $numReg_01 duplicated)")
-        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT ${if (numReg_01 < 1000000) "/*+ BROADCAST(dup) */ " else "" } PK.*
+        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step2)")
+        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT /*+ BROADCAST(dup) */ PK.*
                                                                                    FROM ${this.DataFramehuemul.Alias} PK
                                                                                      INNER JOIN ___temp_pk_det_01 dup
                                                                                         ON ${SQL_PK_on}
