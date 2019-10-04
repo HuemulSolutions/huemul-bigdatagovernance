@@ -1893,10 +1893,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                                                    GROUP BY ${SQL_PK}
                                                                                    HAVING COUNT(1) > 1
                                                                                 """)
-        df_detail_01.cache()
+        val numReg_01 = df_detail_01.count()
         //get rows duplicated
-        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step2)")
-        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT PK.*
+        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step2, $numReg_01 duplicated)")
+        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT ${if (numReg_01 < 1000000) "/*+ BROADCAST(dup) */ " else "" } PK.*
                                                                                    FROM ${this.DataFramehuemul.Alias} PK
                                                                                      INNER JOIN ___temp_pk_det_01 dup
                                                                                         ON ${SQL_PK_on}
