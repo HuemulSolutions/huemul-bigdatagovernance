@@ -973,6 +973,104 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                                ${if (whereSQL == null || whereSQL == "") "" else s"WHERE ${whereSQL}" }"""
   }
   
+  
+  
+  /**
+   * Create table script to save DF to disk
+   */
+  private def DF_CreateTable_Script(parquetLocation: String, fullTableName: String): String = {
+    //create structu
+    var ColumnsCreateTable : String = ""
+    var coma: String = ""
+    
+    this.DataDF.schema.fields.foreach { x => 
+      ColumnsCreateTable += s"$coma${x.name} ${x.dataType.sql} \n"
+      coma = ","
+    }
+    
+    
+    //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+    val lCreateTableScript = s"""
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${fullTableName} (${ColumnsCreateTable })
+                                 STORED AS PARQUET                            
+                                 LOCATION '${parquetLocation}'"""
+                                 
+    if (huemulBigDataGov.DebugMode)
+      huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
+      
+    return lCreateTableScript    
+  }
+  
+  
+  
+  /**
+   * Save Result data to disk
+   */
+  def savePersistToDisk(OverriteIfExist: Boolean, tableNameInHive: String, localPath: String, globalPath: ArrayBuffer[huemul_KeyValuePath] = huemulBigDataGov.GlobalSettings.SANDBOX_BigFiles_Path, databaseName: ArrayBuffer[huemul_KeyValuePath] = huemulBigDataGov.GlobalSettings.SANDBOX_DataBase ): Boolean = {
+    var Result: Boolean = true
+    val tempPath = huemulBigDataGov.GlobalSettings.GetPathForSaveTableWithoutDG(huemulBigDataGov, globalPath, localPath, tableNameInHive)
+    
+    try {      
+      Control.NewStep("Saving DF to Disk")
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${tempPath} ")
+      if (OverriteIfExist)
+        this.DataDF.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+      else 
+        this.DataDF.write.mode(SaveMode.Append).format("parquet").save(tempPath)
+      
+    } catch {
+      case e: Exception => 
+        Result = false
+        Control.Control_Error.GetError(e, getClass.getSimpleName, 2008)
+    }
+    
+    if (Result) {
+      //if (CreateInHive ) {
+        val ddbbName: String = huemulBigDataGov.getDataBase(databaseName)
+        val tabName: String = s"$ddbbName.$tableNameInHive"
+        val sqlDrop01 = s"drop table if exists ${tabName}"
+        Control.NewStep("Save: Drop Hive table Def")
+        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
+        try {
+          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(ddbbName).collect()
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableNameInHive.toUpperCase() }.length > 0) 
+            huemulBigDataGov.spark.sql(sqlDrop01)
+            
+        } catch {
+          case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+        }
+       
+      //}
+        
+      try {
+        //create table
+        //if (CreateInHive ) {
+          Control.NewStep("Save: Create Table in Hive Metadata")
+          val lscript = DF_CreateTable_Script(tempPath, tabName) 
+          huemulBigDataGov.spark.sql(lscript)
+        //}
+    
+        //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
+        //Control.NewStep("Save: Repair Hive Metadata")
+        //if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"MSCK REPAIR TABLE ${tabName}")
+        //huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${tabName}")
+        
+        if (huemulBigDataGov.ImpalaEnabled) {
+          Control.NewStep("Save: refresh Impala Metadata")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"invalidate metadata ${tabName}")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh ${tabName}")
+        }
+      } catch {
+        case e: Exception => 
+          Result = false
+          Control.Control_Error.GetError(e, getClass.getSimpleName,2009)
+      }
+    }
+      
+    return Result
+    
+  }
+  
   def DQ_Register(DQ: huemul_DQRecord) {
     DQ_Result.append(DQ)
     Control.RegisterDQuality(DQ.Table_Name
