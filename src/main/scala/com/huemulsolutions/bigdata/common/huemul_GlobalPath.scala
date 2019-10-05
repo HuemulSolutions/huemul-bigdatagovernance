@@ -113,6 +113,11 @@ class huemul_GlobalPath() extends Serializable {
       return s"${GetPath(huemulBigDataGov, TEMPORAL_Path)}$function_name/$table_name"
     }
     
+    //to save DF directly from DF without DataGovernance
+    def GetPathForSaveTableWithoutDG(huemulBigDataGov: huemul_BigDataGovernance,globalPath: ArrayBuffer[huemul_KeyValuePath], localPath_name: String, table_name: String): String = {        
+      return s"${GetPath(huemulBigDataGov, globalPath)}$localPath_name/$table_name"
+    }
+    
     
     def RaiseError(Environment: String) {
       sys.error(s"error, environment does't exist: '$Environment', must be '$GlobalEnvironments'  ")
