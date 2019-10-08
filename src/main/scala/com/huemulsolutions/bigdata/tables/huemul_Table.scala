@@ -1730,6 +1730,16 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Step3: Return DQ Validation
       if (TotalLeft > 0) {
         
+        DF_ProcessToDQ( AliasDistinct   //sqlfrom
+                        , null           //sqlwhere
+                        , true            //haveField
+                        , FirstRowFK      //fieldname
+                        , Values.DQ_Id
+                        , huemulType_DQNotification.ERROR //dq_error_notification 
+                        , Result.Error_Code //error_code
+                        , s"(${Result.Error_Code}) FK ERROR ON ${fk_table_name}"// dq_error_description
+                        )
+        /* //replaced with DF_ProcessToDQ from 2.1
         //get SQL to save error details to DQ_Error_Table
         val SQL_ErrorDetail = this.DataFramehuemul.DQ_GenQuery( AliasDistinct   //sqlfrom
                                                               , null           //sqlwhere
@@ -1749,6 +1759,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
           }
         }
+        * 
+        */
       }
       
       
@@ -1756,6 +1768,36 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     return Result
+  }
+  
+  private def DF_ProcessToDQ(fromSQL: String
+                  ,whereSQL: String
+                  ,haveField: Boolean
+                  ,fieldName: String
+                  ,dq_id: String
+                  ,dq_error_notification: huemulType_DQNotification.huemulType_DQNotification
+                  ,error_code: Integer
+                  ,dq_error_description: String
+                  ) {
+    //get SQL to save error details to DQ_Error_Table
+        val SQL_ProcessToDQDetail = this.DataFramehuemul.DQ_GenQuery( fromSQL   
+                                                              , whereSQL           
+                                                              , haveField            
+                                                              , fieldName      
+                                                              , dq_id
+                                                              , dq_error_notification  
+                                                              , error_code 
+                                                              , dq_error_description
+                                                              )
+        val DetailDF = huemulBigDataGov.DF_ExecuteQuery("__DetailDF", SQL_ProcessToDQDetail)
+        
+        //Save errors to disk
+        if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DetailDF != null && this.getSaveDQResult) {
+          Control.NewStep("Start Save DQ Error Details for FK ")                
+          if (!savePersist_DQ(Control, DetailDF)){
+            huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
+          }
+        }
   }
   
   private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean, LocalControl: huemul_Control): huemul_DataQualityResult = {
@@ -2342,7 +2384,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var Result: Boolean = false
     val whoExecute = getClassAndPackage()  
     if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.executeSave(NewAlias, true, true, true, false, null, storageLevelOfDF)      
+      Result = this.executeSave(NewAlias, true, true, true, false, null, storageLevelOfDF, false)      
     else {
       raiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
       
@@ -2351,14 +2393,25 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return Result
   }
   
+  //2.1: compatibility with previous version
   def executeOnlyInsert(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
+    return executeOnlyInsert(NewAlias, storageLevelOfDF, false)
+  }
+  
+  //2.1: add RegisterOnlyInsertInDQ params
+  def executeOnlyInsert(NewAlias: String, RegisterOnlyInsertInDQ: Boolean): Boolean = {
+    return executeOnlyInsert(NewAlias, null, RegisterOnlyInsertInDQ)
+  }
+  
+  //2.1: introduce RegisterOnlyInsertInDQ
+  def executeOnlyInsert(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel, RegisterOnlyInsertInDQ: Boolean): Boolean = {
     var Result: Boolean = false
     if (this._TableType == huemulType_Tables.Transaction)
       raiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
 
     val whoExecute = getClassAndPackage()  
     if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.executeSave(NewAlias, true, false, false, false, null, storageLevelOfDF) 
+      Result = this.executeSave(NewAlias, true, false, false, false, null, storageLevelOfDF, RegisterOnlyInsertInDQ) 
     else {
       raiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
     }
@@ -2373,7 +2426,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     val whoExecute = getClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.executeSave(NewAlias, false, true, false, false, null, storageLevelOfDF)  
+      Result = this.executeSave(NewAlias, false, true, false, false, null, storageLevelOfDF, false)  
     else {
       raiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
@@ -2387,7 +2440,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     val whoExecute = getClassAndPackage()  
     if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
-      Result = this.executeSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate, storageLevelOfDF)  
+      Result = this.executeSave(NewAlias, false, false, false, true, PartitionValueForSelectiveUpdate, storageLevelOfDF, false)  
     else {
       raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
@@ -2423,7 +2476,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Master & Reference: update and Insert
    Transactional: Delete and Insert new data
    */
-  private def executeSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel): Boolean = {
+  private def executeSave(AliasNewData: String, IsInsert: Boolean, IsUpdate: Boolean, IsDelete: Boolean, IsSelectiveUpdate: Boolean, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel, RegisterOnlyInsertInDQ: Boolean): Boolean = {
     if (!this.DefinitionIsClose)
       this.raiseError(s"huemul_Table Error: MUST call ApplyTableDefinition ${this.TableName}", 1048)
     
@@ -2497,7 +2550,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
       LocalControl.NewStep("Start Save ")                
-      if (savePersist(LocalControl, DataFramehuemul.DataFrame, OnlyInsert, IsSelectiveUpdate)){
+      if (savePersist(LocalControl, DataFramehuemul.DataFrame, OnlyInsert, IsSelectiveUpdate, RegisterOnlyInsertInDQ )){
         LocalControl.NewStep("Register Master Information ")
         Control.RegisterMASTER_CREATE_Use(this)
       
@@ -2552,7 +2605,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Save data to disk
    */
-  private def savePersist(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean): Boolean = {
+  private def savePersist(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean, RegisterOnlyInsertInDQ:Boolean): Boolean = {
     var DF_Final = DF
     var Result: Boolean = true
     
@@ -2570,8 +2623,55 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (OnlyInsert && !IsSelectiveUpdate) {
         DF_Final = DF_Final.where("___ActionType__ = 'NEW'") 
       }
-      if (OnlyInsert)
+      if (OnlyInsert) {
         DF_Final = DF_Final.drop("___ActionType__")
+      
+        if (RegisterOnlyInsertInDQ) {
+          val dt_start = huemulBigDataGov.getCurrentDateTimeJava()  
+          DF_Final.createOrReplaceGlobalTempView("__tempnewtodq")
+          val numRowsDQ = DF_Final.count()
+          val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+          val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
+          
+          //from 2.1: insertOnlyNew as DQ issue 
+          val Values = new huemul_DQRecord(huemulBigDataGov)
+          Values.Table_Name =TableName
+          Values.BBDD_Name =this.getDataBase(this._DataBase)
+          Values.DF_Alias = ""
+          Values.ColumnName = null
+          Values.DQ_Name =s"OnlyInsert"
+          Values.DQ_Description =s"new values inserted to master or reference table"
+          Values.DQ_QueryLevel = huemulType_DQQueryLevel.Row // IsAggregate =false
+          Values.DQ_Notification = huemulType_DQNotification.WARNING// RaiseError =true
+          Values.DQ_SQLFormula =""
+          Values.DQ_ErrorCode = 1055
+          Values.DQ_toleranceError_Rows = 0
+          Values.DQ_toleranceError_Percent = null
+          Values.DQ_ResultDQ ="new values inserted to master or reference table"
+          Values.DQ_NumRowsOK = 0
+          Values.DQ_NumRowsError = numRowsDQ
+          Values.DQ_NumRowsTotal =numRowsDQ
+          Values.DQ_IsError = false
+          Values.DQ_IsWarning = true
+          Values.DQ_ExternalCode = "HUEMUL_DQ_009"
+          Values.DQ_duration_hour = duration.hour.toInt
+          Values.DQ_duration_minute = duration.minute.toInt
+          Values.DQ_duration_second = duration.second.toInt
+          
+          this.DataFramehuemul.DQ_Register(Values)
+          
+          //from 2.1: add only insert to DQ record
+          DF_ProcessToDQ(   "__tempnewtodq"   //sqlfrom
+                          , null              //sqlwhere
+                          , false             //haveField
+                          , null              //fieldname
+                          , Values.DQ_Id
+                          , huemulType_DQNotification.WARNING //dq_error_notification 
+                          , Values.DQ_ErrorCode //error_code
+                          , s"(1055) huemul_Table Warning: new values inserted to master or reference table"// dq_error_description
+                          )
+        }
+      }
       
     }
       
