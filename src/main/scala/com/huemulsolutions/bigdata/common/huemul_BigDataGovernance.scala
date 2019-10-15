@@ -176,7 +176,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  logMessageInfo("huemul_BigDataGovernance version 2.1 - sv1.0") 
+  logMessageInfo("huemul_BigDataGovernance version 2.1 - sv1.0.1") 
        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
@@ -265,6 +265,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     case e: Exception => logMessageError("ImpalaEnabled: error values (true or false)")
   }
   
+  var getHiveMetadata: Boolean = true
+  try {
+    getHiveMetadata = arguments.GetValue("getHiveMetadata", "true" ).toBoolean
+  } catch {    
+    case e: Exception => logMessageError("getHiveMetadata: error values (true or false)")
+  }
   
   /**
    * Setting Control/PostgreSQL conectivity
@@ -340,7 +346,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * GET HIVE METADATA FOR COLUMNS TRACEABILITY
    *************************/
-  if (!TestPlanMode) {
+  if (!TestPlanMode && getHiveMetadata == true) {
     logMessageInfo("Start get hive table metadata..")
     getColumnsAndTables(false)
     logMessageInfo("End get hive table metadata..")
@@ -975,7 +981,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   
   
-  
+  log_info.setLevel(Level.ALL)
 }
 
 
