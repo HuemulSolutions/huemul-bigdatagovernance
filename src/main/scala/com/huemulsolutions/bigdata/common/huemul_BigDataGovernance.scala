@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.expressions.Coalesce
 import com.huemulsolutions.bigdata.sql_decode._
 import com.huemulsolutions.bigdata.control.huemul_Control
 import org.apache.log4j.Level
+
         
       
 /*
@@ -63,62 +64,142 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   def getColumnsAndTables(OnlyRefreshTempTables: Boolean): ArrayBuffer[huemul_sql_tables_and_columns] = {
     val inicio = this.getCurrentDateTimeJava()
     
-    if (OnlyRefreshTempTables)
-      _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
-    else 
-      _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
+    //try to get hive metadata from cache
+    var getFromHive: Boolean = true
+    val df_name: String = GlobalSettings.GetDebugTempPath(this, "internal", "temp_hive_metadata") + ".parquet"
     
-    //spark.catalog.listTables().show(10000)
-    //spark.catalog.listDatabases().show()
-    var numRowDatabase = 0
-    var allDatabases = spark.catalog.listDatabases().collect()
-    
-    //only get the first one
-    if (OnlyRefreshTempTables)
-      allDatabases = allDatabases.filter { x => x == allDatabases(0)  }
-    
-      
-    allDatabases.foreach { x_database =>
-      numRowDatabase += 1
-      //println(s"x_database.name: ${x_database.name}")
-      var resTables = spark.catalog.listTables(x_database.name).collect()
-      if (numRowDatabase > 1)
-        resTables = resTables.filter { x_fil => x_fil.database != null }
-      else {
-        //only get temp tables (null database)
-        if (OnlyRefreshTempTables)
-          resTables = resTables.filter { x_fil => x_fil.database == null }
-      }
-        //resTables.foreach { x_prin => println(x_prin) }
-      
-      
-      
-      resTables.foreach { x => 
-        //get all columns
-        //println(s"database: ${x.database}, table: ${x.name}")
-        //spark.catalog.listColumns(x.database, x.name).show(10000)
-        var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
-  
-        if (x.database == null)
-          listcols = spark.catalog.listColumns(x.name)
-        else
-          listcols = spark.catalog.listColumns(x.database, x.name)
+    //cache is set to true
+    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0) {
+      this.logMessageInfo(s"get Hive Metadata from cache")
+      //get from DF
+      try {
+        //try to read cache
+        var DF_get = this.spark.read.parquet(df_name).collect
+        this.logMessageInfo(s"Hive num Rows from cache: ${DF_get.length}")
+        //if any row, get datetime
+        if (DF_get.length > 0) {
+          val datetime_insert = DF_get(0).getAs[String]("datetime_insert")
           
-        listcols.collect().foreach { y =>
-          //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
-          val newRow = new huemul_sql_tables_and_columns()
-          newRow.column_name = y.name
-          newRow.database_name = if (x.database == null) "__temporary" else x.database
-          newRow.table_name = x.name
-          _ColumnsAndTables.append(newRow)
-        }  
+          //println(datetime_insert)
+          val start_hive_date = Calendar.getInstance
+          start_hive_date.setTime(dateTimeFormat.parse(datetime_insert))
+          val current_date = this.getCurrentDateTimeJava()
+          val diff_date = this.getDateTimeDiff(start_hive_date, current_date)
+          //println(start_hive_date)
+          //println(current_date)
+          //println(diff_date)
+          
+          //if elapsed hour > set hour, then refresh from hive
+          if (diff_date.days * 24 + diff_date.hour > this.GlobalSettings.HIVE_HourToUpdateMetadata) {
+            this.logMessageInfo(s"Time elapsed, must refresh Hive Metadata... ${diff_date.days * 24 + diff_date.hour} (elapsed) > ${this.GlobalSettings.HIVE_HourToUpdateMetadata} (set)")
+            getFromHive = true
+          } else {
+            _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
+            DF_get.foreach { x =>
+              val newreg = new huemul_sql_tables_and_columns()
+              newreg.database_name = x.getAs[String]("database_name")
+              newreg.table_name = x.getAs[String]("table_name")
+              newreg.column_name = x.getAs[String]("column_name")
+                
+              _ColumnsAndTables.append(newreg) 
+            }
+            
+            getFromHive = false
+          }
+            
+        } else {
+          getFromHive = true
+        }
+      } catch {
+        case e: Exception =>
+          println(e)
+          getFromHive = true
+      }
+    } 
+    
+    //get from hive if cache doesn't exists
+    if (getFromHive) {
+      this.logMessageInfo(s"get Hive Metadata from HIVE")
+      if (OnlyRefreshTempTables)
+        _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
+      else 
+        _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
+      
+      //spark.catalog.listTables().show(10000)
+      //spark.catalog.listDatabases().show()
+      var numRowDatabase = 0
+      var allDatabases = spark.catalog.listDatabases().collect()
+      
+      //only get the first one
+      if (OnlyRefreshTempTables)
+        allDatabases = allDatabases.filter { x => x == allDatabases(0)  }
+      
+        
+      allDatabases.foreach { x_database =>
+        numRowDatabase += 1
+        //println(s"x_database.name: ${x_database.name}")
+        var resTables = spark.catalog.listTables(x_database.name).collect()
+        if (numRowDatabase > 1)
+          resTables = resTables.filter { x_fil => x_fil.database != null }
+        else {
+          //only get temp tables (null database)
+          if (OnlyRefreshTempTables)
+            resTables = resTables.filter { x_fil => x_fil.database == null }
+        }
+          //resTables.foreach { x_prin => println(x_prin) }
+        
+        
+        
+        resTables.foreach { x => 
+          //get all columns
+          //println(s"database: ${x.database}, table: ${x.name}")
+          //spark.catalog.listColumns(x.database, x.name).show(10000)
+          var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
+    
+          if (x.database == null)
+            listcols = spark.catalog.listColumns(x.name)
+          else
+            listcols = spark.catalog.listColumns(x.database, x.name)
+            
+          listcols.collect().foreach { y =>
+            //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
+            val newRow = new huemul_sql_tables_and_columns()
+            newRow.column_name = y.name
+            newRow.database_name = if (x.database == null) "__temporary" else x.database
+            newRow.table_name = x.name
+            _ColumnsAndTables.append(newRow)
+          }  
+        }
       }
     }
+    
+    
+    
+    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0 && getFromHive) {
+      this.logMessageInfo(s"Save Hive Metadata to cache")
+      import spark.implicits._
+      val ldt = this.getCurrentDateTime()
+      val b = _ColumnsAndTables.map { x => TempHiveSchema(x.database_name, x.table_name, x.column_name, ldt ) }.toList
+      val bDF = b.toDF()
+      bDF.repartition(1).write.mode(SaveMode.Overwrite).parquet(df_name )
+    }
+    
     
     val duration = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
     logMessageInfo(s"duration (hh:mm:ss): ${"%02d".format(duration.hour)}:${"%02d".format(duration.minute)}:${"%02d".format(duration.second)}")
     //println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
+    
+    //_ColumnsAndTables.foreach { x => println(s"${x.database_name}, ${x.table_name}, ${x.column_name}")}
     return _ColumnsAndTables 
+  }
+  
+  private def CreateTempHiveSchema(): StructType = {
+    //Fields
+    var fieldsDetail : ArrayBuffer[StructField] = null
+    fieldsDetail.append(StructField("database_name", StringType, nullable = true) )
+    fieldsDetail.append(StructField("table_name", StringType, nullable = true) )
+    fieldsDetail.append(StructField("column_name", StringType, nullable = true) )
+    return StructType(fieldsDetail)
   }
   
   def num_to_text(text_format: String, value: Any): String = {
@@ -176,7 +257,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  logMessageInfo("huemul_BigDataGovernance version 2.1 - sv1.0.1") 
+  logMessageInfo("huemul_BigDataGovernance version 2.1 - sv1.0.2") 
        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
@@ -984,4 +1065,8 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   log_info.setLevel(Level.ALL)
 }
 
+case class TempHiveSchema(database_name: String, table_name: String, column_name: String, datetime_insert: String) extends Serializable {
+    
+}
+    
 
