@@ -67,7 +67,9 @@ class huemul_GlobalPath() extends Serializable {
     var MDM_SaveBackup: Boolean = true
     val MDM_Backup_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
 
-    
+    //from 2.1
+    //set > 1 to cache hive metadata
+    var HIVE_HourToUpdateMetadata: Integer = 0
     
     /**
      Returns true if path has value, otherwise return false
