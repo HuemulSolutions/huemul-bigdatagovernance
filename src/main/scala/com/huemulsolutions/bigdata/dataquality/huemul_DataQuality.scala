@@ -30,6 +30,11 @@ class huemul_DataQuality(FieldName: huemul_Columns
   
   private var _DQ_ExternalCode: String = DQ_ExternalCode
   private var ToleranceError_Percent: Decimal = null
+  private var _QueryLevel: huemulType_DQQueryLevel = QueryLevel
+  private var _Notification: huemulType_DQNotification = Notification
+  private var _SaveErrorDetails: Boolean = SaveErrorDetails
+  
+  
   /**% of total for refuse validation. Example: 0.15 = 15% (null to not use)
    */
   def getToleranceError_Percent: Decimal = {return ToleranceError_Percent}
@@ -47,9 +52,7 @@ class huemul_DataQuality(FieldName: huemul_Columns
   def setId(Id: Integer) {_Id = Id}
   def getId(): Integer = {return _Id}
   
-  private var _QueryLevel: huemulType_DQQueryLevel = QueryLevel
-  private var _Notification: huemulType_DQNotification = Notification
-  private var _SaveErrorDetails: Boolean = SaveErrorDetails
+  
   
   
   def getFieldName(): huemul_Columns = {return FieldName}
