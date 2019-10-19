@@ -522,7 +522,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Nombre de DQ      
       if (x.get(this).isInstanceOf[huemul_DataQuality]) {
         val DQField = x.get(this).asInstanceOf[huemul_DataQuality]
-        DQField.setMyName(x.getName)       
+        DQField.setMyName(x.getName)     
+        
+        if (DQField.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE && DQField.getSaveErrorDetails() == false)
+          raiseError(s"huemul_Table Error: DQ ${x.getName}:, Notification is set to WARNING_EXCLUDE, but SaveErrorDetails is set to false. Use setSaveErrorDetails to set true ",1055)
+          
       }
       
       //Nombre de FK
@@ -542,7 +546,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulControl: end ApplyTableDefinition")
     if (!HasPK) this.raiseError("huemul_Table Error: PK not defined", 1017)
     if (this.getTableType == huemulType_Tables.Transaction && !PartitionFieldValid)
-      raiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional (invalida name ${this.getPartitionField} )",1035)
+      raiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional (invalid name ${this.getPartitionField} )",1035)
       
     DefinitionIsClose = true
     return true
