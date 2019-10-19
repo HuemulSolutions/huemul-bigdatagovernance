@@ -882,7 +882,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         Values.DQ_NumRowsError =DQWithError
         Values.DQ_NumRowsTotal =x.NumRowsTotal    
         Values.DQ_IsError = x.getNotification() == huemulType_DQNotification.ERROR && IsError //IsError 
-        Values.DQ_IsWarning = x.getNotification() == huemulType_DQNotification.WARNING && IsError
+        Values.DQ_IsWarning = (x.getNotification() == huemulType_DQNotification.WARNING || x.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE) && IsError
         Values.DQ_duration_hour = duration.hour.toInt
         Values.DQ_duration_minute = duration.minute.toInt
         Values.DQ_duration_second = duration.second.toInt
