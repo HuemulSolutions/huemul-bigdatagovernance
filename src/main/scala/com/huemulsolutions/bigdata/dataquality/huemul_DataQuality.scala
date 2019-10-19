@@ -47,11 +47,16 @@ class huemul_DataQuality(FieldName: huemul_Columns
   def setId(Id: Integer) {_Id = Id}
   def getId(): Integer = {return _Id}
   
+  private var _QueryLevel: huemulType_DQQueryLevel = QueryLevel
+  private var _Notification: huemulType_DQNotification = Notification
+  private var _SaveErrorDetails: Boolean = SaveErrorDetails
+  
+  
   def getFieldName(): huemul_Columns = {return FieldName}
-  def getQueryLevel(): huemulType_DQQueryLevel  = {return QueryLevel}
+  def getQueryLevel(): huemulType_DQQueryLevel  = {return _QueryLevel}
   def getDescription(): String  ={return  Description}
-  def getNotification(): huemulType_DQNotification = {return Notification}
-  def getSaveErrorDetails(): Boolean = {return if (QueryLevel == huemulType_DQQueryLevel.Row) SaveErrorDetails else false}
+  def getNotification(): huemulType_DQNotification = {return _Notification}
+  def getSaveErrorDetails(): Boolean = {return if (_QueryLevel == huemulType_DQQueryLevel.Row) _SaveErrorDetails else false}
   def getErrorCode(): Integer = {return Error_Code}
   def setDQ_ExternalCode(value: String) {_DQ_ExternalCode = value }
   def getDQ_ExternalCode(): String = {return _DQ_ExternalCode}
@@ -76,5 +81,22 @@ class huemul_DataQuality(FieldName: huemul_Columns
     ToleranceError_Rows = toleranceRows
     ToleranceError_Percent = tolerancePercent
   }
+  
+  def setQueryLevel(value: huemulType_DQQueryLevel): huemul_DataQuality = {
+    _QueryLevel = value
+    this
+  }
+  
+  def setNotification(value: huemulType_DQNotification ): huemul_DataQuality = {
+    _Notification = value
+    this
+  }
+  
+  def setSaveErrorDetails(value: Boolean): huemul_DataQuality = {
+    _SaveErrorDetails = value
+    this
+  }
+  
+  
  
 }
