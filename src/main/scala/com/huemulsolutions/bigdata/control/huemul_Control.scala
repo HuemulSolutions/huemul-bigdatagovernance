@@ -65,12 +65,12 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private var control_QueryArray: ArrayBuffer[huemul_control_query] = new ArrayBuffer[huemul_control_query]()
   private var control_QueryColArray: ArrayBuffer[huemul_control_querycol] = new ArrayBuffer[huemul_control_querycol]()
   
-  //new from 2.1: get version from control_config
-  control_getVersion()
-  
-  //Find process name in control_process
-  
+  //Find process name in control_process  
   if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) {
+    //new from 2.1: get version from control_config
+    control_getVersion()
+
+  
     control_process_addOrUpd(Control_ClassName
                   ,Control_ClassName
                   ,Control_FileName
