@@ -1695,6 +1695,29 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     return ExecResult             
   }
   
+  /**
+   * Get DQ details with dq_notification = WARNING_EXCLUDE and dq_iswarning = 1
+   */
+  def control_getDQResultForWarningExclude(): ArrayBuffer[String] = {
+    //Get Table Id
+    var result: ArrayBuffer[String] = new ArrayBuffer[String]()
+    
+    val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          select  dq_id
+          from control_dq
+          where processexec_id = ${ReplaceSQLStringNulls(this.Control_Id,null)}
+          AND   dq_notification = ${ReplaceSQLStringNulls("WARNING_EXCLUDE",null)}
+          AND   dq_iswarning = 1
+      """)
+    
+      
+    ExecResultTable.ResultSet.foreach { x =>  
+      result.append(x.getAs[String]("dq_id"))
+    }   
+    
+    return result
+  }
+  
   def control_getDQResult(): huemul_JDBCResult = {
     //Get Table Id
     val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
