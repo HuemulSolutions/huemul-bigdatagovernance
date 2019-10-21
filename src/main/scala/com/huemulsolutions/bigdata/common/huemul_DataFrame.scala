@@ -963,7 +963,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                   ,dq_error_description: String
                   ): String = {
     return s"""SELECT '${Control.Control_Id }' as dq_control_id
-                                     ,'${dq_id }' as dq_error_id
+                                     ,'${dq_id }' as dq_dq_id
                                      ,'${if (haveField) fieldName else "all"}' as dq_error_columnname
                                      ,'${dq_error_notification}' as dq_error_notification 
                                      ,'${error_code}' as dq_error_code
