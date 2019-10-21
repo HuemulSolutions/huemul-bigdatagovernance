@@ -2149,7 +2149,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								   ,tableuse_numrowsupdatable
                       								   ,tableuse_numrowsnochange 
                       								   ,tableuse_numrowsmarkdelete
-                                         ,tableuse_numrowsexcluded
+                                         ${if (getVersionFull() >= 20100) " ,tableuse_numrowsexcluded" else "" /* from 2.1: */}
                       								   ,tableuse_numrowstotal
                       								   ,tableuse_partitionvalue
                                          ,tableuse_pathbackup
@@ -2174,7 +2174,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${p_TableUse_numRowsUpdatable}
           		   ,${p_TableUse_numRowsNoChange}
           		   ,${p_TableUse_numRowsMarkDelete}
-          		   ,${p_TableUse_numRowsExcluded}
+          		   ${if (getVersionFull() >= 20100) s",${p_TableUse_numRowsExcluded}" else "" /* from 2.1: */}
           		   ,${p_TableUse_numRowsTotal}
           		   ,${ReplaceSQLStringNulls(p_TableUse_PartitionValue,200)}
           		   ,${ReplaceSQLStringNulls(p_Tableuse_pathbackup,1000)}
@@ -2226,6 +2226,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       case e: Exception => 
         huemulBigDataGov.logMessageError(s"control version error_ ${e}")
     }
+    
+    if (getVersionFull() > 0)
+      huemulBigDataGov.logMessageInfo(s"control model version compatibility: ${getVersionFull()} ")
+      
   }
   private var _version_mayor: Int = 0
   private var _version_minor: Int = 0
