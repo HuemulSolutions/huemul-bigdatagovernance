@@ -526,6 +526,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         if (DQField.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE && DQField.getSaveErrorDetails() == false)
           raiseError(s"huemul_Table Error: DQ ${x.getName}:, Notification is set to WARNING_EXCLUDE, but SaveErrorDetails is set to false. Use setSaveErrorDetails to set true ",1055)
+        else if (DQField.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE && DQField.getQueryLevel() != huemulType_DQQueryLevel.Row )
+          raiseError(s"huemul_Table Error: DQ ${x.getName}:, Notification is set to WARNING_EXCLUDE, QueryLevel MUST set to huemulType_DQQueryLevel.Row",1056)
           
       }
       
@@ -632,6 +634,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var _NumRows_Delete: Long = null
   private var _NumRows_Total: Long = null
   private var _NumRows_NoChange: Long = null
+  private var _NumRows_Excluded: Long = 0
   
   def NumRows_New(): Long = {
     return _NumRows_New
@@ -655,6 +658,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   def NumRows_NoChange(): Long = {
     return _NumRows_NoChange
+  }
+  
+  def NumRows_Excluded(): Long = {
+    return _NumRows_Excluded
   }
    /*  ********************************************************************************
    *****   F I E L D   M E T H O D S    **************************************** 
@@ -2171,6 +2178,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       this._NumRows_Updatable = 0
       this._NumRows_Delete = 0
       this._NumRows_NoChange = 0
+      this._NumRows_Excluded = 0
       
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
     } 
@@ -2350,6 +2358,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     this._NumRows_Updatable  = FirstRow.getAs("__Updatable")
     this._NumRows_Delete = FirstRow.getAs("__Delete")
     this._NumRows_NoChange= FirstRow.getAs("__NoChange")
+    
     
     
     LocalControl.NewStep(s"${TypeOfCall}: Validating Insert & Update")
@@ -2554,7 +2563,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       
       LocalControl.NewStep("Start Save ")                
-      if (savePersist(LocalControl, DataFramehuemul.DataFrame, OnlyInsert, IsSelectiveUpdate, RegisterOnlyInsertInDQ )){
+      if (savePersist(LocalControl, DataFramehuemul, OnlyInsert, IsSelectiveUpdate, RegisterOnlyInsertInDQ )){
         LocalControl.NewStep("Register Master Information ")
         Control.RegisterMASTER_CREATE_Use(this)
       
@@ -2609,9 +2618,57 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Save data to disk
    */
-  private def savePersist(LocalControl: huemul_Control, DF: DataFrame, OnlyInsert: Boolean, IsSelectiveUpdate: Boolean, RegisterOnlyInsertInDQ:Boolean): Boolean = {
-    var DF_Final = DF
+  private def savePersist(LocalControl: huemul_Control, DF_huemul: huemul_DataFrame , OnlyInsert: Boolean, IsSelectiveUpdate: Boolean, RegisterOnlyInsertInDQ:Boolean): Boolean = {
+    var DF_Final = DF_huemul.DataFrame
     var Result: Boolean = true
+    
+    //Add from 2.1: exclude DQ from WARNING_EXCLUDE
+    val warning_Exclude_detail = Control.control_getDQResultForWarningExclude()
+    if (warning_Exclude_detail.length > 0) {
+      
+      //get PK
+      var dq_StringSQL_PK: String = ""
+      var dq_StringSQL_PK_join: String = ""
+      var dq_firstPK: String = null
+      var coma: String = ""
+      var _and: String = ""
+      getALLDeclaredFields().filter { x => x.setAccessible(true)
+                                           x.get(this).isInstanceOf[huemul_Columns] &&
+                                           x.get(this).asInstanceOf[huemul_Columns].getIsPK }
+      .foreach { x =>
+        dq_StringSQL_PK += s" ${coma}${x.getName}"
+        dq_StringSQL_PK_join += s" ${_and} PK.${x.getName} = EXCLUDE.${x.getName}" 
+        if (dq_firstPK == null)
+          dq_firstPK = x.getName
+        coma = ","
+        _and = " and "
+      }
+      
+      
+      //get DQ with WARNING_EXCLUDE > 0 rows
+      var dq_id_list: String = ""
+      coma = ""
+      warning_Exclude_detail.foreach { x => 
+        dq_id_list = s"""${dq_id_list}${coma}"${x}"""" 
+        coma = ","
+      }
+      val _tableNameDQ: String = internalGetTable(huemulType_InternalTableType.DQ)
+      
+      //get PK Details
+      LocalControl.NewStep("WARNING_EXCLUDE: Get details")
+      val DQ_Det = huemulBigDataGov.DF_ExecuteQuery("__DQ_Det", s"""SELECT DISTINCT ${dq_StringSQL_PK} FROM ${_tableNameDQ} WHERE dq_control_id="${Control.Control_Id}" AND dq_dq_id in ($warning_Exclude_detail)""")
+      //Broadcast
+      _NumRows_Excluded = DQ_Det.count()
+      var apply_broadcast: String = ""
+      if (_NumRows_Excluded < 50000)
+        apply_broadcast = "/*+ BROADCAST(EXCLUDE) */"
+        
+      //exclude
+      LocalControl.NewStep("WARNING_EXCLUDE: EXCLUDE rows")
+      DF_Final = huemulBigDataGov.DF_ExecuteQuery(DF_huemul.Alias,s"SELECT $apply_broadcast PK.* FROM ${DF_huemul.Alias} LEFT JOIN __DQ_Det EXCLUDE ON ${dq_StringSQL_PK_join} WHERE EXCLUDE.${dq_firstPK} IS NULL ")
+      
+      this.UpdateStatistics(LocalControl, "WARNING_EXCLUDE", DF_huemul.Alias)
+    }
     
     //Add from 2.0: save Old Value Trace
     if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace && _SQL_OldValueFullTrace_DF != null) {
@@ -2786,6 +2843,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
       }
     }
+    
+    //from 2.1: assing final DF to huemulDataFrame
+    DF_huemul.setDataFrame(DF_Final, DF_huemul.Alias, false) 
     
     //from 2.0: update dq and ovt used
     LocalControl.RegisterMASTER_UPDATE_isused(this)
