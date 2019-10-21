@@ -62,9 +62,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private val testPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = new scala.collection.mutable.ListBuffer[huemul_TestPlan]() 
   def getTestPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = {return testPlanDetails}
   
-  //import com.huemulsolutions.bigdata.
   private var control_QueryArray: ArrayBuffer[huemul_control_query] = new ArrayBuffer[huemul_control_query]()
   private var control_QueryColArray: ArrayBuffer[huemul_control_querycol] = new ArrayBuffer[huemul_control_querycol]()
+  
+  //new from 2.1: get version from control_config
+  control_getVersion()
   
   //Find process name in control_process
   
@@ -2184,6 +2186,55 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     return ExecResult             
   }
+  
+  /**
+   * New from 2.1
+   * Used to get current version of control model
+   */
+  private def control_getVersion() {
+    try {
+      val ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          SELECT version_mayor
+                ,version_minor
+                ,version_patch
+					FROM control_config
+          WHERE config_id = 1
+      """)
+      
+      if (ExecResult.IsError) {
+        huemulBigDataGov.logMessageError("control version table not found...")
+      } else if (ExecResult.ResultSet.length == 0){
+        //insert 2.1
+        huemulBigDataGov.logMessageInfo("control version: insert new version")
+        val ExecResultCol = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_config (config_id, version_mayor, version_minor, version_patch)
+          VALUES (1,2,1,0)
+          """)
+          
+          _version_mayor = 2
+          _version_minor = 1
+          _version_patch = 0
+      } else {
+        _version_mayor = ExecResult.GetValue("version_mayor", ExecResult.ResultSet(0)).toString().toInt
+        _version_minor = ExecResult.GetValue("version_minor", ExecResult.ResultSet(0)).toString().toInt
+        _version_patch = ExecResult.GetValue("version_patch", ExecResult.ResultSet(0)).toString().toInt
+      }
+      
+      
+    
+    } catch {
+      case e: Exception => 
+        huemulBigDataGov.logMessageError(s"control version error_ ${e}")
+    }
+  }
+  private var _version_mayor: Int = 0
+  private var _version_minor: Int = 0
+  private var _version_patch: Int = 0
+  
+  def getVersionMayor(): Int = {return _version_mayor}
+  def getVersionMinor(): Int = {return _version_minor}
+  def getVersionPatch(): Int = {return _version_patch}
+  def getVersionFull(): Int = {return s"""${"%02d".format(_version_mayor)}${"%02d".format(_version_minor)}${"%02d".format(_version_patch)}""".toInt }
   
   /**
    * New from 2.0
