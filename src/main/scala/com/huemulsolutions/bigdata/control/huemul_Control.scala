@@ -735,6 +735,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,null //DefMaster.NumRows_Updatable()
                              ,null //DefMaster.NumRows_NoChange() 
                              ,null //DefMaster.NumRows_Delete()
+                             ,null //DefMaster.numRows_Excluded()
                              ,null //DefMaster.NumRows_Total()
                              ,DefMaster.getPartitionValue
                              ,DefMaster._getBackupPath()
@@ -1037,6 +1038,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,DefMaster.NumRows_Updatable()
                              ,DefMaster.NumRows_NoChange() 
                              ,DefMaster.NumRows_Delete()
+                             ,DefMaster.NumRows_Excluded()
                              ,DefMaster.NumRows_Total()
                              ,DefMaster.getPartitionValue
                              ,DefMaster._getBackupPath()
@@ -2103,6 +2105,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_TableUse_numRowsUpdatable: java.lang.Long
                              ,p_TableUse_numRowsNoChange: java.lang.Long
                              ,p_TableUse_numRowsMarkDelete: java.lang.Long
+                             ,p_TableUse_numRowsExcluded: java.lang.Long
                              ,p_TableUse_numRowsTotal: java.lang.Long
                              ,p_TableUse_PartitionValue: String
                              ,p_Tableuse_pathbackup: String
@@ -2144,6 +2147,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								   ,tableuse_numrowsupdatable
                       								   ,tableuse_numrowsnochange 
                       								   ,tableuse_numrowsmarkdelete
+                                         ,tableuse_numrowsexcluded
                       								   ,tableuse_numrowstotal
                       								   ,tableuse_partitionvalue
                                          ,tableuse_pathbackup
@@ -2168,6 +2172,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${p_TableUse_numRowsUpdatable}
           		   ,${p_TableUse_numRowsNoChange}
           		   ,${p_TableUse_numRowsMarkDelete}
+          		   ,${p_TableUse_numRowsExcluded}
           		   ,${p_TableUse_numRowsTotal}
           		   ,${ReplaceSQLStringNulls(p_TableUse_PartitionValue,200)}
           		   ,${ReplaceSQLStringNulls(p_Tableuse_pathbackup,1000)}
