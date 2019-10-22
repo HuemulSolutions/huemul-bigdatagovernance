@@ -383,6 +383,22 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return internalGetTable(huemulType_InternalTableType.Normal)
   }
   
+  //new from 2.1
+  /**
+   * Return DataBaseName.TableName for DQ
+   */
+  def getTable_DQ(): String = {
+    return internalGetTable(huemulType_InternalTableType.DQ)
+  }
+  
+  //new from 2.1
+  /**
+   * Return DataBaseName.TableName for OldValueTrace
+   */
+  def getTable_OldValueTrace(): String = {
+    return internalGetTable(huemulType_InternalTableType.OldValueTrace)
+  }
+  
   
   private def internalGetTable(internalTableType: huemulType_InternalTableType, withDataBase: Boolean = true): String = {
     var _getTable: String = ""
