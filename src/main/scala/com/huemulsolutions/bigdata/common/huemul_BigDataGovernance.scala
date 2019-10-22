@@ -257,7 +257,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  logMessageInfo("huemul_BigDataGovernance version 2.1 - sv1.0.2") 
+  logMessageInfo("huemul_BigDataGovernance version 2.1 - sv1.0.3") 
        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
@@ -338,6 +338,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   } catch {    
     case e: Exception => logMessageError("SaveTempDF: error values (true or false)")
   }
+  
+  var SaveTempTables: Boolean = true
+  try {
+    SaveTempTables = arguments.GetValue("SaveTempTables", "true" ).toBoolean
+  } catch {    
+    case e: Exception => logMessageError("SaveTempTables: error values (true or false)")
+  }
+  
   
   var ImpalaEnabled: Boolean = GlobalSettings.ImpalaEnabled
   try {
@@ -650,7 +658,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    */
   def CreateTempTable(DF: DataFrame, Alias: String, CreateTable: Boolean, NumPartitionCoalesce: Integer ) {
     //Create parquet in temp folder
-    if (CreateTable && SaveTempDF){
+    if (CreateTable && SaveTempDF && SaveTempTables){
       val FileToTemp: String = GlobalSettings.GetDebugTempPath(this, ProcessNameCall, Alias) + ".parquet"      
       logMessageInfo(s"path result for table alias $Alias: $FileToTemp ")
       //version 1.3 --> prueba para optimizar escritura temporal
