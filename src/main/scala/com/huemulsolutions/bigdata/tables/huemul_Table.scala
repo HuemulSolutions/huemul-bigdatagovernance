@@ -710,7 +710,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return StructType.apply(fieldsStruct)
   }
   
-  def getDataQuality(): ArrayBuffer[huemul_DataQuality] = {
+  def getDataQuality(warning_exclude: Boolean): ArrayBuffer[huemul_DataQuality] = {
     val GetDeclaredfields = getALLDeclaredFields()
     val Result = new ArrayBuffer[huemul_DataQuality]()
      
@@ -720,7 +720,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         .foreach { x =>
           //Get DQ
           var DQRule = x.get(this).asInstanceOf[huemul_DataQuality]
-          Result.append(DQRule)
+          
+          if (warning_exclude == true && DQRule.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE)
+            Result.append(DQRule)
+          else if (warning_exclude == false && DQRule.getNotification() != huemulType_DQNotification.WARNING_EXCLUDE)
+            Result.append(DQRule)
         }
       }
     
@@ -1461,11 +1465,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
   CREATE SQL SCRIPT FIELDS FOR VALIDATE NOT NULL ATTRIBUTES
    */
-  private def SQL_NotNull_FinalTable(): ArrayBuffer[huemul_Columns] = {
+  private def SQL_NotNull_FinalTable(warning_exclude: Boolean): ArrayBuffer[huemul_Columns] = {
     var StringSQL: ArrayBuffer[huemul_Columns] = new ArrayBuffer[huemul_Columns]()
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                           x.get(this).isInstanceOf[huemul_Columns] &&
-                                         !x.get(this).asInstanceOf[huemul_Columns].getNullable && huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
+                                         !x.get(this).asInstanceOf[huemul_Columns].getNullable && 
+                                         warning_exclude == false &&
+                                         huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
@@ -1671,12 +1677,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   */
   
-  private def DF_ForeingKeyMasterAuto(): huemul_DataQualityResult = {
+  private def DF_ForeingKeyMasterAuto(warning_exclude: Boolean): huemul_DataQualityResult = {
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayFK = this.getForeingKey()
     val DataBaseName = this.getDataBase(this._DataBase)
     //For Each Foreing Key Declared
-    ArrayFK.foreach { x =>
+    ArrayFK.filter { x => (warning_exclude == true && x.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE) ||
+                          (warning_exclude == false && x.getNotification() != huemulType_DQNotification.WARNING_EXCLUDE)
+                   } foreach { x =>
       
       //Step1: Create distinct FROM NEW DF
       var SQLFields: String = ""
@@ -1699,11 +1707,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val AliasDistinct_B: String = s"___${x.MyName}_FKRuleDistB__"
       val DF_Distinct = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct_B, s"SELECT DISTINCT ${SQLFields} FROM ${this.DataFramehuemul.Alias} ${if (x.AllowNull) s" WHERE ${FirstRowFK} is not null " else "" }")
         
+      var broadcast_sql: String = ""
+      if (x.getBroadcastJoin())
+        broadcast_sql = "/*+ BROADCAST(PK) */"
+        
       //Step2: left join with TABLE MASTER DATA
       val AliasLeft: String = s"___${x.MyName}_FKRuleLeft__"
       val InstanceTable = x._Class_TableName.asInstanceOf[huemul_Table]
       val fk_table_name = InstanceTable.internalGetTable(huemulType_InternalTableType.Normal)
-      val SQLLeft: String = s"""SELECT FK.* 
+      val SQLLeft: String = s"""SELECT $broadcast_sql FK.* 
                                  FROM ${AliasDistinct_B} FK 
                                    LEFT JOIN ${fk_table_name} PK
                                      ON ${SQLLeftJoin} 
@@ -1736,7 +1748,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DQ_Name =s"FK - ${SQLFields}"
       Values.DQ_Description =s"FK Validation: PK Table: ${InstanceTable.internalGetTable(huemulType_InternalTableType.Normal)} "
       Values.DQ_QueryLevel = huemulType_DQQueryLevel.Row // IsAggregate =false
-      Values.DQ_Notification = huemulType_DQNotification.ERROR// RaiseError =true
+      Values.DQ_Notification = x.getNotification() //from 2.1, before --> huemulType_DQNotification.ERROR// RaiseError =true
       Values.DQ_SQLFormula =SQLLeft
       Values.DQ_ErrorCode = Result.Error_Code
       Values.DQ_toleranceError_Rows =0
@@ -1745,8 +1757,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DQ_NumRowsOK =NumTotalDistinct - TotalLeft
       Values.DQ_NumRowsError =TotalLeft
       Values.DQ_NumRowsTotal =NumTotalDistinct
-      Values.DQ_IsError = Result.isError
-      Values.DQ_IsWarning = false
+      Values.DQ_IsError = if (x.getNotification() == huemulType_DQNotification.ERROR) Result.isError else false
+      Values.DQ_IsWarning = if (x.getNotification() != huemulType_DQNotification.ERROR) Result.isError else false
       Values.DQ_ExternalCode = "HUEMUL_DQ_001"
       Values.DQ_duration_hour = duration.hour.toInt
       Values.DQ_duration_minute = duration.minute.toInt
@@ -1762,32 +1774,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                         , true            //haveField
                         , FirstRowFK      //fieldname
                         , Values.DQ_Id
-                        , huemulType_DQNotification.ERROR //dq_error_notification 
+                        , x.getNotification() //from 2.1, before -->huemulType_DQNotification.ERROR //dq_error_notification 
                         , Result.Error_Code //error_code
                         , s"(${Result.Error_Code}) FK ERROR ON ${fk_table_name}"// dq_error_description
                         )
-        /* //replaced with DF_ProcessToDQ from 2.1
-        //get SQL to save error details to DQ_Error_Table
-        val SQL_ErrorDetail = this.DataFramehuemul.DQ_GenQuery( AliasDistinct   //sqlfrom
-                                                              , null           //sqlwhere
-                                                              , true            //haveField
-                                                              , FirstRowFK      //fieldname
-                                                              , Values.DQ_Id
-                                                              , huemulType_DQNotification.ERROR //dq_error_notification 
-                                                              , Result.Error_Code //error_code
-                                                              , s"(${Result.Error_Code}) FK ERROR ON ${fk_table_name}"// dq_error_description
-                                                              )
-        val DetailErrorsDF = huemulBigDataGov.DF_ExecuteQuery("__error_dq_detail_fk", SQL_ErrorDetail)
         
-        //Save errors to disk
-        if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DetailErrorsDF != null && this.getSaveDQResult) {
-          Control.NewStep("Start Save DQ Error Details for FK ")                
-          if (!savePersist_DQ(Control, DetailErrorsDF)){
-            huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
-          }
-        }
-        * 
-        */
       }
       
       
@@ -1827,7 +1818,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
   }
   
-  private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean, LocalControl: huemul_Control): huemul_DataQualityResult = {
+  private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean, LocalControl: huemul_Control, warning_exclude: Boolean): huemul_DataQualityResult = {
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayDQ: ArrayBuffer[huemul_DataQuality] = new ArrayBuffer[huemul_DataQuality]()
     
@@ -1848,25 +1839,28 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Result.isError = true
       Result.Description += "\nhuemul_Table Error: PK not defined"
       Result.Error_Code = 1017
-    }    
+    }  
     
-    val DQ_PK : huemul_DataQuality = new huemul_DataQuality(null, s"PK Validation",s"count(1) = count(distinct ${SQL_PK} )", 1018, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_002" )
-    DQ_PK.setTolerance(0, null)
-    ArrayDQ.append(DQ_PK)
+    if (!warning_exclude) { 
+      val DQ_PK : huemul_DataQuality = new huemul_DataQuality(null, s"PK Validation",s"count(1) = count(distinct ${SQL_PK} )", 1018, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_002" )
+      DQ_PK.setTolerance(0, null)
+      ArrayDQ.append(DQ_PK)    
+     
+      //*********************************
+      //Aplicar DQ según definición de campos en DataDefDQ: Unique Values   
+      //*********************************
+      SQL_Unique_FinalTable().foreach { x => 
+        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
         
-    //*********************************
-    //Aplicar DQ según definición de campos en DataDefDQ: Unique Values   
-    //*********************************
-    SQL_Unique_FinalTable().foreach { x => 
-      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
-      
-      val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(x, s"UNIQUE Validation ",s"count(1) = count(distinct ${x.get_MyName()} )", 2006, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_003" )
-      DQ_UNIQUE.setTolerance(0, null)
-      ArrayDQ.append(DQ_UNIQUE) 
+        val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(x, s"UNIQUE Validation ",s"count(1) = count(distinct ${x.get_MyName()} )", 2006, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_003" )
+        DQ_UNIQUE.setTolerance(0, null)
+        ArrayDQ.append(DQ_UNIQUE) 
+      }
     }
     
+    
     //Aplicar DQ según definición de campos en DataDefDQ: Acepta nulos (nullable)
-    SQL_NotNull_FinalTable().foreach { x => 
+    SQL_NotNull_FinalTable(warning_exclude).foreach { x => 
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD ${x.get_MyName()}")
       
         val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, s"Not Null for field ${x.get_MyName()} ", s"${x.get_MyName()} IS NOT NULL",1023, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_004")
@@ -1875,7 +1869,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //VAlidación DQ_RegExp
-    getColumns().filter { x => x.getDQ_RegExp != null}.foreach { x => 
+    getColumns().filter { x => x.getDQ_RegExp != null && warning_exclude == false}.foreach { x => 
         var SQLFormula : String = s"""${x.get_MyName()} rlike "${x.getDQ_RegExp}" """
 
         var tand = ""
@@ -1889,7 +1883,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
    
     //VAlidación DQ máximo y mínimo largo de texto
-    getColumns().filter { x => x.getDQ_MinLen != null || x.getDQ_MaxLen != null  }.foreach { x => 
+    getColumns().filter { x => (x.getDQ_MinLen != null || x.getDQ_MaxLen != null) && warning_exclude == false  }.foreach { x => 
         var SQLFormula : String = ""
 
         var tand = ""
@@ -1908,7 +1902,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //VAlidación DQ máximo y mínimo de números
-    getColumns().filter { x => x.getDQ_MinDecimalValue != null || x.getDQ_MaxDecimalValue != null  }.foreach { x => 
+    getColumns().filter { x => (x.getDQ_MinDecimalValue != null || x.getDQ_MaxDecimalValue != null) && warning_exclude == false  }.foreach { x => 
         
         var SQLFormula : String = ""
         var tand = ""
@@ -1927,7 +1921,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     //VAlidación DQ máximo y mínimo de fechas
-    getColumns().filter { x => x.getDQ_MinDateTimeValue != null || x.getDQ_MaxDateTimeValue != null  }.foreach { x => 
+    getColumns().filter { x => (x.getDQ_MinDateTimeValue != null || x.getDQ_MaxDateTimeValue != null) && warning_exclude == false  }.foreach { x => 
         
         var SQLFormula : String = ""
         var tand = ""
@@ -1945,7 +1939,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         ArrayDQ.append(MinMaxDT)
     }
     
-    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.getDataQuality(), ArrayDQ, this.DataFramehuemul.Alias, this, this.getSaveDQErrorOnce)
+    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.getDataQuality(warning_exclude), ArrayDQ, this.DataFramehuemul.Alias, this, this.getSaveDQErrorOnce)
     
     if (ResultDQ.isError){
       Result.isError = true
@@ -2537,20 +2531,45 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //do work
       DF_MDM_Dohuemul(LocalControl, AliasNewData,IsInsert, IsUpdate, IsDelete, IsSelectiveUpdate, PartitionValueForSelectiveUpdate, storageLevelOfDF)
   
+      
+   //WARNING_EXCLUDE (starting 2.1)
       //DataQuality by Columns
-      LocalControl.NewStep("Start DataQuality")
-      val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate, LocalControl)
+      LocalControl.NewStep("Start DataQuality ERROR AND WARNING")
+      val DQResult_EXCLUDE = DF_DataQualityMasterAuto(IsSelectiveUpdate, LocalControl, true)
       //Foreing Keys by Columns
-      LocalControl.NewStep("Start ForeingKey ")
-      val FKResult = DF_ForeingKeyMasterAuto()
+      LocalControl.NewStep("Start ForeingKey ERROR AND WARNING ")
+      val FKResult_EXCLUDE = DF_ForeingKeyMasterAuto(true)
+      
+      //from 2.1: exclude_warnings, update DataFramehuemul 
+      excludeRows(LocalControl)
+   
+    //REST OF RULES (DIFFERENT FROM WARNING_EXCLUDE)
+      //DataQuality by Columns
+      LocalControl.NewStep("Start DataQuality ERROR AND WARNING")
+      val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate, LocalControl, false)
+      //Foreing Keys by Columns
+      LocalControl.NewStep("Start ForeingKey ERROR AND WARNING ")
+      val FKResult = DF_ForeingKeyMasterAuto(false)
+      
       
       LocalControl.NewStep("Validating errors ")
       var localErrorCode: Integer = null
-      if (DQResult.isError || FKResult.isError) {
+      if (DQResult.isError || FKResult.isError || DQResult_EXCLUDE.isError || FKResult_EXCLUDE.isError) {
         result = false
         var ErrorDetail: String = ""
+        
+        if (DQResult_EXCLUDE.isError) {
+          ErrorDetail = s"DataQuality Error: \n${DQResult_EXCLUDE.Description}"
+          localErrorCode = DQResult_EXCLUDE.Error_Code
+        }
+        
+        if (FKResult_EXCLUDE.isError) {
+          ErrorDetail += s"\nForeing Key Validation Error: \n${FKResult_EXCLUDE.Description}"
+          localErrorCode = DQResult_EXCLUDE.Error_Code
+        }
+        
         if (DQResult.isError) {
-          ErrorDetail = s"DataQuality Error: \n${DQResult.Description}"
+          ErrorDetail += s"DataQuality Error: \n${DQResult.Description}"
           localErrorCode = DQResult.Error_Code
         }
         
@@ -2558,7 +2577,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           ErrorDetail += s"\nForeing Key Validation Error: \n${FKResult.Description}"
           localErrorCode = DQResult.Error_Code
         }
-              
+         
         
         raiseError(ErrorDetail, localErrorCode)
       }
@@ -2631,17 +2650,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
   }
   
-  /**
-   * Save data to disk
-   */
-  private def savePersist(LocalControl: huemul_Control, DF_huemul: huemul_DataFrame , OnlyInsert: Boolean, IsSelectiveUpdate: Boolean, RegisterOnlyInsertInDQ:Boolean): Boolean = {
-    var DF_Final = DF_huemul.DataFrame
-    var Result: Boolean = true
-    
+  private def excludeRows(LocalControl: huemul_Control): Unit = {
     //Add from 2.1: exclude DQ from WARNING_EXCLUDE
     val warning_Exclude_detail = Control.control_getDQResultForWarningExclude()
     if (warning_Exclude_detail.length > 0) {
-      
       //get PK
       var dq_StringSQL_PK: String = ""
       var dq_StringSQL_PK_join: String = ""
@@ -2681,11 +2693,22 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
       //exclude
       LocalControl.NewStep("WARNING_EXCLUDE: EXCLUDE rows")
-      DF_Final = huemulBigDataGov.DF_ExecuteQuery(DF_huemul.Alias,s"SELECT $apply_broadcast PK.* FROM ${DF_huemul.Alias} LEFT JOIN __DQ_Det EXCLUDE ON ${dq_StringSQL_PK_join} WHERE EXCLUDE.${dq_firstPK} IS NULL ")
+      DataFramehuemul.DF_from_SQL(DataFramehuemul.Alias, s"SELECT $apply_broadcast PK.* FROM ${DataFramehuemul.Alias} LEFT JOIN __DQ_Det EXCLUDE ON ${dq_StringSQL_PK_join} WHERE EXCLUDE.${dq_firstPK} IS NULL ")
       
-      this.UpdateStatistics(LocalControl, "WARNING_EXCLUDE", DF_huemul.Alias)
+      this.UpdateStatistics(LocalControl, "WARNING_EXCLUDE", DataFramehuemul.Alias)
     }
     
+    
+  }
+  
+  /**
+   * Save data to disk
+   */
+  private def savePersist(LocalControl: huemul_Control, DF_huemul: huemul_DataFrame , OnlyInsert: Boolean, IsSelectiveUpdate: Boolean, RegisterOnlyInsertInDQ:Boolean): Boolean = {
+    var DF_Final = DF_huemul.DataFrame
+    var Result: Boolean = true
+    
+        
     //Add from 2.0: save Old Value Trace
     if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace && _SQL_OldValueFullTrace_DF != null) {
       Result = savePersist_OldValueTrace(LocalControl,_SQL_OldValueFullTrace_DF)
@@ -2705,7 +2728,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
         if (RegisterOnlyInsertInDQ) {
           val dt_start = huemulBigDataGov.getCurrentDateTimeJava()  
-          DF_Final.createOrReplaceGlobalTempView("__tempnewtodq")
+          DF_Final.createOrReplaceTempView("__tempnewtodq")
           val numRowsDQ = DF_Final.count()
           val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
           val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
