@@ -2181,14 +2181,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //STEP 2: Execute final table //Add debugmode and getnumpartitions in v1.3
       DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this, storageLevelOfDF)
       
-      LocalControl.NewStep("Transaction: Get Statistics info")
-      this._NumRows_Total = this.DataFramehuemul.getNumRows
-      this._NumRows_New = this._NumRows_Total
-      this._NumRows_Update  = 0
-      this._NumRows_Updatable = 0
-      this._NumRows_Delete = 0
-      this._NumRows_NoChange = 0
-      this._NumRows_Excluded = 0
+      //LocalControl.NewStep("Transaction: Get Statistics info")
+      this.UpdateStatistics(LocalControl, "Transaction", null)
+      
       
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
     } 
@@ -2347,48 +2342,59 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String, Alias: String) {
     LocalControl.NewStep(s"${TypeOfCall}: Statistics")
-    //DQ for Reference and Master Data
-    val DQ_ReferenceData: DataFrame = huemulBigDataGov.spark.sql(
-                      s"""SELECT CAST(SUM(CASE WHEN ___ActionType__ = 'NEW' then 1 else 0 end) as Long) as __New
-                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' and SameHashKey = 0 then 1 else 0 end) as Long) as __Update
-                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' then 1 else 0 end) as Long) as __Updatable
-                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'DELETE' then 1 else 0 end) as Long) as __Delete
-                                ,CAST(SUM(CASE WHEN ___ActionType__ = 'EQUAL' OR
-                                              (___ActionType__ = 'UPDATE' and SameHashKey <> 0) then 1 else 0 end) as Long) as __NoChange
-                                ,CAST(count(1) AS Long) as __Total
-                          FROM ${Alias} temp 
-                       """)
     
-    if (huemulBigDataGov.DebugMode) DQ_ReferenceData.show()
-    
-    val FirstRow = DQ_ReferenceData.collect()(0) // .first()
-    this._NumRows_Total = FirstRow.getAs("__Total")
-    this._NumRows_New = FirstRow.getAs("__New")
-    this._NumRows_Update  = FirstRow.getAs("__Update")
-    this._NumRows_Updatable  = FirstRow.getAs("__Updatable")
-    this._NumRows_Delete = FirstRow.getAs("__Delete")
-    this._NumRows_NoChange= FirstRow.getAs("__NoChange")
-    
-    
-    
-    LocalControl.NewStep(s"${TypeOfCall}: Validating Insert & Update")
-    var DQ_Error: String = ""
-    var Error_Number: Integer = null
-    if (this._NumRows_Total == this._NumRows_New)
-      DQ_Error = "" //Doesn't have error, first run
-    else if (this._DQ_MaxNewRecords_Num != null && this._DQ_MaxNewRecords_Num > 0 && this._NumRows_New > this._DQ_MaxNewRecords_Num){
-      DQ_Error = s"huemul_Table Error: DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this._DQ_MaxNewRecords_Num}) "
-      Error_Number = 1005
-    }
-    else if (this._DQ_MaxNewRecords_Perc != null && this._DQ_MaxNewRecords_Perc > Decimal.apply(0) && (Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total)) > this._DQ_MaxNewRecords_Perc) {
-      DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total))}) exceeds % max defined (${this._DQ_MaxNewRecords_Perc}) "
-      Error_Number = 1006
-    }
-
-    if (DQ_Error != "")
-      raiseError(DQ_Error, Error_Number)
+    if (Alias == null) {
+      this._NumRows_Total = this.DataFramehuemul.getNumRows
+      this._NumRows_New = this._NumRows_Total
+      this._NumRows_Update  = 0
+      this._NumRows_Updatable = 0
+      this._NumRows_Delete = 0
+      this._NumRows_NoChange = 0
+      this._NumRows_Excluded = 0
+    } else {
+      //DQ for Reference and Master Data
+      val DQ_ReferenceData: DataFrame = huemulBigDataGov.spark.sql(
+                        s"""SELECT CAST(SUM(CASE WHEN ___ActionType__ = 'NEW' then 1 else 0 end) as Long) as __New
+                                  ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' and SameHashKey = 0 then 1 else 0 end) as Long) as __Update
+                                  ,CAST(SUM(CASE WHEN ___ActionType__ = 'UPDATE' then 1 else 0 end) as Long) as __Updatable
+                                  ,CAST(SUM(CASE WHEN ___ActionType__ = 'DELETE' then 1 else 0 end) as Long) as __Delete
+                                  ,CAST(SUM(CASE WHEN ___ActionType__ = 'EQUAL' OR
+                                                (___ActionType__ = 'UPDATE' and SameHashKey <> 0) then 1 else 0 end) as Long) as __NoChange
+                                  ,CAST(count(1) AS Long) as __Total
+                            FROM ${Alias} temp 
+                         """)
       
-    DQ_ReferenceData.unpersist()
+      if (huemulBigDataGov.DebugMode) DQ_ReferenceData.show()
+      
+      val FirstRow = DQ_ReferenceData.collect()(0) // .first()
+      this._NumRows_Total = FirstRow.getAs("__Total")
+      this._NumRows_New = FirstRow.getAs("__New")
+      this._NumRows_Update  = FirstRow.getAs("__Update")
+      this._NumRows_Updatable  = FirstRow.getAs("__Updatable")
+      this._NumRows_Delete = FirstRow.getAs("__Delete")
+      this._NumRows_NoChange= FirstRow.getAs("__NoChange")
+      
+      
+      
+      LocalControl.NewStep(s"${TypeOfCall}: Validating Insert & Update")
+      var DQ_Error: String = ""
+      var Error_Number: Integer = null
+      if (this._NumRows_Total == this._NumRows_New)
+        DQ_Error = "" //Doesn't have error, first run
+      else if (this._DQ_MaxNewRecords_Num != null && this._DQ_MaxNewRecords_Num > 0 && this._NumRows_New > this._DQ_MaxNewRecords_Num){
+        DQ_Error = s"huemul_Table Error: DQ MDM Error: N° New Rows (${this._NumRows_New}) exceeds max defined (${this._DQ_MaxNewRecords_Num}) "
+        Error_Number = 1005
+      }
+      else if (this._DQ_MaxNewRecords_Perc != null && this._DQ_MaxNewRecords_Perc > Decimal.apply(0) && (Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total)) > this._DQ_MaxNewRecords_Perc) {
+        DQ_Error = s"huemul_Table Error: DQ MDM Error: % New Rows (${(Decimal.apply(this._NumRows_New) / Decimal.apply(this._NumRows_Total))}) exceeds % max defined (${this._DQ_MaxNewRecords_Perc}) "
+        Error_Number = 1006
+      }
+  
+      if (DQ_Error != "")
+        raiseError(DQ_Error, Error_Number)
+        
+      DQ_ReferenceData.unpersist()
+    }
   }
   
   private def getClassAndPackage(): huemul_AuthorizationPair = {
@@ -2534,10 +2540,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
    //WARNING_EXCLUDE (starting 2.1)
       //DataQuality by Columns
-      LocalControl.NewStep("Start DataQuality ERROR AND WARNING")
+      LocalControl.NewStep("Start DataQuality WARNING_EXCLUDE")
       val DQResult_EXCLUDE = DF_DataQualityMasterAuto(IsSelectiveUpdate, LocalControl, true)
       //Foreing Keys by Columns
-      LocalControl.NewStep("Start ForeingKey ERROR AND WARNING ")
+      LocalControl.NewStep("Start ForeingKey WARNING_EXCLUDE ")
       val FKResult_EXCLUDE = DF_ForeingKeyMasterAuto(true)
       
       //from 2.1: exclude_warnings, update DataFramehuemul 
@@ -2684,7 +2690,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //get PK Details
       LocalControl.NewStep("WARNING_EXCLUDE: Get details")
-      val DQ_Det = huemulBigDataGov.DF_ExecuteQuery("__DQ_Det", s"""SELECT DISTINCT ${dq_StringSQL_PK} FROM ${_tableNameDQ} WHERE dq_control_id="${Control.Control_Id}" AND dq_dq_id in ($warning_Exclude_detail)""")
+      val DQ_Det = huemulBigDataGov.DF_ExecuteQuery("__DQ_Det", s"""SELECT DISTINCT ${dq_StringSQL_PK} FROM ${_tableNameDQ} WHERE dq_control_id="${Control.Control_Id}" AND dq_dq_id in ($dq_id_list)""")
       //Broadcast
       _NumRows_Excluded = DQ_Det.count()
       var apply_broadcast: String = ""
@@ -2692,10 +2698,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         apply_broadcast = "/*+ BROADCAST(EXCLUDE) */"
         
       //exclude
-      LocalControl.NewStep("WARNING_EXCLUDE: EXCLUDE rows")
-      DataFramehuemul.DF_from_SQL(DataFramehuemul.Alias, s"SELECT $apply_broadcast PK.* FROM ${DataFramehuemul.Alias} LEFT JOIN __DQ_Det EXCLUDE ON ${dq_StringSQL_PK_join} WHERE EXCLUDE.${dq_firstPK} IS NULL ")
+      LocalControl.NewStep(s"WARNING_EXCLUDE: EXCLUDE rows")
+      huemulBigDataGov.logMessageInfo(s"WARNING_EXCLUDE: ${_NumRows_Excluded} rows excluded")
+      DataFramehuemul.DF_from_SQL(DataFramehuemul.Alias, s"SELECT $apply_broadcast PK.* FROM ${DataFramehuemul.Alias} PK LEFT JOIN __DQ_Det EXCLUDE ON ${dq_StringSQL_PK_join} WHERE EXCLUDE.${dq_firstPK} IS NULL ")
       
-      this.UpdateStatistics(LocalControl, "WARNING_EXCLUDE", DataFramehuemul.Alias)
+      if (_TableType == huemulType_Tables.Transaction)
+        this.UpdateStatistics(LocalControl, "WARNING_EXCLUDE", null)
+      else 
+        this.UpdateStatistics(LocalControl, "WARNING_EXCLUDE", DataFramehuemul.Alias)
     }
     
     
