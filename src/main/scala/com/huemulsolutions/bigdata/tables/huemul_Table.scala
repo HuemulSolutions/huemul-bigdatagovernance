@@ -1725,7 +1725,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val AliasDistinct: String = s"___${x.MyName}_FKRuleDist__"
       val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
       val DF_Left = huemulBigDataGov.DF_ExecuteQuery(AliasDistinct, SQLLeft)
-      val TotalLeft = DF_Left.count()
+      var TotalLeft = DF_Left.count()
       
       if (TotalLeft > 0) {
         Result.isError = true
@@ -1734,9 +1734,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         Result.dqDF = DF_Left
         Result.profilingResult.count_all_Col = TotalLeft
         DF_Left.show()
+        
+        val DF_leftDetail = huemulBigDataGov.DF_ExecuteQuery("__DF_leftDetail", s"""SELECT FK.* 
+                                                                                    FROM ${this.DataFramehuemul.Alias} FK  
+                                                                                      LEFT JOIN ${fk_table_name} PK
+                                                                                         ON ${SQLLeftJoin} 
+                                                                                    WHERE ${FirstRowPK} IS NULL""")
+                                                                                    
+        
+        TotalLeft = DF_leftDetail.count()
+     
       }
          
-      val NumTotalDistinct = DF_Distinct.count()
+      //val NumTotalDistinct = DF_Distinct.count()
+      val numTotal = this.DataFramehuemul.getNumRows()
       val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
       val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
       
@@ -1754,9 +1765,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DQ_toleranceError_Rows =0
       Values.DQ_toleranceError_Percent =null
       Values.DQ_ResultDQ =Result.Description
-      Values.DQ_NumRowsOK =NumTotalDistinct - TotalLeft
+      Values.DQ_NumRowsOK =numTotal - TotalLeft
       Values.DQ_NumRowsError =TotalLeft
-      Values.DQ_NumRowsTotal =NumTotalDistinct
+      Values.DQ_NumRowsTotal =numTotal
       Values.DQ_IsError = if (x.getNotification() == huemulType_DQNotification.ERROR) Result.isError else false
       Values.DQ_IsWarning = if (x.getNotification() != huemulType_DQNotification.ERROR) Result.isError else false
       Values.DQ_ExternalCode = "HUEMUL_DQ_001"
@@ -1768,8 +1779,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //Step3: Return DQ Validation
       if (TotalLeft > 0) {
+       
         
-        DF_ProcessToDQ( AliasDistinct   //sqlfrom
+        DF_ProcessToDQ( "__DF_leftDetail"   //sqlfrom
                         , null           //sqlwhere
                         , true            //haveField
                         , FirstRowFK      //fieldname
@@ -2560,22 +2572,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       LocalControl.NewStep("Validating errors ")
       var localErrorCode: Integer = null
-      if (DQResult.isError || FKResult.isError || DQResult_EXCLUDE.isError || FKResult_EXCLUDE.isError) {
+      if (DQResult.isError || FKResult.isError ) {
         result = false
         var ErrorDetail: String = ""
-        
-        if (DQResult_EXCLUDE.isError) {
-          ErrorDetail = s"DataQuality Error: \n${DQResult_EXCLUDE.Description}"
-          localErrorCode = DQResult_EXCLUDE.Error_Code
-        }
-        
-        if (FKResult_EXCLUDE.isError) {
-          ErrorDetail += s"\nForeing Key Validation Error: \n${FKResult_EXCLUDE.Description}"
-          localErrorCode = DQResult_EXCLUDE.Error_Code
-        }
-        
+                
         if (DQResult.isError) {
-          ErrorDetail += s"DataQuality Error: \n${DQResult.Description}"
+          ErrorDetail = s"DataQuality Error: \n${DQResult.Description}"
           localErrorCode = DQResult.Error_Code
         }
         
@@ -2683,7 +2685,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var dq_id_list: String = ""
       coma = ""
       warning_Exclude_detail.foreach { x => 
-        dq_id_list = s"""${dq_id_list}${coma}"${x}"""" 
+        dq_id_list += s"""${coma}"${x}"""" 
         coma = ","
       }
       val _tableNameDQ: String = internalGetTable(huemulType_InternalTableType.DQ)
