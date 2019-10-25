@@ -636,7 +636,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     return c
   }
   
-  private var _SQL_OldValueFullTrace_DF: DataFrame = null 
+  //private var _SQL_OldValueFullTrace_DF: DataFrame = null 
   private var _MDM_AutoInc: Long = 0
   private var _ControlTableId: String = null
   def _getMDM_AutoInc(): Long = {return _MDM_AutoInc}
@@ -1434,7 +1434,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     if (IncludeActionType)
-      StringSQL += s", ___ActionType__ \n" 
+      StringSQL += s", ___ActionType__, SameHashKey \n" 
        
     StringSQL += s"FROM $NewAlias New\n" 
      
@@ -2318,7 +2318,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
                                          
       LocalControl.NewStep("Ref & Master: Final Table")
-      val SQLFinalTable = SQL_Step4_Final("__Hash_p1", huemulBigDataGov.ProcessNameCall, if (OnlyInsert) true else false)
+      //val SQLFinalTable = SQL_Step4_Final("__Hash_p1", huemulBigDataGov.ProcessNameCall, if (OnlyInsert) true else false)
+      //from 2.1: incluye ActionType fro all master and transaction table types, to use on statistics 
+      val SQLFinalTable = SQL_Step4_Final("__Hash_p1", huemulBigDataGov.ProcessNameCall, true )
 
      
       //STEP 2: Execute final table // Add debugmode and getnumpartitions in v1.3 
@@ -2326,30 +2328,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
       
       
-      //CREATE NEW DATAFRAME WITH MDM OLD VALUE FULL TRACE
-      _SQL_OldValueFullTrace_DF = null
-      if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace) {
-        LocalControl.NewStep("Ref & Master: MDM Old Value Full Trace")
-        val SQL_FullTrace = SQL_Step_OldValueTrace("__FullJoin", huemulBigDataGov.ProcessNameCall)
-        
-        if (SQL_FullTrace != null){ //if null, doesn't have the mdm old "value full trace" to get          
-          _SQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery("__SQL_OldValueFullTrace_DF",SQL_FullTrace)
-          
-        }
-          
-        
-      }
-      //Unpersist first DF
-//      SQLHash_p2_DF.unpersist()
-//      SQLHash_p1_DF.unpersist()
-//      SQLFullJoin_DF.unpersist()
       
       
     } else
       raiseError(s"huemul_Table Error: ${_TableType} found, Master o Reference required ", 1007)
-      
-    
-    
   }
   
   private def UpdateStatistics(LocalControl: huemul_Control, TypeOfCall: String, Alias: String) {
@@ -2720,13 +2702,25 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var DF_Final = DF_huemul.DataFrame
     var Result: Boolean = true
     
-        
+    //from 2.1 --> change position of this code, to get after WARNING_EXCLUDE
     //Add from 2.0: save Old Value Trace
-    if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace && _SQL_OldValueFullTrace_DF != null) {
-      Result = savePersist_OldValueTrace(LocalControl,_SQL_OldValueFullTrace_DF)
-      if (!Result)
-        return Result 
-    } 
+    //CREATE NEW DATAFRAME WITH MDM OLD VALUE FULL TRACE
+    if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace) {
+      LocalControl.NewStep("Ref & Master: MDM Old Value Full Trace")
+      val SQL_FullTrace = SQL_Step_OldValueTrace("__FullJoin", huemulBigDataGov.ProcessNameCall)
+      
+      var tempSQL_OldValueFullTrace_DF : DataFrame = null 
+      if (SQL_FullTrace != null){ //if null, doesn't have the mdm old "value full trace" to get          
+        tempSQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery("__SQL_OldValueFullTrace_DF",SQL_FullTrace) 
+      
+        if (tempSQL_OldValueFullTrace_DF != null) {
+          Result = savePersist_OldValueTrace(LocalControl,tempSQL_OldValueFullTrace_DF)
+          
+          if (!Result)
+            return Result 
+        }
+      }
+    }
 
     
     if (this._TableType == huemulType_Tables.Reference || this._TableType == huemulType_Tables.Master || IsSelectiveUpdate) {
@@ -2735,8 +2729,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (OnlyInsert && !IsSelectiveUpdate) {
         DF_Final = DF_Final.where("___ActionType__ = 'NEW'") 
       }
+      
+      DF_Final = DF_Final.drop("___ActionType__").drop("SameHashKey") //from 2.1: always this columns exist on reference and master tables
       if (OnlyInsert) {
-        DF_Final = DF_Final.drop("___ActionType__")
       
         if (RegisterOnlyInsertInDQ) {
           val dt_start = huemulBigDataGov.getCurrentDateTimeJava()  
