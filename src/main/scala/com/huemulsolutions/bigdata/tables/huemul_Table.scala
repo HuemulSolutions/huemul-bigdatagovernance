@@ -1774,7 +1774,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DQ_NumRowsTotal =numTotal
       Values.DQ_IsError = if (x.getNotification() == huemulType_DQNotification.ERROR) Result.isError else false
       Values.DQ_IsWarning = if (x.getNotification() != huemulType_DQNotification.ERROR) Result.isError else false
-      Values.DQ_ExternalCode = "HUEMUL_DQ_001"
+      Values.DQ_ExternalCode = x.getExternalCode // "HUEMUL_DQ_001"
       Values.DQ_duration_hour = duration.hour.toInt
       Values.DQ_duration_minute = duration.minute.toInt
       Values.DQ_duration_second = duration.second.toInt
