@@ -62,7 +62,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getTableType: huemulType_Tables = {return _TableType}
   private var _TableType : huemulType_Tables = huemulType_Tables.Transaction
   
-  
+  private var _PK_externalCode: String = "HUEMUL_DQ_002"
+  def getPK_externalCode: String = {return _PK_externalCode}
+  def setPK_externalCode(value: String) {
+    _PK_externalCode = value  
+  }
   /**
    Save DQ Result to disk, only if DQ_SaveErrorDetails in GlobalPath is true
    */
@@ -1854,7 +1858,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }  
     
     if (!warning_exclude) { 
-      val DQ_PK : huemul_DataQuality = new huemul_DataQuality(null, s"PK Validation",s"count(1) = count(distinct ${SQL_PK} )", 1018, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_002" )
+      val DQ_PK : huemul_DataQuality = new huemul_DataQuality(null, s"PK Validation",s"count(1) = count(distinct ${SQL_PK} )", 1018, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, getPK_externalCode )
       DQ_PK.setTolerance(0, null)
       ArrayDQ.append(DQ_PK)    
      
@@ -1864,7 +1868,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       SQL_Unique_FinalTable().foreach { x => 
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
         
-        val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(x, s"UNIQUE Validation ",s"count(1) = count(distinct ${x.get_MyName()} )", 2006, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_003" )
+        val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(x, s"UNIQUE Validation ",s"count(1) = count(distinct ${x.get_MyName()} )", 2006, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, x.getIsUnique_externalCode )
         DQ_UNIQUE.setTolerance(0, null)
         ArrayDQ.append(DQ_UNIQUE) 
       }
@@ -1875,7 +1879,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     SQL_NotNull_FinalTable(warning_exclude).foreach { x => 
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD ${x.get_MyName()}")
       
-        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, s"Not Null for field ${x.get_MyName()} ", s"${x.get_MyName()} IS NOT NULL",1023, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_004")
+        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, s"Not Null for field ${x.get_MyName()} ", s"${x.get_MyName()} IS NOT NULL",1023, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, x.getNullable_externalCode)
         NotNullDQ.setTolerance(0, null)
         ArrayDQ.append(NotNullDQ)
     }
@@ -1887,7 +1891,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         var tand = ""
                   
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
-        val RegExp : huemul_DataQuality = new huemul_DataQuality(x, s"RegExp Column ${x.get_MyName()}",SQLFormula, 1041, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, if (x.getDQ_RegExp_externalCode == null) "HUEMUL_DQ_005" else x.getDQ_RegExp_externalCode  )
+        val RegExp : huemul_DataQuality = new huemul_DataQuality(x, s"RegExp Column ${x.get_MyName()}",SQLFormula, 1041, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, x.getDQ_RegExp_externalCode  )
         
         RegExp.setTolerance(0, null)
         ArrayDQ.append(RegExp)
@@ -1908,7 +1912,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           SQLFormula += s" $tand length(${x.get_MyName()}) <= ${x.getDQ_MaxLen}"
                   
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
-        val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, s"length DQ for Column ${x.get_MyName()}",SQLFormula, 1020, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_006" )
+        val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, s"length DQ for Column ${x.get_MyName()}",SQLFormula, 1020, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, if (x.getDQ_MinLen_externalCode == null) x.getDQ_MaxLen_externalCode else x.getDQ_MinLen_externalCode )
         MinMaxLen.setTolerance(0, null)
         ArrayDQ.append(MinMaxLen)
     }
@@ -1927,7 +1931,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           SQLFormula += s" $tand ${x.get_MyName()} <= ${x.getDQ_MaxDecimalValue}"
         
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
-        val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, s"Number range DQ for Column ${x.get_MyName()}", SQLFormula,1021, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true,"HUEMUL_DQ_007")
+        val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, s"Number range DQ for Column ${x.get_MyName()}", SQLFormula,1021, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true,if (x.getDQ_MinDecimalValue_externalCode == null) x.getDQ_MaxDecimalValue_externalCode else x.getDQ_MinDecimalValue_externalCode)
         MinMaxNumber.setTolerance(0, null)         
         ArrayDQ.append(MinMaxNumber)
     }
@@ -1946,7 +1950,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           SQLFormula += s" $tand ${x.get_MyName()} <= '${x.getDQ_MaxDateTimeValue}'"
           
         SQLFormula = s" (${SQLFormula}) or (${x.get_MyName()} is null) "
-        val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, s"DateTime range DQ Column ${x.get_MyName()} ", SQLFormula, 1022, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, "HUEMUL_DQ_008")
+        val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, s"DateTime range DQ Column ${x.get_MyName()} ", SQLFormula, 1022, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, if (x.getDQ_MinDateTimeValue_externalCode == null) x.getDQ_MaxDateTimeValue_externalCode else x.getDQ_MinDateTimeValue_externalCode)
         MinMaxDT.setTolerance(0, null)
         ArrayDQ.append(MinMaxDT)
     }
