@@ -63,7 +63,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var _TableType : huemulType_Tables = huemulType_Tables.Transaction
   
   private var _PK_externalCode: String = "HUEMUL_DQ_002"
-  def getPK_externalCode: String = {return _PK_externalCode}
+  def getPK_externalCode: String = {return if (_PK_externalCode==null) "HUEMUL_DQ_002" else _PK_externalCode }
   def setPK_externalCode(value: String) {
     _PK_externalCode = value  
   }
