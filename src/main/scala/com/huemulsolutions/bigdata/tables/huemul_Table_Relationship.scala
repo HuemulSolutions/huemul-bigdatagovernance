@@ -36,8 +36,9 @@ class huemul_Table_Relationship(Class_TableName: Object, allowNull: Boolean) {
   
   private var _externalCode: String = "HUEMUL_DQ_001"
   def getExternalCode: String = {return if (_externalCode==null) "HUEMUL_DQ_001" else _externalCode }
-  def setExternalCode(value: String) {
+  def setExternalCode(value: String): huemul_Table_Relationship = {
     _externalCode = value  
+    return this
   }
   
 }
