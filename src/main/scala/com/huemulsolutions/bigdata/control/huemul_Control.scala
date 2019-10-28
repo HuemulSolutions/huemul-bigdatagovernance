@@ -1406,6 +1406,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                 						  ,processexec_param_min	
                 						  ,processexec_param_sec	
                 						  ,processexec_param_others
+                              ${if (getVersionFull() >= 20100) " ,processexec_huemulversion" else "" /* from 2.1: */}
+                              ${if (getVersionFull() >= 20100) " ,processexec_controlversion" else "" /* from 2.1: */}
                               ,error_id
                               ,mdm_fhcreate
                               ,mdm_processname)
@@ -1433,6 +1435,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     			  ,${p_processExec_param_min}	
     			  ,${p_processExec_param_sec}	
     			  ,''
+            ${if (getVersionFull() >= 20100) s" ,${ReplaceSQLStringNulls(huemulBigDataGov.currentVersion ,20)}" else "" /* from 2.1: */}
+            ${if (getVersionFull() >= 20100) s" ,${ReplaceSQLStringNulls(s"${getVersionMayor()}.${getVersionMinor()}.${getVersionPatch()}" ,20)}" else "" /* from 2.1: */}
     			  ,null
     			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime(),null)}
     			  ,${ReplaceSQLStringNulls(p_MDM_ProcessName,200)}
