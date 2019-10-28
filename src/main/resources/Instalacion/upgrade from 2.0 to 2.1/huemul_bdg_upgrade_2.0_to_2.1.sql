@@ -8,3 +8,5 @@
 								,primary key (config_id));
 								
 								
+ALTER TABLE control_processexec ADD processexec_huemulversion varchar(20);
+ALTER TABLE control_processexec ADD processexec_controlversion varchar(20);
