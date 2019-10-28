@@ -29,6 +29,7 @@ import com.huemulsolutions.bigdata.sql_decode._
 import com.huemulsolutions.bigdata.control.huemul_Control
 import org.apache.log4j.Level
 
+
         
       
 /*
@@ -51,6 +52,7 @@ import org.apache.log4j.Level
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
+  val currentVersion: String = "2.1"
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -252,13 +254,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     log_info.error(message)
   }
   
+ 
   
   
   /*********************
    * ARGUMENTS
    *************************/
-  logMessageInfo("huemul_BigDataGovernance version 2.1 - sv1.0.3") 
-       
+  logMessageInfo(s"huemul_BigDataGovernance version ${currentVersion} - sv1.0.3")
+        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
   val Environment: String = arguments.GetValue("Environment", null, s"MUST be set environment parameter: '${GlobalSettings.GlobalEnvironments}' " )
