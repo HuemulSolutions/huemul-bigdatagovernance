@@ -2348,7 +2348,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       this._NumRows_Updatable = 0
       this._NumRows_Delete = 0
       this._NumRows_NoChange = 0
-      this._NumRows_Excluded = 0
+      //this._NumRows_Excluded = 0
     } else {
       //DQ for Reference and Master Data
       val DQ_ReferenceData: DataFrame = huemulBigDataGov.spark.sql(
@@ -2507,6 +2507,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (!this.DefinitionIsClose)
       this.raiseError(s"huemul_Table Error: MUST call ApplyTableDefinition ${this.TableName}", 1048)
     
+    _NumRows_Excluded = 0  
+      
     var LocalControl = new huemul_Control(huemulBigDataGov, Control ,huemulType_Frequency.ANY_MOMENT, false )
     LocalControl.AddParamInformation("AliasNewData", AliasNewData)
     LocalControl.AddParamInformation("IsInsert", IsInsert.toString())

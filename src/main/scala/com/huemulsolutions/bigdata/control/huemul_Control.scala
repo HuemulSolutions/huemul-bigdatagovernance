@@ -36,6 +36,11 @@ class huemul_control_querycol extends Serializable {
 
 class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrequency: huemulType_Frequency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulBigDataGov = phuemulBigDataGov
+  
+  private var _version_mayor: Int = 0
+  private var _version_minor: Int = 0
+  private var _version_patch: Int = 0
+  
   val Control_Id: String = huemulBigDataGov.huemul_GetUniqueId() 
   
   val Invoker = new Exception().getStackTrace()
@@ -65,11 +70,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private var control_QueryArray: ArrayBuffer[huemul_control_query] = new ArrayBuffer[huemul_control_query]()
   private var control_QueryColArray: ArrayBuffer[huemul_control_querycol] = new ArrayBuffer[huemul_control_querycol]()
   
+  
   //Find process name in control_process  
   if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) {
     //new from 2.1: get version from control_config
-    control_getVersion()
-
+    control_SearchtVersion()
   
     control_process_addOrUpd(Control_ClassName
                   ,Control_ClassName
@@ -2132,7 +2137,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     }
     
     val local_tablesuse_id = huemulBigDataGov.huemul_GetUniqueId()
-      
+      //println(s"getVersionFull: ${getVersionFull}")
     val ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           insert into control_tablesuse ( tablesuse_id
                                          ,table_id
@@ -2186,8 +2191,6 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${ReplaceSQLStringNulls(p_MDM_ProcessName,200)}
       )          		   
         """)
-    
-    
     return ExecResult             
   }
   
@@ -2195,7 +2198,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
    * New from 2.1
    * Used to get current version of control model
    */
-  private def control_getVersion() {
+  private def control_SearchtVersion() {
     try {
       val ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
           SELECT version_mayor
@@ -2235,9 +2238,6 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       huemulBigDataGov.logMessageInfo(s"control model version compatibility: ${getVersionFull()} ")
       
   }
-  private var _version_mayor: Int = 0
-  private var _version_minor: Int = 0
-  private var _version_patch: Int = 0
   
   def getVersionMayor(): Int = {return _version_mayor}
   def getVersionMinor(): Int = {return _version_minor}
