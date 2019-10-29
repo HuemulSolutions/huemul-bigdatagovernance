@@ -260,7 +260,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  logMessageInfo(s"huemul_BigDataGovernance version ${currentVersion} - sv1.0.3")
+  logMessageInfo(s"huemul_BigDataGovernance version ${currentVersion}")
         
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
