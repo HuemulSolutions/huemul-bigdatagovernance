@@ -1435,8 +1435,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     			  ,${p_processExec_param_min}	
     			  ,${p_processExec_param_sec}	
     			  ,''
-            ${if (getVersionFull() >= 20100) s" ,${ReplaceSQLStringNulls(huemulBigDataGov.currentVersion ,20)}" else "" /* from 2.1: */}
-            ${if (getVersionFull() >= 20100) s" ,${ReplaceSQLStringNulls(s"${getVersionMayor()}.${getVersionMinor()}.${getVersionPatch()}" ,20)}" else "" /* from 2.1: */}
+            ${if (getVersionFull() >= 20100) s" ,${ReplaceSQLStringNulls(huemulBigDataGov.currentVersion ,50)}" else "" /* from 2.1: */}
+            ${if (getVersionFull() >= 20100) s" ,${ReplaceSQLStringNulls(s"${getVersionMayor()}.${getVersionMinor()}.${getVersionPatch()}" ,50)}" else "" /* from 2.1: */}
     			  ,null
     			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime(),null)}
     			  ,${ReplaceSQLStringNulls(p_MDM_ProcessName,200)}
