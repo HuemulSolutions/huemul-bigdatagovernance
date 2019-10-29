@@ -482,7 +482,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     try {
       DQResult.dqDF = huemulBigDataGov.spark.sql(SQL)
             
-      if (huemulBigDataGov.DebugMode) DQResult.dqDF.show()        
+      DQResult.dqDF.show()        
       huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByCol_${Col}",huemulBigDataGov.DebugMode, numPartitionsForTempFiles)
       
       val FirstRow = DQResult.dqDF.first()
@@ -530,8 +530,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       
       if (huemulBigDataGov.DebugMode) {
         DQResult.dqDF.printSchema()
-        DQResult.dqDF.show()
       }
+      DQResult.dqDF.show()
       huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByFunction_${function}",huemulBigDataGov.DebugMode, numPartitionsForTempFiles)
       
     } catch {
