@@ -36,6 +36,11 @@ class huemul_control_querycol extends Serializable {
 
 class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrequency: huemulType_Frequency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulBigDataGov = phuemulBigDataGov
+  
+  private var _version_mayor: Int = 0
+  private var _version_minor: Int = 0
+  private var _version_patch: Int = 0
+  
   val Control_Id: String = huemulBigDataGov.huemul_GetUniqueId() 
   
   val Invoker = new Exception().getStackTrace()
@@ -62,13 +67,15 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   private val testPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = new scala.collection.mutable.ListBuffer[huemul_TestPlan]() 
   def getTestPlanDetails: scala.collection.mutable.ListBuffer[huemul_TestPlan] = {return testPlanDetails}
   
-  //import com.huemulsolutions.bigdata.
   private var control_QueryArray: ArrayBuffer[huemul_control_query] = new ArrayBuffer[huemul_control_query]()
   private var control_QueryColArray: ArrayBuffer[huemul_control_querycol] = new ArrayBuffer[huemul_control_querycol]()
   
-  //Find process name in control_process
   
+  //Find process name in control_process  
   if (RegisterInControlLog && huemulBigDataGov.RegisterInControl) {
+    //new from 2.1: get version from control_config
+    control_SearchtVersion()
+  
     control_process_addOrUpd(Control_ClassName
                   ,Control_ClassName
                   ,Control_FileName
@@ -501,6 +508,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              , BBDD_Name: String
                              , DF_Alias: String
                              , ColumnName: String
+                             , DQ_Id: String
                              , DQ_Name: String
                              , DQ_Description: String
                              , DQ_QueryLevel: huemulType_DQQueryLevel //DQ_IsAggregate: Boolean
@@ -521,11 +529,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              , DQ_duration_second: Integer) {
                 
     //Create New Id
-    val DQId = huemulBigDataGov.huemul_GetUniqueId()
+    //val DQId = huemulBigDataGov.huemul_GetUniqueId() //version 2.1, issue 60
 
     if (huemulBigDataGov.RegisterInControl) {
       //Insert processExcec
-      control_DQ_add(   DQId
+      control_DQ_add(   DQ_Id //DQId
                          , Table_Name
                          , BBDD_Name
                          , this.Control_ClassName
@@ -734,6 +742,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,null //DefMaster.NumRows_Updatable()
                              ,null //DefMaster.NumRows_NoChange() 
                              ,null //DefMaster.NumRows_Delete()
+                             ,null //DefMaster.numRows_Excluded()
                              ,null //DefMaster.NumRows_Total()
                              ,DefMaster.getPartitionValue
                              ,DefMaster._getBackupPath()
@@ -1036,6 +1045,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,DefMaster.NumRows_Updatable()
                              ,DefMaster.NumRows_NoChange() 
                              ,DefMaster.NumRows_Delete()
+                             ,DefMaster.NumRows_Excluded()
                              ,DefMaster.NumRows_Total()
                              ,DefMaster.getPartitionValue
                              ,DefMaster._getBackupPath()
@@ -1167,7 +1177,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
    */
   private def control_TestPlanTest_GetOK ( p_testPlan_Id: String): huemul_JDBCResult =  {
     var ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
-                    select cast(count(1) as Integer) as cantidad, cast(sum(testplan_isok) as Integer) as total_ok 
+                    select count(1) as cantidad, sum(testplan_isok) as total_ok 
                     from control_testplan 
                     where testplangroup_id = '${p_testPlan_Id}' 
                     and testplan_name = 'TestPlan_IsOK'
@@ -1401,6 +1411,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                 						  ,processexec_param_min	
                 						  ,processexec_param_sec	
                 						  ,processexec_param_others
+                              ${if (getVersionFull() >= 20100) " ,processexec_huemulversion" else "" /* from 2.1: */}
+                              ${if (getVersionFull() >= 20100) " ,processexec_controlversion" else "" /* from 2.1: */}
                               ,error_id
                               ,mdm_fhcreate
                               ,mdm_processname)
@@ -1428,6 +1440,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     			  ,${p_processExec_param_min}	
     			  ,${p_processExec_param_sec}	
     			  ,''
+            ${if (getVersionFull() >= 20100) s" ,${ReplaceSQLStringNulls(huemulBigDataGov.currentVersion ,50)}" else "" /* from 2.1: */}
+            ${if (getVersionFull() >= 20100) s" ,${ReplaceSQLStringNulls(s"${getVersionMayor()}.${getVersionMinor()}.${getVersionPatch()}" ,50)}" else "" /* from 2.1: */}
     			  ,null
     			  ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime(),null)}
     			  ,${ReplaceSQLStringNulls(p_MDM_ProcessName,200)}
@@ -1692,6 +1706,29 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       """)
            
     return ExecResult             
+  }
+  
+  /**
+   * Get DQ details with dq_notification = WARNING_EXCLUDE and dq_iswarning = 1
+   */
+  def control_getDQResultForWarningExclude(): ArrayBuffer[String] = {
+    //Get Table Id
+    var result: ArrayBuffer[String] = new ArrayBuffer[String]()
+    
+    val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          select  dq_id
+          from control_dq
+          where processexec_id = ${ReplaceSQLStringNulls(this.Control_Id,null)}
+          AND   dq_notification = ${ReplaceSQLStringNulls("WARNING_EXCLUDE",null)}
+          AND   dq_iswarning = 1
+      """)
+    
+      
+    ExecResultTable.ResultSet.foreach { x =>  
+      result.append(x.getAs[String]("dq_id"))
+    }   
+    
+    return result
   }
   
   def control_getDQResult(): huemul_JDBCResult = {
@@ -2079,6 +2116,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_TableUse_numRowsUpdatable: java.lang.Long
                              ,p_TableUse_numRowsNoChange: java.lang.Long
                              ,p_TableUse_numRowsMarkDelete: java.lang.Long
+                             ,p_TableUse_numRowsExcluded: java.lang.Long
                              ,p_TableUse_numRowsTotal: java.lang.Long
                              ,p_TableUse_PartitionValue: String
                              ,p_Tableuse_pathbackup: String
@@ -2099,7 +2137,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     }
     
     val local_tablesuse_id = huemulBigDataGov.huemul_GetUniqueId()
-      
+      //println(s"getVersionFull: ${getVersionFull}")
     val ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           insert into control_tablesuse ( tablesuse_id
                                          ,table_id
@@ -2120,6 +2158,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								   ,tableuse_numrowsupdatable
                       								   ,tableuse_numrowsnochange 
                       								   ,tableuse_numrowsmarkdelete
+                                         ${if (getVersionFull() >= 20100) " ,tableuse_numrowsexcluded" else "" /* from 2.1: */}
                       								   ,tableuse_numrowstotal
                       								   ,tableuse_partitionvalue
                                          ,tableuse_pathbackup
@@ -2144,6 +2183,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${p_TableUse_numRowsUpdatable}
           		   ,${p_TableUse_numRowsNoChange}
           		   ,${p_TableUse_numRowsMarkDelete}
+          		   ${if (getVersionFull() >= 20100) s",${p_TableUse_numRowsExcluded}" else "" /* from 2.1: */}
           		   ,${p_TableUse_numRowsTotal}
           		   ,${ReplaceSQLStringNulls(p_TableUse_PartitionValue,200)}
           		   ,${ReplaceSQLStringNulls(p_Tableuse_pathbackup,1000)}
@@ -2151,10 +2191,58 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${ReplaceSQLStringNulls(p_MDM_ProcessName,200)}
       )          		   
         """)
-    
-    
     return ExecResult             
   }
+  
+  /**
+   * New from 2.1
+   * Used to get current version of control model
+   */
+  private def control_SearchtVersion() {
+    try {
+      val ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+          SELECT version_mayor
+                ,version_minor
+                ,version_patch
+					FROM control_config
+          WHERE config_id = 1
+      """)
+      
+      if (ExecResult.IsError) {
+        huemulBigDataGov.logMessageError("control version table not found...")
+      } else if (ExecResult.ResultSet.length == 0){
+        //insert 2.1
+        huemulBigDataGov.logMessageInfo("control version: insert new version")
+        val ExecResultCol = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
+          INSERT INTO control_config (config_id, version_mayor, version_minor, version_patch)
+          VALUES (1,2,1,0)
+          """)
+          
+          _version_mayor = 2
+          _version_minor = 1
+          _version_patch = 0
+      } else {
+        _version_mayor = ExecResult.GetValue("version_mayor", ExecResult.ResultSet(0)).toString().toInt
+        _version_minor = ExecResult.GetValue("version_minor", ExecResult.ResultSet(0)).toString().toInt
+        _version_patch = ExecResult.GetValue("version_patch", ExecResult.ResultSet(0)).toString().toInt
+      }
+      
+      
+    
+    } catch {
+      case e: Exception => 
+        huemulBigDataGov.logMessageError(s"control version error_ ${e}")
+    }
+    
+    if (getVersionFull() > 0)
+      huemulBigDataGov.logMessageInfo(s"control model version compatibility: ${getVersionFull()} ")
+      
+  }
+  
+  def getVersionMayor(): Int = {return _version_mayor}
+  def getVersionMinor(): Int = {return _version_minor}
+  def getVersionPatch(): Int = {return _version_patch}
+  def getVersionFull(): Int = {return s"""${"%02d".format(_version_mayor)}${"%02d".format(_version_minor)}${"%02d".format(_version_patch)}""".toInt }
   
   /**
    * New from 2.0

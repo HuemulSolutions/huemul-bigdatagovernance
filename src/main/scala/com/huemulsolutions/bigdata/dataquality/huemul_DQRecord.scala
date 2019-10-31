@@ -1,14 +1,16 @@
 package com.huemulsolutions.bigdata.dataquality
 
 import org.apache.spark.sql.types._
+import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 
-class huemul_DQRecord extends Serializable {
+class huemul_DQRecord(huemulBigDataGov: huemul_BigDataGovernance) extends Serializable {
   var Table_Name: String = null
   var BBDD_Name: String= null
   var DF_Alias: String= null
   var ColumnName: String= null
+  var DQ_Id: String = huemulBigDataGov.huemul_GetUniqueId()
   var DQ_Name: String= null
   var DQ_Description: String= null
   var DQ_QueryLevel: huemulType_DQQueryLevel = null

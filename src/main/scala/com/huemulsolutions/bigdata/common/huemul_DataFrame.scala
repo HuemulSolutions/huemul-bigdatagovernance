@@ -70,8 +70,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   private var DQ_Result: ArrayBuffer[huemul_DQRecord] = new ArrayBuffer[huemul_DQRecord]()
   def getDQResult(): ArrayBuffer[huemul_DQRecord] = {return DQ_Result}
   
-  private def local_setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean, createLineage: Boolean ) {
-    //DF.persist(MEMORY_ONLY_SER)
+  private def local_setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean ) {
     DataDF = DF
     DataSchema = DF.schema
     DataDF.createOrReplaceTempView(Alias)
@@ -83,16 +82,13 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     //Data_isRead = true
     //TODO: ver como poner la fecha de término de lectura StopRead_dt = Calendar.getInstance()
     
-    if (createLineage) {
-      
-    }
-        
+            
     if (SaveInTemp)
       huemulBigDataGov.CreateTempTable(DataDF, AliasDF, huemulBigDataGov.DebugMode, null)
   }
   
   def setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean = true) {
-    local_setDataFrame(DF, Alias, SaveInTemp, true /*create Lineage*/)
+    local_setDataFrame(DF, Alias, SaveInTemp)
   }
   
   
@@ -112,7 +108,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
       
     
-    local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
+    local_setDataFrame(DFTemp, Alias, SaveInTemp)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
     huemulBigDataGov.DF_SaveLineage(Alias
@@ -130,8 +126,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /**   
    Create DF from SQL (equivalent to spark.sql method)
    */
-  def _CreateFinalQuery(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null, finalTable: huemul_Table) {
-    //WARNING: ANY CHANGE ON DF_from_SQL MUST BE REPLIATE IN THIS METHOD
+  def _CreateFinalQuery(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null, finalTable: huemul_Table, storageLevelOfDF: org.apache.spark.storage.StorageLevel) {
+    //WARNING: ANY CHANGE ON DF_from_SQL MUST BE REPLICATE IN THIS METHOD
     
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
     val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
@@ -139,8 +135,12 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
       
+    if (storageLevelOfDF != null) {
+      huemulBigDataGov.logMessageDebug(s"DF to ${storageLevelOfDF}")
+      DFTemp.persist(storageLevelOfDF)
+    }
     
-    local_setDataFrame(DFTemp, Alias, SaveInTemp, false)
+    local_setDataFrame(DFTemp, Alias, SaveInTemp)
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     
     huemulBigDataGov.DF_SaveLineage(Alias
@@ -165,7 +165,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val DF = huemulBigDataGov.spark.createDataFrame(rowRDD, DataSchema)
     
     //Assign DataFrame to LocalDataFrame
-    local_setDataFrame(DF, Alias, huemulBigDataGov.DebugMode, false)
+    local_setDataFrame(DF, Alias, huemulBigDataGov.DebugMode)
     
     //Unpersisnt unused data
     rowRDD.unpersist(false)
@@ -208,7 +208,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
       
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -269,7 +269,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -390,7 +390,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -478,7 +478,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     try {
       DQResult.dqDF = huemulBigDataGov.spark.sql(SQL)
             
-      if (huemulBigDataGov.DebugMode) DQResult.dqDF.show()        
+      DQResult.dqDF.show()        
       huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByCol_${Col}",huemulBigDataGov.DebugMode, numPartitionsForTempFiles)
       
       val FirstRow = DQResult.dqDF.first()
@@ -526,8 +526,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       
       if (huemulBigDataGov.DebugMode) {
         DQResult.dqDF.printSchema()
-        DQResult.dqDF.show()
       }
+      DQResult.dqDF.show()
       huemulBigDataGov.CreateTempTable(DQResult.dqDF,s"${AliasDF}_DQ_StatsByFunction_${function}",huemulBigDataGov.DebugMode, numPartitionsForTempFiles)
       
     } catch {
@@ -604,7 +604,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -686,7 +686,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)    
     
-    val Values = new huemul_DQRecord()
+    val Values = new huemul_DQRecord(huemulBigDataGov)
     Values.Table_Name =TableName
     Values.BBDD_Name =BBDDName
     Values.DF_Alias =AliasDF
@@ -785,6 +785,10 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    Run DataQuality defined in Master
    */
   def DF_RunDataQuality(OfficialDataQuality: ArrayBuffer[huemul_DataQuality], ManualRules: ArrayBuffer[huemul_DataQuality], DF_to_Query: String, dMaster: huemul_Table): huemul_DataQualityResult = {
+    DF_RunDataQuality(OfficialDataQuality, ManualRules, DF_to_Query, dMaster, true)  
+  }
+  
+  def DF_RunDataQuality(OfficialDataQuality: ArrayBuffer[huemul_DataQuality], ManualRules: ArrayBuffer[huemul_DataQuality], DF_to_Query: String, dMaster: huemul_Table, registerDQOnce: Boolean ): huemul_DataQualityResult = {
     val AliasToQuery = if (DF_to_Query == null) this.AliasDF else DF_to_Query
      
     /*****************************************************************/
@@ -820,6 +824,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       //import java.util.Calendar;
       //Get DQ Result from DF
       
+      Control.NewStep(s"Step: DQ Result: Start analyzing the DQ result") 
       getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
         x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId}")
         x.NumRowsTotal = if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) 1 else DQTotalRows
@@ -854,7 +859,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         
         
         
-        val Values = new huemul_DQRecord()
+        val Values = new huemul_DQRecord(huemulBigDataGov)
         Values.Table_Name =dfTableName
         Values.BBDD_Name =dfDataBaseName
         Values.DF_Alias =AliasToQuery
@@ -873,7 +878,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         Values.DQ_NumRowsError =DQWithError
         Values.DQ_NumRowsTotal =x.NumRowsTotal    
         Values.DQ_IsError = x.getNotification() == huemulType_DQNotification.ERROR && IsError //IsError 
-        Values.DQ_IsWarning = x.getNotification() == huemulType_DQNotification.WARNING && IsError
+        Values.DQ_IsWarning = (x.getNotification() == huemulType_DQNotification.WARNING || x.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE) && IsError
         Values.DQ_duration_hour = duration.hour.toInt
         Values.DQ_duration_minute = duration.minute.toInt
         Values.DQ_duration_second = duration.second.toInt
@@ -894,23 +899,37 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         //Save details to DF with errors
         if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails()) {
           //Query to get detail errors
-          //Control.NewStep(s"Step: DQ Result: Get detales for (Id ${x.getId}) ${x.getDescription} ") 
+          Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}) ") 
           val SQL_Detail = DQ_GenQuery(AliasToQuery
                                       ,s"not (${x.getSQLFormula()})"
                                       ,!(x.getFieldName == null) //asField
                                       ,if (x.getFieldName == null) "all" else x.getFieldName.get_MyName() //fieldName
+                                      ,Values.DQ_Id
                                       ,x.getNotification()
                                       ,x.getErrorCode()
                                       ,s"(Id ${x.getId}) ${x.getDescription}"
                                       )
                                
           //Execute query
+          //Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}, save to DF) ") 
           var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
                                
-          if (DF_ErrorDetails == null)
-            DF_ErrorDetails = DF_EDetail
-          else
-            DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
+          if (dMaster != null && !registerDQOnce) {
+            //if call is from huemul_Table, save detail to disk
+            //Save errors to disk
+            if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DF_EDetail != null && dMaster.getSaveDQResult) {
+              Control.NewStep("Start Save DQ Error Details ")                
+              if (!dMaster.savePersist_DQ(Control, DF_EDetail)){
+                huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
+              }
+            }
+          } else {
+            //acumulate DF, if call is outside huemul_Table
+            if (DF_ErrorDetails == null)
+              DF_ErrorDetails = DF_EDetail
+            else
+              DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
+          }
         }
       }
     }
@@ -934,11 +953,13 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                   ,whereSQL: String
                   ,haveField: Boolean
                   ,fieldName: String
+                  ,dq_id: String
                   ,dq_error_notification: huemulType_DQNotification.huemulType_DQNotification
                   ,error_code: Integer
                   ,dq_error_description: String
                   ): String = {
     return s"""SELECT '${Control.Control_Id }' as dq_control_id
+                                     ,'${dq_id }' as dq_dq_id
                                      ,'${if (haveField) fieldName else "all"}' as dq_error_columnname
                                      ,'${dq_error_notification}' as dq_error_notification 
                                      ,'${error_code}' as dq_error_code
@@ -948,12 +969,111 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
                                ${if (whereSQL == null || whereSQL == "") "" else s"WHERE ${whereSQL}" }"""
   }
   
+  
+  
+  /**
+   * Create table script to save DF to disk
+   */
+  private def DF_CreateTable_Script(parquetLocation: String, fullTableName: String): String = {
+    //create structu
+    var ColumnsCreateTable : String = ""
+    var coma: String = ""
+    
+    this.DataDF.schema.fields.foreach { x => 
+      ColumnsCreateTable += s"$coma${x.name} ${x.dataType.sql} \n"
+      coma = ","
+    }
+    
+    
+    //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+    val lCreateTableScript = s"""
+                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${fullTableName} (${ColumnsCreateTable })
+                                 STORED AS PARQUET                            
+                                 LOCATION '${parquetLocation}'"""
+                                 
+    if (huemulBigDataGov.DebugMode)
+      huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
+      
+    return lCreateTableScript    
+  }
+  
+  
+  
+  /**
+   * Save Result data to disk
+   */
+  def savePersistToDisk(OverriteIfExist: Boolean, tableNameInHive: String, localPath: String, globalPath: ArrayBuffer[huemul_KeyValuePath] = huemulBigDataGov.GlobalSettings.SANDBOX_BigFiles_Path, databaseName: ArrayBuffer[huemul_KeyValuePath] = huemulBigDataGov.GlobalSettings.SANDBOX_DataBase ): Boolean = {
+    var Result: Boolean = true
+    val tempPath = huemulBigDataGov.GlobalSettings.GetPathForSaveTableWithoutDG(huemulBigDataGov, globalPath, localPath, tableNameInHive)
+    
+    try {      
+      Control.NewStep("Saving DF to Disk")
+      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${tempPath} ")
+      if (OverriteIfExist)
+        this.DataDF.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+      else 
+        this.DataDF.write.mode(SaveMode.Append).format("parquet").save(tempPath)
+      
+    } catch {
+      case e: Exception => 
+        Result = false
+        Control.Control_Error.GetError(e, getClass.getSimpleName, 2008)
+    }
+    
+    if (Result) {
+      //if (CreateInHive ) {
+        val ddbbName: String = huemulBigDataGov.getDataBase(databaseName)
+        val tabName: String = s"$ddbbName.$tableNameInHive"
+        val sqlDrop01 = s"drop table if exists ${tabName}"
+        Control.NewStep("Save: Drop Hive table Def")
+        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
+        try {
+          val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(ddbbName).collect()
+          if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableNameInHive.toUpperCase() }.length > 0) 
+            huemulBigDataGov.spark.sql(sqlDrop01)
+            
+        } catch {
+          case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+        }
+       
+      //}
+        
+      try {
+        //create table
+        //if (CreateInHive ) {
+          Control.NewStep("Save: Create Table in Hive Metadata")
+          val lscript = DF_CreateTable_Script(tempPath, tabName) 
+          huemulBigDataGov.spark.sql(lscript)
+        //}
+    
+        //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
+        //Control.NewStep("Save: Repair Hive Metadata")
+        //if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"MSCK REPAIR TABLE ${tabName}")
+        //huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${tabName}")
+        
+        if (huemulBigDataGov.ImpalaEnabled) {
+          Control.NewStep("Save: refresh Impala Metadata")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"invalidate metadata ${tabName}")
+          huemulBigDataGov.impala_connection.ExecuteJDBC_NoResulSet(s"refresh ${tabName}")
+        }
+      } catch {
+        case e: Exception => 
+          Result = false
+          Control.Control_Error.GetError(e, getClass.getSimpleName,2009)
+      }
+    }
+      
+    return Result
+    
+  }
+  
   def DQ_Register(DQ: huemul_DQRecord) {
     DQ_Result.append(DQ)
     Control.RegisterDQuality(DQ.Table_Name
         , DQ.BBDD_Name
         , DQ.DF_Alias
         , DQ.ColumnName
+        , DQ.DQ_Id
         , DQ.DQ_Name
         , DQ.DQ_Description
         , DQ.DQ_QueryLevel

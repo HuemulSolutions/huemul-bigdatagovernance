@@ -1,4 +1,5 @@
 
+drop table control_config;
 
 drop table  control_executors ;
 

@@ -67,7 +67,9 @@ class huemul_GlobalPath() extends Serializable {
     var MDM_SaveBackup: Boolean = true
     val MDM_Backup_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
 
-    
+    //from 2.1
+    //set > 1 to cache hive metadata
+    var HIVE_HourToUpdateMetadata: Integer = 0
     
     /**
      Returns true if path has value, otherwise return false
@@ -111,6 +113,11 @@ class huemul_GlobalPath() extends Serializable {
     //TEMP
     def GetDebugTempPath(huemulBigDataGov: huemul_BigDataGovernance, function_name: String, table_name: String): String = {        
       return s"${GetPath(huemulBigDataGov, TEMPORAL_Path)}$function_name/$table_name"
+    }
+    
+    //to save DF directly from DF without DataGovernance
+    def GetPathForSaveTableWithoutDG(huemulBigDataGov: huemul_BigDataGovernance,globalPath: ArrayBuffer[huemul_KeyValuePath], localPath_name: String, table_name: String): String = {        
+      return s"${GetPath(huemulBigDataGov, globalPath)}$localPath_name/$table_name"
     }
     
     
