@@ -1177,7 +1177,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
    */
   private def control_TestPlanTest_GetOK ( p_testPlan_Id: String): huemul_JDBCResult =  {
     var ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
-                    select cast(count(1) as Integer) as cantidad, cast(sum(testplan_isok) as Integer) as total_ok 
+                    select count(1) as cantidad, sum(testplan_isok) as total_ok 
                     from control_testplan 
                     where testplangroup_id = '${p_testPlan_Id}' 
                     and testplan_name = 'TestPlan_IsOK'
