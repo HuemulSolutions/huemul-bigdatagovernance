@@ -399,10 +399,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   @transient val CONTROL_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.CONTROL_Setting),GlobalSettings.CONTROL_Driver, DebugMode) // Connection = null
   @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode) //Connection = null
   
-  if (!TestPlanMode && RegisterInControl) 
+  if (!TestPlanMode && RegisterInControl) { 
+    logMessageInfo(s"establishing connection with control model")  
     CONTROL_connection.StartConnection()
-  if (!TestPlanMode && ImpalaEnabled)
-      impala_connection.StartConnection()
+  }
+  if (!TestPlanMode && ImpalaEnabled) {
+    logMessageInfo(s"establishing connection with impala") 
+    impala_connection.StartConnection()
+  }
   
   val spark: SparkSession = if (!TestPlanMode & LocalSparkSession == null) 
                                       SparkSession.builder().appName(appName)
@@ -438,7 +442,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * GET HIVE METADATA FOR COLUMNS TRACEABILITY
    *************************/
-  if (!TestPlanMode && getHiveMetadata == true) {
+  if (!TestPlanMode && getHiveMetadata == true && RegisterInControl) {
     logMessageInfo("Start get hive table metadata..")
     getColumnsAndTables(false)
     logMessageInfo("End get hive table metadata..")
