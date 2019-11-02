@@ -1719,7 +1719,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //Get Table Id
     var result: ArrayBuffer[String] = new ArrayBuffer[String]()
     
-    if (RegisterInControlLog) {
+    if (huemulBigDataGov.RegisterInControl) {
       val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
             select  dq_id
             from control_dq
