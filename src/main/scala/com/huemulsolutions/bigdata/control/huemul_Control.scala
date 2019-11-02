@@ -454,8 +454,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
       val TotalProcess = ResultTestPlan.GetValue("cantidad",ResultTestPlan.ResultSet(0)).toString().toInt //ResultTestPlan.ResultSet(0).getAs[Long]("cantidad".toLowerCase()).toInt
       var TotalOK = ResultTestPlan.GetValue("total_ok",ResultTestPlan.ResultSet(0)).toString().toInt //ResultTestPlan.ResultSet(0).getAs[Long]("total_ok".toLowerCase()).toInt
-      if (TotalOK == null)
-        TotalOK = 0
+     // if (TotalOK == null)
+     //   TotalOK = 0
          
       if (TotalProcess != TotalOK) {
         phuemulBigDataGov.logMessageDebug(s"TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
