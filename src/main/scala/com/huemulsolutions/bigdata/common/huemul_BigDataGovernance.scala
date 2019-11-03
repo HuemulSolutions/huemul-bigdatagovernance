@@ -426,6 +426,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   val IdPortMonitoring = if (!TestPlanMode) spark.sparkContext.uiWebUrl.get else "" 
+    
+  if (!TestPlanMode) {
+    //from 2.2: resolve BUG reading ORC, add set spark.sql.hive.convertMetastoreOrc=true according to SPARK-15705
+    spark.sql("set spark.sql.hive.convertMetastoreOrc=true")
+  }
   
   //spark.sql("set").show(10000, truncate = false)
   //val GetConfigSet = spark.sparkContext.getConf  
