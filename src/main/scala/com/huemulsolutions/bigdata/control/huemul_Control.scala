@@ -69,6 +69,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   
   private var control_QueryArray: ArrayBuffer[huemul_control_query] = new ArrayBuffer[huemul_control_query]()
   private var control_QueryColArray: ArrayBuffer[huemul_control_querycol] = new ArrayBuffer[huemul_control_querycol]()
+  private var control_WARNING_EXCLUDE_DQ_Id: ArrayBuffer[String] = new ArrayBuffer[String]()
   
   
   //Find process name in control_process  
@@ -453,8 +454,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
       val TotalProcess = ResultTestPlan.GetValue("cantidad",ResultTestPlan.ResultSet(0)).toString().toInt //ResultTestPlan.ResultSet(0).getAs[Long]("cantidad".toLowerCase()).toInt
       var TotalOK = ResultTestPlan.GetValue("total_ok",ResultTestPlan.ResultSet(0)).toString().toInt //ResultTestPlan.ResultSet(0).getAs[Long]("total_ok".toLowerCase()).toInt
-      if (TotalOK == null)
-        TotalOK = 0
+     // if (TotalOK == null)
+     //   TotalOK = 0
          
       if (TotalProcess != TotalOK) {
         phuemulBigDataGov.logMessageDebug(s"TestPlan_IsOkById with Error: Total Process: $TotalProcess, Total OK: $TotalOK, Total Error: ${TotalProcess-TotalOK}, Total Process Expected: $TotalProcessExpected")
@@ -561,7 +562,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , Control_ClassName
                          
                          )
-     
+    } else {
+      if (DQ_Notification == huemulType_DQNotification.WARNING_EXCLUDE && DQ_IsWarning) {
+        control_WARNING_EXCLUDE_DQ_Id.append(DQ_Id)
+      }
     }
     
   }
@@ -1715,18 +1719,21 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     //Get Table Id
     var result: ArrayBuffer[String] = new ArrayBuffer[String]()
     
-    val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
-          select  dq_id
-          from control_dq
-          where processexec_id = ${ReplaceSQLStringNulls(this.Control_Id,null)}
-          AND   dq_notification = ${ReplaceSQLStringNulls("WARNING_EXCLUDE",null)}
-          AND   dq_iswarning = 1
-      """)
-    
+    if (huemulBigDataGov.RegisterInControl) {
+      val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+            select  dq_id
+            from control_dq
+            where processexec_id = ${ReplaceSQLStringNulls(this.Control_Id,null)}
+            AND   dq_notification = ${ReplaceSQLStringNulls("WARNING_EXCLUDE",null)}
+            AND   dq_iswarning = 1
+        """)
       
-    ExecResultTable.ResultSet.foreach { x =>  
-      result.append(x.getAs[String]("dq_id"))
-    }   
+        
+      ExecResultTable.ResultSet.foreach { x =>  
+        result.append(x.getAs[String]("dq_id"))
+      }   
+    } else
+      result = control_WARNING_EXCLUDE_DQ_Id
     
     return result
   }
