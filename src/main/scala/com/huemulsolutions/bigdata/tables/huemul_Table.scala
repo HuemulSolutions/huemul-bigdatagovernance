@@ -492,6 +492,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else if (this._TableType != huemulType_Tables.Transaction && _PartitionField != "")
       raiseError(s"huemul_Table Error: PartitionField shouldn't be defined if TableType is ${this._TableType}",1036)
       
+    //from 2.2 --> validate tableType with Format
+    if (this._TableType == huemulType_Tables.Transaction && !(this._StorageType == huemulType_StorageType.PARQUET || this._StorageType == huemulType_StorageType.ORC))
+      raiseError(s"huemul_Table Error: Transaction Tables only available with PARQUET or ORC StorageType ",1057)
+      
     if (this._DataBase == null)
       raiseError(s"huemul_Table Error: DataBase must be defined",1037)
     if (this._Frequency == null)
