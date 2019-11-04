@@ -2222,7 +2222,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         huemulBigDataGov.logMessageInfo("control version: insert new version")
         val ExecResultCol = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           INSERT INTO control_config (config_id, version_mayor, version_minor, version_patch)
-          VALUES (1,2,1,0)
+          VALUES (1,2,2,0)
           """)
           
           _version_mayor = 2
