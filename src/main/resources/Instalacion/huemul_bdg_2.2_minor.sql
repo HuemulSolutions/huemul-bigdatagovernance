@@ -366,6 +366,7 @@ create table  control_tablesuse (			  tablesuse_id            varchar(50)
                                              ,tableuse_numrowsexcluded			  int
 											 ,tableuse_partitionvalue varchar(200)
 											 ,tableuse_pathbackup	  varchar(1000)
+											 ,tableuse_backupstatus			  int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
                                              ,primary key (tablesuse_id) 
