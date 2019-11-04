@@ -6,4 +6,11 @@
     status 2 --> backup deleted
  */
  
+ UPDATE control_config
+ SET version_mayor	= 2
+    ,version_minor	= 2
+    ,version_patch  = 0
+where config_id = 1;
+
+
  
