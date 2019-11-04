@@ -105,7 +105,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getStorageType: huemulType_StorageType = {return _StorageType}
   private var _StorageType : huemulType_StorageType = null
   
-  val _StorageType_OldValueTrace: String = "parquet"  //csv, json, parquet
+  val _StorageType_OldValueTrace: String = "parquet"  //csv, json, parquet, orc
   /**
     Table description
    */
@@ -1641,7 +1641,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    """PARTITIONED BY (MDM_columnName STRING)
                                      STORED AS PARQUET""" 
                                   }
+                                  else if (_StorageType_OldValueTrace == "orc") {
+                                   """PARTITIONED BY (MDM_columnName STRING)
+                                     STORED AS ORC""" 
                                   }
+                                 }
                                  LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
                                   //${if (_StorageType_OldValueTrace == "csv") {s"""
                                   //TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")"""}}"""
@@ -2261,14 +2265,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
         
         if (this.getNumPartitions == null || this.getNumPartitions <= 0)
-          DFTempCopy.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+          DFTempCopy.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(tempPath)     //2.2 -> this._StorageType.toString() instead of "parquet"
         else
-          DFTempCopy.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)
+          DFTempCopy.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(tempPath)   //2.2 -> this._StorageType.toString() instead of "parquet"
         DFTempCopy.unpersist()
        
         //Open temp file
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"open temp old df: $tempPath ")
-        val DFTempOpen = huemulBigDataGov.spark.read.parquet(tempPath)        
+        val DFTempOpen = huemulBigDataGov.spark.read.format(this._StorageType.toString()).load(tempPath)  //2.2 --> read.format(this._StorageType.toString()).load(tempPath)    instead of  read.parquet(tempPath)   
         DFTempOpen.createOrReplaceTempView(TempAlias)        
       } else {
           huemulBigDataGov.logMessageInfo(s"create empty dataframe because ${this.internalGetTable(huemulType_InternalTableType.Normal)} does not exist")
