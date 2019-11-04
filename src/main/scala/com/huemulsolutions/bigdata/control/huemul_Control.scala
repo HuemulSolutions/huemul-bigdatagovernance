@@ -2169,6 +2169,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								   ,tableuse_numrowstotal
                       								   ,tableuse_partitionvalue
                                          ,tableuse_pathbackup
+                                         ${if (getVersionFull() >= 20200) " ,tableuse_backupstatus" else "" /* from 2.2: */}
                       								   ,mdm_fhcreate
                       								   ,mdm_processname)
         	VALUES(  ${ReplaceSQLStringNulls(local_tablesuse_id,50)}
@@ -2194,6 +2195,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${p_TableUse_numRowsTotal}
           		   ,${ReplaceSQLStringNulls(p_TableUse_PartitionValue,200)}
           		   ,${ReplaceSQLStringNulls(p_Tableuse_pathbackup,1000)}
+          		   ${if (getVersionFull() >= 20200) s",${if (p_Tableuse_pathbackup == null || p_Tableuse_pathbackup.trim() == "") "0" else "1"}" else "" /* from 2.2: */}
           		   ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime(),null)}
           		   ,${ReplaceSQLStringNulls(p_MDM_ProcessName,200)}
       )          		   
