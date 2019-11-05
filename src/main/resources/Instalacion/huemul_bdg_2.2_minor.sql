@@ -371,6 +371,10 @@ create table  control_tablesuse (			  tablesuse_id            varchar(50)
                                              ,mdm_processname         varchar(200)
                                              ,primary key (tablesuse_id) 
                                             );
+                                            
+                                            
+ CREATE INDEX IDX_control_tablesuse_I01 ON control_tablesuse (tableuse_backupstatus);
+                                             
                     
 create table  control_dq (
                                               dq_id                   varchar(50) 

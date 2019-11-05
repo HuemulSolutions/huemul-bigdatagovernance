@@ -6,6 +6,8 @@
     status 2 --> backup deleted
  */
  
+ CREATE INDEX IDX_control_tablesuse_I01 ON control_tablesuse (tableuse_backupstatus);
+ 
  UPDATE control_config
  SET version_mayor	= 2
     ,version_minor	= 2
