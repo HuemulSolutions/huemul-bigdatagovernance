@@ -15,6 +15,7 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import huemulType_Frequency._
 import scala.collection.mutable.ArrayBuffer
+import org.apache.hadoop.fs.FileSystem
 
 class huemul_control_query extends Serializable  {
   var query_id: String = null
@@ -2104,6 +2105,62 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     return ExecResult             
   }
   
+  
+  /**
+   * Get Backup to delete
+   */
+  def control_getBackupToDelete(numBackupToMaintain: Int): Boolean = {
+    var Result: Boolean = true
+    
+    if (huemulBigDataGov.RegisterInControl) {
+      this.NewStep(s"Backup: get Backups info")
+      val ExecResultTable = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+            select  tablesuse_id
+              		, table_id
+              		, tableuse_pathbackup
+              		, mdm_fhcreate
+            from control_tablesuse
+            where tableuse_backupstatus = 1
+            order by table_id, mdm_fhcreate desc
+        """)
+      
+      this.NewStep(s"Backup: Num regs: ${ExecResultTable.ResultSet.length } ")
+      var table_id_ant: String = ""
+      var numCount: Int = 0
+      ExecResultTable.ResultSet.foreach { x =>  
+        val backup_table_id = x.getAs[String]("table_id")
+        if (table_id_ant == backup_table_id) {
+          numCount +=1
+          
+          //delete
+          if (numCount > numBackupToMaintain) {
+            val backupPath = x.getAs[String]("tableuse_pathbackup")
+            this.NewStep(s"Backup: drop file ${backupPath} ")
+            val backupPath_hdfs = new org.apache.hadoop.fs.Path(backupPath)
+            val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
+            if (fs.exists(backupPath_hdfs)){
+              fs.delete(backupPath_hdfs, true)
+            }   
+            
+           //update status
+            huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s""" 
+                      UPDATE control_tablesuse
+                      SET tableuse_backupstatus = 2
+                      WHERE tablesuse_id = ${ReplaceSQLStringNulls(x.getAs[String]("tablesuse_id"),50)}
+                  """)
+          }
+        } else {
+          table_id_ant = backup_table_id
+          numCount = 1
+        } 
+      }
+      this.NewStep(s"Backup: End Process")
+    } 
+    
+   
+    return Result
+  }
+  
   private def control_TablesUse_add (p_Table_Name: String
                              ,p_Table_BBDDName: String
                              ,p_Process_Id: String
@@ -2169,6 +2226,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								   ,tableuse_numrowstotal
                       								   ,tableuse_partitionvalue
                                          ,tableuse_pathbackup
+                                         ${if (getVersionFull() >= 20200) " ,tableuse_backupstatus" else "" /* from 2.2: */}
                       								   ,mdm_fhcreate
                       								   ,mdm_processname)
         	VALUES(  ${ReplaceSQLStringNulls(local_tablesuse_id,50)}
@@ -2194,6 +2252,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           		   ,${p_TableUse_numRowsTotal}
           		   ,${ReplaceSQLStringNulls(p_TableUse_PartitionValue,200)}
           		   ,${ReplaceSQLStringNulls(p_Tableuse_pathbackup,1000)}
+          		   ${if (getVersionFull() >= 20200) s",${if (p_Tableuse_pathbackup == null || p_Tableuse_pathbackup.trim() == "") "0" else "1"}" else "" /* from 2.2: */}
           		   ,${ReplaceSQLStringNulls(huemulBigDataGov.getCurrentDateTime(),null)}
           		   ,${ReplaceSQLStringNulls(p_MDM_ProcessName,200)}
       )          		   
@@ -2222,7 +2281,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         huemulBigDataGov.logMessageInfo("control version: insert new version")
         val ExecResultCol = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           INSERT INTO control_config (config_id, version_mayor, version_minor, version_patch)
-          VALUES (1,2,1,0)
+          VALUES (1,2,2,0)
           """)
           
           _version_mayor = 2

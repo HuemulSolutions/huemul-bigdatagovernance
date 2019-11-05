@@ -366,10 +366,15 @@ create table  control_tablesuse (			  tablesuse_id            varchar(50)
                                              ,tableuse_numrowsexcluded			  int
 											 ,tableuse_partitionvalue varchar(200)
 											 ,tableuse_pathbackup	  varchar(1000)
+											 ,tableuse_backupstatus			  int
                                              ,mdm_fhcreate            varchar(30)
                                              ,mdm_processname         varchar(200)
                                              ,primary key (tablesuse_id) 
                                             );
+                                            
+                                            
+ CREATE INDEX IDX_control_tablesuse_I01 ON control_tablesuse (tableuse_backupstatus);
+                                             
                     
 create table  control_dq (
                                               dq_id                   varchar(50) 
