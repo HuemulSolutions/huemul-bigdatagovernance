@@ -25,6 +25,7 @@ import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
 import com.huemulsolutions.bigdata.tables.huemulType_InternalTableType._
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
+import org.apache.spark.sql.execution.datasources.hbase._
 
 //import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
 
@@ -495,6 +496,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //from 2.2 --> validate tableType with Format
     if (this._TableType == huemulType_Tables.Transaction && !(this._StorageType == huemulType_StorageType.PARQUET || this._StorageType == huemulType_StorageType.ORC))
       raiseError(s"huemul_Table Error: Transaction Tables only available with PARQUET or ORC StorageType ",1057)
+      
+    //Fron 2.2 --> validate tableType HBASE and turn on globalSettings
+    if (this._StorageType == huemulType_StorageType.HBASE && !huemulBigDataGov.GlobalSettings.getHBase_available)
+      raiseError(s"huemul_Table Error: StorageType is set to HBASE, requires invoke HBase_available in globalSettings  ",1058)
       
     if (this._DataBase == null)
       raiseError(s"huemul_Table Error: DataBase must be defined",1037)
