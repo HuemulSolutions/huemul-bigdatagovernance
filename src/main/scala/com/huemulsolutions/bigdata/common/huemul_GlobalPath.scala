@@ -71,6 +71,13 @@ class huemul_GlobalPath() extends Serializable {
     //set > 1 to cache hive metadata
     var HIVE_HourToUpdateMetadata: Integer = 0
     
+    //FROM 2.2
+    //Add Hbase available
+    var _HBase_available: Boolean = false
+    def setHBase_available() {
+      _HBase_available = true
+    }
+    
     /**
      Returns true if path has value, otherwise return false
      */
