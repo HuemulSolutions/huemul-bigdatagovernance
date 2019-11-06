@@ -101,12 +101,18 @@ Finalmente, también automatiza la generación de código a partir de las defini
        <artifactId>hive-jdbc</artifactId>
        <version>1.1.0</version>
 	</dependency>
+	
 
+
+	<!-- https://mvnrepository.com/artifact/com.hortonworks.shc/shc-core -->
 	<dependency>
 	    <groupId>com.hortonworks.shc</groupId>
 	    <artifactId>shc-core</artifactId>
 	    <version>1.1.0.3.1.2.1-1</version>
 	</dependency>
+		
+
+
 
 
     <!-- Test -->
@@ -186,6 +192,32 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	  
 	</build>
 
+
+<repositories>
+	<repository>
+     <releases>
+      <enabled>true</enabled>
+     </releases>
+     <snapshots>
+      <enabled>true</enabled>
+     </snapshots>
+     <id>hortonworks.extrepo</id>
+     <name>Hortonworks HDP</name>
+     <url>http://repo.hortonworks.com/content/repositories/releases</url>
+    </repository>
+
+    <repository>
+     <releases>
+      <enabled>true</enabled>
+     </releases>
+     <snapshots>
+      <enabled>true</enabled>
+     </snapshots>
+     <id>hortonworks.other</id>
+     <name>Hortonworks Other Dependencies</name>
+     <url>http://repo.hortonworks.com/content/groups/public</url>
+    </repository>
+</repositories>
   
  
   
