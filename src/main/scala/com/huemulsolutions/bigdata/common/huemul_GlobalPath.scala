@@ -74,7 +74,7 @@ class huemul_GlobalPath() extends Serializable {
     //FROM 2.2
     //Add Hbase available
     private var _HBase_available: Boolean = false
-    dev getHBase_available(): Boolean = {return _HBase_available}
+    def getHBase_available(): Boolean = {return _HBase_available}
     def setHBase_available() {
       _HBase_available = true
     }
