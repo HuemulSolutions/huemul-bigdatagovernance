@@ -309,19 +309,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    ******************************************************************************** */
   
   
-  val MDM_newValue = new huemul_Columns (StringType, true, "New value updated in table", false)
-  val MDM_oldValue = new huemul_Columns (StringType, true, "Old value", false)
-  val MDM_AutoInc = new huemul_Columns (LongType, true, "auto incremental for version control", false)
-  val processExec_id = new huemul_Columns (StringType, true, "Process Execution Id (control model)", false)
+  val MDM_newValue = new huemul_Columns (StringType, true, "New value updated in table", false).setHBaseCatalogMapping("loginfo")
+  val MDM_oldValue = new huemul_Columns (StringType, true, "Old value", false).setHBaseCatalogMapping("loginfo")
+  val MDM_AutoInc = new huemul_Columns (LongType, true, "auto incremental for version control", false).setHBaseCatalogMapping("loginfo")
+  val processExec_id = new huemul_Columns (StringType, true, "Process Execution Id (control model)", false).setHBaseCatalogMapping("loginfo")
   
-  val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false)
-  val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false)
-  val MDM_fhChange = new huemul_Columns (TimestampType, false, "fecha / hora de último cambio de valor en los campos de negocio", false)
-  val MDM_ProcessChange = new huemul_Columns (StringType, false, "Nombre del proceso que cambió los datos", false)
-  val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false)
-  val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false)
+  val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false).setHBaseCatalogMapping("loginfo")
+  val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false).setHBaseCatalogMapping("loginfo")
+  val MDM_fhChange = new huemul_Columns (TimestampType, false, "fecha / hora de último cambio de valor en los campos de negocio", false).setHBaseCatalogMapping("loginfo")
+  val MDM_ProcessChange = new huemul_Columns (StringType, false, "Nombre del proceso que cambió los datos", false).setHBaseCatalogMapping("loginfo")
+  val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false).setHBaseCatalogMapping("loginfo")
+  val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false).setHBaseCatalogMapping("loginfo")
   
-  val MDM_columnName = new huemul_Columns (StringType, true, "Column Name", false)
+  val MDM_columnName = new huemul_Columns (StringType, true, "Column Name", false).setHBaseCatalogMapping("loginfo")
   
   var AdditionalRowsForDistint: String = ""
   private var DefinitionIsClose: Boolean = false
@@ -402,6 +402,22 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   def getTable_OldValueTrace(): String = {
     return internalGetTable(huemulType_InternalTableType.OldValueTrace)
+  }
+  
+  //new from 2.2
+  def getHBaseCatalog(): String = {
+    var result: String = "{"
+    var fields: String = ""
+    getALLDeclaredFields().filter { x => x.setAccessible(true) 
+                x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
+    } foreach { x =>
+      x.setAccessible(true)
+      fields = fields + ""
+    }
+    
+    result += "}"
+    
+    return result
   }
   
   
