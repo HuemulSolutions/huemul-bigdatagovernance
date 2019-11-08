@@ -454,4 +454,16 @@ class huemul_Columns(param_DataType: DataType
     this.SQLForInsert = SQLForInsert
   }
   
+  //from 2.2 --> add setting to HBase
+  private var _hive_df: String = "default"
+  private var _hive_col: String = null
+  def setHBaseCatalogMapping(df: String, col: String = null): huemul_Columns = {
+    _hive_df = df
+    _hive_col = col
+    this
+  }
+  
+  def getHBaseCatalogFamily(): String = {return _hive_df}
+  def getHBaseCatalogColumn(): String = {return _hive_col}
+  
 }
