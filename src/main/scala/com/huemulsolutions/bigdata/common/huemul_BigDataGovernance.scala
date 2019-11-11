@@ -158,19 +158,26 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           //spark.catalog.listColumns(x.database, x.name).show(10000)
           var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
     
-          if (x.database == null)
-            listcols = spark.catalog.listColumns(x.name)
-          else
-            listcols = spark.catalog.listColumns(x.database, x.name)
-            
-          listcols.collect().foreach { y =>
-            //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
-            val newRow = new huemul_sql_tables_and_columns()
-            newRow.column_name = y.name
-            newRow.database_name = if (x.database == null) "__temporary" else x.database
-            newRow.table_name = x.name
-            _ColumnsAndTables.append(newRow)
-          }  
+          try {
+            if (x.database == null)
+              listcols = spark.catalog.listColumns(x.name)
+            else
+              listcols = spark.catalog.listColumns(x.database, x.name)
+              
+            listcols.collect().foreach { y =>
+              //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
+              val newRow = new huemul_sql_tables_and_columns()
+              newRow.column_name = y.name
+              newRow.database_name = if (x.database == null) "__temporary" else x.database
+              newRow.table_name = x.name
+              _ColumnsAndTables.append(newRow)
+            }  
+          } catch {
+            case e: Exception =>
+              println(s"Error reading HIVE metadata on table ${x.database}.${x.name}")
+              println(e)
+              
+          }
         }
       }
     }
