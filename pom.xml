@@ -70,6 +70,8 @@ Finalmente, también automatiza la generación de código a partir de las defini
     <scala.tools.version>2.11</scala.tools.version>
     <scala.version>2.11.8</scala.version>
     <spark.version>2.2.1</spark.version>
+    <hbase.client.version>2.1.0</hbase.client.version>
+    <hbase-spark.version>1.0.0</hbase-spark.version>
   </properties>
 
   <dependencies>
@@ -104,17 +106,25 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	
 
 
-	<!-- https://mvnrepository.com/artifact/com.hortonworks.shc/shc-core -->
+	<!-- https://mvnrepository.com/artifact/com.hortonworks.shc/shc-core 
 	<dependency>
 	    <groupId>com.hortonworks.shc</groupId>
 	    <artifactId>shc-core</artifactId>
 	    <version>1.1.0.3.1.2.1-1</version>
 	</dependency>
-		
-
-
-
-
+		-->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+      <version>${hbase.client.version}</version>
+    </dependency>
+     <!-- https://mvnrepository.com/artifact/org.apache.hbase.connectors.spark/hbase-spark -->
+   <dependency>
+     <groupId>org.apache.hbase.connectors.spark</groupId>
+     <artifactId>hbase-spark</artifactId>
+     <version>1.0.0</version>
+   </dependency>
+    
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
@@ -195,6 +205,11 @@ Finalmente, también automatiza la generación de código a partir de las defini
 
 <repositories>
 	<repository>
+      <id>scala-tools.org</id>
+      <name>Scala-Tools Maven2 Repository</name>
+      <url>http://scala-tools.org/repo-releases</url>
+    </repository>
+	<repository>
      <releases>
       <enabled>true</enabled>
      </releases>
@@ -218,7 +233,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
      <url>http://repo.hortonworks.com/content/groups/public</url>
     </repository>
 </repositories>
-  
+
  
   
 </project>
