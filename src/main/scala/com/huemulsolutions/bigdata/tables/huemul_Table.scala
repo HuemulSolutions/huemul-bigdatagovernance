@@ -16,7 +16,7 @@ import com.huemulsolutions.bigdata.dataquality.huemul_DataQuality
 import com.huemulsolutions.bigdata.dataquality.huemul_DataQualityResult
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
-import com.sun.xml.internal.ws.api.pipe.NextAction
+
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification
 import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
@@ -25,9 +25,7 @@ import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
 import com.huemulsolutions.bigdata.tables.huemulType_InternalTableType._
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
-import org.apache.spark.sql.execution.datasources.hbase._
-
-//import com.sun.imageio.plugins.jpeg.DQTMarkerSegment
+//import org.apache.spark.sql.execution.datasources.hbase._
 
 
 class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_TableDQ with Serializable  {
@@ -323,6 +321,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   val MDM_columnName = new huemul_Columns (StringType, true, "Column Name", false).setHBaseCatalogMapping("loginfo")
   
+  //from 2.2 --> add rowKey compatibility with HBase
+  val hs_rowKey = new huemul_Columns (StringType, true, "Concatenated PK", false).setHBaseCatalogMapping("loginfo")
+  
   var AdditionalRowsForDistint: String = ""
   private var DefinitionIsClose: Boolean = false
   
@@ -405,20 +406,78 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   //new from 2.2
+  /**
+   * Define HBase Table and namespace 
+   */
+  private var _hbase_namespace: String = null
+  private var _hbase_tableName: String = null
+  def setHBaseTableName(namespace: String, tableName: String = null) {
+    _hbase_namespace = namespace
+    _hbase_tableName = tableName
+  }
+  
+  def getHBaseNamespace(): String = {return if ( _hbase_namespace == null) this.getDataBase(this._DataBase) else _hbase_namespace}
+  def getHBaseTableName(): String = {return if (_hbase_tableName == null) this.TableName else _hbase_tableName}
+  
+  /**
+   * get Catalog for HBase mapping
+   */
   def getHBaseCatalog(): String = {
-    var result: String = "{"
-    var fields: String = ""
+
+    //create fields
+    var fields: String = s""""${if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey"}":{"cf":"rowkey","col":"key","type":"string"} """
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
-                x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
+                x.get(this).isInstanceOf[huemul_Columns] 
     } foreach { x =>
       x.setAccessible(true)
-      fields = fields + ""
+      var dataField = x.get(this).asInstanceOf[huemul_Columns]
+      
+      if (!(dataField.getIsPK && _numPKColumns == 1)) {        
+        fields = fields + s""", \n "${x.getName}":{"cf":"${dataField.getHBaseCatalogFamily()}","col":"${dataField.getHBaseCatalogColumn()}","type":"${dataField.getHBaseDataType()}"} """
+      }
     }
     
-    result += "}"
+    //create struct
+    var result = s"""{
+        "table":{"namespace":"${getHBaseNamespace()}", "name":"${getHBaseTableName()}"},
+        "rowkey":"key",
+        "columns":{${fields}
+         }
+      }""".stripMargin
     
     return result
   }
+  
+  /**
+   * get Catalog for HBase mapping
+   */
+  def getHBaseCatalogForHIVE(): String = {
+
+    //create fields
+    var fields: String = s":key"
+    getALLDeclaredFields().filter { x => x.setAccessible(true) 
+                x.get(this).isInstanceOf[huemul_Columns] 
+    } foreach { x =>
+      x.setAccessible(true)
+      var dataField = x.get(this).asInstanceOf[huemul_Columns]
+      
+      if (!(dataField.getIsPK && _numPKColumns == 1)) {        
+        fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}"""
+      }
+    }
+    
+    
+    return fields
+  }
+  
+  //get PK for HBase Tables rowKey 
+  private var _HBase_rowKeyCalc: String = null
+  private var _HBase_PKColumn: String = ""
+  
+  private var _numPKColumns: Int = 0
+  
+  
+  
   
   
   private def internalGetTable(internalTableType: huemulType_InternalTableType, withDataBase: Boolean = true): String = {
@@ -527,6 +586,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
       
     var PartitionFieldValid: Boolean = false
+    var comaPKConcat = ""
+    
+    _numPKColumns = 0
       
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
@@ -562,6 +624,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         if (this.getTableType == huemulType_Tables.Transaction && DataField.get_MyName().toUpperCase() == this.getPartitionField.toUpperCase())
           PartitionFieldValid = true
+          
+        //from 2.2 --> get concatenaded key for HBase
+        if (DataField.getIsPK && getStorageType == huemulType_StorageType.HBASE) {
+          _HBase_rowKeyCalc += s"${comaPKConcat}'[', ${if (DataField.DataType == StringType) DataField.get_MyName() else s"CAST(${DataField.get_MyName()} AS STRING)" },']'"
+          comaPKConcat = ","
+          _HBase_PKColumn = DataField.get_MyName()
+          _numPKColumns += 1
+        }
+            
       }
       
       //Nombre de DQ      
@@ -584,6 +655,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //TODO: Validate FK Setting
         
       }
+    }
+    
+    //from 2.2 --> set _HBase_rowKey for hBase Tables
+    if (getStorageType == huemulType_StorageType.HBASE) {
+      if (_numPKColumns == 1)
+        _HBase_rowKeyCalc = _HBase_PKColumn
+      else 
+        _HBase_rowKeyCalc = s"concat(${_HBase_rowKeyCalc})"
     }
     
     
@@ -640,7 +719,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue" && x.getName != "MDM_AutoInc" && x.getName != "processExec_id"  }
         
         if (this._TableType == huemulType_Tables.Transaction) 
-          b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"  }   
+          b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"   }
+        
+        //       EXCLUDE FOR PARQUET, ORC, ETC             OR            EXCLUDE FOR HBASE AND NUM PKs == 1
+        if (getStorageType != huemulType_StorageType.HBASE || (getStorageType == huemulType_StorageType.HBASE && _numPKColumns == 1) )
+          b = b.filter { x => x.getName != "hs_rowKey"  }
+        
       }
       
       
@@ -1272,7 +1356,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
       } else {
         if (   x.getName == "MDM_fhNew" || x.getName == "MDM_ProcessNew" || x.getName == "MDM_fhChange"
-            || x.getName == "MDM_ProcessChange" || x.getName == "MDM_StatusReg" 
+            || x.getName == "MDM_ProcessChange" || x.getName == "MDM_StatusReg" || x.getName == "hs_rowKey"
             || x.getName == "MDM_hash")
           StringSQL += s"${coma}old_${x.getName}  \n"
         else {          
@@ -1323,7 +1407,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
       } else {
         if (   x.getName == "MDM_fhNew" || x.getName == "MDM_ProcessNew" || x.getName == "MDM_fhChange"
-            || x.getName == "MDM_ProcessChange" || x.getName == "MDM_StatusReg" 
+            || x.getName == "MDM_ProcessChange" || x.getName == "MDM_StatusReg" || x.getName == "hs_rowKey" 
             || x.getName == "MDM_hash")
           StringSQL += s"${coma}old_${x.getName}  \n"
         else {          
@@ -1381,7 +1465,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
            
       if (   x.getName == "MDM_fhNew" || x.getName == "MDM_ProcessNew" || x.getName == "MDM_fhChange"
-            || x.getName == "MDM_ProcessChange" || x.getName == "MDM_StatusReg" 
+            || x.getName == "MDM_ProcessChange" || x.getName == "MDM_StatusReg" || x.getName == "hs_rowKey" 
             || x.getName == "MDM_hash")
         StringSQL += s"${coma}old_${x.getName}  \n"
       else 
@@ -1427,7 +1511,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var StringSQL: String = "SELECT "
     
     var coma: String = ""
-
+    
     //Obtiene todos los campos
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns]
@@ -1448,6 +1532,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' THEN CAST(2 as Int) WHEN ___ActionType__ = 'NEW' THEN CAST(2 as Int) WHEN ___ActionType__ = 'DELETE' THEN CAST(-1 AS Int)  ELSE CAST(old_${x.getName} AS Int) END as ${x.getName} \n"
       else if (x.getName == "MDM_hash")
         StringSQL += s"${coma}MDM_hash \n"
+      else if (x.getName == "hs_rowKey"){
+        if (getStorageType == huemulType_StorageType.HBASE && _numPKColumns > 1)
+          StringSQL += s"${coma}${_HBase_rowKeyCalc} as ${x.getName} \n"
+      }
       else 
         StringSQL += s" ${coma}${x.getName}  \n"
         
@@ -1607,12 +1695,23 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
     
-    //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
-    val lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
-                                 ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
-                                 STORED AS ${_StorageType.toString()}                                  
-                                 LOCATION '${getFullNameWithPath()}'"""
+    var lCreateTableScript: String = "" 
+    if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC) {
+      //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+      lCreateTableScript = s"""
+                                   CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
+                                   ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
+                                   STORED AS ${_StorageType.toString()}                                  
+                                   LOCATION '${getFullNameWithPath()}'"""
+    } else if (getStorageType == huemulType_StorageType.HBASE)  {
+      lCreateTableScript = s"""
+                                   CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
+                                   ROW FORMAT SERDE 'org.apache.hadoop.hive.hbase.HBaseSerDe' 
+                                   STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+                                   WITH SERDEPROPERTIES ("hbase.columns.mapping"="${getHBaseCatalogForHIVE()}")                                   
+                                   TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace()}:${getHBaseTableName()}");"""
+    }
+    
                                  
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
@@ -2826,14 +2925,32 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           DF_Final = DF_Final.repartition(this.getNumPartitions)
         }
                 
+        var localSaveMode: SaveMode = null
         if (OnlyInsert) {
           LocalControl.NewStep("Save: Append Master & Ref Data")
-          DF_Final.write.mode(SaveMode.Append).format(this._StorageType.toString()).save(getFullNameWithPath())
+          localSaveMode = SaveMode.Append
         }
         else {
           LocalControl.NewStep("Save: Overwrite Master & Ref Data")
-          DF_Final.write.mode(SaveMode.Overwrite).format(this._StorageType.toString()).save(getFullNameWithPath())
+          localSaveMode = SaveMode.Overwrite
         }
+        
+       
+       println(getHBaseCatalog())
+       if (this.getStorageType == huemulType_StorageType.HBASE) {
+            var numPartition: String = if (this.getNumPartitions > 5) this.getNumPartitions.toString() else "5"
+            println("cantidad de particiones")
+            println(numPartition)
+            /*
+            DF_Final.write.mode(localSaveMode).options(Map(HBaseTableCatalog.tableCatalog -> getHBaseCatalog()
+                                                           , HBaseTableCatalog.newTable -> numPartition)
+                                                        ).format(huemulBigDataGov.GlobalSettings.getHBase_formatTable()).save()
+                                                        * 
+                                                        */
+          }
+       else 
+         DF_Final.write.mode(localSaveMode).format(this._StorageType.toString()).save(getFullNameWithPath())
+        
         
         //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
         //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
