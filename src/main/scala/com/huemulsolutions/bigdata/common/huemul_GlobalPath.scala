@@ -78,6 +78,12 @@ class huemul_GlobalPath() extends Serializable {
     def setHBase_available() {
       _HBase_available = true
     }
+    private var _HBase_formatTable: String = "org.apache.spark.sql.execution.datasources.hbase"
+    def setHBase_formatTable(value: String) {
+      _HBase_formatTable = value
+    }
+    def getHBase_formatTable(): String = {return _HBase_formatTable}
+    
     
     /**
      Returns true if path has value, otherwise return false
