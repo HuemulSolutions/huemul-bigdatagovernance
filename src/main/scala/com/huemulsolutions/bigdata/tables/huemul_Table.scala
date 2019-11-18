@@ -2941,6 +2941,16 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             var numPartition: String = if (this.getNumPartitions > 5) this.getNumPartitions.toString() else "5"
             println("cantidad de particiones")
             println(numPartition)
+            
+            //array with column names
+            val __cols = DF_Final.columns.filterNot( x => x.equals(if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey")).sorted
+            val __colSorteDF = DF_Final.select(__cols.map(x => col(x)): _*)
+           // val __valCols = __cols.
+           // val __pdd = __colSorteDF.map(row => {
+                
+              
+              
+            
             /*
             DF_Final.write.mode(localSaveMode).options(Map(HBaseTableCatalog.tableCatalog -> getHBaseCatalog()
                                                            , HBaseTableCatalog.newTable -> numPartition)

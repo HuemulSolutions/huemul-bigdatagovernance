@@ -116,7 +116,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
-      <version>${hbase.client.version}</version>
+      <version>2.1.0</version>
     </dependency>
      <!-- https://mvnrepository.com/artifact/org.apache.hbase.connectors.spark/hbase-spark -->
    <dependency>
@@ -124,6 +124,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
      <artifactId>hbase-spark</artifactId>
      <version>1.0.0</version>
    </dependency>
+    
     
     <!-- Test -->
     <dependency>
@@ -202,7 +203,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	  
 	</build>
 
-
+ <!--
 <repositories>
 	<repository>
       <id>scala-tools.org</id>
@@ -232,8 +233,18 @@ Finalmente, también automatiza la generación de código a partir de las defini
      <name>Hortonworks Other Dependencies</name>
      <url>http://repo.hortonworks.com/content/groups/public</url>
     </repository>
+    
+    <repository>
+      <id>central</id>
+      <name>Central Repository</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <layout>default</layout>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
 </repositories>
-
+-->
  
   
 </project>
