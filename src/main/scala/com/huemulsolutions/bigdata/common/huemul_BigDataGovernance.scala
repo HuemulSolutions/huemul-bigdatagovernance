@@ -67,7 +67,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     var getFromHive: Boolean = true
     val df_name: String = GlobalSettings.GetDebugTempPath(this, "internal", "temp_hive_metadata") + ".parquet"
     
-        
+    
     //get from hive if cache doesn't exists
     if (getFromHive) {
       this.logMessageInfo(s"get Hive Metadata from HIVE")
@@ -107,19 +107,26 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           //spark.catalog.listColumns(x.database, x.name).show(10000)
           var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
     
-          if (x.database == null)
-            listcols = spark.catalog.listColumns(x.name)
-          else
-            listcols = spark.catalog.listColumns(x.database, x.name)
-            
-          listcols.collect().foreach { y =>
-            //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
-            val newRow = new huemul_sql_tables_and_columns()
-            newRow.column_name = y.name
-            newRow.database_name = if (x.database == null) "__temporary" else x.database
-            newRow.table_name = x.name
-            _ColumnsAndTables.append(newRow)
-          }  
+          try {
+            if (x.database == null)
+              listcols = spark.catalog.listColumns(x.name)
+            else
+              listcols = spark.catalog.listColumns(x.database, x.name)
+              
+            listcols.collect().foreach { y =>
+              //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
+              val newRow = new huemul_sql_tables_and_columns()
+              newRow.column_name = y.name
+              newRow.database_name = if (x.database == null) "__temporary" else x.database
+              newRow.table_name = x.name
+              _ColumnsAndTables.append(newRow)
+            }  
+          } catch {
+            case e: Exception =>
+              println(s"Error reading HIVE metadata on table ${x.database}.${x.name}")
+              //println(e)
+              
+          }
         }
       }
     }
@@ -130,7 +137,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     //println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
     
     //_ColumnsAndTables.foreach { x => println(s"${x.database_name}, ${x.table_name}, ${x.column_name}")}
-    return _ColumnsAndTables 
+    return _ColumnsAndTables  
   }
   
   def num_to_text(text_format: String, value: Any): String = {
