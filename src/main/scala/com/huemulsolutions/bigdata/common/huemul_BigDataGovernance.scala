@@ -64,12 +64,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     val inicio = this.getCurrentDateTimeJava()
     
     //try to get hive metadata from cache
-    var getFromHive: Boolean = true
+    
     val df_name: String = GlobalSettings.GetDebugTempPath(this, "internal", "temp_hive_metadata") + ".parquet"
     
     
     //get from hive if cache doesn't exists
-    if (getFromHive) {
+    if (getMetadataFromHive) {
       this.logMessageInfo(s"get Hive Metadata from HIVE")
       if (OnlyRefreshTempTables)
         _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
@@ -262,6 +262,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
   }
   
+  var getMetadataFromHive: Boolean = true
+  try {
+    getMetadataFromHive = arguments.GetValue("getMetadataFromHive", "true" ).toBoolean
+  } catch {    
+    case e: Exception => logMessageError("getMetadataFromHive: error values (true or false)")
+  }
   
   val Malla_Id: String = arguments.GetValue("Malla_Id", "" )
   var HideLibQuery: Boolean = false
