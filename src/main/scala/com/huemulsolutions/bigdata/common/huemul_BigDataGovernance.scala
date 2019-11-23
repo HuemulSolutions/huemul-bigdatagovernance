@@ -67,11 +67,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     val inicio = this.getCurrentDateTimeJava()
     
     //try to get hive metadata from cache
-    var getFromHive: Boolean = true
+    //var getFromHive: Boolean = true
     val df_name: String = GlobalSettings.GetDebugTempPath(this, "internal", "temp_hive_metadata") + ".parquet"
     
     //cache is set to true
-    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0) {
+    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0 && getMetadataFromHive) {
       this.logMessageInfo(s"get Hive Metadata from cache")
       //get from DF
       try {
@@ -94,7 +94,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           //if elapsed hour > set hour, then refresh from hive
           if (diff_date.days * 24 + diff_date.hour > this.GlobalSettings.HIVE_HourToUpdateMetadata) {
             this.logMessageInfo(s"Time elapsed, must refresh Hive Metadata... ${diff_date.days * 24 + diff_date.hour} (elapsed) > ${this.GlobalSettings.HIVE_HourToUpdateMetadata} (set)")
-            getFromHive = true
+            getMetadataFromHive = true
           } else {
             _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
             DF_get.foreach { x =>
@@ -106,21 +106,21 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
               _ColumnsAndTables.append(newreg) 
             }
             
-            getFromHive = false
+            getMetadataFromHive = false
           }
             
         } else {
-          getFromHive = true
+          getMetadataFromHive = true
         }
       } catch {
         case e: Exception =>
           println(e)
-          getFromHive = true
+          getMetadataFromHive = true
       }
     } 
     
     //get from hive if cache doesn't exists
-    if (getFromHive) {
+    if (getMetadataFromHive) {
       this.logMessageInfo(s"get Hive Metadata from HIVE")
       if (OnlyRefreshTempTables)
         _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
@@ -184,7 +184,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
     
     
-    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0 && getFromHive) {
+    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0 && getMetadataFromHive) {
       this.logMessageInfo(s"Save Hive Metadata to cache")
       import spark.implicits._
       val ldt = this.getCurrentDateTime()
@@ -334,6 +334,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
   }
   
+  var getMetadataFromHive: Boolean = true
+  try {
+    getMetadataFromHive = arguments.GetValue("getMetadataFromHive", "true" ).toBoolean
+  } catch {    
+    case e: Exception => logMessageError("getMetadataFromHive: error values (true or false)")
+  }
   
   val Malla_Id: String = arguments.GetValue("Malla_Id", "" )
   var HideLibQuery: Boolean = false
