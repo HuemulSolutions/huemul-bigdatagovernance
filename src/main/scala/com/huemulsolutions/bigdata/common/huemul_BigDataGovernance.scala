@@ -63,61 +63,73 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   def getColumnsAndTables(OnlyRefreshTempTables: Boolean): ArrayBuffer[huemul_sql_tables_and_columns] = {
     val inicio = this.getCurrentDateTimeJava()
     
-    if (OnlyRefreshTempTables)
-      _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
-    else 
-      _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
+    //try to get hive metadata from cache
+    var getFromHive: Boolean = true
+    val df_name: String = GlobalSettings.GetDebugTempPath(this, "internal", "temp_hive_metadata") + ".parquet"
     
-    //spark.catalog.listTables().show(10000)
-    //spark.catalog.listDatabases().show()
-    var numRowDatabase = 0
-    var allDatabases = spark.catalog.listDatabases().collect()
+        
+    //get from hive if cache doesn't exists
+    if (getFromHive) {
+      this.logMessageInfo(s"get Hive Metadata from HIVE")
+      if (OnlyRefreshTempTables)
+        _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
+      else 
+        _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
+      
+      //spark.catalog.listTables().show(10000)
+      //spark.catalog.listDatabases().show()
+      var numRowDatabase = 0
+      var allDatabases = spark.catalog.listDatabases().collect()
+      
+      //only get the first one
+      if (OnlyRefreshTempTables)
+        allDatabases = allDatabases.filter { x => x == allDatabases(0)  }
+      
+        
+      allDatabases.foreach { x_database =>
+        numRowDatabase += 1
+        //println(s"x_database.name: ${x_database.name}")
+        var resTables = spark.catalog.listTables(x_database.name).collect()
+        if (numRowDatabase > 1)
+          resTables = resTables.filter { x_fil => x_fil.database != null }
+        else {
+          //only get temp tables (null database)
+          if (OnlyRefreshTempTables)
+            resTables = resTables.filter { x_fil => x_fil.database == null }
+        }
+          //resTables.foreach { x_prin => println(x_prin) }
+        
+        
+        
+        resTables.foreach { x => 
+          //get all columns
+          //println(s"database: ${x.database}, table: ${x.name}")
+          //spark.catalog.listColumns(x.database, x.name).show(10000)
+          var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
     
-    //only get the first one
-    if (OnlyRefreshTempTables)
-      allDatabases = allDatabases.filter { x => x == allDatabases(0)  }
-    
-      
-    allDatabases.foreach { x_database =>
-      numRowDatabase += 1
-      //println(s"x_database.name: ${x_database.name}")
-      var resTables = spark.catalog.listTables(x_database.name).collect()
-      if (numRowDatabase > 1)
-        resTables = resTables.filter { x_fil => x_fil.database != null }
-      else {
-        //only get temp tables (null database)
-        if (OnlyRefreshTempTables)
-          resTables = resTables.filter { x_fil => x_fil.database == null }
-      }
-        //resTables.foreach { x_prin => println(x_prin) }
-      
-      
-      
-      resTables.foreach { x => 
-        //get all columns
-        //println(s"database: ${x.database}, table: ${x.name}")
-        //spark.catalog.listColumns(x.database, x.name).show(10000)
-        var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
-  
-        if (x.database == null)
-          listcols = spark.catalog.listColumns(x.name)
-        else
-          listcols = spark.catalog.listColumns(x.database, x.name)
-          
-        listcols.collect().foreach { y =>
-          //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
-          val newRow = new huemul_sql_tables_and_columns()
-          newRow.column_name = y.name
-          newRow.database_name = if (x.database == null) "__temporary" else x.database
-          newRow.table_name = x.name
-          _ColumnsAndTables.append(newRow)
-        }  
+          if (x.database == null)
+            listcols = spark.catalog.listColumns(x.name)
+          else
+            listcols = spark.catalog.listColumns(x.database, x.name)
+            
+          listcols.collect().foreach { y =>
+            //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
+            val newRow = new huemul_sql_tables_and_columns()
+            newRow.column_name = y.name
+            newRow.database_name = if (x.database == null) "__temporary" else x.database
+            newRow.table_name = x.name
+            _ColumnsAndTables.append(newRow)
+          }  
+        }
       }
     }
+    
     
     val duration = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
     logMessageInfo(s"duration (hh:mm:ss): ${"%02d".format(duration.hour)}:${"%02d".format(duration.minute)}:${"%02d".format(duration.second)}")
     //println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
+    
+    //_ColumnsAndTables.foreach { x => println(s"${x.database_name}, ${x.table_name}, ${x.column_name}")}
     return _ColumnsAndTables 
   }
   
@@ -176,7 +188,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * ARGUMENTS
    *************************/
-  logMessageInfo("huemul_BigDataGovernance version 2.0.1 - sv1.0") 
+  logMessageInfo("huemul_BigDataGovernance version 2.0.2 - sv1.0") 
        
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
