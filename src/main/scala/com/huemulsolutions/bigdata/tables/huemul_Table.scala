@@ -5,6 +5,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.util._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
+
 import java.lang.Long
 import scala.collection.mutable._
 import org.apache.hadoop.fs.FileSystem
@@ -25,7 +26,22 @@ import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
 import com.huemulsolutions.bigdata.tables.huemulType_InternalTableType._
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
-//import org.apache.spark.sql.execution.datasources.hbase._
+
+import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
+import org.apache.hadoop.hbase.spark.HBaseContext
+import org.apache.hadoop.hbase.spark.HBaseRDDFunctions._
+import org.apache.hadoop.hbase.client.{Connection,ConnectionFactory,HBaseAdmin,HTable,Put,Get}
+import org.apache.hadoop.hbase.util.Bytes
+import org.apache.hadoop.hbase.spark.KeyFamilyQualifier
+import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles
+import org.apache.hadoop.hbase.client.Delete
+import org.apache.hadoop.hbase.client.Admin
+//import org.apache.hadoop.hbase.HTableDescriptors // HTableDescriptor
+import org.apache.hadoop.hbase.HColumnDescriptor
+//import org.apache.hadoop.hbase.client.TableDescriptorBuilder
+//import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder
+
+//import org.apache.hadoop.hbase.ColumnDescriptor
 
 
 class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_TableDQ with Serializable  {
@@ -1709,7 +1725,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    ROW FORMAT SERDE 'org.apache.hadoop.hive.hbase.HBaseSerDe' 
                                    STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
                                    WITH SERDEPROPERTIES ("hbase.columns.mapping"="${getHBaseCatalogForHIVE()}")                                   
-                                   TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace()}:${getHBaseTableName()}");"""
+                                   TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace()}:${getHBaseTableName()}")"""
     }
     
                                  
@@ -2936,19 +2952,125 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
         
        
-       println(getHBaseCatalog())
+       //println(getHBaseCatalog())
        if (this.getStorageType == huemulType_StorageType.HBASE) {
             var numPartition: String = if (this.getNumPartitions > 5) this.getNumPartitions.toString() else "5"
             println("cantidad de particiones")
             println(numPartition)
             
             //array with column names
-            val __cols = DF_Final.columns.filterNot( x => x.equals(if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey")).sorted
-            val __colSorteDF = DF_Final.select(__cols.map(x => col(x)): _*)
-           // val __valCols = __cols.
-           // val __pdd = __colSorteDF.map(row => {
-                
+            val __nomPK = if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey"
+            
+            val __cols = DF_Final.columns.sortBy { x => (if (x==__nomPK) "0" else "1").concat(x) } 
+            val __colSortedDF = DF_Final.select(__cols.map( x => col(x)): _*)
+            val __colFromTable = getALLDeclaredFields(false)
+            
+            //excluir PK
+            val __valCols = __cols.filterNot(x => x.equals(__nomPK)).map { x => {
+              val fam_fil = __colFromTable.filter { y => y.getName.toUpperCase() == x.toUpperCase() }
+              var fam: String = "default"
+              var nom: String = x
+              if (fam_fil.length == 1) {
+                val __reg = fam_fil(0) 
+                __reg.setAccessible(true)
+                var dataField = __reg.get(this).asInstanceOf[huemul_Columns]
+                fam = dataField.getHBaseCatalogFamily()
+                nom = dataField.getHBaseCatalogColumn()
+              }
+              (nom, fam )
+            }}
+            
+            val __numCols: Int = __valCols.length
+    
+            import huemulBigDataGov.spark.implicits._ 
+            val __pdd_2 = __colSortedDF.flatMap(row => {
+              val rowKey = row(0).toString() //Bytes.toBytes(x._1)
               
+              for (i <- 0 until __numCols) yield {
+                  val colName = __valCols(i)._1.toString()
+                  val famName = __valCols(i)._2.toString()
+                  val colValue = if (row(i+1) == null) null else row(i+1).toString()
+                  
+                  (rowKey, (famName, colName, colValue))
+                }
+              }
+            ).rdd
+            
+            //inicializa HBase
+            val hbaseConf = HBaseConfiguration.create()
+            val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
+            
+             //ASignación de tabla
+            val stagingFolder = s"/tmp/user/${Control.Control_Id}"
+            println(stagingFolder)
+            val tableNameString: String = s"${getHBaseNamespace()}:${getHBaseTableName()}"
+            val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
+            println(tableNameString)
+            
+            //Crea tabla
+            Control.NewStep("HBase: Create connection")
+            val connection = ConnectionFactory.createConnection(hbaseConf)
+            val admin = connection.getAdmin()
+            
+            Control.NewStep("HBase: Validate TableExists")
+            if (!admin.tableExists(tableName)) {
+              
+             
+              /* desde hbase 2.0
+              val __newTable = TableDescriptorBuilder.newBuilder(tableName)
+                          .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("default".getBytes).build())
+                          .build()
+                          * 
+                          */
+             
+              Control.NewStep("HBase: Table Def")
+              val __newTable = new org.apache.hadoop.hbase.HTableDescriptor(tableName)
+              
+              val a = __valCols.map(x=>x._2).distinct.foreach { x => 
+                __newTable.addFamily(new HColumnDescriptor(x))  
+              }
+              
+              
+              Control.NewStep("HBase: Create Table")
+              admin.createTable(__newTable)
+              /*
+             
+              admin.createTable(__newTable)
+              * 
+              */
+            }
+            
+            //elimina los registros que tengan algún valor en null
+            Control.NewStep("HBase: nulls values")
+            val __tdd_null = __pdd_2.filter(x=> x._2._3 == null).map(x=>x._1).distinct().map(x=> Bytes.toBytes(x))
+            Control.NewStep("HBase: Delete nulls")
+            hbaseContext.bulkDelete[Array[Byte]](__tdd_null
+                    ,tableName
+                    ,putRecord => new Delete( putRecord)
+            		     
+                    ,4)
+                
+            Control.NewStep("HBase: prepare insert values")
+            val __tdd_notnull = __pdd_2.filter(x=> x._2._3 != null)
+            Control.NewStep("HBase: insert values")
+            __tdd_notnull.hbaseBulkLoad(hbaseContext
+                                  , tableName
+                                  , t =>  {
+                                    val rowKey = Bytes.toBytes(t._1)
+                                    val family: Array[Byte] = Bytes.toBytes(t._2._1)
+                                    val qualifier = Bytes.toBytes(t._2._2)
+                                    val value = Bytes.toBytes(t._2._3)
+                                    
+                                    val keyFamilyQualifier = new KeyFamilyQualifier(rowKey,family, qualifier)
+                                    Seq((keyFamilyQualifier, value)).iterator
+                                    
+                                  }
+                                  , stagingFolder)
+            
+            
+            val load = new LoadIncrementalHFiles(hbaseConf)
+            Control.NewStep("HBase: Execute")
+            load.run(Array(stagingFolder, tableNameString))
               
             
             /*
