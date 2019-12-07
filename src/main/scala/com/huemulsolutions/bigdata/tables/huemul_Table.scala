@@ -38,6 +38,8 @@ import org.apache.hadoop.hbase.client.Delete
 import org.apache.hadoop.hbase.client.Admin
 //import org.apache.hadoop.hbase.HTableDescriptors // HTableDescriptor
 import org.apache.hadoop.hbase.HColumnDescriptor
+import org.apache.hive.jdbc.HiveConnection
+
 //import org.apache.hadoop.hbase.client.TableDescriptorBuilder
 //import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder
 
@@ -230,7 +232,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getFrequency: huemulType_Frequency = {return _Frequency}
   
   /**
-   * SaveDQErrorOnce: true (default value) to save DQ result to disk only once (all together)
+   * SaveDQErrorOnce: false (default value) to save DQ result to disk only once (all together)
    * false to save DQ result to disk independently (each DQ error or warning)
   */
   def setSaveDQErrorOnce(value: Boolean) {
@@ -239,7 +241,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _SaveDQErrorOnce = value
   }
-  private var _SaveDQErrorOnce: Boolean = true
+  private var _SaveDQErrorOnce: Boolean = false
   def getSaveDQErrorOnce: Boolean = {return _SaveDQErrorOnce}
   
   
@@ -328,11 +330,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   val MDM_AutoInc = new huemul_Columns (LongType, true, "auto incremental for version control", false).setHBaseCatalogMapping("loginfo")
   val processExec_id = new huemul_Columns (StringType, true, "Process Execution Id (control model)", false).setHBaseCatalogMapping("loginfo")
   
-  val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false).setHBaseCatalogMapping("loginfo")
-  val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false).setHBaseCatalogMapping("loginfo")
-  val MDM_fhChange = new huemul_Columns (TimestampType, false, "fecha / hora de último cambio de valor en los campos de negocio", false).setHBaseCatalogMapping("loginfo")
-  val MDM_ProcessChange = new huemul_Columns (StringType, false, "Nombre del proceso que cambió los datos", false).setHBaseCatalogMapping("loginfo")
-  val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false).setHBaseCatalogMapping("loginfo")
+  val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false).setHBaseCatalogMapping("loginfo9")
+  val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false).setHBaseCatalogMapping("loginfo3")
+  val MDM_fhChange = new huemul_Columns (TimestampType, false, "fecha / hora de último cambio de valor en los campos de negocio", false).setHBaseCatalogMapping("loginfo2")
+  val MDM_ProcessChange = new huemul_Columns (StringType, false, "Nombre del proceso que cambió los datos", false).setHBaseCatalogMapping("loginfo4")
+  val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false).setHBaseCatalogMapping("loginfo2")
   val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false).setHBaseCatalogMapping("loginfo")
   
   val MDM_columnName = new huemul_Columns (StringType, true, "Column Name", false).setHBaseCatalogMapping("loginfo")
@@ -438,6 +440,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * get Catalog for HBase mapping
    */
+  /*
   def getHBaseCatalog(): String = {
 
     //create fields
@@ -463,6 +466,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     return result
   }
+  */
   
   /**
    * get Catalog for HBase mapping
@@ -485,6 +489,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     return fields
   }
+ 
   
   //get PK for HBase Tables rowKey 
   private var _HBase_rowKeyCalc: String = null
@@ -1728,7 +1733,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace()}:${getHBaseTableName()}")"""
     }
     
-                                 
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       
@@ -2952,8 +2956,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
         
        
-       //println(getHBaseCatalog())
-       if (this.getStorageType == huemulType_StorageType.HBASE) {
+        if (this.getStorageType == huemulType_StorageType.HBASE) {
             var numPartition: String = if (this.getNumPartitions > 5) this.getNumPartitions.toString() else "5"
             println("cantidad de particiones")
             println(numPartition)
@@ -3012,10 +3015,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             val connection = ConnectionFactory.createConnection(hbaseConf)
             val admin = connection.getAdmin()
             
+            println("obteniendo namespace")
+            val _listNamespace = admin.listNamespaceDescriptors()
+            
+            //Create namespace if it doesn't exist
+            _listNamespace.foreach { x => println(x.getName) }
+            if (_listNamespace.filter { x => x.getName == getHBaseNamespace }.length == 0) {
+              admin.createNamespace(org.apache.hadoop.hbase.NamespaceDescriptor.create(getHBaseNamespace).build())
+            }
+            
             Control.NewStep("HBase: Validate TableExists")
             if (!admin.tableExists(tableName)) {
-              
-             
               /* desde hbase 2.0
               val __newTable = TableDescriptorBuilder.newBuilder(tableName)
                           .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder("default".getBytes).build())
@@ -3026,29 +3036,55 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
               Control.NewStep("HBase: Table Def")
               val __newTable = new org.apache.hadoop.hbase.HTableDescriptor(tableName)
               
+              //Add families
               val a = __valCols.map(x=>x._2).distinct.foreach { x => 
                 __newTable.addFamily(new HColumnDescriptor(x))  
               }
               
-              
               Control.NewStep("HBase: Create Table")
               admin.createTable(__newTable)
-              /*
-             
-              admin.createTable(__newTable)
-              * 
-              */
+            } else {
+              val _getFamilies = admin.getTableDescriptor(tableName).getFamilies.toArray()
+              var _newFamilies = __valCols.map(x=>x._2).distinct
+              
+              //get current families
+              _getFamilies.foreach { x =>
+                    val _reg = x.asInstanceOf[org.apache.hadoop.hbase.HColumnDescriptor].getNameAsString
+                    println(_reg)
+                      _newFamilies = _newFamilies.filter { y => y != _reg }
+                    }
+              println("las que quedaron:")
+              _newFamilies.foreach { x => println(x) }
+              //Add new families
+              if (_newFamilies.length > 0) {
+                val __oldTable = admin.getTableDescriptor(tableName)
+                val a = _newFamilies.foreach { x => 
+                  println(s"nuevas: ${x}")
+                __oldTable.addFamily(new HColumnDescriptor(x))  
+                }
+                
+                admin.modifyTable(tableName, __oldTable)
+                
+                //sys.error("fin obligatorio")
+              }
+              
+              
+              
+              
             }
             
             //elimina los registros que tengan algún valor en null
-            Control.NewStep("HBase: nulls values")
-            val __tdd_null = __pdd_2.filter(x=> x._2._3 == null).map(x=>x._1).distinct().map(x=> Bytes.toBytes(x))
-            Control.NewStep("HBase: Delete nulls")
-            hbaseContext.bulkDelete[Array[Byte]](__tdd_null
-                    ,tableName
-                    ,putRecord => new Delete( putRecord)
-            		     
-                    ,4)
+            //si es OnlyInsert no existen los registros anteriormente, por tanto no hay registros nulos que eliminar.
+            if (!OnlyInsert) {
+              Control.NewStep("HBase: nulls values")
+              val __tdd_null = __pdd_2.filter(x=> x._2._3 == null).map(x=>x._1).distinct().map(x=> Bytes.toBytes(x))
+              Control.NewStep("HBase: Delete nulls")
+              hbaseContext.bulkDelete[Array[Byte]](__tdd_null
+                      ,tableName
+                      ,putRecord => new Delete( putRecord)
+              		     
+                      ,4)
+            }
                 
             Control.NewStep("HBase: prepare insert values")
             val __tdd_notnull = __pdd_2.filter(x=> x._2._3 != null)
@@ -3147,7 +3183,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           LocalControl.NewStep("Save: Create Table in Hive Metadata")
           CreateTableScript = DF_CreateTableScript() 
          
-          huemulBigDataGov.spark.sql(CreateTableScript)
+          //from 2.2 --> create HBAse table using JDBC Hive connection
+          if (getStorageType == huemulType_StorageType.HBASE)
+            huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(CreateTableScript)
+          else 
+            huemulBigDataGov.spark.sql(CreateTableScript)
         }
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
