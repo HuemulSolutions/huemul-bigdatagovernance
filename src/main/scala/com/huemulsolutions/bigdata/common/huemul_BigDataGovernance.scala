@@ -411,6 +411,8 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    *************************/
   @transient val CONTROL_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.CONTROL_Setting),GlobalSettings.CONTROL_Driver, DebugMode) // Connection = null
   @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode) //Connection = null
+  //FROM 2.2 --> ADD Hive connection to create HBase tables
+  @transient val HIVE_connection   = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.HIVE_Setting),null, DebugMode) //Connection = null
   
   if (!TestPlanMode && RegisterInControl) { 
     logMessageInfo(s"establishing connection with control model")  
@@ -419,6 +421,15 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   if (!TestPlanMode && ImpalaEnabled) {
     logMessageInfo(s"establishing connection with impala") 
     impala_connection.StartConnection()
+  }
+  //from 2.2 --> start HIVE Connection
+  if (!TestPlanMode) {
+    if (GlobalSettings.ValidPath(GlobalSettings.HIVE_Setting, this.Environment)) {
+      logMessageInfo(s"establishing connection with JDBC HIVE")
+      impala_connection.StartConnection()
+    } else {
+      logMessageWarn(s"can't establish connection with JDBC HIVE (HIVE_Setting's missing)")
+    }
   }
   
   val spark: SparkSession = if (!TestPlanMode & LocalSparkSession == null) 
