@@ -21,6 +21,24 @@ import org.apache.hive.jdbc.HiveConnection
 
 class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   
+  
+  def saveToHBase(DF_to_save: DataFrame
+                , HBase_Namespace: String
+                , HBase_tableName: String
+                , numPartitions: Int
+                , isOnlyInsert: Boolean
+                , DF_ColumnPKName: String
+                ): Boolean = {
+    return saveToHBase(DF_to_save
+                                    ,HBase_Namespace
+                                    ,HBase_tableName
+                                    ,numPartitions
+                                    ,isOnlyInsert
+                                    ,DF_ColumnPKName
+                                    ,null)
+  }
+    
+  
   def saveToHBase(DF_to_save: DataFrame
                 , HBase_Namespace: String
                 , HBase_tableName: String
@@ -32,14 +50,13 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     var result: Boolean = true
     
     var numPartition: String = if (numPartitions > 5) numPartitions.toString() else "5"
-    println("cantidad de particiones")
-    println(numPartition)
+    Control.NewStep(s"HBase: num partitions = ${numPartition} ")
     
     //array with column names    
     val __cols = DF_to_save.columns.sortBy { x => (if (x==DF_ColumnPKName) "0" else "1").concat(x) } 
     val __colSortedDF = DF_to_save.select(__cols.map( x => col(x)): _*)
     
-    //excluir PK
+    //exclude PK from columns to save (PK is a row key)
     val __valCols = __cols.filterNot(x => x.equals(DF_ColumnPKName)).map { x => {
       var fam: String = "default"
       var nom: String = x
@@ -58,8 +75,11 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       (nom, fam )
     }}
     
+    //get num cols
     val __numCols: Int = __valCols.length
 
+    Control.NewStep(s"HBase: Map to HBase format ")
+    //map to HBase format (keyValue, family, colname, value)
     import huemulBigDataGov.spark.implicits._ 
     val __pdd_2 = __colSortedDF.flatMap(row => {
       val rowKey = row(0).toString() //Bytes.toBytes(x._1)
@@ -74,32 +94,33 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       }
     ).rdd
     
-    //inicializa HBase
+    //Starting HBase
+    Control.NewStep(s"HBase: Create hBaseConfiguration and HBaseContext")
     val hbaseConf = HBaseConfiguration.create()
     val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
     
-     //ASignación de tabla
+     //Table Assign
+    Control.NewStep(s"HBase: Set staging Folder and Family:Table Name")
     val stagingFolder = s"/tmp/user/${Control.Control_Id}"
-    println(stagingFolder)
     val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
     val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
-    println(tableNameString)
+    huemulBigDataGov.logMessageDebug(s"staging folder: ${stagingFolder}")
     
     //Crea tabla
     Control.NewStep("HBase: Create connection")
     val connection = ConnectionFactory.createConnection(hbaseConf)
     val admin = connection.getAdmin()
     
-    println("obteniendo namespace")
+    Control.NewStep(s"HBase: Namespaces validation...")
     val _listNamespace = admin.listNamespaceDescriptors()
     
     //Create namespace if it doesn't exist
-    _listNamespace.foreach { x => println(x.getName) }
+    //_listNamespace.foreach { x => println(x.getName) }
     if (_listNamespace.filter { x => x.getName == HBase_Namespace }.length == 0) {
       admin.createNamespace(org.apache.hadoop.hbase.NamespaceDescriptor.create(HBase_Namespace).build())
     }
     
-    Control.NewStep("HBase: Validate TableExists")
+    Control.NewStep("HBase: TableExists validation...")
     if (!admin.tableExists(tableName)) {
       /* desde hbase 2.0
       val __newTable = TableDescriptorBuilder.newBuilder(tableName)
@@ -108,7 +129,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
                   * 
                   */
      
-      Control.NewStep("HBase: Table Def")
+      Control.NewStep(s"HBase: Table doesn't exists, creating table... ")
       val __newTable = new org.apache.hadoop.hbase.HTableDescriptor(tableName)
       
       //Add families
@@ -116,9 +137,9 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
         __newTable.addFamily(new HColumnDescriptor(x))  
       }
       
-      Control.NewStep("HBase: Create Table")
       admin.createTable(__newTable)
     } else {
+      Control.NewStep(s"HBase: Table exists, get families ")
       val __oldTable = admin.getTableDescriptor(tableName)
       val _getFamilies = __oldTable.getFamilies.toArray()
       var _newFamilies = __valCols.map(x=>x._2).distinct
@@ -129,16 +150,15 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       //get current families
       _getFamilies.foreach { x =>
             val _reg = x.asInstanceOf[org.apache.hadoop.hbase.HColumnDescriptor].getNameAsString
-            println(_reg)
+            //println(_reg)
               _newFamilies = _newFamilies.filter { y => y != _reg }
             }
-      println("las que quedaron:")
-      _newFamilies.foreach { x => println(x) }
+      
       //Add new families
       if (_newFamilies.length > 0) {
-        
+        Control.NewStep(s"HBase: creating new families ")
         val a = _newFamilies.foreach { x => 
-          println(s"nuevas: ${x}")
+          //println(s"nuevas: ${x}")
         __oldTable.addFamily(new HColumnDescriptor(x))  
         }
         
@@ -152,7 +172,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     //elimina los registros que tengan algún valor en null
     //si es OnlyInsert no existen los registros anteriormente, por tanto no hay registros nulos que eliminar.
     if (!isOnlyInsert) {
-      Control.NewStep("HBase: nulls values")
+      Control.NewStep(s"HBase: set null when previous values were not null")
       val __tdd_null = __pdd_2.filter(x=> x._2._3 == null).map(x=>x._1).distinct().map(x=> Bytes.toBytes(x))
       Control.NewStep("HBase: Delete nulls")
       hbaseContext.bulkDelete[Array[Byte]](__tdd_null
@@ -162,9 +182,10 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
               ,4)
     }
         
-    Control.NewStep("HBase: prepare insert values")
+    Control.NewStep(s"HBase: exclude null values ")
     val __tdd_notnull = __pdd_2.filter(x=> x._2._3 != null)
-    Control.NewStep("HBase: insert values")
+  
+    Control.NewStep(s"HBase: insert and update values ")
     __tdd_notnull.hbaseBulkLoad(hbaseContext
                           , tableName
                           , t =>  {
@@ -179,9 +200,8 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
                           }
                           , stagingFolder)
     
-    
+    Control.NewStep(s"HBase: execute HBase job ")
     val load = new LoadIncrementalHFiles(hbaseConf)
-    Control.NewStep("HBase: Execute")
     load.run(Array(stagingFolder, tableNameString))
       
     
