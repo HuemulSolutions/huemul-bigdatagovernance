@@ -766,8 +766,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   private def getALLDeclaredFields_forHBase(allDeclaredFields: Array[java.lang.reflect.Field]) : Array[(java.lang.reflect.Field, String, String)] = {
        
-    val result = allDeclaredFields.map { x =>     
+    val result = allDeclaredFields.filter { x => x.setAccessible(true)
+                                      x.get(this).isInstanceOf[huemul_Columns] }.map { x =>     
       //Get field
+      x.setAccessible(true)
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       (x,Field.getHBaseCatalogFamily(), Field.getHBaseCatalogColumn())
     }
