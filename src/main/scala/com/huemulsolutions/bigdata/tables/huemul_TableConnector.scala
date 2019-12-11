@@ -18,9 +18,40 @@ import org.apache.hadoop.hbase.client.Admin
 //import org.apache.hadoop.hbase.HTableDescriptors // HTableDescriptor
 import org.apache.hadoop.hbase.HColumnDescriptor
 import org.apache.hive.jdbc.HiveConnection
+import org.apache.hadoop.hbase.spark.datasources.HBaseTableCatalog
 
 class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   
+  
+  def tableExistsHBase(HBase_Namespace: String
+                     , HBase_tableName: String): Boolean = {
+    var result: Boolean = false
+    //Crea tabla
+    Control.NewStep(s"HBase: Create hBaseConfiguration and HBaseContext")
+    val hbaseConf = HBaseConfiguration.create()
+    val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
+    
+    Control.NewStep("HBase: Create connection")
+    val connection = ConnectionFactory.createConnection(hbaseConf)
+    val admin = connection.getAdmin()
+    
+    val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
+    val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
+    
+    Control.NewStep(s"HBase: Namespaces validation...")
+    result = admin.tableExists(tableName)
+    
+    admin.close()
+    connection.close()
+    
+    return result
+  }
+  
+  def getDFFromHBase(Alias: String, catalog: String): DataFrame = {
+    val DF = huemulBigDataGov.spark.read.options(Map(HBaseTableCatalog.tableCatalog->catalog)).format("org.apache.hadoop.hbase.spark").load()
+    DF.createOrReplaceTempView(Alias)
+    return DF
+  }
   
   def saveToHBase(DF_to_save: DataFrame
                 , HBase_Namespace: String
@@ -101,7 +132,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     
      //Table Assign
     Control.NewStep(s"HBase: Set staging Folder and Family:Table Name")
-    val stagingFolder = s"/tmp/user/${Control.Control_Id}"
+    val stagingFolder = s"/tmp/user/${Control.getStepId}"
     val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
     val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
     huemulBigDataGov.logMessageDebug(s"staging folder: ${stagingFolder}")
@@ -204,6 +235,8 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     val load = new LoadIncrementalHFiles(hbaseConf)
     load.run(Array(stagingFolder, tableNameString))
       
+    admin.close()
+    connection.close()
     
     /*
     DF_to_save.write.mode(localSaveMode).options(Map(HBaseTableCatalog.tableCatalog -> getHBaseCatalog()
