@@ -54,8 +54,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   var Control_Start_dt: Calendar = Calendar.getInstance()
   var Control_Stop_dt: Calendar = null
   val Control_Error: huemul_ControlError = new huemul_ControlError(huemulBigDataGov)
-  val Control_Params: scala.collection.mutable.ListBuffer[huemul_LibraryParams] = new scala.collection.mutable.ListBuffer[huemul_LibraryParams]() 
+  val Control_Params: scala.collection.mutable.ListBuffer[huemul_LibraryParams] = new scala.collection.mutable.ListBuffer[huemul_LibraryParams]()
+  
   private var LocalIdStep: String = ""
+  def getStepId: String = return LocalIdStep 
   private var Step_IsDQ: Boolean = false
   private var AdditionalParamsInfo: String = ""
   
