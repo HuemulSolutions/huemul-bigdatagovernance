@@ -2,6 +2,7 @@ package com.huemulsolutions.bigdata.tables
 
 import com.huemulsolutions.bigdata.control.huemul_Control
 import org.apache.spark.sql._
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
 import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 
@@ -19,6 +20,7 @@ import org.apache.hadoop.hbase.client.Admin
 import org.apache.hadoop.hbase.HColumnDescriptor
 import org.apache.hive.jdbc.HiveConnection
 import org.apache.hadoop.hbase.spark.datasources.HBaseTableCatalog
+import scala.reflect.runtime.universe.{ typeOf, TypeTag, Type }
 
 class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   
@@ -76,7 +78,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
                 , numPartitions: Int
                 , isOnlyInsert: Boolean
                 , DF_ColumnPKName: String
-                , huemulDeclaredFieldsForHBase : Array[(java.lang.reflect.Field, String, String)] //Optional
+                , huemulDeclaredFieldsForHBase : Array[(java.lang.reflect.Field, String, String, DataType)] //Optional
                 ): Boolean = {
     var result: Boolean = true
     
@@ -85,12 +87,13 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     
     //array with column names    
     val __cols = DF_to_save.columns.sortBy { x => (if (x==DF_ColumnPKName) "0" else "1").concat(x) } 
-    val __colSortedDF = DF_to_save.select(__cols.map( x => col(x)): _*)
-    
+    val __colSortedDF = DF_to_save.select(__cols.map( x => col(x) ): _*)
+    val __schema = __colSortedDF.schema
     //exclude PK from columns to save (PK is a row key)
     val __valCols = __cols.filterNot(x => x.equals(DF_ColumnPKName)).map { x => {
       var fam: String = "default"
       var nom: String = x
+      var dataType: DataType = __schema.fields( __schema.fieldIndex(x)).dataType
       
       //Only if huemulDeclaredFields has value
       if (huemulDeclaredFieldsForHBase != null) {
@@ -100,10 +103,11 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
           val __reg = fam_fil(0) 
           fam = __reg._2
           nom = __reg._3
+          dataType = __reg._4
         }
       }
       
-      (nom, fam )
+      (nom, fam, dataType )
     }}
     
     //get num cols
@@ -111,6 +115,44 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
 
     Control.NewStep(s"HBase: Map to HBase format ")
     //map to HBase format (keyValue, family, colname, value)
+    
+  /*
+    val typename2Type = Map[Row, Array[Byte]](
+       r BooleanType -> ,
+       "byte" -> ByteType
+      )
+      * 
+      */
+    
+    
+       /*
+       DataTypes.BooleanType)
+        Values = row.getAs[Boolean](columnName)
+      else if (firstRow.dataType == DataTypes.ShortType)
+        Values = row.getAs[Short](columnName)
+      else if (firstRow.dataType == DataTypes.LongType)
+        Values = row.getAs[Long](columnName)
+      else if (firstRow.dataType == DataTypes.BinaryType)
+        Values = row.getAs[BinaryType](columnName)
+      else if (firstRow.dataType == DataTypes.StringType)
+        Values = row.getAs[String](columnName)
+      else if (firstRow.dataType == DataTypes.NullType)
+        Values = row.getAs[NullType](columnName)
+      else if (firstRow.dataType == DecimalType || firstRow.dataType.typeName.toLowerCase().contains("decimal"))
+        Values = row.getAs[BigDecimal](columnName)
+      else if (firstRow.dataType == DataTypes.IntegerType)
+        Values = row.getAs[Integer](columnName)
+      else if (firstRow.dataType == DataTypes.FloatType)
+        Values = row.getAs[Float](columnName)
+      else if (firstRow.dataType == DataTypes.DoubleType)
+        Values = row.getAs[Double](columnName)
+      else if (firstRow.dataType == DataTypes.DateType)
+        Values = row.getAs[Date](columnName)
+      else if (firstRow.dataType == DataTypes.TimestampType)
+        Values = row.getAs[String](columnName)
+      )
+    */
+
     import huemulBigDataGov.spark.implicits._ 
     val __pdd_2 = __colSortedDF.flatMap(row => {
       val rowKey = row(0).toString() //Bytes.toBytes(x._1)
@@ -118,8 +160,39 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       for (i <- 0 until __numCols) yield {
           val colName = __valCols(i)._1.toString()
           val famName = __valCols(i)._2.toString()
-          val colValue = if (row(i+1) == null) null else row(i+1).toString()
-          
+          val colDataType = __valCols(i)._3
+          var colValue: Array[Byte] = null
+
+          if (row(i+1) == null)
+            colValue = null
+          else if (colDataType == DataTypes.BooleanType)
+            colValue = Bytes.toBytes(row.getBoolean(i+1)) 
+          else if (colDataType == DataTypes.ShortType)
+            colValue = Bytes.toBytes(row.getShort(i+1))
+          else if (colDataType == DataTypes.LongType)
+            colValue = Bytes.toBytes(row.getLong(i+1))
+          //else if (colDataType == DataTypes.BinaryType)
+          //  colValue = Bytes.toBytes(row.getBinary(i+1))
+          else if (colDataType == DataTypes.StringType)
+            colValue = Bytes.toBytes(row.getString(i+1))
+          //else if (colDataType == DataTypes.NullType)
+          //  colValue = Bytes.toBytes(row.getAs[NullType](columnName)
+          else if (colDataType == DecimalType || colDataType.typeName.toLowerCase().contains("decimal"))
+            colValue = Bytes.toBytes(row(i+1).toString())
+            //colValue = Bytes.toBytes(row.getDecimal(i+1))
+          else if (colDataType == DataTypes.IntegerType)
+            colValue = Bytes.toBytes(row.getInt(i+1))
+          else if (colDataType == DataTypes.FloatType)
+            colValue = Bytes.toBytes(row.getFloat(i+1))
+          else if (colDataType == DataTypes.DoubleType)
+            colValue = Bytes.toBytes(row.getDouble(i+1))
+          else if (colDataType == DataTypes.DateType)
+            colValue = Bytes.toBytes(row(i+1).toString())
+          else if (colDataType == DataTypes.TimestampType)
+            colValue = Bytes.toBytes(row(i+1).toString())
+          else
+            colValue = Bytes.toBytes(row(i+1).toString())
+                
           (rowKey, (famName, colName, colValue))
         }
       }
@@ -223,7 +296,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
                             val rowKey = Bytes.toBytes(t._1)
                             val family: Array[Byte] = Bytes.toBytes(t._2._1)
                             val qualifier = Bytes.toBytes(t._2._2)
-                            val value = Bytes.toBytes(t._2._3)
+                            val value = t._2._3
                             
                             val keyFamilyQualifier = new KeyFamilyQualifier(rowKey,family, qualifier)
                             Seq((keyFamilyQualifier, value)).iterator
