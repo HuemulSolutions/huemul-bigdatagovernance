@@ -506,6 +506,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var dataField = x.get(this).asInstanceOf[huemul_Columns]
       
       if (!(dataField.getIsPK && _numPKColumns == 1)) {        
+        //fields = fields + s""", \n "${x.getName}":{"cf":"${dataField.getHBaseCatalogFamily()}","col":"${dataField.getHBaseCatalogColumn()}","type":"${dataField.getHBaseDataType()}"} """
         fields = fields + s""", \n "${x.getName}":{"cf":"${dataField.getHBaseCatalogFamily()}","col":"${dataField.getHBaseCatalogColumn()}","type":"${dataField.getHBaseDataType()}"} """
       
         if (tableType != huemulType_InternalTableType.OldValueTrace) {
@@ -550,28 +551,28 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (tableType == huemulType_InternalTableType.DQ) {
           //create StructType
           if ("dq_control_id".toUpperCase() != x.getName.toUpperCase()) {
-            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}"""
+            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}#b"""
           }
         }
         else if (tableType == huemulType_InternalTableType.OldValueTrace) {
           //create StructType MDM_columnName
           if ("MDM_columnName".toUpperCase() != x.getName.toUpperCase()) {
-            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}"""
+            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}#b"""
           }
         }
         else {
           //create StructType
-          fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}"""
+          fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}${if (dataField.DataType == TimestampType || dataField.DataType == DateType || dataField.DataType == DecimalType || dataField.DataType.typeName.toLowerCase().contains("decimal")) "" else "#b"}"""
           
         }
         
         if (tableType != huemulType_InternalTableType.OldValueTrace) {
           if (dataField.getMDM_EnableOldValue)
-            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}_old"""
+            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}_old${if (dataField.DataType == TimestampType || dataField.DataType == DateType || dataField.DataType == DecimalType || dataField.DataType.typeName.toLowerCase().contains("decimal") ) "" else "#b"}"""
           if (dataField.getMDM_EnableDTLog) 
             fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}_fhChange"""
           if (dataField.getMDM_EnableProcessLog)
-            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}_ProcessLog"""
+            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}_ProcessLog#b"""
         }
         
         
@@ -865,14 +866,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Get all declared fields from class, transform to huemul_Columns
    */
-  private def getALLDeclaredFields_forHBase(allDeclaredFields: Array[java.lang.reflect.Field]) : Array[(java.lang.reflect.Field, String, String)] = {
+  private def getALLDeclaredFields_forHBase(allDeclaredFields: Array[java.lang.reflect.Field]) : Array[(java.lang.reflect.Field, String, String, DataType)] = {
        
     val result = allDeclaredFields.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }.map { x =>     
       //Get field
       x.setAccessible(true)
       var Field = x.get(this).asInstanceOf[huemul_Columns]
-      (x,Field.getHBaseCatalogFamily(), Field.getHBaseCatalogColumn())
+      (x,Field.getHBaseCatalogFamily(), Field.getHBaseCatalogColumn(), Field.DataType)
     }
     
     return result
