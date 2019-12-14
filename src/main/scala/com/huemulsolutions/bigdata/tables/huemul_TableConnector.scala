@@ -19,8 +19,8 @@ import org.apache.hadoop.hbase.client.Admin
 //import org.apache.hadoop.hbase.HTableDescriptors // HTableDescriptor
 import org.apache.hadoop.hbase.HColumnDescriptor
 import org.apache.hive.jdbc.HiveConnection
-import org.apache.hadoop.hbase.spark.datasources.HBaseTableCatalog
-import scala.reflect.runtime.universe.{ typeOf, TypeTag, Type }
+//import org.apache.hadoop.hbase.spark.datasources.HBaseTableCatalog
+
 
 class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   
@@ -49,11 +49,14 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     return result
   }
   
+  /*
   def getDFFromHBase(Alias: String, catalog: String): DataFrame = {
     val DF = huemulBigDataGov.spark.read.options(Map(HBaseTableCatalog.tableCatalog->catalog)).format("org.apache.hadoop.hbase.spark").load()
     DF.createOrReplaceTempView(Alias)
     return DF
   }
+  * 
+  */
   
   def saveToHBase(DF_to_save: DataFrame
                 , HBase_Namespace: String
@@ -116,43 +119,6 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     Control.NewStep(s"HBase: Map to HBase format ")
     //map to HBase format (keyValue, family, colname, value)
     
-  /*
-    val typename2Type = Map[Row, Array[Byte]](
-       r BooleanType -> ,
-       "byte" -> ByteType
-      )
-      * 
-      */
-    
-    
-       /*
-       DataTypes.BooleanType)
-        Values = row.getAs[Boolean](columnName)
-      else if (firstRow.dataType == DataTypes.ShortType)
-        Values = row.getAs[Short](columnName)
-      else if (firstRow.dataType == DataTypes.LongType)
-        Values = row.getAs[Long](columnName)
-      else if (firstRow.dataType == DataTypes.BinaryType)
-        Values = row.getAs[BinaryType](columnName)
-      else if (firstRow.dataType == DataTypes.StringType)
-        Values = row.getAs[String](columnName)
-      else if (firstRow.dataType == DataTypes.NullType)
-        Values = row.getAs[NullType](columnName)
-      else if (firstRow.dataType == DecimalType || firstRow.dataType.typeName.toLowerCase().contains("decimal"))
-        Values = row.getAs[BigDecimal](columnName)
-      else if (firstRow.dataType == DataTypes.IntegerType)
-        Values = row.getAs[Integer](columnName)
-      else if (firstRow.dataType == DataTypes.FloatType)
-        Values = row.getAs[Float](columnName)
-      else if (firstRow.dataType == DataTypes.DoubleType)
-        Values = row.getAs[Double](columnName)
-      else if (firstRow.dataType == DataTypes.DateType)
-        Values = row.getAs[Date](columnName)
-      else if (firstRow.dataType == DataTypes.TimestampType)
-        Values = row.getAs[String](columnName)
-      )
-    */
-
     import huemulBigDataGov.spark.implicits._ 
     val __pdd_2 = __colSortedDF.flatMap(row => {
       val rowKey = row(0).toString() //Bytes.toBytes(x._1)
@@ -198,17 +164,17 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       }
     ).rdd
     
+    
+     //Table Assign
+    Control.NewStep(s"HBase: Set staging Folder and Family:Table Name")
+    
+    val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
+    val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
+    
     //Starting HBase
     Control.NewStep(s"HBase: Create hBaseConfiguration and HBaseContext")
     val hbaseConf = HBaseConfiguration.create()
     val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
-    
-     //Table Assign
-    Control.NewStep(s"HBase: Set staging Folder and Family:Table Name")
-    val stagingFolder = s"/tmp/user/${Control.getStepId}"
-    val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
-    val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
-    huemulBigDataGov.logMessageDebug(s"staging folder: ${stagingFolder}")
     
     //Crea tabla
     Control.NewStep("HBase: Create connection")
@@ -288,6 +254,11 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
         
     Control.NewStep(s"HBase: exclude null values ")
     val __tdd_notnull = __pdd_2.filter(x=> x._2._3 != null)
+    println(s"N° total: ${__pdd_2.count()}")
+    println(s"N° filtardos: ${__tdd_notnull.count()}")
+    
+    val stagingFolder = s"/tmp/user/${Control.getStepId}"
+    huemulBigDataGov.logMessageDebug(s"staging folder: ${stagingFolder}")
   
     Control.NewStep(s"HBase: insert and update values ")
     __tdd_notnull.hbaseBulkLoad(hbaseContext
