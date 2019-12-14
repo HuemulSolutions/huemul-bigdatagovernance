@@ -1257,7 +1257,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           StringSQL_ActionType = s" case when Old.${x.getName} is null then 'NEW' when ${NewColumnCast} is null then 'EQUAL' else 'UPDATE' END as ___ActionType__  "
       } else {
         //¿column exist in DataFrame?
-        val columnExist = !(OfficialColumns.filter { y => y.name == x.getName}.length == 0)
+        val columnExist = !(OfficialColumns.filter { y => y.name.toLowerCase() == x.getName.toLowerCase()}.length == 0)
         
         //String for new DataFrame fulljoin
         if (columnExist){
@@ -1291,19 +1291,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
       
         if (Field.getMDM_EnableOldValue){
-          if (OfficialColumns.filter { y => y.name == s"${x.getName}_old"}.length == 0) //no existe columna en dataframe
+          if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${x.getName}_old".toLowerCase()}.length == 0) //no existe columna en dataframe
             StringSQL_LeftJoin += s",CAST(null AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
           else //existe columna en dataframe
             StringSQL_LeftJoin += s",CAST(old.${x.getName}_old AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
         }
         if (Field.getMDM_EnableDTLog){
-          if (OfficialColumns.filter { y => y.name == s"${x.getName}_fhChange"}.length == 0) //no existe columna en dataframe
+          if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${x.getName}_fhChange".toLowerCase()}.length == 0) //no existe columna en dataframe
             StringSQL_LeftJoin += s",CAST(null AS TimeStamp) as old_${x.getName}_fhChange \n"
           else //existe columna en dataframe
             StringSQL_LeftJoin += s",CAST(old.${x.getName}_fhChange AS TimeStamp) as old_${x.getName}_fhChange \n"
         }
         if (Field.getMDM_EnableProcessLog){
-          if (OfficialColumns.filter { y => y.name == s"${x.getName}_ProcessLog"}.length == 0) //no existe columna en dataframe
+          if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${x.getName}_ProcessLog".toLowerCase()}.length == 0) //no existe columna en dataframe
             StringSQL_LeftJoin += s",CAST(null AS STRING) as old_${x.getName}_ProcessLog \n"
           else //existe columna en dataframe
             StringSQL_LeftJoin += s",CAST(old.${x.getName}_ProcessLog AS STRING) as old_${x.getName}_ProcessLog \n"
@@ -1398,7 +1398,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           StringSQL_ActionType = s" case when Old.${x.getName} is null then 'NEW' when ${NewColumnCast} is null then ${if (isDelete) "'DELETE'" else "'EQUAL'"} else ${if (isUpdate) "'UPDATE'" else "'EQUAL'"} END as ___ActionType__  "
       } else {
         //¿column exist in DataFrame?
-        val columnExist = !(OfficialColumns.filter { y => y.name == x.getName}.length == 0)
+        val columnExist = !(OfficialColumns.filter { y => y.name.toLowerCase() == x.getName.toLowerCase()}.length == 0)
         
         //String for new DataFrame fulljoin
         if (columnExist)
@@ -1430,19 +1430,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
       
         if (Field.getMDM_EnableOldValue){
-          if (OfficialColumns.filter { y => y.name == s"${x.getName}_old"}.length == 0) //no existe columna en dataframe
+          if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${x.getName}_old".toLowerCase()}.length == 0) //no existe columna en dataframe
             StringSQL_FullJoin += s",CAST(null AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
           else //existe columna en dataframe
             StringSQL_FullJoin += s",CAST(old.${x.getName}_old AS ${Field.DataType.sql}) as old_${x.getName}_old \n"
         }
         if (Field.getMDM_EnableDTLog){
-          if (OfficialColumns.filter { y => y.name == s"${x.getName}_fhChange"}.length == 0) //no existe columna en dataframe
+          if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${x.getName}_fhChange".toLowerCase()}.length == 0) //no existe columna en dataframe
             StringSQL_FullJoin += s",CAST(null AS TimeStamp) as old_${x.getName}_fhChange \n"
           else //existe columna en dataframe
             StringSQL_FullJoin += s",CAST(old.${x.getName}_fhChange AS TimeStamp) as old_${x.getName}_fhChange \n"
         }
         if (Field.getMDM_EnableProcessLog){
-          if (OfficialColumns.filter { y => y.name == s"${x.getName}_ProcessLog"}.length == 0) //no existe columna en dataframe
+          if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${x.getName}_ProcessLog".toLowerCase()}.length == 0) //no existe columna en dataframe
             StringSQL_FullJoin += s",CAST(null AS STRING) as old_${x.getName}_ProcessLog \n"
           else //existe columna en dataframe
             StringSQL_FullJoin += s",CAST(old.${x.getName}_ProcessLog AS STRING) as old_${x.getName}_ProcessLog \n"
@@ -2513,10 +2513,33 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         val hBaseConnector = new huemul_TableConnector(huemulBigDataGov, LocalControl)
         if (hBaseConnector.tableExistsHBase(getHBaseNamespace(huemulType_InternalTableType.Normal),getHBaseTableName(huemulType_InternalTableType.Normal))) {
           oldDataFrameExists = true
-          println(getHBaseCatalog(huemulType_InternalTableType.Normal))
-          val DFHBase = hBaseConnector.getDFFromHBase(TempAlias, getHBaseCatalog(huemulType_InternalTableType.Normal))
+          //println(getHBaseCatalog(huemulType_InternalTableType.Normal))
+          //val DFHBase = hBaseConnector.getDFFromHBase(TempAlias, getHBaseCatalog(huemulType_InternalTableType.Normal))
+          
+          //create external table if doesn't exists
+          CreateTableScript = DF_CreateTableScript()          
+          huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(CreateTableScript)
+            
+          val DFHBase = huemulBigDataGov.DF_ExecuteQuery(TempAlias, s"SELECT * FROM ${this.internalGetTable(huemulType_InternalTableType.Normal)}")
+          
+          /*
+          var tempPath: String = null
+          if (huemulBigDataGov.GlobalSettings.MDM_SaveBackup && this._SaveBackup){
+            tempPath = this.getFullNameWithPath_Backup(Control.Control_Id )
+            _BackupPath = tempPath
+            if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to backup dir: $tempPath ")
+          } else {
+            tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
+            if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
+          }
+          
+          if (this.getNumPartitions == null || this.getNumPartitions <= 0)
+            DFHBase.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)     //2.2 -> this._StorageType.toString() instead of "parquet"
+          else
+            DFHBase.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)   //2.2 -> this._StorageType.toString() instead of "parquet"
+          */
+          val numRows = DFHBase.count()
           DFHBase.show()
-          //huemulBigDataGov.DF_ExecuteQuery(TempAlias, s"SELECT * FROM ${this.internalGetTable(huemulType_InternalTableType.Normal)}")
         }
       } else {
         if (fs.exists(new org.apache.hadoop.fs.Path(this.getFullNameWithPath()))){
@@ -2763,7 +2786,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.HasName(x.get_MappedName())) {
         //val ColumnNames = if (UseAliasColumnName) x.get_MappedName() else x.get_MyName()
         val ColumnNames = x.get_MyName()
-        val ColumnInSchema = Schema.filter { y => y.name == ColumnNames }
+        val ColumnInSchema = Schema.filter { y => y.name.toLowerCase() == ColumnNames.toLowerCase() }
         if (ColumnInSchema == null || ColumnInSchema.length == 0)
           raiseError(s"huemul_Table Error: column missing in Schema ${ColumnNames}", 1038)
         if (ColumnInSchema.length != 1)
