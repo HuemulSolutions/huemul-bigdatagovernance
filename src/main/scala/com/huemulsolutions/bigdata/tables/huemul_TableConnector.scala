@@ -24,6 +24,29 @@ import org.apache.hive.jdbc.HiveConnection
 
 class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   
+  def tableDeleteHBase(HBase_Namespace: String
+                     , HBase_tableName: String) = {
+
+    //Crea tabla
+    
+    val hbaseConf = HBaseConfiguration.create()
+    val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
+    
+    
+    val connection = ConnectionFactory.createConnection(hbaseConf)
+    val admin = connection.getAdmin()
+    
+    val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
+    val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
+    
+    admin.disableTable(tableName)
+    admin.deleteTable(tableName)
+    
+    admin.close()
+    connection.close()
+    
+    
+  }
   
   def tableExistsHBase(HBase_Namespace: String
                      , HBase_tableName: String): Boolean = {
@@ -254,30 +277,32 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
         
     Control.NewStep(s"HBase: exclude null values ")
     val __tdd_notnull = __pdd_2.filter(x=> x._2._3 != null)
-    println(s"N° total: ${__pdd_2.count()}")
-    println(s"N° filtardos: ${__tdd_notnull.count()}")
+   // println(s"N° total: ${__pdd_2.count()}")
+   // println(s"N° filtardos: ${__tdd_notnull.count()}")
     
     val stagingFolder = s"/tmp/user/${Control.getStepId}"
     huemulBigDataGov.logMessageDebug(s"staging folder: ${stagingFolder}")
   
     Control.NewStep(s"HBase: insert and update values ")
-    __tdd_notnull.hbaseBulkLoad(hbaseContext
-                          , tableName
-                          , t =>  {
-                            val rowKey = Bytes.toBytes(t._1)
-                            val family: Array[Byte] = Bytes.toBytes(t._2._1)
-                            val qualifier = Bytes.toBytes(t._2._2)
-                            val value = t._2._3
-                            
-                            val keyFamilyQualifier = new KeyFamilyQualifier(rowKey,family, qualifier)
-                            Seq((keyFamilyQualifier, value)).iterator
-                            
-                          }
-                          , stagingFolder)
-    
-    Control.NewStep(s"HBase: execute HBase job ")
-    val load = new LoadIncrementalHFiles(hbaseConf)
-    load.run(Array(stagingFolder, tableNameString))
+    if (__tdd_notnull.count() > 0) {
+      __tdd_notnull.hbaseBulkLoad(hbaseContext
+                            , tableName
+                            , t =>  {
+                              val rowKey = Bytes.toBytes(t._1)
+                              val family: Array[Byte] = Bytes.toBytes(t._2._1)
+                              val qualifier = Bytes.toBytes(t._2._2)
+                              val value = t._2._3
+                              
+                              val keyFamilyQualifier = new KeyFamilyQualifier(rowKey,family, qualifier)
+                              Seq((keyFamilyQualifier, value)).iterator
+                              
+                            }
+                            , stagingFolder)
+      
+      Control.NewStep(s"HBase: execute HBase job ")
+      val load = new LoadIncrementalHFiles(hbaseConf)
+      load.run(Array(stagingFolder, tableNameString))
+    }
       
     admin.close()
     connection.close()
