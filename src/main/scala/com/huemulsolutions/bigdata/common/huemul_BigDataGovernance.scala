@@ -986,7 +986,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (numPartitions != null && numPartitions > 0)
       SQL_DF = SQL_DF.repartition(numPartitions)      
       
-    if (this.DebugMode) SQL_DF.show()
+    
+    if (this.DebugMode) {
+      this.logMessageDebug(s"alias: ${Alias}")
+      SQL_DF.show()
+    }
     //Change alias name
     SQL_DF.createOrReplaceTempView(Alias)         //crea vista sql
 
