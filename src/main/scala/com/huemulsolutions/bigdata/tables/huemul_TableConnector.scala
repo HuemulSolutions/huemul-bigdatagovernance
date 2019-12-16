@@ -39,9 +39,11 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
     val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
     
-    admin.disableTable(tableName)
-    admin.deleteTable(tableName)
-    
+    if (admin.tableExists(tableName)) {
+      admin.disableTable(tableName)
+      admin.deleteTable(tableName)
+    }
+      
     admin.close()
     connection.close()
     
