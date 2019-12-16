@@ -3059,6 +3059,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    
       if (OnlyInsert && !IsSelectiveUpdate) {
         DF_Final = DF_Final.where("___ActionType__ = 'NEW'") 
+      } else if (this.getStorageType == huemulType_StorageType.HBASE){
+        //exclude "EQUAL" to improve write performance on HBase
+        DF_Final = DF_Final.where("___ActionType__ != 'EQUAL'")
       }
       
       DF_Final = DF_Final.drop("___ActionType__").drop("SameHashKey") //from 2.1: always this columns exist on reference and master tables
@@ -3269,7 +3272,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_OldValueTrace()} ")
-      if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET){
+      if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC){
         DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       }
