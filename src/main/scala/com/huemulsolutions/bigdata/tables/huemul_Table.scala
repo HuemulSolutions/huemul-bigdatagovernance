@@ -120,12 +120,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Type of Persistent storage (parquet, csv, json) for DQ
    */
   def setStorageType_DQResult(value: huemulType_StorageType) {
+    if (_StorageType_DQResult == huemulType_StorageType.HBASE)
+      raiseError("huemul_Table Error: HBase is not available for DQ Table", 1061)
+      
     if (DefinitionIsClose)
       this.raiseError("You can't change value of StorageType_DQResult, definition is close", 1033)
     else
       _StorageType_DQResult = value
   }
   def getStorageType_DQResult: huemulType_StorageType = {
+    if (_StorageType_DQResult == huemulType_StorageType.HBASE)
+      raiseError("huemul_Table Error: HBase is not available for DQ Table", 1061)
     return   if (_StorageType_DQResult != null) _StorageType_DQResult
         else if (_StorageType_DQResult == null && getStorageType == huemulType_StorageType.HBASE ) _storageType_default  
         else getStorageType
@@ -136,12 +141,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    Type of Persistent storage (parquet, csv, json) for DQ
    */
   def setStorageType_OldValueTrace(value: huemulType_StorageType) {
+    if (_StorageType_OldValueTrace == huemulType_StorageType.HBASE)
+      raiseError("huemul_Table Error: HBase is not available for OldValueTraceTable", 1063)
+      
     if (DefinitionIsClose)
       this.raiseError("You can't change value of StorageType_OldValueTrace, definition is close", 1033)
     else
       _StorageType_OldValueTrace = value
   }
   def getStorageType_OldValueTrace: huemulType_StorageType = {
+    if (_StorageType_OldValueTrace == huemulType_StorageType.HBASE)
+      raiseError("huemul_Table Error: HBase is not available for OldValueTraceTable", 1063)
     return   if (_StorageType_OldValueTrace != null) _StorageType_OldValueTrace
         else if (_StorageType_OldValueTrace == null && getStorageType == huemulType_StorageType.HBASE ) _storageType_default  
         else getStorageType    
@@ -674,6 +684,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     if (this.getStorageType == null)
       raiseError(s"huemul_Table Error: StorageType must be defined",1002)
+      
+    if (this.getStorageType_DQResult == null)
+      raiseError(s"huemul_Table Error: HBase is not available for DQ Table",1061)
+      
+    if (this.getStorageType_OldValueTrace == null)
+      raiseError(s"huemul_Table Error: HBase is not available for OldValueTraceTable",1063)
       
     if (this._TableType == null)
       raiseError(s"huemul_Table Error: TableType must be defined",1034)
@@ -3330,8 +3346,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     try {      
       LocalControl.NewStep("Save DQ Result: Saving new DQ result")
-      //from 2.2 --> add HBase storage (from table definition)
-      if (this.getStorageType == huemulType_StorageType.HBASE) {
+      //from 2.2 --> add HBase storage (from table definition) --> NOT SUPPORTED
+      if (this.getStorageType_DQResult == huemulType_StorageType.HBASE) {
         val huemulDriver = new huemul_TableConnector(huemulBigDataGov, LocalControl)
         huemulDriver.saveToHBase(DF_Final
                                   ,getHBaseNamespace(huemulType_InternalTableType.DQ)
@@ -3343,7 +3359,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                   )      
       } else {
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_DQ()} ")        
-        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this.getStorageType.toString()).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
+        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this.getStorageType_DQResult.toString()).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
       }
       
     } catch {
