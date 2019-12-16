@@ -2539,7 +2539,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             DFHBase.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)   //2.2 -> this._StorageType.toString() instead of "parquet"
           */
           val numRows = DFHBase.count()
-          DFHBase.show()
+          //DFHBase.show()
         }
       } else {
         if (fs.exists(new org.apache.hadoop.fs.Path(this.getFullNameWithPath()))){
@@ -3118,15 +3118,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
        
         if (this.getStorageType == huemulType_StorageType.HBASE){
-          val huemulDriver = new huemul_TableConnector(huemulBigDataGov, LocalControl)
-          huemulDriver.saveToHBase(DF_Final
-                                  ,getHBaseNamespace(huemulType_InternalTableType.Normal)
-                                  ,getHBaseTableName(huemulType_InternalTableType.Normal)
-                                  ,this.getNumPartitions //numPartitions
-                                  ,OnlyInsert
-                                  ,if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey" //PKName
-                                  ,getALLDeclaredFields_forHBase(getALLDeclaredFields(false))
-                                  )                                    
+          if (DF_Final.count() > 0) {
+            val huemulDriver = new huemul_TableConnector(huemulBigDataGov, LocalControl)
+            huemulDriver.saveToHBase(DF_Final
+                                    ,getHBaseNamespace(huemulType_InternalTableType.Normal)
+                                    ,getHBaseTableName(huemulType_InternalTableType.Normal)
+                                    ,this.getNumPartitions //numPartitions
+                                    ,OnlyInsert
+                                    ,if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey" //PKName
+                                    ,getALLDeclaredFields_forHBase(getALLDeclaredFields(false))
+                                    )
+          }
         }
         else 
           DF_Final.write.mode(localSaveMode).format(this.getStorageType.toString()).save(getFullNameWithPath())
