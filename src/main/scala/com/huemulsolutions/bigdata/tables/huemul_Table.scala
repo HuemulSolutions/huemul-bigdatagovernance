@@ -2265,14 +2265,22 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                                                                    GROUP BY ${SQL_PK}
                                                                                    HAVING COUNT(1) > 1
                                                                                 """)
-        //val numReg_01 = df_detail_01.count()
+                                                                                
+        df_detail_01.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+        val numReg_01 = df_detail_01.count()
+         //Broadcast
+        var _NumRows_PK: String = ""
+        if (numReg_01 < 50000)
+          _NumRows_PK = "/*+ BROADCAST(dup) */"
+          
         //get rows duplicated
         LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step2)")
-        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT /*+ BROADCAST(dup) */ PK.*
+        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT ${_NumRows_PK} PK.*
                                                                                    FROM ${this.DataFramehuemul.Alias} PK
                                                                                      INNER JOIN ___temp_pk_det_01 dup
                                                                                         ON ${SQL_PK_on}
                                                                                 """)   
+        df_detail_02.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
         val numReg = df_detail_02.count()                                                                                 
                                                                               
         val DQ_Id_PK = ResultDQ.getDQResult().filter { dqres => dqres.DQ_ErrorCode == 1018 }(0).DQ_Id
@@ -2289,7 +2297,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Execute query
         LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step3, $numReg rows)")
         var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ_PK", SQL_Detail)
-                             
+        DF_EDetail.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+        val numCount = DF_EDetail.count()
         if (ResultDQ.DetailErrorsDF == null)
           ResultDQ.DetailErrorsDF = DF_EDetail
         else
@@ -3276,7 +3285,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_OldValueTrace()} ")
       if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC){
-        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
+        DF_Final.write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
+        //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       }
       else
@@ -3365,7 +3375,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                   )      
       } else {
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_DQ()} ")        
-        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this.getStorageType_DQResult.toString()).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
+        //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this.getStorageType_DQResult.toString()).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
+        DF_Final.write.mode(SaveMode.Append).format(this.getStorageType_DQResult.toString()).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
       }
       
     } catch {
