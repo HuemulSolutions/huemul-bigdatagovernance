@@ -2621,6 +2621,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                               , SQL_Step1_FullJoin(TempAlias, NextAlias, isUpdate, isDelete)
                                               , Control //parent control 
                                              )
+      
+      //from 2.2 --> add to compatibility with HBase (without this, OldValueTrace doesn't work becacuse it recalculate with new HBase values                                       
+      SQLFullJoin_DF.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
                                              
                                              
       //STEP 2: Create Tabla with Update and Insert result
