@@ -2485,6 +2485,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //STEP 2: Execute final table //Add debugmode and getnumpartitions in v1.3
       DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this, storageLevelOfDF)
       
+      //from 2.2 --> persist to improve performance
+      DataFramehuemul.DataFrame.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+      
       //LocalControl.NewStep("Transaction: Get Statistics info")
       this.UpdateStatistics(LocalControl, "Transaction", null)
       
