@@ -118,7 +118,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     val __colSortedDF = DF_to_save.select(__cols.map( x => col(x) ): _*)
     val __schema = __colSortedDF.schema
     //exclude PK from columns to save (PK is a row key)
-    val __valCols = __cols.filterNot(x => x.equals(DF_ColumnPKName)).map { x => {
+    val __valCols = __cols.filterNot(x => x.toLowerCase().equals(DF_ColumnPKName.toLowerCase())).map { x => {
       var fam: String = "default"
       var nom: String = x
       var dataType: DataType = __schema.fields( __schema.fieldIndex(x)).dataType
@@ -165,14 +165,14 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
           //else if (colDataType == DataTypes.BinaryType)
           //  colValue = Bytes.toBytes(row.getBinary(i+1))
           else if (colDataType == DataTypes.StringType)
-            colValue = Bytes.toBytes(row.getString(i+1))
+            colValue = Bytes.toBytes(row(i+1).toString())
           //else if (colDataType == DataTypes.NullType)
           //  colValue = Bytes.toBytes(row.getAs[NullType](columnName)
           else if (colDataType == DecimalType || colDataType.typeName.toLowerCase().contains("decimal"))
             colValue = Bytes.toBytes(row(i+1).toString())
             //colValue = Bytes.toBytes(row.getDecimal(i+1))
           else if (colDataType == DataTypes.IntegerType)
-            colValue = Bytes.toBytes(row.getInt(i+1))
+            colValue = Bytes.toBytes(row(i+1).toString()) //Bytes.toBytes(row.getAs[Integer](i+1) )  //(row.getInt(i+1))
           else if (colDataType == DataTypes.FloatType)
             colValue = Bytes.toBytes(row.getFloat(i+1))
           else if (colDataType == DataTypes.DoubleType)
