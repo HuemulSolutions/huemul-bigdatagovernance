@@ -556,7 +556,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       x.setAccessible(true)
       var dataField = x.get(this).asInstanceOf[huemul_Columns]
       
-      if (!(dataField.getIsPK && _numPKColumns == 1)) {        
+      if (!(dataField.getIsPK && _numPKColumns == 1) && (x.getName.toLowerCase() != "hs_rowKey".toLowerCase())) {        
         
         if (tableType == huemulType_InternalTableType.DQ) {
           //create StructType
@@ -595,7 +595,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
  
   
   //get PK for HBase Tables rowKey 
-  private var _HBase_rowKeyCalc: String = null
+  private var _HBase_rowKeyCalc: String = ""
   private var _HBase_PKColumn: String = ""
   
   private var _numPKColumns: Int = 0
@@ -719,7 +719,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var comaPKConcat = ""
     
     _numPKColumns = 0
-      
+    _HBase_rowKeyCalc = ""
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
     } foreach { x =>
@@ -1058,10 +1058,23 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val NumFields = fieldList.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }.length
     
+    
     var ColumnsCreateTable : String = ""
     var coma: String = ""
+    
+    //for HBase, add hs_rowKey as Key column
+    if (getStorageType == huemulType_StorageType.HBASE && _numPKColumns > 1) {
+      fieldList.filter { x => x.getName == "hs_rowKey" }.foreach { x =>
+        var Field = x.get(this).asInstanceOf[huemul_Columns]
+        var DataTypeLocal = Field.DataType.sql
+      
+        ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
+        coma = ","
+      }
+    }                                      
+    
     fieldList.filter { x => x.setAccessible(true)
-                                      x.get(this).isInstanceOf[huemul_Columns] }
+                                      x.get(this).isInstanceOf[huemul_Columns] && x.getName != "hs_rowKey" }
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
@@ -2548,6 +2561,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           CreateTableScript = DF_CreateTableScript()          
           huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(CreateTableScript)
             
+          LocalControl.NewStep("Ref & Master: Reading HBase data...")     
           val DFHBase = huemulBigDataGov.DF_ExecuteQuery(TempAlias, s"SELECT * FROM ${this.internalGetTable(huemulType_InternalTableType.Normal)}")
           
           /*
