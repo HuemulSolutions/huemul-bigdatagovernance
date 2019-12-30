@@ -70,6 +70,8 @@ Finalmente, también automatiza la generación de código a partir de las defini
     <scala.tools.version>2.11</scala.tools.version>
     <scala.version>2.11.8</scala.version>
     <spark.version>2.2.1</spark.version>
+    <hbase.client.version>2.1.0</hbase.client.version>
+    <hbase-spark.version>1.0.0</hbase-spark.version>
   </properties>
 
   <dependencies>
@@ -95,17 +97,131 @@ Finalmente, también automatiza la generación de código a partir de las defini
       <version>${spark.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>                                                      
-	   <groupId>org.postgresql</groupId>
-	   <artifactId>postgresql</artifactId>
-	   <version>9.4.1212</version>                                
-	</dependency> 
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming_${scala.tools.version}</artifactId>
+      <version>${spark.version}</version>
+    </dependency>
+
 	<dependency>
        <groupId>org.apache.hive</groupId>
        <artifactId>hive-jdbc</artifactId>
        <version>1.1.0</version>
 	</dependency>
+ 
 
+	<dependency>
+	    <groupId>org.apache.hbase.connectors.spark</groupId>
+     	<artifactId>hbase-spark</artifactId>
+    	<version>1.0.0</version>
+   	</dependency>
+
+	<dependency>
+		<groupId>jdk.tools</groupId>
+		<artifactId>jdk.tools</artifactId>
+		<version>1.7.0_05</version>
+		<scope>system</scope>
+		<systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
+	</dependency>
+	<!-- 
+	<dependency>
+        <groupId>org.apache.hbase</groupId>
+        <artifactId>hbase-spark</artifactId>
+        <version>1.1.2.2.6.4.0-91</version>
+    </dependency>
+    -->
+    <dependency>
+	   <groupId>org.apache.hbase</groupId>
+	   <artifactId>hbase-client</artifactId>
+	   <version>1.1.2</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-common</artifactId>
+      <version>1.1.2</version>
+    </dependency>
+    
+   	<dependency>
+         <groupId>org.apache.hbase</groupId>
+         <artifactId>hbase-protocol</artifactId>
+         <version>1.1.2</version>
+     </dependency>
+
+     <dependency>
+         <groupId>org.apache.hbase</groupId>
+         <artifactId>hbase-annotations</artifactId>
+         <version>1.1.2</version>
+     </dependency>
+
+  	 <dependency>
+         <groupId>org.apache.hbase</groupId>
+         <artifactId>hbase-hadoop-compat</artifactId>
+         <version>1.1.2</version>
+     </dependency>
+     
+     <dependency>
+         <groupId>org.apache.hbase</groupId>
+         <artifactId>hbase-hadoop2-compat</artifactId>
+         <version>1.1.2</version>
+     </dependency>
+	<!-- https://mvnrepository.com/artifact/com.hortonworks.shc/shc-core -->
+
+	
+
+  <!-- 
+		  
+	<dependency>
+		<groupId>jdk.tools</groupId>
+		<artifactId>jdk.tools</artifactId>
+		<version>1.7.0_05</version>
+		<scope>system</scope>
+		<systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
+	</dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+      <version>1.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-common</artifactId>
+      <version>1.1.2</version>
+    </dependency>
+    
+   	<dependency>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-protocol</artifactId>
+          <version>1.1.2</version>
+      </dependency>
+
+      <dependency>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-annotations</artifactId>
+          <version>1.1.2</version>
+      </dependency>
+
+	  <dependency>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-hadoop-compat</artifactId>
+          <version>1.1.2</version>
+      </dependency>
+      
+
+      <dependency>
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-spark</artifactId>
+          <version>2.0.0-alpha4</version>
+      </dependency>
+      -->
+     <!-- https://mvnrepository.com/artifact/org.apache.hbase.connectors.spark/hbase-spark 
+   <dependency>
+     <groupId>org.apache.hbase.connectors.spark</groupId>
+     <artifactId>hbase-spark</artifactId>
+     <version>1.0.0</version>
+   </dependency>
+    -->
+    
     <!-- Test -->
     <dependency>
       <groupId>junit</groupId>
@@ -183,7 +299,68 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	  
 	</build>
 
-  
+ <!--
+<repositories>
+	<repository>
+     <id>hortonworks.extrepo</id>
+     <name>Hortonworks HDP</name>
+     <url>http://repo.hortonworks.com/content/repositories/releases</url>
+    </repository>
+
+    <repository>
+     <id>hortonworks.other</id>
+     <name>Hortonworks Other Dependencies</name>
+     <url>http://repo.hortonworks.com/content/groups/public</url>
+    </repository>
+    
+    <repository>
+      <id>central</id>
+      <name>Central Repository</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </repository>
+</repositories>
+
+<repositories>
+	<repository>
+      <id>scala-tools.org</id>
+      <name>Scala-Tools Maven2 Repository</name>
+      <url>http://scala-tools.org/repo-releases</url>
+    </repository>
+	<repository>
+     <releases>
+      <enabled>true</enabled>
+     </releases>
+     <snapshots>
+      <enabled>true</enabled>
+     </snapshots>
+     <id>hortonworks.extrepo</id>
+     <name>Hortonworks HDP</name>
+     <url>http://repo.hortonworks.com/content/repositories/releases</url>
+    </repository>
+
+    <repository>
+     <releases>
+      <enabled>true</enabled>
+     </releases>
+     <snapshots>
+      <enabled>true</enabled>
+     </snapshots>
+     <id>hortonworks.other</id>
+     <name>Hortonworks Other Dependencies</name>
+     <url>http://repo.hortonworks.com/content/groups/public</url>
+    </repository>
+    
+    <repository>
+      <id>central</id>
+      <name>Central Repository</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <layout>default</layout>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+</repositories>
+-->
  
   
 </project>

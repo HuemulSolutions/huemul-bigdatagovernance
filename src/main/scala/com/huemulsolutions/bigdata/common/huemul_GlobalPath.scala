@@ -21,6 +21,9 @@ class huemul_GlobalPath() extends Serializable {
     val CONTROL_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     val IMPALA_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
+    //from 2.2 --> add HIVE connect
+    val HIVE_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
+    
     //RAW
     val RAW_SmallFiles_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     val RAW_BigFiles_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
@@ -70,6 +73,23 @@ class huemul_GlobalPath() extends Serializable {
     //from 2.1
     //set > 1 to cache hive metadata
     var HIVE_HourToUpdateMetadata: Integer = 0
+    
+    //FROM 2.2
+    //Add Hbase available
+    private var _HBase_available: Boolean = false
+    def getHBase_available(): Boolean = {return _HBase_available}
+    def setHBase_available() {
+      _HBase_available = true
+    }
+    /*
+    private var _HBase_formatTable: String = "org.apache.spark.sql.execution.datasources.hbase"
+    def setHBase_formatTable(value: String) {
+      _HBase_formatTable = value
+    }
+    def getHBase_formatTable(): String = {return _HBase_formatTable}
+    * 
+    */
+    
     
     /**
      Returns true if path has value, otherwise return false
