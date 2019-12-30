@@ -52,7 +52,7 @@ import org.apache.log4j.Level
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.1"
+  val currentVersion: String = "2.2"
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -67,11 +67,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     val inicio = this.getCurrentDateTimeJava()
     
     //try to get hive metadata from cache
-    var getFromHive: Boolean = true
+    //var getFromHive: Boolean = true
     val df_name: String = GlobalSettings.GetDebugTempPath(this, "internal", "temp_hive_metadata") + ".parquet"
     
     //cache is set to true
-    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0) {
+    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0 && getMetadataFromHive) {
       this.logMessageInfo(s"get Hive Metadata from cache")
       //get from DF
       try {
@@ -94,7 +94,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           //if elapsed hour > set hour, then refresh from hive
           if (diff_date.days * 24 + diff_date.hour > this.GlobalSettings.HIVE_HourToUpdateMetadata) {
             this.logMessageInfo(s"Time elapsed, must refresh Hive Metadata... ${diff_date.days * 24 + diff_date.hour} (elapsed) > ${this.GlobalSettings.HIVE_HourToUpdateMetadata} (set)")
-            getFromHive = true
+            getMetadataFromHive = true
           } else {
             _ColumnsAndTables = new ArrayBuffer[huemul_sql_tables_and_columns]() 
             DF_get.foreach { x =>
@@ -106,21 +106,21 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
               _ColumnsAndTables.append(newreg) 
             }
             
-            getFromHive = false
+            getMetadataFromHive = false
           }
             
         } else {
-          getFromHive = true
+          getMetadataFromHive = true
         }
       } catch {
         case e: Exception =>
           println(e)
-          getFromHive = true
+          getMetadataFromHive = true
       }
     } 
     
     //get from hive if cache doesn't exists
-    if (getFromHive) {
+    if (getMetadataFromHive) {
       this.logMessageInfo(s"get Hive Metadata from HIVE")
       if (OnlyRefreshTempTables)
         _ColumnsAndTables = _ColumnsAndTables.filter { x_fil => x_fil.database_name != "__temporary" }
@@ -158,26 +158,33 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           //spark.catalog.listColumns(x.database, x.name).show(10000)
           var listcols:org.apache.spark.sql.Dataset[org.apache.spark.sql.catalog.Column]= null
     
-          if (x.database == null)
-            listcols = spark.catalog.listColumns(x.name)
-          else
-            listcols = spark.catalog.listColumns(x.database, x.name)
-            
-          listcols.collect().foreach { y =>
-            //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
-            val newRow = new huemul_sql_tables_and_columns()
-            newRow.column_name = y.name
-            newRow.database_name = if (x.database == null) "__temporary" else x.database
-            newRow.table_name = x.name
-            _ColumnsAndTables.append(newRow)
-          }  
+          try {
+            if (x.database == null)
+              listcols = spark.catalog.listColumns(x.name)
+            else
+              listcols = spark.catalog.listColumns(x.database, x.name)
+              
+            listcols.collect().foreach { y =>
+              //println(s"database: ${x.database}, table: ${x.name}, column: ${y.name}")
+              val newRow = new huemul_sql_tables_and_columns()
+              newRow.column_name = y.name
+              newRow.database_name = if (x.database == null) "__temporary" else x.database
+              newRow.table_name = x.name
+              _ColumnsAndTables.append(newRow)
+            }  
+          } catch {
+            case e: Exception =>
+              println(s"Error reading HIVE metadata on table ${x.database}.${x.name}")
+              println(e)
+              
+          }
         }
       }
     }
     
     
     
-    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0 && getFromHive) {
+    if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0 && getMetadataFromHive) {
       this.logMessageInfo(s"Save Hive Metadata to cache")
       import spark.implicits._
       val ldt = this.getCurrentDateTime()
@@ -327,6 +334,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
   }
   
+  var getMetadataFromHive: Boolean = true
+  try {
+    getMetadataFromHive = arguments.GetValue("getMetadataFromHive", "true" ).toBoolean
+  } catch {    
+    case e: Exception => logMessageError("getMetadataFromHive: error values (true or false)")
+  }
   
   val Malla_Id: String = arguments.GetValue("Malla_Id", "" )
   var HideLibQuery: Boolean = false
@@ -398,6 +411,9 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    *************************/
   @transient val CONTROL_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.CONTROL_Setting),GlobalSettings.CONTROL_Driver, DebugMode) // Connection = null
   @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode) //Connection = null
+  //FROM 2.2 --> ADD Hive connection to create HBase tables
+  val _HIVE_connString: String = if (GlobalSettings.ValidPath(GlobalSettings.HIVE_Setting, this.Environment)) GlobalSettings.GetPath(this, GlobalSettings.HIVE_Setting) else ""
+  @transient val HIVE_connection   = new huemul_JDBCProperties(this, _HIVE_connString,null, DebugMode) //Connection = null
   
   if (!TestPlanMode && RegisterInControl) { 
     logMessageInfo(s"establishing connection with control model")  
@@ -406,6 +422,15 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   if (!TestPlanMode && ImpalaEnabled) {
     logMessageInfo(s"establishing connection with impala") 
     impala_connection.StartConnection()
+  }
+  //from 2.2 --> start HIVE Connection
+  if (!TestPlanMode) {
+    if (GlobalSettings.ValidPath(GlobalSettings.HIVE_Setting, this.Environment)) {
+      logMessageInfo(s"establishing connection with JDBC HIVE")
+      HIVE_connection.StartConnection()
+    } else {
+      logMessageWarn(s"can't establish connection with JDBC HIVE (HIVE_Setting's missing)")
+    }
   }
   
   val spark: SparkSession = if (!TestPlanMode & LocalSparkSession == null) 
@@ -426,6 +451,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   val IdPortMonitoring = if (!TestPlanMode) spark.sparkContext.uiWebUrl.get else "" 
+    
+  if (!TestPlanMode) {
+    //from 2.2: resolve BUG reading ORC, add set spark.sql.hive.convertMetastoreOrc=true according to SPARK-15705
+    spark.sql("set spark.sql.hive.convertMetastoreOrc=true")
+  }
   
   //spark.sql("set").show(10000, truncate = false)
   //val GetConfigSet = spark.sparkContext.getConf  
@@ -956,7 +986,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (numPartitions != null && numPartitions > 0)
       SQL_DF = SQL_DF.repartition(numPartitions)      
       
-    if (this.DebugMode) SQL_DF.show()
+    
+    if (this.DebugMode) {
+      this.logMessageDebug(s"alias: ${Alias}")
+      SQL_DF.show()
+    }
     //Change alias name
     SQL_DF.createOrReplaceTempView(Alias)         //crea vista sql
 

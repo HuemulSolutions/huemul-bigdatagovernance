@@ -454,4 +454,33 @@ class huemul_Columns(param_DataType: DataType
     this.SQLForInsert = SQLForInsert
   }
   
+  //from 2.2 --> add setting to HBase
+  private var _hive_df: String = "default"
+  private var _hive_col: String = null
+  
+  /**
+   * Define family and column name on HBase Tables 
+   */
+  def setHBaseCatalogMapping(df: String, col: String = null): huemul_Columns = {
+    _hive_df = df
+    _hive_col = col
+    this
+  }
+  
+  def getHBaseCatalogFamily(): String = {return _hive_df}
+  def getHBaseCatalogColumn(): String = {return if (_hive_col == null) get_MyName() else _hive_col}
+  
+  def getHBaseDataType(): String = {
+    return if (DataType == DataTypes.StringType) "string"
+      else if (DataType == DataTypes.IntegerType) "int"
+      else if (DataType == DataTypes.ShortType) "smallint"
+      else if (DataType == DataTypes.BooleanType) "boolean"
+      else if (DataType == DataTypes.DoubleType) "double"
+      else if (DataType == DataTypes.FloatType) "float"
+      else if (DataType == DataTypes.LongType) "bigint"
+      else if (DataType == DataTypes.ShortType) "tinyint"
+      else if (DataType == DataTypes.BinaryType) "binary"
+      else "string"
+        
+  }
 }

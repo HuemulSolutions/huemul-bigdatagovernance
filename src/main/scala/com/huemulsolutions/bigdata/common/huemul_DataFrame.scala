@@ -71,6 +71,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   def getDQResult(): ArrayBuffer[huemul_DQRecord] = {return DQ_Result}
   
   private def local_setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean ) {
+    _NumRows = -1
     DataDF = DF
     DataSchema = DF.schema
     DataDF.createOrReplaceTempView(Alias)
@@ -100,7 +101,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     //WARNING: ANY CHANGE ON THIS METHOD MUST BE REPLIATES TO _CreateFinalQuery
     //THE ONLY DIFFERENCE IS IN 
     //huemulBigDataGov.DF_SaveLineage(Alias, sql,dt_start, dt_end, Control)
-    
+    _NumRows = -1
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
     val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
     //Cambio en v1.3: optimiza tiempo al aplicar repartition para archivos pequeños             
@@ -160,7 +161,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * RAW_to_DF: Create DF from RDD, save at Data.DataDF
    */
   def DF_from_RAW(rowRDD: RDD[Row], Alias: String) {
-    //Create DataFrame 
+    //Create DataFrame
+    _NumRows = -1
     if (huemulBigDataGov.DebugMode) { println(rowRDD.take(2).foreach { x => println(x) }) }
     val DF = huemulBigDataGov.spark.createDataFrame(rowRDD, DataSchema)
     
@@ -825,110 +827,116 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       //Get DQ Result from DF
       
       Control.NewStep(s"Step: DQ Result: Start analyzing the DQ result") 
-      getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
-        x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId}")
-        x.NumRowsTotal = if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) 1 else DQTotalRows
-        x.ResultDQ = ""
-        
-        val DQWithError = x.NumRowsTotal - x.NumRowsOK
-        val DQWithErrorPerc = Decimal.apply(DQWithError) / Decimal.apply(x.NumRowsTotal)
-        var IsError: Boolean = false
-        
-        //Validate max num rows with error vs definition 
-        if (x.getToleranceError_Rows != null) {
-          if (DQWithError > x.getToleranceError_Rows)
-            IsError = true
-        } 
-        
-        //Validate % rows with error vs definition
-        if (x.getToleranceError_Percent != null) {
-          if (DQWithErrorPerc > x.getToleranceError_Percent) 
-            IsError = true
-        }
-        
-        //set user message
-        x.ResultDQ = s"DQ ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}, Name: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
-        if (huemulBigDataGov.DebugMode || IsError) huemulBigDataGov.logMessageDebug(x.ResultDQ)
-                       
-        var dfTableName: String = null
-        var dfDataBaseName: String = null
-        if (dMaster != null) {
-          dfTableName = dMaster.TableName
-          dfDataBaseName = dMaster.getCurrentDataBase()
-        }
-        
-        
-        
-        val Values = new huemul_DQRecord(huemulBigDataGov)
-        Values.Table_Name =dfTableName
-        Values.BBDD_Name =dfDataBaseName
-        Values.DF_Alias =AliasToQuery
-        Values.ColumnName =if (x.getFieldName == null) null else x.getFieldName.get_MyName()
-        Values.DQ_Name =x.getMyName()
-        Values.DQ_Description =s"(Id ${x.getId}) ${x.getDescription}"
-        Values.DQ_QueryLevel =x.getQueryLevel() // .getDQ_QueryLevel
-        Values.DQ_Notification =x.getNotification()
-        Values.DQ_SQLFormula =x.getSQLFormula
-        Values.DQ_toleranceError_Rows =x.getToleranceError_Rows
-        Values.DQ_toleranceError_Percent =x.getToleranceError_Percent
-        Values.DQ_ResultDQ =x.ResultDQ
-        Values.DQ_ExternalCode = x.getDQ_ExternalCode()
-        Values.DQ_ErrorCode = if (IsError) x.getErrorCode() else null 
-        Values.DQ_NumRowsOK =x.NumRowsOK
-        Values.DQ_NumRowsError =DQWithError
-        Values.DQ_NumRowsTotal =x.NumRowsTotal    
-        Values.DQ_IsError = x.getNotification() == huemulType_DQNotification.ERROR && IsError //IsError 
-        Values.DQ_IsWarning = (x.getNotification() == huemulType_DQNotification.WARNING || x.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE) && IsError
-        Values.DQ_duration_hour = duration.hour.toInt
-        Values.DQ_duration_minute = duration.minute.toInt
-        Values.DQ_duration_second = duration.second.toInt
-    
-    
-        ErrorLog.appendDQResult(Values)
-        this.DQ_Register(Values)
-        
-        if (Values.DQ_IsWarning)
-          NumTotalWarnings += 1
+      
+      if (DQTotalRows == 0) {
+        Control.NewStep(s"Step: DQ Result: 0 rows in DF, nothing to evaluate") 
+        huemulBigDataGov.logMessageWarn("0 rows in DF, nothing to evaluate")
+      } else {
+        getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
+          x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId}")
+          x.NumRowsTotal = if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) 1 else DQTotalRows
+          x.ResultDQ = ""
           
-        if (Values.DQ_IsError) {
-          txtTotalErrors += s"\nHuemulDataFrameLog: DQ Name (${x.getErrorCode()}): ${x.getMyName} with error: ${x.ResultDQ}"
-          NumTotalErrors += 1
-          localErrorCode = x.getErrorCode()
-        }
-        
-        //Save details to DF with errors
-        if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails()) {
-          //Query to get detail errors
-          Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}) ") 
-          val SQL_Detail = DQ_GenQuery(AliasToQuery
-                                      ,s"not (${x.getSQLFormula()})"
-                                      ,!(x.getFieldName == null) //asField
-                                      ,if (x.getFieldName == null) "all" else x.getFieldName.get_MyName() //fieldName
-                                      ,Values.DQ_Id
-                                      ,x.getNotification()
-                                      ,x.getErrorCode()
-                                      ,s"(Id ${x.getId}) ${x.getDescription}"
-                                      )
-                               
-          //Execute query
-          //Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}, save to DF) ") 
-          var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
-                               
-          if (dMaster != null && !registerDQOnce) {
-            //if call is from huemul_Table, save detail to disk
-            //Save errors to disk
-            if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DF_EDetail != null && dMaster.getSaveDQResult) {
-              Control.NewStep("Start Save DQ Error Details ")                
-              if (!dMaster.savePersist_DQ(Control, DF_EDetail)){
-                huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
+          val DQWithError = x.NumRowsTotal - x.NumRowsOK
+          val DQWithErrorPerc = Decimal.apply(DQWithError) / Decimal.apply(x.NumRowsTotal)
+          var IsError: Boolean = false
+          
+          //Validate max num rows with error vs definition 
+          if (x.getToleranceError_Rows != null) {
+            if (DQWithError > x.getToleranceError_Rows)
+              IsError = true
+          } 
+          
+          //Validate % rows with error vs definition
+          if (x.getToleranceError_Percent != null) {
+            if (DQWithErrorPerc > x.getToleranceError_Percent) 
+              IsError = true
+          }
+          
+          //set user message
+          x.ResultDQ = s"DQ ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}, Name: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
+          if (huemulBigDataGov.DebugMode || IsError) huemulBigDataGov.logMessageDebug(x.ResultDQ)
+                         
+          var dfTableName: String = null
+          var dfDataBaseName: String = null
+          if (dMaster != null) {
+            dfTableName = dMaster.TableName
+            dfDataBaseName = dMaster.getCurrentDataBase()
+          }
+          
+          
+          
+          val Values = new huemul_DQRecord(huemulBigDataGov)
+          Values.Table_Name =dfTableName
+          Values.BBDD_Name =dfDataBaseName
+          Values.DF_Alias =AliasToQuery
+          Values.ColumnName =if (x.getFieldName == null) null else x.getFieldName.get_MyName()
+          Values.DQ_Name =x.getMyName()
+          Values.DQ_Description =s"(Id ${x.getId}) ${x.getDescription}"
+          Values.DQ_QueryLevel =x.getQueryLevel() // .getDQ_QueryLevel
+          Values.DQ_Notification =x.getNotification()
+          Values.DQ_SQLFormula =x.getSQLFormula
+          Values.DQ_toleranceError_Rows =x.getToleranceError_Rows
+          Values.DQ_toleranceError_Percent =x.getToleranceError_Percent
+          Values.DQ_ResultDQ =x.ResultDQ
+          Values.DQ_ExternalCode = x.getDQ_ExternalCode()
+          Values.DQ_ErrorCode = if (IsError) x.getErrorCode() else null 
+          Values.DQ_NumRowsOK =x.NumRowsOK
+          Values.DQ_NumRowsError =DQWithError
+          Values.DQ_NumRowsTotal =x.NumRowsTotal    
+          Values.DQ_IsError = x.getNotification() == huemulType_DQNotification.ERROR && IsError //IsError 
+          Values.DQ_IsWarning = (x.getNotification() == huemulType_DQNotification.WARNING || x.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE) && IsError
+          Values.DQ_duration_hour = duration.hour.toInt
+          Values.DQ_duration_minute = duration.minute.toInt
+          Values.DQ_duration_second = duration.second.toInt
+      
+      
+          ErrorLog.appendDQResult(Values)
+          this.DQ_Register(Values)
+          
+          if (Values.DQ_IsWarning)
+            NumTotalWarnings += 1
+            
+          if (Values.DQ_IsError) {
+            txtTotalErrors += s"\nHuemulDataFrameLog: DQ Name (${x.getErrorCode()}): ${x.getMyName} with error: ${x.ResultDQ}"
+            NumTotalErrors += 1
+            localErrorCode = x.getErrorCode()
+          }
+          
+          //Save details to DF with errors
+          if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails()) {
+            //Query to get detail errors
+            Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}) ") 
+            val SQL_Detail = DQ_GenQuery(AliasToQuery
+                                        ,s"not (${x.getSQLFormula()})"
+                                        ,!(x.getFieldName == null) //asField
+                                        ,if (x.getFieldName == null) "all" else x.getFieldName.get_MyName() //fieldName
+                                        ,Values.DQ_Id
+                                        ,x.getNotification()
+                                        ,x.getErrorCode()
+                                        ,s"(Id ${x.getId}) ${x.getDescription}"
+                                        )
+                                 
+            //Execute query
+            //Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}, save to DF) ") 
+            var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ", SQL_Detail)
+                                 
+            if (dMaster != null && !registerDQOnce) {
+              //if call is from huemul_Table, save detail to disk
+              //Save errors to disk
+              if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DF_EDetail != null && dMaster.getSaveDQResult) {
+                Control.NewStep("Start Save DQ Error Details ")                
+                if (!dMaster.savePersist_DQ(Control, DF_EDetail)){
+                  huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
+                }
               }
+            } else {
+              //acumulate DF, if call is outside huemul_Table
+              if (DF_ErrorDetails == null)
+                DF_ErrorDetails = DF_EDetail
+              else
+                DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
             }
-          } else {
-            //acumulate DF, if call is outside huemul_Table
-            if (DF_ErrorDetails == null)
-              DF_ErrorDetails = DF_EDetail
-            else
-              DF_ErrorDetails = DF_ErrorDetails.union(DF_EDetail)
           }
         }
       }
