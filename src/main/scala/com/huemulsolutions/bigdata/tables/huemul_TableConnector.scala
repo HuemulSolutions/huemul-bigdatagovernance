@@ -112,20 +112,31 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     
     var numPartition: String = if (numPartitions > 5) numPartitions.toString() else "5"
     Control.NewStep(s"HBase: num partitions = ${numPartition} ")
+
+    //get Schema
+    val __schema = DF_to_save.schema
     
-    //array with column names    
-    val __cols = DF_to_save.columns.sortBy { x => (if (x==DF_ColumnPKName) "0" else "1").concat(x) } 
-    val __colSortedDF = DF_to_save.select(__cols.map( x => col(x) ): _*)
-    val __schema = __colSortedDF.schema
-    //exclude PK from columns to save (PK is a row key)
-    val __valCols = __cols.filterNot(x => x.toLowerCase().equals(DF_ColumnPKName.toLowerCase())).map { x => {
+    //GET index to PK
+    var indexPK = -1
+    var isFound: Boolean = false
+    __schema.foreach { x => 
+      if (!isFound) {
+        indexPK+=1
+        if (x.name.toLowerCase() == DF_ColumnPKName.toLowerCase())
+          isFound = true   
+      }
+    }
+    
+    //create array with family and column info
+    val __valCols1 = __schema.filter { x => x.name.toLowerCase() != DF_ColumnPKName.toLowerCase()  } .map { x => {
       var fam: String = "default"
-      var nom: String = x
-      var dataType: DataType = __schema.fields( __schema.fieldIndex(x)).dataType
-      
+      var nom: String = x.name
+      var dataType: DataType = __schema.fields( __schema.fieldIndex(x.name)).dataType
+      var pos = __schema.fieldIndex(x.name)
+
       //Only if huemulDeclaredFields has value
       if (huemulDeclaredFieldsForHBase != null) {
-        val fam_fil = huemulDeclaredFieldsForHBase.filter { y => y._1.getName.toUpperCase() == x.toUpperCase() }
+        val fam_fil = huemulDeclaredFieldsForHBase.filter { y => y._1.getName.toUpperCase() == x.name.toUpperCase() }
         
         if (fam_fil.length == 1) {
           val __reg = fam_fil(0) 
@@ -135,61 +146,66 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
         }
       }
       
-      (nom, fam, dataType )
+      (nom, fam, dataType, pos )
     }}
-    
+
+    //reorder to optimize HBase insert
+    @transient lazy val __valCols2 = __valCols1.sortBy( f => f._2.concat(f._1))
     //get num cols
-    val __numCols: Int = __valCols.length
+    @transient lazy  val __numCols2: Int = __valCols2.length
 
     Control.NewStep(s"HBase: Map to HBase format ")
-    //map to HBase format (keyValue, family, colname, value)
     
+    //map to HBase format (keyValue, family, colname, value)
     import huemulBigDataGov.spark.implicits._ 
-    val __pdd_2 = __colSortedDF.flatMap(row => {
-      val rowKey = row(0).toString() //Bytes.toBytes(x._1)
+    val __pdd_2 = DF_to_save.flatMap(row => {
+      val rowKey = row(indexPK).toString() //Bytes.toBytes(x._1)
       
-      for (i <- 0 until __numCols) yield {
-          val colName = __valCols(i)._1.toString()
-          val famName = __valCols(i)._2.toString()
-          val colDataType = __valCols(i)._3
+      for (ii <- 0 until __numCols2) yield {
+          val colName = __valCols2(ii)._1.toString()
+          val famName = __valCols2(ii)._2.toString()
+          val colDataType = __valCols2(ii)._3
           var colValue: Array[Byte] = null
+          val y = __valCols2(ii)._4
 
-          if (row(i+1) == null)
+          if (row(y) == null)
             colValue = null
           else if (colDataType == DataTypes.BooleanType)
-            colValue = Bytes.toBytes(row.getBoolean(i+1)) 
+            colValue = Bytes.toBytes(row.getBoolean(y)) 
           else if (colDataType == DataTypes.ShortType)
-            colValue = Bytes.toBytes(row.getShort(i+1))
+            colValue = Bytes.toBytes(row.getShort(y))
           else if (colDataType == DataTypes.LongType)
-            colValue = Bytes.toBytes(row.getLong(i+1))
+            colValue = Bytes.toBytes(row.getLong(y))
           //else if (colDataType == DataTypes.BinaryType)
-          //  colValue = Bytes.toBytes(row.getBinary(i+1))
+          //  colValue = Bytes.toBytes(row.getBinary(y))
           else if (colDataType == DataTypes.StringType)
-            colValue = Bytes.toBytes(row(i+1).toString())
+            colValue = Bytes.toBytes(row(y).toString())
           //else if (colDataType == DataTypes.NullType)
           //  colValue = Bytes.toBytes(row.getAs[NullType](columnName)
           else if (colDataType == DecimalType || colDataType.typeName.toLowerCase().contains("decimal"))
-            colValue = Bytes.toBytes(row(i+1).toString())
-            //colValue = Bytes.toBytes(row.getDecimal(i+1))
+            colValue = Bytes.toBytes(row(y).toString())
+            //colValue = Bytes.toBytes(row.getDecimal(y))
           else if (colDataType == DataTypes.IntegerType)
-            colValue = Bytes.toBytes(row(i+1).toString()) //Bytes.toBytes(row.getAs[Integer](i+1) )  //(row.getInt(i+1))
+            colValue = Bytes.toBytes(row.getInt(y))
           else if (colDataType == DataTypes.FloatType)
-            colValue = Bytes.toBytes(row.getFloat(i+1))
+            colValue = Bytes.toBytes(row.getFloat(y))
           else if (colDataType == DataTypes.DoubleType)
-            colValue = Bytes.toBytes(row.getDouble(i+1))
+            colValue = Bytes.toBytes(row.getDouble(y))
           else if (colDataType == DataTypes.DateType)
-            colValue = Bytes.toBytes(row(i+1).toString())
+            colValue = Bytes.toBytes(row(y).toString())
           else if (colDataType == DataTypes.TimestampType)
-            colValue = Bytes.toBytes(row(i+1).toString())
+            colValue = Bytes.toBytes(row(y).toString())
           else
-            colValue = Bytes.toBytes(row(i+1).toString())
+            colValue = Bytes.toBytes(row(y).toString())
                 
           (rowKey, (famName, colName, colValue))
         }
       }
     ).rdd
     
-    
+    __pdd_2.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+    val numRowsTot = __pdd_2.count()
+        
      //Table Assign
     Control.NewStep(s"HBase: Set staging Folder and Family:Table Name")
     
@@ -201,7 +217,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     val hbaseConf = HBaseConfiguration.create()
     val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
     
-    //Crea tabla
+    //create table
     Control.NewStep("HBase: Create connection")
     val connection = ConnectionFactory.createConnection(hbaseConf)
     val admin = connection.getAdmin()
@@ -228,7 +244,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       val __newTable = new org.apache.hadoop.hbase.HTableDescriptor(tableName)
       
       //Add families
-      val a = __valCols.map(x=>x._2).distinct.foreach { x => 
+      val a = __valCols2.map(x=>x._2).distinct.foreach { x => 
         __newTable.addFamily(new HColumnDescriptor(x))  
       }
       
@@ -237,7 +253,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       Control.NewStep(s"HBase: Table exists, get families ")
       val __oldTable = admin.getTableDescriptor(tableName)
       val _getFamilies = __oldTable.getFamilies.toArray()
-      var _newFamilies = __valCols.map(x=>x._2).distinct
+      var _newFamilies = __valCols2.map(x=>x._2).distinct
       
       /*
        * CHECK FAMILIES
@@ -279,8 +295,6 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
         
     Control.NewStep(s"HBase: exclude null values ")
     val __tdd_notnull = __pdd_2.filter(x=> x._2._3 != null)
-   // println(s"N° total: ${__pdd_2.count()}")
-   // println(s"N° filtardos: ${__tdd_notnull.count()}")
     
     val stagingFolder = s"/tmp/user/${Control.getStepId}"
     huemulBigDataGov.logMessageDebug(s"staging folder: ${stagingFolder}")
@@ -318,4 +332,6 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
   
     return result
   }
+  
+  
 }
