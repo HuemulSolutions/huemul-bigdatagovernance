@@ -216,8 +216,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _LocalPath = value
   }
-  def getLocalPath: String = {return _LocalPath}
   private var _LocalPath   : String= ""
+  def getLocalPath: String = {return if (_LocalPath == null) "null/"
+                                     else if (_LocalPath.takeRight(1) != "/") _LocalPath.concat("/")
+                                     else _LocalPath }
+  
   
   def setGlobalPaths(value: ArrayBuffer[huemul_KeyValuePath]) {
     if (DefinitionIsClose)
@@ -397,36 +400,36 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * Get Fullpath hdfs = GlobalPaths + LocalPaths + TableName  
    */
   def getFullNameWithPath() : String = {
-    return globalPath + _LocalPath + TableName
+    return globalPath + getLocalPath + TableName
   }
   
   /**
    * Get Fullpath hdfs for DQ results = GlobalPaths + DQError_Path + TableName + "_dq"
    */
   def getFullNameWithPath_DQ() : String = {
-    return this.getPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.getDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_dq"
+    return this.getPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + TableName + "_dq"
   }
   
   /**
    * Get Fullpath hdfs for _oldvalue results = GlobalPaths + DQError_Path + TableName + "_oldvalue"
    */
   def getFullNameWithPath_OldValueTrace() : String = {
-    return this.getPath(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_Path) + this.getDataBase(this._DataBase) + '/' + _LocalPath + TableName + "_oldvalue"
+    return this.getPath(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + TableName + "_oldvalue"
   }
   
    /**
    * Get Fullpath hdfs for backpu  = Backup_Path + database + TableName + "_backup"
    */
   def getFullNameWithPath_Backup(control_id: String) : String = {
-    return this.getPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.getDataBase(this._DataBase) + '/' + _LocalPath + 'c' + control_id + '/' + TableName + "_backup"
+    return this.getPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + 'c' + control_id + '/' + TableName + "_backup"
   }
   
   def getFullNameWithPath2(ManualEnvironment: String) : String = {
-    return globalPath(ManualEnvironment) + _LocalPath + TableName
+    return globalPath(ManualEnvironment) + getLocalPath + TableName
   }
     
   def getFullPath() : String = {
-    return globalPath + _LocalPath 
+    return globalPath + getLocalPath 
   }
   
   
@@ -2563,24 +2566,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             
           LocalControl.NewStep("Ref & Master: Reading HBase data...")     
           val DFHBase = huemulBigDataGov.DF_ExecuteQuery(TempAlias, s"SELECT * FROM ${this.internalGetTable(huemulType_InternalTableType.Normal)}")
-          
-          /*
-          var tempPath: String = null
+          val numRows = DFHBase.count()
           if (huemulBigDataGov.GlobalSettings.MDM_SaveBackup && this._SaveBackup){
-            tempPath = this.getFullNameWithPath_Backup(Control.Control_Id )
+            var tempPath = this.getFullNameWithPath_Backup(Control.Control_Id )
             _BackupPath = tempPath
             if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to backup dir: $tempPath ")
-          } else {
-            tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
-            if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
+         
+            LocalControl.NewStep("Ref & Master: Backup...")
+            DFHBase.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)     //2.2 -> this._StorageType.toString() instead of "parquet"
           }
           
-          if (this.getNumPartitions == null || this.getNumPartitions <= 0)
-            DFHBase.write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)     //2.2 -> this._StorageType.toString() instead of "parquet"
-          else
-            DFHBase.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format("parquet").save(tempPath)   //2.2 -> this._StorageType.toString() instead of "parquet"
-          */
-          val numRows = DFHBase.count()
+          
           //DFHBase.show()
         }
       } else {
