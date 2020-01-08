@@ -357,7 +357,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   
   
-  private var CreateInHive: Boolean = true
+  //private var CreateInHive: Boolean = true
   private var CreateTableScript: String = ""
   private var PartitionValue: String = null
   def getPartitionValue(): String = {return PartitionValue}
@@ -3233,66 +3233,65 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     if (Result) {
-      if (CreateInHive ) {
-        val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.Normal)}"
-        LocalControl.NewStep("Save: Drop Hive table Def")
-        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
-        try {
-          //new from 2.3
-          if (createExternalTable_Normal) {
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
-              val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getCurrentDataBase()).collect()
-              if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase()  }.length > 0) 
-                huemulBigDataGov.spark.sql(sqlDrop01)
-            }
-            
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
-              huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(sqlDrop01)
-            }
+  
+      val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.Normal)}"
+      LocalControl.NewStep("Save: Drop Hive table Def")
+      if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
+      try {
+        //new from 2.3
+        if (createExternalTable_Normal) {
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
+            val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getCurrentDataBase()).collect()
+            if (TablesListFromHive.filter { x => x.name.toUpperCase() == TableName.toUpperCase()  }.length > 0) 
+              huemulBigDataGov.spark.sql(sqlDrop01)
           }
           
-        } catch {
-          case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
+            huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(sqlDrop01)
+          }
         }
-       
+        
+      } catch {
+        case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
       }
+     
+      
         
       try {
         //create table
-        if (CreateInHive ) {
-          LocalControl.NewStep("Save: Create Table in Hive Metadata")
-          CreateTableScript = DF_CreateTableScript() 
-         
-          //from 2.2 --> create HBAse table using JDBC Hive connection
-          if (getStorageType == huemulType_StorageType.HBASE) {
-            //new from 2.3
-            if (createExternalTable_Normal) {
-              if (huemulBigDataGov.GlobalSettings.HBASE_createExternalTableUsingSpark){
-                huemulBigDataGov.spark.sql(CreateTableScript)
-              }
-              
-              if (huemulBigDataGov.GlobalSettings.HBASE_createExternalTableUsingHive) {
-                huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(CreateTableScript)
-              }
+        LocalControl.NewStep("Save: Create Table in Hive Metadata")
+        CreateTableScript = DF_CreateTableScript() 
+       
+        //from 2.2 --> create HBAse table using JDBC Hive connection
+        if (getStorageType == huemulType_StorageType.HBASE) {
+          //new from 2.3
+          if (createExternalTable_Normal) {
+            if (huemulBigDataGov.GlobalSettings.HBASE_createExternalTableUsingSpark){
+              huemulBigDataGov.spark.sql(CreateTableScript)
             }
             
-          } else{
-            //new from 2.3
-            if (createExternalTable_Normal) {
-              if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
-                huemulBigDataGov.spark.sql(CreateTableScript)
-              }
-              
-              if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
-                huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(CreateTableScript)
-              }
+            if (huemulBigDataGov.GlobalSettings.HBASE_createExternalTableUsingHive) {
+              huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(CreateTableScript)
+            }
+          }
+          
+        } else{
+          //new from 2.3
+          if (createExternalTable_Normal) {
+            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
+              huemulBigDataGov.spark.sql(CreateTableScript)
+            }
+            
+            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
+              huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(CreateTableScript)
             }
           }
         }
+        
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         val _tableName : String = internalGetTable(huemulType_InternalTableType.Normal)
-        if (CreateInHive && (_PartitionField != null && _PartitionField != "")) {
+        if (_PartitionField != null && _PartitionField != "") {
           LocalControl.NewStep("Save: Repair Hive Metadata")
           val _refreshTable: String = s"MSCK REPAIR TABLE ${_tableName}"
           if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(_refreshTable)
@@ -3368,47 +3367,45 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     if (Result) {
-      if (CreateInHive ) {
-        val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.OldValueTrace)}"
-        LocalControl.NewStep("Save: OldVT Result: Drop Hive table Def")
-        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
-        try {
-          //new from 2.3
-          if (createExternalTable_OVT) {
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
-              val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)).collect()
-              if (TablesListFromHive.filter { x => x.name.toUpperCase() == internalGetTable(huemulType_InternalTableType.OldValueTrace,false).toUpperCase() }.length > 0) 
-                huemulBigDataGov.spark.sql(sqlDrop01)
-            }
-            
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
-              huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(sqlDrop01)
-            }
+      val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.OldValueTrace)}"
+      LocalControl.NewStep("Save: OldVT Result: Drop Hive table Def")
+      if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
+      try {
+        //new from 2.3
+        if (createExternalTable_OVT) {
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
+            val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getDataBase(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_DataBase)).collect()
+            if (TablesListFromHive.filter { x => x.name.toUpperCase() == internalGetTable(huemulType_InternalTableType.OldValueTrace,false).toUpperCase() }.length > 0) 
+              huemulBigDataGov.spark.sql(sqlDrop01)
           }
-            
-        } catch {
-          case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+          
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
+            huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(sqlDrop01)
+          }
         }
-       
+          
+      } catch {
+        case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
       }
+     
+      
         
       try {
         //create table
-        if (CreateInHive ) {
-          LocalControl.NewStep("Save: OldVT Result: Create Table in Hive Metadata")
-          val lscript = DF_CreateTable_OldValueTrace_Script()       
-          //new from 2.3
-          if (createExternalTable_OVT) {
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
-              huemulBigDataGov.spark.sql(lscript)
-            }
-            
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
-              huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(lscript)
-            }
+        LocalControl.NewStep("Save: OldVT Result: Create Table in Hive Metadata")
+        val lscript = DF_CreateTable_OldValueTrace_Script()       
+        //new from 2.3
+        if (createExternalTable_OVT) {
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
+            huemulBigDataGov.spark.sql(lscript)
           }
-        
+          
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
+            huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(lscript)
+          }
         }
+      
+        
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         val _tableNameOldValueTrace: String = internalGetTable(huemulType_InternalTableType.OldValueTrace)
@@ -3485,48 +3482,46 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     if (Result) {
-      if (CreateInHive ) {
-        val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.DQ)}"
-        LocalControl.NewStep("Save: Drop Hive table Def")
-        if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
-        try {
-          //new from 2.3
-          if (createExternalTable_DQ) {
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
-              val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)).collect()
-              if (TablesListFromHive.filter { x => x.name.toUpperCase() == internalGetTable(huemulType_InternalTableType.DQ,false).toUpperCase() }.length > 0) 
-                huemulBigDataGov.spark.sql(sqlDrop01)
-            }
-            
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
-              huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(sqlDrop01)
-            }
+      val sqlDrop01 = s"drop table if exists ${internalGetTable(huemulType_InternalTableType.DQ)}"
+      LocalControl.NewStep("Save: Drop Hive table Def")
+      if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
+      try {
+        //new from 2.3
+        if (createExternalTable_DQ) {
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
+            val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(getDataBase(huemulBigDataGov.GlobalSettings.DQError_DataBase)).collect()
+            if (TablesListFromHive.filter { x => x.name.toUpperCase() == internalGetTable(huemulType_InternalTableType.DQ,false).toUpperCase() }.length > 0) 
+              huemulBigDataGov.spark.sql(sqlDrop01)
           }
-            
-        } catch {
-          case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
+          
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
+            huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(sqlDrop01)
+          }
         }
-       
+          
+      } catch {
+        case t: Throwable => huemulBigDataGov.logMessageError(s"Error drop hive table: ${t.getMessage}") //t.printStackTrace()
       }
+     
+      
         
       try {
         //create table
-        if (CreateInHive ) {
-          LocalControl.NewStep("Save: Create Table in Hive Metadata")
-          val lscript = DF_CreateTable_DQ_Script() 
-         
-          //new from 2.3
-          if (createExternalTable_DQ) {
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
-              huemulBigDataGov.spark.sql(lscript)
-            }
-            
-            if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
-              huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(lscript)
-            }
+        LocalControl.NewStep("Save: Create Table in Hive Metadata")
+        val lscript = DF_CreateTable_DQ_Script() 
+       
+        //new from 2.3
+        if (createExternalTable_DQ) {
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingSpark){
+            huemulBigDataGov.spark.sql(lscript)
           }
           
+          if (huemulBigDataGov.GlobalSettings.createExternalTableUsingHive) {
+            huemulBigDataGov.HIVE_connection.ExecuteJDBC_NoResulSet(lscript)
+          }
         }
+        
+        
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         val _tableNameDQ: String = internalGetTable(huemulType_InternalTableType.DQ)
