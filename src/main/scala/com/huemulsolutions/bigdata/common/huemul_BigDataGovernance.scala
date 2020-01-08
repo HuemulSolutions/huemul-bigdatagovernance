@@ -425,11 +425,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   //from 2.2 --> start HIVE Connection
   if (!TestPlanMode) {
-    if (GlobalSettings.ValidPath(GlobalSettings.HIVE_Setting, this.Environment)) {
+    if (_HIVE_connString != null && _HIVE_connString != "") {
       logMessageInfo(s"establishing connection with JDBC HIVE")
       HIVE_connection.StartConnection()
     } else {
-      logMessageWarn(s"can't establish connection with JDBC HIVE (HIVE_Setting's missing)")
+      if (GlobalSettings.createExternalTableUsingHive) {
+        sys.error(s"createExternalTableUsingHive is set to true, but I can't establish connection with JDBC HIVE (maybe HIVE_Setting's missing)")
+      } else
+        logMessageWarn(s"can't establish connection with JDBC HIVE (HIVE_Setting's missing)")
     }
   }
   
