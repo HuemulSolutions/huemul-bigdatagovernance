@@ -25,12 +25,9 @@ class huemul_GlobalPath() extends Serializable {
     val HIVE_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
     //from 2.3 --> add 
-    var PARQUET_createExternalTableUsingSpark: Boolean = true
-    var PARQUET_createExternalTableUsingHive: Boolean = false
-    
-    var ORC_createExternalTableUsingSpark: Boolean = true
-    var ORC_createExternalTableUsingHive: Boolean = false
-    
+    var createExternalTableUsingSpark: Boolean = true
+    var createExternalTableUsingHive: Boolean = false
+        
     var HBASE_createExternalTableUsingSpark: Boolean = false
     var HBASE_createExternalTableUsingHive: Boolean = true
     
