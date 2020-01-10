@@ -1,4 +1,4 @@
-package com.huemulsolutions.bigdata.tables
+package com.huemulsolutions.bigdata.common
 
 object huemulType_ExternalDB extends Enumeration {
   type huemulType_ExternalDB = Value
