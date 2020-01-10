@@ -411,9 +411,6 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    *************************/
   @transient val CONTROL_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.CONTROL_Setting),GlobalSettings.CONTROL_Driver, DebugMode) // Connection = null
   @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode) //Connection = null
-  //FROM 2.2 --> ADD Hive connection to create HBase tables
-  val _HIVE_connString: String = if (GlobalSettings.ValidPath(GlobalSettings.HIVE_Setting, this.Environment)) GlobalSettings.GetPath(this, GlobalSettings.HIVE_Setting) else ""
-  @transient val HIVE_connection   = new huemul_JDBCProperties(this, _HIVE_connString,null, DebugMode) //Connection = null
   
   if (!TestPlanMode && RegisterInControl) { 
     logMessageInfo(s"establishing connection with control model")  
@@ -423,18 +420,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     logMessageInfo(s"establishing connection with impala") 
     impala_connection.StartConnection()
   }
-  //from 2.2 --> start HIVE Connection
-  if (!TestPlanMode) {
-    if (_HIVE_connString != null && _HIVE_connString != "") {
-      logMessageInfo(s"establishing connection with JDBC HIVE")
-      HIVE_connection.StartConnection()
-    } else {
-      if (GlobalSettings.createExternalTableUsingHive) {
-        sys.error(s"createExternalTableUsingHive is set to true, but I can't establish connection with JDBC HIVE (maybe HIVE_Setting's missing)")
-      } else
-        logMessageWarn(s"can't establish connection with JDBC HIVE (HIVE_Setting's missing)")
-    }
-  }
+  
   
   val spark: SparkSession = if (!TestPlanMode & LocalSparkSession == null) 
                                       SparkSession.builder().appName(appName)
