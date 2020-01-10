@@ -44,7 +44,7 @@ class huemul_ExternalDBType() extends Serializable {
       return null
 
     if (!huemulBigDataGov.GlobalSettings.ValidPath(getConnectionStrings, huemulBigDataGov.Environment)) {
-      huemulBigDataGov.logMessageWarn("JDBC Connection not defined")
+      huemulBigDataGov.logMessageWarn(s"JDBC Connection not defined (driver: ${getJDBCdriver()})")
       return null
     }
     
