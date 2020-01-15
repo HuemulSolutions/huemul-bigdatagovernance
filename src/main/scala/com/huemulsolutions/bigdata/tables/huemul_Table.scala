@@ -286,9 +286,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getSaveDQErrorOnce: Boolean = {return _SaveDQErrorOnce}
   
   //from 2.3 --> #85 add new options to determine whether create External Table
-  var createExternalTable_Normal: Boolean = true
-  var createExternalTable_DQ: Boolean = true
-  var createExternalTable_OVT: Boolean = true
+  //var createExternalTable_Normal: Boolean = true
+  //var createExternalTable_DQ: Boolean = true
+  //var createExternalTable_OVT: Boolean = true
   
   
   /**
