@@ -50,7 +50,7 @@ class huemul_ExternalDBType() extends Serializable {
     
     val _connString: String = huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, getConnectionStrings)
     JDBC_connection = new huemul_JDBCProperties(huemulBigDataGov, _connString,getJDBCdriver, huemulBigDataGov.DebugMode)
-    
+    JDBC_connection.StartConnection()
     return JDBC_connection
   }
   //(this, _HIVE_connString,null, DebugMode) //Connection = null
