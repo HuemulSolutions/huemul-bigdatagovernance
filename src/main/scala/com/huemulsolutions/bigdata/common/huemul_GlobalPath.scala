@@ -26,7 +26,7 @@ class huemul_GlobalPath() extends Serializable {
     val HIVE_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
     //from 2.3 --> add 
-    var createExternalTableConf: huemul_ExternalDB = new huemul_ExternalDB()
+    var externalBBDD_conf: huemul_ExternalDB = new huemul_ExternalDB()
     
     //RAW
     val RAW_SmallFiles_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
