@@ -3519,29 +3519,29 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         /**** D R O P   F O R   H B A S E ******/
         
         //FOR SPARK--> NOT SUPPORTED FOR SPARK
-        //if (huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_SPARK.getActiveForHBASE()){
+        //if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.externalTableUsing_SPARK.getActiveForHBASE()){
         //  val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(databaseName).collect()
         //    if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableName.toUpperCase()  }.length > 0) 
         //      huemulBigDataGov.spark.sql(sqlDrop01)
         //}
         
         //FOR HIVE
-        if (huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_HIVE.getActiveForHBASE())
-          huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlDrop01)
+        if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE())
+          huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlDrop01)
       //}
     } else {
       /**** D R O P   F O R    O T H E R S ******/
       
       //FOR SPARK
-      if (huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_SPARK.getActive()) {
+      if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_SPARK.getActive()) {
         val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(databaseName).collect()
           if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableName.toUpperCase()  }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
       }
       
       //FOR HIVE
-      if (huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_HIVE.getActive())
-        huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlDrop01)
+      if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getActive())
+        huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlDrop01)
     }
     
   }
@@ -3554,23 +3554,23 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         /**** D R O P   F O R   H B A S E ******/
         
         //FOR SPARK --> NOT SUPPORTED FOR SPARK
-        //if (huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_SPARK.getActiveForHBASE())
+        //if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.externalTableUsing_SPARK.getActiveForHBASE())
         //  huemulBigDataGov.spark.sql(sqlSentence)
         
         //FOR HIVE
-        if (huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_HIVE.getActiveForHBASE())
-          huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlSentence)
+        if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE())
+          huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlSentence)
       //}
     } else {
       /**** D R O P   F O R   O T H E R ******/
       
       //FOR SPARK
-      if (huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_SPARK.getActive())
+      if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_SPARK.getActive())
         huemulBigDataGov.spark.sql(sqlSentence)
       
       //FOR HIVE
-      if (huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_HIVE.getActive())
-        huemulBigDataGov.GlobalSettings.createExternalTableConf.externalTableUsing_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlSentence)
+      if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getActive())
+        huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlSentence)
     
     }
   }
