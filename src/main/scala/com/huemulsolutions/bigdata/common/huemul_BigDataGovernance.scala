@@ -526,6 +526,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (RegisterInControl) this.CONTROL_connection.connection.close()
     if (ImpalaEnabled) this.impala_connection.connection.close()
     
+    if (GlobalSettings.externalBBDD_conf.Using_HIVE.getActive() == true || GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE() == true ) {
+      val connHIVE = GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(this)
+      connHIVE.connection.close()
+    }
+    
   }
   
   def application_closeAll(ApplicationInUse: String) {
