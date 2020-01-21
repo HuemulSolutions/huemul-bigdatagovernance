@@ -94,16 +94,13 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
     
     var i = 0
     if (connection == null) sys.error("error JDBC connection failed")
-    while (i<=2 && connection.isClosed()) {
-      huemulBigDataGob.logMessageWarn("CONTROL connection closed, trying to establish new connection")
+    while (connection.isClosed()) {
+      huemulBigDataGob.logMessageWarn("JDBC connection closed, trying to establish new connection")
+      Thread.sleep(5000)
       StartConnection()
-      i+=1
+      //i+=1
     }
     
-    if (i == 3) {
-      sys.error("error while trying to establish new connection")
-    }
-      
         
       try {
         
@@ -223,16 +220,13 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
    
     var i = 0
     if (connection == null) sys.error("error JDBC connection failed")
-    while (i<=2 && connection.isClosed()) {
-      huemulBigDataGob.logMessageWarn("CONTROL connection closed, trying to establish new connection")
+    while (connection.isClosed()) {
+      huemulBigDataGob.logMessageWarn("JDBC connection closed, trying to establish new connection")
+      Thread.sleep(5000)
       StartConnection()
-      i+=1
+      //i+=1
     }
     
-    if (i == 3) {
-      sys.error("error while trying to establish new connection")
-    }
-  
     try {
       //val statement = connection.createStatement()
       val Resultado = statement.execute(SQL)
