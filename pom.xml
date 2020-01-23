@@ -71,7 +71,6 @@ Finalmente, también automatiza la generación de código a partir de las defini
     <scala.version>2.11.8</scala.version>
     <spark.version>2.2.1</spark.version>
     <hbase.client.version>2.1.0</hbase.client.version>
-    <hbase-spark.version>1.0.0</hbase-spark.version>
   </properties>
 
   <dependencies>
@@ -127,43 +126,43 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	<dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-spark</artifactId>
-        <version>1.1.2.2.6.4.0-91</version>
+        <version>2.2.2.2.6.4.0-91</version>
     </dependency>
     -->
     <dependency>
 	   <groupId>org.apache.hbase</groupId>
 	   <artifactId>hbase-client</artifactId>
-	   <version>1.1.2</version>
+	   <version>2.2.2</version>
     </dependency>
     
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
-      <version>1.1.2</version>
+      <version>2.2.2</version>
     </dependency>
     
    	<dependency>
          <groupId>org.apache.hbase</groupId>
          <artifactId>hbase-protocol</artifactId>
-         <version>1.1.2</version>
+         <version>2.2.2</version>
      </dependency>
 
      <dependency>
          <groupId>org.apache.hbase</groupId>
          <artifactId>hbase-annotations</artifactId>
-         <version>1.1.2</version>
+         <version>2.2.2</version>
      </dependency>
 
   	 <dependency>
          <groupId>org.apache.hbase</groupId>
          <artifactId>hbase-hadoop-compat</artifactId>
-         <version>1.1.2</version>
+         <version>2.2.2</version>
      </dependency>
      
      <dependency>
          <groupId>org.apache.hbase</groupId>
          <artifactId>hbase-hadoop2-compat</artifactId>
-         <version>1.1.2</version>
+         <version>2.2.2</version>
      </dependency>
 	<!-- https://mvnrepository.com/artifact/com.hortonworks.shc/shc-core -->
 
@@ -181,30 +180,30 @@ Finalmente, también automatiza la generación de código a partir de las defini
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
-      <version>1.1.2</version>
+      <version>2.2.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
-      <version>1.1.2</version>
+      <version>2.2.2</version>
     </dependency>
     
    	<dependency>
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-protocol</artifactId>
-          <version>1.1.2</version>
+          <version>2.2.2</version>
       </dependency>
 
       <dependency>
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-annotations</artifactId>
-          <version>1.1.2</version>
+          <version>2.2.2</version>
       </dependency>
 
 	  <dependency>
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-hadoop-compat</artifactId>
-          <version>1.1.2</version>
+          <version>2.2.2</version>
       </dependency>
       
 
