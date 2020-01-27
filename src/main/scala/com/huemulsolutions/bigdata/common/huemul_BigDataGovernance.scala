@@ -52,7 +52,7 @@ import org.apache.log4j.Level
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.2"
+  val currentVersion: String = "2.3"
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -411,9 +411,6 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    *************************/
   @transient val CONTROL_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.CONTROL_Setting),GlobalSettings.CONTROL_Driver, DebugMode) // Connection = null
   @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode) //Connection = null
-  //FROM 2.2 --> ADD Hive connection to create HBase tables
-  val _HIVE_connString: String = if (GlobalSettings.ValidPath(GlobalSettings.HIVE_Setting, this.Environment)) GlobalSettings.GetPath(this, GlobalSettings.HIVE_Setting) else ""
-  @transient val HIVE_connection   = new huemul_JDBCProperties(this, _HIVE_connString,null, DebugMode) //Connection = null
   
   if (!TestPlanMode && RegisterInControl) { 
     logMessageInfo(s"establishing connection with control model")  
@@ -423,15 +420,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     logMessageInfo(s"establishing connection with impala") 
     impala_connection.StartConnection()
   }
-  //from 2.2 --> start HIVE Connection
-  if (!TestPlanMode) {
-    if (GlobalSettings.ValidPath(GlobalSettings.HIVE_Setting, this.Environment)) {
-      logMessageInfo(s"establishing connection with JDBC HIVE")
-      HIVE_connection.StartConnection()
-    } else {
-      logMessageWarn(s"can't establish connection with JDBC HIVE (HIVE_Setting's missing)")
-    }
-  }
+  
   
   val spark: SparkSession = if (!TestPlanMode & LocalSparkSession == null) 
                                       SparkSession.builder().appName(appName)
@@ -536,6 +525,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     this.spark.close()
     if (RegisterInControl) this.CONTROL_connection.connection.close()
     if (ImpalaEnabled) this.impala_connection.connection.close()
+    
+    if (GlobalSettings.externalBBDD_conf.Using_HIVE.getActive() == true || GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE() == true ) {
+      val connHIVE = GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(this)
+      connHIVE.connection.close()
+    }
     
   }
   

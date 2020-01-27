@@ -22,7 +22,11 @@ class huemul_GlobalPath() extends Serializable {
     val IMPALA_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
     
     //from 2.2 --> add HIVE connect
+    @deprecated("this method will be removed, instead use createExternalTableConf", "3.0")
     val HIVE_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
+    
+    //from 2.3 --> add 
+    var externalBBDD_conf: huemul_ExternalDB = new huemul_ExternalDB()
     
     //RAW
     val RAW_SmallFiles_Path: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
