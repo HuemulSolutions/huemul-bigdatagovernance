@@ -15,6 +15,7 @@ class huemul_Authorization extends Serializable  {
   }
   
   def HasAccess(ClassName: String, PackageName: String): Boolean = {
+    //Access.foreach { x => println(s"""${x.getLocalClassName().toUpperCase()} == ${ClassName.replace("$", "").toUpperCase()} && ${x.getLocalPackageName().toUpperCase()} == ${PackageName.replace("$", "").toUpperCase()}""" ) }
     val values = Access.filter { x => x.getLocalClassName().toUpperCase() == ClassName.replace("$", "").toUpperCase() && x.getLocalPackageName().toUpperCase() == PackageName.replace("$", "").toUpperCase()  }
     
     return (values.length >= 1 || Access.length == 0 )
