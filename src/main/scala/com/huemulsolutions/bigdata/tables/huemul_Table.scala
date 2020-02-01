@@ -2750,13 +2750,29 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   private def getClassAndPackage(): huemul_AuthorizationPair = {
-    val Invoker = new Exception().getStackTrace()(2)
-    val InvokerName: String = Invoker.getClassName().replace("$", "")
+    var Invoker: StackTraceElement = null
+    var InvokerName: String = null
+    var ClassNameInvoker: String = null
+    var PackageNameInvoker: String = null
     
-    val ArrayResult = InvokerName.split('.')
-    
-    val ClassNameInvoker = ArrayResult(ArrayResult.length-1)
-    val PackageNameInvoker: String = InvokerName.replace(".".concat(ClassNameInvoker), "")
+    var numClassBack: Int = 1
+    do {
+      //repeat until find className different to myself
+      numClassBack += 1
+      Invoker = new Exception().getStackTrace()(numClassBack)
+      InvokerName = Invoker.getClassName().replace("$", "")
+      
+      val ArrayResult = InvokerName.split('.')
+      
+      ClassNameInvoker = ArrayResult(ArrayResult.length-1)
+      PackageNameInvoker = InvokerName.replace(".".concat(ClassNameInvoker), "")
+      
+      //println(s"${numClassBack}, ${ClassNameInvoker.toLowerCase()} == ${this.getClass.getSimpleName.toLowerCase()}")
+      if (ClassNameInvoker.toLowerCase() == this.getClass.getSimpleName.toLowerCase() || ClassNameInvoker.toLowerCase() == "huemul_table") {
+        Invoker = null
+      }
+        
+    } while (Invoker == null) 
     
     return new huemul_AuthorizationPair(ClassNameInvoker,PackageNameInvoker)
   }
