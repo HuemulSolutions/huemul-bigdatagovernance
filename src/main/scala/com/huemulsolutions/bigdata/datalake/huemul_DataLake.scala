@@ -374,25 +374,23 @@ def GenerateInitialCode(PackageBase: String, PackageProject: String, NewObjectNa
       LocalFields += s"                                     ,${x.getcolumnName_Business}\n"
       LocalMapping += s"      huemulTable.${x.getcolumnName_Business}.SetMapping(${Coma}${x.getcolumnName_Business}${Coma})\n"
        
-      LocalColumns += s"  val ${x.getcolumnName_Business} = new huemul_Columns (${x.getDataType}, true, ${Coma}${x.getDescription}${Coma}) \n"
-      LocalColumns += s"  ${x.getcolumnName_Business}.setARCO_Data(false)  \n"
-      LocalColumns += s"  ${x.getcolumnName_Business}.setSecurityLevel(huemulType_SecurityLevel.Public)  \n"
+      LocalColumns += s"  val ${x.getcolumnName_Business} = new huemul_Columns (${x.getDataType}, true, ${Coma}${x.getDescription}${Coma})"
 
       if (TableType == huemulType_Tables.Master || TableType == huemulType_Tables.Reference) {
-        LocalColumns += s"  ${x.getcolumnName_Business}.setMDM_EnableOldValue(true)  \n"
-        LocalColumns += s"  ${x.getcolumnName_Business}.setMDM_EnableDTLog(true)  \n"
-        LocalColumns += s"  ${x.getcolumnName_Business}.setMDM_EnableProcessLog(true)  \n"
+        LocalColumns += s".setMDM_EnableOldValue().setMDM_EnableDTLog().setMDM_EnableProcessLog()"
       }
       
+      LocalColumns += s"  \n"
+      
       if (huemulBigDataGov.IsNumericType(x.getDataType)) {
-        LocalColumns += s"  //${x.getcolumnName_Business}.setDQ_MinDecimalValue(Decimal.apply(0))  \n"
-        LocalColumns += s"  //${x.getcolumnName_Business}.setDQ_MaxDecimalValue(Decimal.apply(200.34))  \n"
+        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MinDecimalValue(Decimal.apply(0),"DQ_USER_ERROR_")  \n"""
+        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MaxDecimalValue(Decimal.apply(200.34),"DQ_USER_ERROR_")  \n"""
       } else if (huemulBigDataGov.IsDateType(x.getDataType)) {
-        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MinDateTimeValue("2018-01-01")  \n"""
-        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MaxDateTimeValue("2018-12-31")  \n"""
+        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MinDateTimeValue("2018-01-01","DQ_USER_ERROR_")  \n"""
+        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MaxDateTimeValue("2018-12-31","DQ_USER_ERROR_")  \n"""
       } else if (x.getDataType == StringType) {
-        LocalColumns += s"  //${x.getcolumnName_Business}.setDQ_MinLen(5) \n"
-        LocalColumns += s"  //${x.getcolumnName_Business}.setDQ_MaxLen(100)  \n"
+        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MinLen(5,"DQ_USER_ERROR_") \n"""
+        LocalColumns += s"""  //${x.getcolumnName_Business}.setDQ_MaxLen(100,"DQ_USER_ERROR_")  \n"""
       }
       
       LocalColumns += s"\n"
@@ -441,12 +439,11 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   this.setLocalPath("${LocalPath}")
   //Frecuencia de actualización
   this.setFrequency(huemulType_Frequency.${Frecuency})
-  //Permite guardar los errores y warnings en la aplicación de reglas de DQ, valor por default es true
-  //this.setSaveDQResult(true)
-  //Permite guardar backup de tablas maestras
-  //this.setSaveBackup(true)  //default value = false
+  //permite asignar un código de error personalizado al fallar la PK
+  this.setPK_externalCode("COD_ERROR")
   
   /**********   O P T I M I Z A C I O N  ****************************************/
+  //nuevo desde version 2.0
   //Indica la cantidad de particiones al guardar un archivo, para archivos pequeños (menor al bloque de HDFS) se 
   //recomienda el valor 1, mientras mayor la tabla la cantidad de particiones debe ser mayor para aprovechar el paralelismo
   //this.setNumPartitions(1)
@@ -456,6 +453,7 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   //this.setSaveDQResult(true)
   //Permite guardar backup de tablas maestras
   //this.setSaveBackup(true)  //default value = false
+
   
   ${
   if (TableType == huemulType_Tables.Transaction) {
@@ -489,37 +487,44 @@ class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   ${
   if (TableType == huemulType_Tables.Transaction) {
   s"""  //Columna de period
-  val period_${PeriodName} = new huemul_Columns (StringType, true,"periodo de los datos")
-  period_${PeriodName}.setIsPK(true)
+  val period_${PeriodName} = new huemul_Columns (StringType, true,"periodo de los datos").setIsPK()
   """
   } else ""}  
     
 ${LocalColumns}
 
-  //**********Atributos adicionales de DataQuality
-  //yourColumn.setIsPK(true)     //valor por default en cada campo es false
-  //yourColumn.setIsUnique(true) //valor por default en cada campo es false
-  //yourColumn.setNullable(true) //valor por default en cada campo es false
-  //yourColumn.setIsUnique(true) //valor por default en cada campo es false
-  //yourColumn.setDQ_MinDecimalValue(Decimal.apply(0))
-  //yourColumn.setDQ_MaxDecimalValue(Decimal.apply(200.0))
-  //yourColumn.setDQ_MinDateTimeValue("2018-01-01")
-  //yourColumn.setDQ_MaxDateTimeValue("2018-12-31")
-  //yourColumn.setDQ_MinLen(5)
-  //yourColumn.setDQ_MaxLen(100)
-  //yourColumn.setDQ_RegExp("")                          //desde versión 2.0
-  //yourColumn.setDefaultValue("'string'") // "10" // "'2018-01-01'"
+  //**********Atributos adicionales de DataQuality 
+  /*
+            .setIsPK()         //por default los campos no son PK
+            .setIsUnique("COD_ERROR") //por default los campos pueden repetir sus valores
+            .setNullable() //por default los campos no permiten nulos
+            .setDQ_MinDecimalValue(Decimal.apply(0),"COD_ERROR")
+            .setDQ_MaxDecimalValue(Decimal.apply(200.0),"COD_ERROR")
+            .setDQ_MinDateTimeValue("2018-01-01","COD_ERROR")
+            .setDQ_MaxDateTimeValue("2018-12-31","COD_ERROR")
+            .setDQ_MinLen(5,"COD_ERROR")
+            .setDQ_MaxLen(100,"COD_ERROR")
+            .setDQ_RegExpresion("","COD_ERROR")                          //desde versión 2.0
+  */
   //**********Atributos adicionales para control de cambios en los datos maestros
-  //yourColumn.setMDM_EnableDTLog(true)
-  //yourColumn.setMDM_EnableOldValue(true)
-  //yourColumn.setMDM_EnableProcessLog(true)
-  //yourColumn.setMDM_EnableOldValue_FullTrace(true)     //desde 2.0: guarda cada cambio de la tabla maestra en tabla de trace
+  /*
+   					.setMDM_EnableDTLog()
+  					.setMDM_EnableOldValue()
+  					.setMDM_EnableProcessLog()
+  					.setMDM_EnableOldValue_FullTrace()     //desde 2.0: guarda cada cambio de la tabla maestra en tabla de trace
+  */
   //**********Otros atributos de clasificación
-  //yourColumn.setEncryptedType("tipo")
-  //yourColumn.setARCO_Data(true)
-  //yourColumn.setSecurityLevel(huemulType_SecurityLevel.Public)
-  //yourColumn.setBusinessGlossary_Id("BG_ID")           //desde 2.0: enlaza id de glosario de términos con campos de la tabla
-   
+  /*
+  					.encryptedType("tipo")
+  					.setARCO_Data()
+  					.securityLevel(huemulType_SecurityLevel.Public)
+  					.setBusinessGlossary("CODIGO")           //desde 2.0: enlaza id de glosario de términos con campos de la tabla
+  */
+  //**********Otros atributos
+  /*
+            .setDefaultValues("'string'") // "10" // "'2018-01-01'"
+  				  .encryptedType("tipo")
+  */
   
   //**********Ejemplo para aplicar DataQuality de Integridad Referencial
   //val i[[tbl_PK]] = new [[tbl_PK]](huemulBigDataGov,Control)
@@ -537,7 +542,7 @@ ${LocalColumns}
   //********************  SaveErrorDetails es opcional, por default es "true", permite almacenar el detalle del error o warning en una tabla específica, debe estar habilitada la opción DQ_SaveErrorDetails en GlobalSettings
   //********************  DQ_ExternalCode es opcional, por default es "null", permite asociar un Id externo de DQ
   //val DQ_NombreRegla: huemul_DataQuality = new huemul_DataQuality(ColumnXX,"Descripcion de la validacion", "Campo_1 > Campo_2",1)
-  //**************Adicionalmeente, puedes agregar "tolerancia" a la validacion, es decir, puedes especiicar 
+  //**************Adicionalmente, puedes agregar "tolerancia" a la validacion, es decir, puedes especiicar 
   //************** numFilas = 10 para permitir 10 errores (al 11 se cae)
   //************** porcentaje = 0.2 para permitir una tolerancia del 20% de errores
   //************** ambos parametros son independientes (condicion o), cualquiera de las dos tolerancias que no se cumpla se gatilla el error o warning
