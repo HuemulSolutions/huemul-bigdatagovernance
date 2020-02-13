@@ -160,6 +160,27 @@ Finalmente, también automatiza la generación de código a partir de las defini
      </dependency>
 	
 		
+		
+	<!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core -->
+	<dependency>
+	    <groupId>org.apache.tika</groupId>
+	    <artifactId>tika-core</artifactId>
+	    <version>1.23</version>
+	</dependency>
+		
+	<!-- https://mvnrepository.com/artifact/org.apache.tika/tika-parsers -->
+	<dependency>
+	    <groupId>org.apache.tika</groupId>
+	    <artifactId>tika-parsers</artifactId>
+	    <version>1.23</version>
+	</dependency>
+	
+	<!-- https://mvnrepository.com/artifact/org.apache.tika/tika-xmp -->
+	<dependency>
+	    <groupId>org.apache.tika</groupId>
+	    <artifactId>tika-xmp</artifactId>
+	    <version>1.23</version>
+	</dependency>
 
   <!-- 
 		  
