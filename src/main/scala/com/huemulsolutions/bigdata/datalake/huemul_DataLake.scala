@@ -64,6 +64,25 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   
   var DataRDD: RDD[String] = null
   
+  //from 2.4
+  /**
+   * get extended info for PDF Files
+   * pos 0: line number
+   * pos 1: line length
+   * pos 2: line length with trim
+   * pos 3: text line
+   */
+  var DataRDD_extended: Array[(Int, Int, Int, String)] = null
+  
+  //from 2.4
+  /**
+   * get metadata info from PDF Files
+   * pos 0: attribute name
+   * pos 1: attribute value
+   */
+  var DataRDD_Metadata: Array[(String, String)] = null
+  
+  
   private var _allColumnsAsString: Boolean = true 
   //def allColumnsAsString(value: Boolean) {_allColumnsAsString = value}
   
@@ -252,6 +271,15 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
             if (huemulBigDataGov.gethuemul_showDemoLines() )
               huemulBigDataGov.logMessageInfo(x) 
             }
+        } else if (this.SettingInUse.FileType == huemulType_FileType.PDF_FILE) {
+          val _PDFFile = huemulBigDataGov.spark.sparkContext.binaryFiles(this.FileName).collect()
+                
+          val pdfResult = new huemul_DataLakePDF()
+          pdfResult.openPDF(_PDFFile, this.SettingInUse.rowDelimiterForPDF)
+          
+          this.DataRDD = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDD_Base)
+          this.DataRDD_extended = pdfResult.RDDPDF_Data
+          this.DataRDD_Metadata = pdfResult.RDDPDF_Metadata
         } else {
           LocalErrorCode = 3006
           this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)
