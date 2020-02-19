@@ -36,7 +36,7 @@ class huemul_DataLakePDF {
     val RDD_Base = _PDF_handler.toString().split(lineDelimiter);
     
     //get RDD extended
-    val RDD_PDF = RDD_Base.map(x =>  {i+=1; (i,x.length,x.trim.length, x)});
+    RDDPDF_Data = RDD_Base.map(x =>  {i+=1; (i,x.length,x.trim.length, x)});
   }
     
 }
