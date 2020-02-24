@@ -3539,8 +3539,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //FOR SPARK--> NOT SUPPORTED FOR SPARK
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_SPARK.getActiveForHBASE()){
-        val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(databaseName).collect()
-          if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableName.toUpperCase()  }.length > 0) 
+        //comment two next lines: get error when doesn't have serDe
+        //val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(databaseName).collect()
+        //  if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableName.toUpperCase()  }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
       }
       
@@ -3552,8 +3553,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //FOR SPARK
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_SPARK.getActive()) {
-        val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(databaseName).collect()
-          if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableName.toUpperCase()  }.length > 0) 
+        //comment two next lines: get error when doesn't have serDe
+        //val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(databaseName).collect()
+        //  if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableName.toUpperCase()  }.length > 0) 
             huemulBigDataGov.spark.sql(sqlDrop01)
       }
       
