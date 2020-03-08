@@ -52,6 +52,12 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
    */
   var LogNumRows_FieldName: String = ""
   
+  //FROM 2.4 
+  /***
+   * character for row delimited in PDF files
+   */
+  var rowDelimiterForPDF: String = "\\n"
+  
   
   private var use_year: Integer = null
   def getuse_year: Integer = {return use_year}

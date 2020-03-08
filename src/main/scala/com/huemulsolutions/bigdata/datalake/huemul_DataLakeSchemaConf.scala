@@ -58,6 +58,30 @@ class huemul_DataLakeSchemaConf extends Serializable {
                                                 , ConvertToNull
                                                 ))
   }
+  
+  //new from 2.4
+  private var customColumn: huemul_DataLakeColumns = null
+  
+  //new from 2.4
+  /**
+   * Add Custom column
+   */
+  def AddCustomColumn(columnName: String
+                      , Description: String = "[[missing description]]") {
+    
+    customColumn = new huemul_DataLakeColumns( columnName
+                                                , columnName
+                                                , StringType 
+                                                , if (Description == null) "[[missing description]]" else Description
+                                                , 0
+                                                , 0
+                                                , false
+                                                , false
+                                                )
+  }
+  
+  //new from 2.4
+  def getCustomColumn(): huemul_DataLakeColumns = {return customColumn}
 }
 
 class huemul_DataLakeColumns(columnName_Business: String

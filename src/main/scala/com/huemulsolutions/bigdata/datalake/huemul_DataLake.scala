@@ -64,6 +64,25 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   
   var DataRDD: RDD[String] = null
   
+  //from 2.4
+  /**
+   * get extended info for PDF Files
+   * pos 0: line number
+   * pos 1: line length
+   * pos 2: line length with trim
+   * pos 3: text line
+   */
+  var DataRDD_extended: RDD[(Int, Int, Int, String)] = null
+  
+  //from 2.4
+  /**
+   * get metadata info from PDF Files
+   * pos 0: attribute name
+   * pos 1: attribute value
+   */
+  var DataRDD_Metadata: Array[(String, String)] = null
+  
+  
   private var _allColumnsAsString: Boolean = true 
   //def allColumnsAsString(value: Boolean) {_allColumnsAsString = value}
   
@@ -100,19 +119,23 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * Return: objeto RAW
    */
   
-  private def ConvertSchemaLocal(SchemaConf: huemul_DataLakeSchemaConf, row : String, local_allColumnsAsString: Boolean) : Row = { 
+  private def ConvertSchemaLocal(SchemaConf: huemul_DataLakeSchemaConf, row : String, local_allColumnsAsString: Boolean, customColumn: String) : Row = { 
     val Schema: StructType = CreateSchema(SchemaConf, local_allColumnsAsString)
     var DataArray_Dest : Array[Any] = null
+    val customColumnNum: Integer = if (customColumn == null) 0 else 1
+    
     if (SchemaConf.ColSeparatorType == huemulType_Separator.CHARACTER) {
       //Get separator and numCols from params
       val separator: String = SchemaConf.ColSeparator
-      val numCols: Integer = Schema.length
+      
+      val numCols: Integer = Schema.length 
       
       if (numCols == 0 || numCols == null){
         this.RaiseError_RAW("huemul_DataLake Error: Schema not defined",3002)
       }
+      
       //declare variables for transform
-      DataArray_Dest = new Array[Any](numCols)      
+      DataArray_Dest = new Array[Any](numCols + customColumnNum)      
       val DataArray_Orig = row.split(separator,numCols)       
           
       DataArray_Orig.indices.foreach { i => 
@@ -148,7 +171,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
       }
     }
     else if (SchemaConf.ColSeparatorType == huemulType_Separator.POSITION) {      
-      DataArray_Dest = new Array[Any](SchemaConf.ColumnsDef.length)
+      DataArray_Dest = new Array[Any](SchemaConf.ColumnsDef.length + customColumnNum)
       
      
       SchemaConf.ColumnsDef.indices.foreach { i => 
@@ -188,6 +211,10 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
        }
       
     }
+    
+    if (customColumnNum == 1) {
+      DataArray_Dest(DataArray_Dest.length-1) = customColumn
+    }
      
     Row.fromSeq(DataArray_Dest) 
   }
@@ -198,7 +225,18 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    */
   
   def ConvertSchema(row : String) : Row = {
-    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, _allColumnsAsString)
+    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, _allColumnsAsString, null)
+    //SchemaConf: huemul_DataLakeSchemaConf, Schema: StructType,
+  }
+  
+  /***
+   * ConvertSchema: Transforma un string en un objeto ROW
+   * incluye parámetro de texto adicional.
+   * Return: objeto Row
+   */
+  
+  def ConvertSchema(row : String, customColumn: String) : Row = {
+    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, _allColumnsAsString, customColumn)
     //SchemaConf: huemul_DataLakeSchemaConf, Schema: StructType,
   }
   
@@ -252,6 +290,15 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
             if (huemulBigDataGov.gethuemul_showDemoLines() )
               huemulBigDataGov.logMessageInfo(x) 
             }
+        } else if (this.SettingInUse.FileType == huemulType_FileType.PDF_FILE) {
+          val _PDFFile = huemulBigDataGov.spark.sparkContext.binaryFiles(this.FileName).collect()
+                
+          val pdfResult = new huemul_DataLakePDF()
+          pdfResult.openPDF(_PDFFile, this.SettingInUse.rowDelimiterForPDF)
+          
+          this.DataRDD = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDD_Base)
+          this.DataRDD_extended = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDDPDF_Data)
+          this.DataRDD_Metadata = pdfResult.RDDPDF_Metadata
         } else {
           LocalErrorCode = 3006
           this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)
@@ -284,7 +331,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           this.Log.Log_isInfoRows = true
        
           val LogRDD =  huemulBigDataGov.spark.sparkContext.parallelize(List(this.Log.DataFirstRow))
-          val rowRDD =  LogRDD.map { x =>  ConvertSchemaLocal(this.SettingInUse.LogSchemaConf, x, true)} 
+          val rowRDD =  LogRDD.map { x =>  ConvertSchemaLocal(this.SettingInUse.LogSchemaConf, x, true,null)} 
 
           //Create DataFrame
           if (huemulBigDataGov.DebugMode) {
@@ -340,6 +387,12 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     
     if (fieldsDetail == null) {
       this.RaiseError_RAW("huemul_DataLake Error: Don't have header information for Detail, see fieldsSeparatorType field ", 3008)
+    }
+    
+    //from 2.4 --> add custom columns at the end
+    val localCustomColumn = SchemaConf.getCustomColumn()
+    if ( localCustomColumn != null) {
+      fieldsDetail.append(new StructField(localCustomColumn.getcolumnName_Business, if (allColumnsAsString) StringType else localCustomColumn.getDataType, nullable = true))
     }
     
     return StructType(fieldsDetail)
