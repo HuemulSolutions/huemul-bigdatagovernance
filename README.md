@@ -16,8 +16,8 @@ Utilizando una metodología sólida que permite a los ingenieros de tu equipo cent
 ### ¿Cómo se genera el código?
 Hay dos formas de generar el código de tu solución
 
-1.  La primera forma es generar el código desde cero utilizando los [template que están disponibles acá](https://github.com/HuemulSolutions/BigDataGovernance_2.3_TemplateBase).
-2.  En la segunda forma solo debes crear la definición de tu interfaz de entrada utilizando el código de ejemplo "raw_entidad_mes.scala" (https://github.com/HuemulSolutions/BigDataGovernance_2.3_TemplateBase/blob/master/src/main/scala/com/yourcompany/yourapplication/datalake/raw_entidad_mes.scala), y luego puedes generar el código de tu tabla y el código de masterización en forma automática!. En el código de la tabla se implementa en forma automática validaciones de calidad de datos, y te permite agregar fácilmente otras validaciones más complejas.
+1.  La primera forma es generar el código desde cero utilizando los [template que están disponibles acá](https://github.com/HuemulSolutions/BigDataGovernance_2.4_TemplateBase).
+2.  En la segunda forma solo debes crear la definición de tu interfaz de entrada utilizando el código de ejemplo "raw_entidad_mes.scala" (https://github.com/HuemulSolutions/BigDataGovernance_2.4_TemplateBase/blob/master/src/main/scala/com/yourcompany/yourapplication/datalake/raw_entidad_mes.scala), y luego puedes generar el código de tu tabla y el código de masterización en forma automática!. En el código de la tabla se implementa en forma automática validaciones de calidad de datos, y te permite agregar fácilmente otras validaciones más complejas.
 
 ![Branching](https://HuemulSolutions.github.io/huemul_flujo_genera_codigo.png)
 
@@ -40,7 +40,7 @@ La implementación de todas estas etapas puede tardar más de una semana, con Huem
 
 Debido al tiempo que demora implementar todas estas estapas, en la práctica solo se logra trabajar en la lógica de negocio sin DataQuality, los planes de pruebas y documentación de los procesos nunca se complentan adecuadamente, esto poniendo en riesgo el éxito de las soluciones analíticas.
 
-La construcción de Huemul BigDataGovernance está basada en las buenas prácticas descritas en el DAMA-DMBOK2 ([Data Management Body Of Knowledge](www.dama.org)), y permite agilizar el desarrollo de proyectos de BigData a nivel corporativo.
+La construcción de Huemul BigDataGovernance está basada en las buenas prácticas descritas en el DAMA-DMBOK2 ([Data Management Body Of Knowledge](http://www.dama.org)), y permite agilizar el desarrollo de proyectos de BigData a nivel corporativo.
 
 ### Metodología Flexible
 El uso de la librería permite desarrollar en forma flexible tus proyectos de BigData. Trabajar directamente sobre los datos en bruto es una buena opción si tienes un proyecto puntual sobre una interfaz en particular, las transformaciones y validaciones que hagan no serán utilizadas por el resto de la organización (desde "A" hasta "D"). Si quieres juntar muchos datos desde distintas fuentes, la mejor estrategia será generar una base consolidada, donde el DataQuality sea implementado una sola vez, y toda la organización pueda acceder a los datos a validados. 
