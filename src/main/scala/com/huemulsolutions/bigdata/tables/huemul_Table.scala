@@ -1109,6 +1109,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (_PartitionField != null && _PartitionField.toUpperCase() != x.getName.toUpperCase()) {
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
           coma = ","
+        } else if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
+          //from 2.4 --> add partitioned field
+          ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
+          coma = ","
         }
       }
       
@@ -1860,26 +1864,48 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
       if (_PartitionField.toUpperCase() == x.getName().toUpperCase() ) {
+        if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
+          PartitionForCreateTable += s"${coma_partition}${_PartitionField}" //without datatype
+        } else {
           PartitionForCreateTable += s"${coma_partition}${_PartitionField} ${Field.DataType.sql}"
+        }
           coma_partition = ","
       }
     }
     
     var lCreateTableScript: String = "" 
-    if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC) {
-      //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
-      lCreateTableScript = s"""
-                                   CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
-                                   ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
-                                   STORED AS ${getStorageType.toString()}                                  
-                                   LOCATION '${getFullNameWithPath()}'"""
-    } else if (getStorageType == huemulType_StorageType.HBASE)  {
-      lCreateTableScript = s"""
-                                   CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
-                                   ROW FORMAT SERDE 'org.apache.hadoop.hive.hbase.HBaseSerDe' 
-                                   STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
-                                   WITH SERDEPROPERTIES ("hbase.columns.mapping"="${getHBaseCatalogForHIVE(huemulType_InternalTableType.Normal)}")                                   
-                                   TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace(huemulType_InternalTableType.Normal)}:${getHBaseTableName(huemulType_InternalTableType.Normal)}")"""
+    //FROM 2.4 --> INCLUDE SPECIAL OPTIONS FOR DATABRICKS
+    if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
+      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC) {
+        //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+        lCreateTableScript = s"""
+                                     CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
+                                     USING ${getStorageType.toString()} 
+                                     ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }                                 
+                                     LOCATION '${getFullNameWithPath()}'"""
+      } else if (getStorageType == huemulType_StorageType.HBASE)  {
+        lCreateTableScript = s"""
+                                     CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
+                                     USING 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+                                     WITH SERDEPROPERTIES ("hbase.columns.mapping"="${getHBaseCatalogForHIVE(huemulType_InternalTableType.Normal)}")                                   
+                                     TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace(huemulType_InternalTableType.Normal)}:${getHBaseTableName(huemulType_InternalTableType.Normal)}")"""
+      }
+    } else {
+      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC) {
+        //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+        lCreateTableScript = s"""
+                                     CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
+                                     ${if (_PartitionField.length() > 0) s"PARTITIONED BY (${PartitionForCreateTable})" else "" }
+                                     STORED AS ${getStorageType.toString()}                                  
+                                     LOCATION '${getFullNameWithPath()}'"""
+      } else if (getStorageType == huemulType_StorageType.HBASE)  {
+        lCreateTableScript = s"""
+                                     CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
+                                     ROW FORMAT SERDE 'org.apache.hadoop.hive.hbase.HBaseSerDe' 
+                                     STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+                                     WITH SERDEPROPERTIES ("hbase.columns.mapping"="${getHBaseCatalogForHIVE(huemulType_InternalTableType.Normal)}")                                   
+                                     TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace(huemulType_InternalTableType.Normal)}:${getHBaseTableName(huemulType_InternalTableType.Normal)}")"""
+      }
     }
     
     if (huemulBigDataGov.DebugMode)
@@ -1894,18 +1920,32 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def DF_CreateTable_DQ_Script(): String = {
               
     var coma_partition = ""
-    var PartitionForCreateTable = s"dq_control_id STRING"
+    var PartitionForCreateTable = if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) s"dq_control_id" else s"dq_control_id STRING"
     
     var lCreateTableScript: String = "" 
-    if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC) {
-    //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
-      lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)} (${getColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
-                                 PARTITIONED BY (${PartitionForCreateTable})
-                                 STORED AS ${getStorageType_DQResult.toString()}                                  
-                                 LOCATION '${getFullNameWithPath_DQ()}'"""
-    } else if (getStorageType_DQResult == huemulType_StorageType.HBASE)  {
-      raiseError("huemul_Table Error: HBase is not available for DQ Table", 1061)
+    //FROM 2.4 --> INCLUDE SPECIAL OPTIONS FOR DATABRICKS
+    if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
+      if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC) {
+      //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+        lCreateTableScript = s"""
+                                   CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)} (${getColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
+                                   USING ${getStorageType_DQResult.toString()}
+                                   PARTITIONED BY (${PartitionForCreateTable})                                  
+                                   LOCATION '${getFullNameWithPath_DQ()}'"""
+      } else if (getStorageType_DQResult == huemulType_StorageType.HBASE)  {
+        raiseError("huemul_Table Error: HBase is not available for DQ Table", 1061)
+      }
+    }  else {
+      if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC) {
+      //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+        lCreateTableScript = s"""
+                                   CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)} (${getColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
+                                   PARTITIONED BY (${PartitionForCreateTable})
+                                   STORED AS ${getStorageType_DQResult.toString()}                                  
+                                   LOCATION '${getFullNameWithPath_DQ()}'"""
+      } else if (getStorageType_DQResult == huemulType_StorageType.HBASE)  {
+        raiseError("huemul_Table Error: HBase is not available for DQ Table", 1061)
+      }
     }
                                  
     if (huemulBigDataGov.DebugMode)
@@ -1922,32 +1962,51 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def DF_CreateTable_OldValueTrace_Script(): String = {
     var coma_partition = ""
     
-    //STORED AS ${_StorageType_OldValueTrace}
-    //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
-    val lCreateTableScript = s"""
-                                 CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.OldValueTrace)} (${getColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
-                                  ${if (getStorageType_OldValueTrace == "csv") {s"""
-                                  ROW FORMAT DELIMITED
-                                  FIELDS TERMINATED BY '\t'
-                                  STORED AS TEXTFILE """}
-                                  else if (getStorageType_OldValueTrace == "json") {
-                                    s"""
-                                     ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
-                                    """
-                                  }
-                                  else if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET) {
-                                   """PARTITIONED BY (MDM_columnName STRING)
-                                     STORED AS PARQUET""" 
-                                  }
-                                  else if (getStorageType_OldValueTrace == huemulType_StorageType.ORC) {
-                                   """PARTITIONED BY (MDM_columnName STRING)
-                                     STORED AS ORC""" 
-                                  }
-                                 }
-                                 LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
-                                  //${if (_StorageType_OldValueTrace == "csv") {s"""
-                                  //TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")"""}}"""
-     
+    var lCreateTableScript: String = "" 
+    //FROM 2.4 --> INCLUDE SPECIAL OPTIONS FOR DATABRICKS
+    if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
+      lCreateTableScript = s"""
+                                   CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.OldValueTrace)} (${getColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
+                                    ${if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET) {
+                                     """USING PARQUET
+                                        PARTITIONED BY (MDM_columnName)""" 
+                                    }
+                                    else if (getStorageType_OldValueTrace == huemulType_StorageType.ORC) {
+                                     """USING ORC
+                                        PARTITIONED BY (MDM_columnName)""" 
+                                    }
+                                   }
+                                   LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
+                                    //${if (_StorageType_OldValueTrace == "csv") {s"""
+                                    //TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")"""}}"""
+    } else {
+      //STORED AS ${_StorageType_OldValueTrace}
+      //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
+      lCreateTableScript = s"""
+                                   CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.OldValueTrace)} (${getColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
+                                    ${if (getStorageType_OldValueTrace == "csv") {s"""
+                                    ROW FORMAT DELIMITED
+                                    FIELDS TERMINATED BY '\t'
+                                    STORED AS TEXTFILE """}
+                                    else if (getStorageType_OldValueTrace == "json") {
+                                      s"""
+                                       ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+                                      """
+                                    }
+                                    else if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET) {
+                                     """PARTITIONED BY (MDM_columnName STRING)
+                                       STORED AS PARQUET""" 
+                                    }
+                                    else if (getStorageType_OldValueTrace == huemulType_StorageType.ORC) {
+                                     """PARTITIONED BY (MDM_columnName STRING)
+                                       STORED AS ORC""" 
+                                    }
+                                   }
+                                   LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
+                                    //${if (_StorageType_OldValueTrace == "csv") {s"""
+                                    //TBLPROPERTIES("timestamp.formats"="yyyy-MM-dd'T'HH:mm:ss.SSSZ")"""}}"""
+    }
+    
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       

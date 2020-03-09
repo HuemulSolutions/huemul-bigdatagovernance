@@ -519,10 +519,13 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     return GlobalSettings.GetDataBase(this, dataBaseFromGlobal)
   }
   
-  def close() {
+  def close(stopSpark: Boolean) {
     application_closeAll(this.IdApplication)
     this.spark.catalog.clearCache()
-    this.spark.close()
+    if (stopSpark) {
+      this.spark.close()
+      this.spark.stop()
+    }
     if (RegisterInControl) this.CONTROL_connection.connection.close()
     if (ImpalaEnabled) this.impala_connection.connection.close()
     
@@ -530,6 +533,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       val connHIVE = GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(this)
       connHIVE.connection.close()
     }
+  }
+  
+  def close() {
+    close(if (GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) false else true)
     
   }
   
