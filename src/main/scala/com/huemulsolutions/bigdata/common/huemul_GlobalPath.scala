@@ -1,7 +1,7 @@
 package com.huemulsolutions.bigdata.common
 
 import scala.collection.mutable.ArrayBuffer
-import com.huemulsolutions.bigdata.common.huemulType_cloudProvider._
+import com.huemulsolutions.bigdata.common.huemulType_bigDataProvider._
 
 class huemul_KeyValuePath(Environment: String, PathOrDataBase: String) extends Serializable {
   /**example: "prod, desa, qa"      
@@ -80,11 +80,11 @@ class huemul_GlobalPath() extends Serializable {
     //set > 1 to cache hive metadata
     var HIVE_HourToUpdateMetadata: Integer = 0
     
-    //from 2.4 --> cloud provider for technical configuration
-    private var _cloudProvider: huemulType_cloudProvider = huemulType_cloudProvider.None
-    def getCloudProvider(): huemulType_cloudProvider = {return _cloudProvider}
-    def setCloudProvider(value: huemulType_cloudProvider) {
-      _cloudProvider = value
+    //from 2.4 --> bigData provider for technical configuration
+    private var _bigDataProvider: huemulType_bigDataProvider = huemulType_bigDataProvider.None
+    def getBigDataProvider(): huemulType_bigDataProvider = {return _bigDataProvider}
+    def setBigDataProvider(value: huemulType_bigDataProvider) {
+      _bigDataProvider = value
     }
     
     //FROM 2.2
