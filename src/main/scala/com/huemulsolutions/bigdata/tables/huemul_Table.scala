@@ -709,8 +709,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError(s"huemul_Table Error: PartitionField shouldn't be defined if TableType is ${this._TableType}",1036)
       
     //from 2.2 --> validate tableType with Format
-    if (this._TableType == huemulType_Tables.Transaction && !(this.getStorageType == huemulType_StorageType.PARQUET || this.getStorageType == huemulType_StorageType.ORC))
-      raiseError(s"huemul_Table Error: Transaction Tables only available with PARQUET or ORC StorageType ",1057)
+    if (this._TableType == huemulType_Tables.Transaction && !(this.getStorageType == huemulType_StorageType.PARQUET || this.getStorageType == huemulType_StorageType.ORC || this.getStorageType == huemulType_StorageType.DELTA))
+      raiseError(s"huemul_Table Error: Transaction Tables only available with PARQUET, DELTA or ORC StorageType ",1057)
       
     //Fron 2.2 --> validate tableType HBASE and turn on globalSettings
     if (this.getStorageType == huemulType_StorageType.HBASE && !huemulBigDataGov.GlobalSettings.getHBase_available)
@@ -1092,7 +1092,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       if (tableType == huemulType_InternalTableType.DQ) {
         //create StructType
-        //FROM 2.4 --> INCLUDE PARTITIONED COLUMN IN CREATE TABLE ONLY FOR DATABRIKS COMPATIBILITY
+        //FROM 2.4 --> INCLUDE PARTITIONED COLUMN IN CREATE TABLE ONLY FOR databricks COMPATIBILITY
         if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) { 
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
           coma = ","
@@ -1103,7 +1103,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
       else if (tableType == huemulType_InternalTableType.OldValueTrace) {
         //create StructType MDM_columnName
-        //FROM 2.4 --> INCLUDE PARTITIONED COLUMN IN CREATE TABLE ONLY FOR DATABRIKS COMPATIBILITY
+        //FROM 2.4 --> INCLUDE PARTITIONED COLUMN IN CREATE TABLE ONLY FOR databricks COMPATIBILITY
         if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
           coma = ","
@@ -1884,7 +1884,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var lCreateTableScript: String = "" 
     //FROM 2.4 --> INCLUDE SPECIAL OPTIONS FOR DATABRICKS
     if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
-      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC) {
+      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC || getStorageType == huemulType_StorageType.DELTA) {
         //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
                                      CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
@@ -1899,7 +1899,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                      TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace(huemulType_InternalTableType.Normal)}:${getHBaseTableName(huemulType_InternalTableType.Normal)}")"""
       }
     } else {
-      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC) {
+      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC || getStorageType == huemulType_StorageType.DELTA) {
         //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
                                      CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
@@ -1933,7 +1933,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var lCreateTableScript: String = "" 
     //FROM 2.4 --> INCLUDE SPECIAL OPTIONS FOR DATABRICKS
     if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
-      if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC) {
+      if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC ) {
       //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
                                    CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)} (${getColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
@@ -1942,6 +1942,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    LOCATION '${getFullNameWithPath_DQ()}'"""
       } else if (getStorageType_DQResult == huemulType_StorageType.HBASE)  {
         raiseError("huemul_Table Error: HBase is not available for DQ Table", 1061)
+      } else if (getStorageType_DQResult == huemulType_StorageType.DELTA) {
+        //for delta, databricks get all columns and partition columns
+        //see https://docs.databricks.com/spark/latest/spark-sql/language-manual/create-table.html
+        lCreateTableScript = s"""
+                                   CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)} 
+                                   USING ${getStorageType_DQResult.toString()}                             
+                                   LOCATION '${getFullNameWithPath_DQ()}'"""
       }
     }  else {
       if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC) {
@@ -1953,6 +1960,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    LOCATION '${getFullNameWithPath_DQ()}'"""
       } else if (getStorageType_DQResult == huemulType_StorageType.HBASE)  {
         raiseError("huemul_Table Error: HBase is not available for DQ Table", 1061)
+      } else if (getStorageType_DQResult == huemulType_StorageType.DELTA) {
+        lCreateTableScript = s"""
+                                   CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)}
+                                   STORED AS ${getStorageType_DQResult.toString()}                                  
+                                   LOCATION '${getFullNameWithPath_DQ()}'"""
       }
     }
                                  
@@ -1983,6 +1995,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                      """USING ORC
                                         PARTITIONED BY (MDM_columnName)""" 
                                     }
+                                    else if (getStorageType_OldValueTrace == huemulType_StorageType.DELTA) {
+                                     """USING DELTA
+                                        PARTITIONED BY (MDM_columnName)""" 
+                                    }
                                    }
                                    LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
                                     //${if (_StorageType_OldValueTrace == "csv") {s"""
@@ -2008,6 +2024,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.ORC) {
                                      """PARTITIONED BY (MDM_columnName STRING)
                                        STORED AS ORC""" 
+                                    }
+                                    else if (getStorageType_OldValueTrace == huemulType_StorageType.DELTA) {
+                                     """PARTITIONED BY (MDM_columnName STRING)
+                                       STORED AS DELTA""" 
                                     }
                                    }
                                    LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
@@ -2674,6 +2694,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
           }
           
+          if (this.getStorageType == huemulType_StorageType.DELTA) {
+            val fsPath = new org.apache.hadoop.fs.Path(tempPath)
+            if (fs.exists(fsPath)){  
+              fs.delete(fsPath, true)
+            }
+          }
+          
           if (this.getNumPartitions == null || this.getNumPartitions <= 0)
             DFTempCopy.write.mode(SaveMode.Overwrite).format(this.getStorageType.toString()).save(tempPath)     //2.2 -> this._StorageType.toString() instead of "parquet"
           else
@@ -3075,9 +3102,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
        
        val DestTableName: String = InternalGetTable(DestEnvironment)
-       huemulBigDataGov.logMessageInfo(s"MSCK REPAIR TABLE ${DestTableName}")
-       huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${DestTableName}")
-              
+       if (this.getStorageType != huemulType_StorageType.DELTA) {
+         huemulBigDataGov.logMessageInfo(s"MSCK REPAIR TABLE ${DestTableName}")
+         huemulBigDataGov.spark.sql(s"MSCK REPAIR TABLE ${DestTableName}")
+       }     
     } else {
        val ProdFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}")
        val ManualFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}")
@@ -3282,10 +3310,23 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         } else {
           this.PartitionValue = DFDistinct(0).getAs[String](_PartitionField)
           val FullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}=${this.PartitionValue}")
+          val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)   
           
-          LocalControl.NewStep("Save: Drop old partition")
-          val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
-          fs.delete(FullPath, true)
+          //if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
+          if (this.getStorageType == huemulType_StorageType.DELTA) {
+            //FROM 2.4 --> NEW DELETE FOR DATABRICKS
+            LocalControl.NewStep("Save: Drop old partition")
+            
+            val FullPath = new org.apache.hadoop.fs.Path(getFullNameWithPath())
+            if (fs.exists(FullPath)) {
+              val strSQL_delete: String = s"DELETE FROM delta.`${getFullNameWithPath}` WHERE ${_PartitionField} = '${this.PartitionValue}' "
+              if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(strSQL_delete)
+              val dfDelete = huemulBigDataGov.spark.sql(strSQL_delete)
+            }
+          } else {
+            LocalControl.NewStep("Save: Drop old partition")      
+            fs.delete(FullPath, true)
+          }
           
           if (this.getNumPartitions > 0) {
             LocalControl.NewStep("Save: Set num FileParts")
@@ -3342,14 +3383,16 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         val _tableName : String = internalGetTable(huemulType_InternalTableType.Normal)
         if (_PartitionField != null && _PartitionField != "") {
-          LocalControl.NewStep("Save: Repair Hive Metadata")
-          val _refreshTable: String = s"MSCK REPAIR TABLE ${_tableName}"
-          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(_refreshTable)
-          //new from 2.3
-          if (getStorageType == huemulType_StorageType.HBASE) {   
-            runSQLexternalTable(_refreshTable, true) 
-          } else {
-            runSQLexternalTable(_refreshTable, false)
+          if (this.getStorageType != huemulType_StorageType.DELTA) {
+            LocalControl.NewStep("Save: Repair Hive Metadata")
+            val _refreshTable: String = s"MSCK REPAIR TABLE ${_tableName}"
+            if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(_refreshTable)
+            //new from 2.3
+            if (getStorageType == huemulType_StorageType.HBASE) {   
+              runSQLexternalTable(_refreshTable, true) 
+            } else {
+              runSQLexternalTable(_refreshTable, false)
+            }
           }
         }
         
@@ -3394,7 +3437,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_OldValueTrace()} ")
-      if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC){
+      if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC || getStorageType_OldValueTrace == huemulType_StorageType.DELTA){
         DF_Final.write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
@@ -3434,11 +3477,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         val _tableNameOldValueTrace: String = internalGetTable(huemulType_InternalTableType.OldValueTrace)
         
-        LocalControl.NewStep("Save: OldVT Result: Repair Hive Metadata")
-        val _refreshTable: String = s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}"
-        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"REFRESH TABLE ${_tableNameOldValueTrace}")
-        //new from 2.3
-        runSQLexternalTable(_refreshTable, false)        
+        if (this.getStorageType_OldValueTrace != huemulType_StorageType.DELTA) {
+          LocalControl.NewStep("Save: OldVT Result: Repair Hive Metadata")
+          val _refreshTable: String = s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}"
+          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"REFRESH TABLE ${_tableNameOldValueTrace}")
+          //new from 2.3
+          runSQLexternalTable(_refreshTable, false)        
+        }
         
         if (huemulBigDataGov.ImpalaEnabled) {
           LocalControl.NewStep("Save: OldVT Result: refresh Impala Metadata")
@@ -3520,11 +3565,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
         //Hive read partitioning metadata, see https://docs.databricks.com/user-guide/tables.html
         val _tableNameDQ: String = internalGetTable(huemulType_InternalTableType.DQ)
-        val _refreshTable: String = s"MSCK REPAIR TABLE ${_tableNameDQ}"
-        LocalControl.NewStep("Save: Repair Hive Metadata")
-        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(_refreshTable)
-        //new from 2.3
-        runSQLexternalTable(_refreshTable, false)        
+        
+        if (this.getStorageType_DQResult != huemulType_StorageType.DELTA) {
+          val _refreshTable: String = s"MSCK REPAIR TABLE ${_tableNameDQ}"
+          LocalControl.NewStep("Save: Repair Hive Metadata")
+          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(_refreshTable)
+          //new from 2.3
+          runSQLexternalTable(_refreshTable, false)
+        }
         
         if (huemulBigDataGov.ImpalaEnabled) {
           LocalControl.NewStep("Save: refresh Impala Metadata")
