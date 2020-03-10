@@ -2694,11 +2694,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
           }
           
-          if (this.getStorageType == huemulType_StorageType.DELTA) {
-            val fsPath = new org.apache.hadoop.fs.Path(tempPath)
-            if (fs.exists(fsPath)){  
-              fs.delete(fsPath, true)
-            }
+          val fsPath = new org.apache.hadoop.fs.Path(tempPath)
+          if (fs.exists(fsPath)){  
+            fs.delete(fsPath, true)
           }
           
           if (this.getNumPartitions == null || this.getNumPartitions <= 0)
