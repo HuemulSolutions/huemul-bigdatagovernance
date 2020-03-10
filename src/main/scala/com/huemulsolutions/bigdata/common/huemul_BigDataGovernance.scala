@@ -532,8 +532,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
     if (GlobalSettings.externalBBDD_conf.Using_HIVE.getActive() == true || GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE() == true ) {
       val connHIVE = GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(this)
-      if (connHIVE.connection != null)
-        connHIVE.connection.close()
+      if (connHIVE != null) {
+        if (connHIVE.connection != null)
+          connHIVE.connection.close()
+      }
     }
   }
   
