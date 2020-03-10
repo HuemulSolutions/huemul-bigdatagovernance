@@ -1092,14 +1092,22 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       if (tableType == huemulType_InternalTableType.DQ) {
         //create StructType
-        if ("dq_control_id".toUpperCase() != x.getName.toUpperCase()) {
+        //FROM 2.4 --> INCLUDE PARTITIONED COLUMN IN CREATE TABLE ONLY FOR DATABRIKS COMPATIBILITY
+        if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) { 
+          ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
+          coma = ","
+        } else if ("dq_control_id".toUpperCase() != x.getName.toUpperCase()) {
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
           coma = ","
         }
       }
       else if (tableType == huemulType_InternalTableType.OldValueTrace) {
         //create StructType MDM_columnName
-        if ("MDM_columnName".toUpperCase() != x.getName.toUpperCase()) {
+        //FROM 2.4 --> INCLUDE PARTITIONED COLUMN IN CREATE TABLE ONLY FOR DATABRIKS COMPATIBILITY
+        if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
+          ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
+          coma = ","
+        } else if ("MDM_columnName".toUpperCase() != x.getName.toUpperCase()) {
           ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
           coma = ","
         }
