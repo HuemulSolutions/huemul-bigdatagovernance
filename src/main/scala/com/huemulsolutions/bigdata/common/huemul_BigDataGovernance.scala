@@ -520,7 +520,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   def close(stopSpark: Boolean) {
-    println(s"this.IdApplication: ${this.IdApplication}, IdApplication: ${IdApplication}")
+    //println(s"this.IdApplication: ${this.IdApplication}, IdApplication: ${IdApplication}")
     application_closeAll(IdApplication)
     this.spark.catalog.clearCache()
     if (stopSpark) {
@@ -548,7 +548,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (RegisterInControl) {
        val ExecResult1 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
        val ExecResult2 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
-       println(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+       //println(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
     }
       
   }
