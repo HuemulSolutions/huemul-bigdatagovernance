@@ -1379,25 +1379,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   
   /**
-  CREATE SQL SCRIPT FOR OLD VALUE TRACE INSERT
+  SCRIPT FOR OLD VALUE TRACE INSERT
    */
-  private def SQL_Step_OldValueTrace(Alias: String, ProcessName: String): String = {
+  private def OldValueTrace_save(Alias: String, ProcessName: String, LocalControl: huemul_Control) = {
        
     //Get PK
-    var StringSQl_PK: String = "SELECT "
+    var StringSQl_PK_base: String = "SELECT "
     var coma: String = ""
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                          x.get(this).isInstanceOf[huemul_Columns] &&
                                          x.get(this).asInstanceOf[huemul_Columns].getIsPK }
     .foreach { x =>
-      StringSQl_PK += s" ${coma}${x.getName}"
+      StringSQl_PK_base += s" ${coma}${x.getName}"
       coma = ","
     }
-    
-    //Get SQL for get columns value change
-    var StringSQl: String = ""
-    var StringUnion: String = ""
-    var count_fulltrace = 0
     
     getALLDeclaredFields().filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] && 
@@ -1406,16 +1401,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       
-      StringSQl +=  s" ${StringUnion} ${StringSQl_PK}, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, CAST(${_MDM_AutoInc} AS BIGINT) as MDM_AutoInc, '${Control.Control_Id}' as processExec_id, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange, cast('${x.getName.toLowerCase()}' as string) as MDM_columnName FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
-      StringUnion = " \n UNION ALL "
-      count_fulltrace += 1
+      val StringSQL =  s"${StringSQl_PK_base}, CAST(new_${x.getName} as string) AS MDM_newValue, CAST(old_${x.getName} as string) AS MDM_oldValue, CAST(${_MDM_AutoInc} AS BIGINT) as MDM_AutoInc, '${Control.Control_Id}' as processExec_id, now() as MDM_fhChange, cast('$ProcessName' as string) as MDM_ProcessChange, cast('${x.getName.toLowerCase()}' as string) as MDM_columnName FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${x.getName} = 1 "
+      val aliasFullTrace: String = s"__SQL_ovt_full_${x.getName}"
+      
+      val tempSQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery(aliasFullTrace,StringSQL) 
+      
+      val numRowsAffected = tempSQL_OldValueFullTrace_DF.count()
+      if (numRowsAffected > 0) {
+        val Result = savePersist_OldValueTrace(LocalControl,tempSQL_OldValueFullTrace_DF)
+        if (!Result)
+            huemulBigDataGov.logMessageWarn(s"Old value trace full trace can't save to disk, column ${x.getName}")
+      }
+      
+      LocalControl.NewStep(s"Ref & Master: ovt full trace finished, ${numRowsAffected} rows changed for ${x.getName} column ")
     }
-    
-    if (count_fulltrace == 0)
-      StringSQl = null
-    
-    
-    return StringSQl 
   }
 
   
@@ -3181,8 +3180,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //CREATE NEW DATAFRAME WITH MDM OLD VALUE FULL TRACE
     if (huemulBigDataGov.GlobalSettings.MDM_SaveOldValueTrace) {
       LocalControl.NewStep("Ref & Master: MDM Old Value Full Trace")
-      val SQL_FullTrace = SQL_Step_OldValueTrace("__FullJoin", huemulBigDataGov.ProcessNameCall)
+      OldValueTrace_save("__FullJoin", huemulBigDataGov.ProcessNameCall, LocalControl)
       
+      /*
       var tempSQL_OldValueFullTrace_DF : DataFrame = null 
       if (SQL_FullTrace != null){ //if null, doesn't have the mdm old "value full trace" to get          
         tempSQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery("__SQL_OldValueFullTrace_DF",SQL_FullTrace) 
@@ -3194,6 +3194,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             return Result 
         }
       }
+      * 
+      */
     }
 
     
