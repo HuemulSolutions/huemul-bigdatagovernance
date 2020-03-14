@@ -63,6 +63,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   //RAW_OpenFile(RAW_File_Info, year, mes, day, hora, min, seg, AdditionalParams)
   
   var DataRDD: RDD[String] = null
+  var DataRaw: DataFrame = null // Store the loaded data from Avro or other future format
   
   //from 2.4
   /**
@@ -111,6 +112,18 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     
   }
   
+   /**
+   * Register DF to Data.DataDF, and asigne alias (NEW 2.3.4)
+   *
+   * @param rowData   DataFrame Data
+   * @param Alias     DataFrame Alias
+   */
+  def DF_from_RAW(rowData: DataFrame, Alias: String): Unit = {
+    DataFramehuemul.setDataFrame(rowData,Alias,false)
+    this.StopRead_dt = huemulBigDataGov.getCurrentDateTimeJava()
+    //Register use in control
+    Control.RegisterRAW_USE(this, Alias)
+  }
   
   /***
    * ConvertSchemaLocal: Transforma un string en un objeto RAW
@@ -266,6 +279,20 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     try {
         this.StartRead_dt = huemulBigDataGov.getCurrentDateTimeJava()
         /************************************************************************/
+        /********   GET  FIELDS   ********************************/
+        /************************************************************************/ 
+        //Fields
+        var fieldsDetail : StructType = CreateSchema(this.SettingInUse.DataSchemaConf, _allColumnsAsString)
+           
+        this.DataFramehuemul.SetDataSchema(fieldsDetail)
+        if (this.huemulBigDataGov.DebugMode) {
+          huemulBigDataGov.logMessageDebug("printing DataSchema from settings: ")
+          this.DataFramehuemul.getDataSchema().printTreeString()
+        }
+        
+        huemulBigDataGov.logMessageInfo("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString())    
+      
+        /************************************************************************/
         /********   OPEN FILE   *********************************/
         /************************************************************************/
         //Open File 
@@ -299,6 +326,15 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           this.DataRDD = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDD_Base)
           this.DataRDD_extended = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDDPDF_Data)
           this.DataRDD_Metadata = pdfResult.RDDPDF_Metadata
+        } else if (this.SettingInUse.FileType == huemulType_FileType.AVRO_FILE) {
+          huemulBigDataGov.logMessageInfo("Opening AVRO data file and building DF DataRaw")
+
+          this.DataRaw= huemulBigDataGov.spark.read
+            .format("avro")
+            .option("compression","snappy")
+            .schema( this.DataFramehuemul.getDataSchema())
+            .load(this.FileName)
+
         } else {
           LocalErrorCode = 3006
           this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)
@@ -348,20 +384,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           
         }
         
-        
-        /************************************************************************/
-        /********   GET  FIELDS   ********************************/
-        /************************************************************************/ 
-        //Fields
-        var fieldsDetail : StructType = CreateSchema(this.SettingInUse.DataSchemaConf, _allColumnsAsString)
-           
-        this.DataFramehuemul.SetDataSchema(fieldsDetail)
-        if (this.huemulBigDataGov.DebugMode) {
-          huemulBigDataGov.logMessageDebug("printing DataSchema from settings: ")
-          this.DataFramehuemul.getDataSchema().printTreeString()
-        }
-        
-        huemulBigDataGov.logMessageInfo("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString())                        
+                            
     } catch {
       case e: Exception => {
         huemulBigDataGov.logMessageError("Error Code")
