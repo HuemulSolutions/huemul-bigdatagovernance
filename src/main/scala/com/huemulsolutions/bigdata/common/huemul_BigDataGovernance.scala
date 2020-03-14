@@ -52,7 +52,7 @@ import org.apache.log4j.Level
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.3.1"
+  val currentVersion: String = "2.4"
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -519,17 +519,28 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     return GlobalSettings.GetDataBase(this, dataBaseFromGlobal)
   }
   
-  def close() {
-    application_closeAll(this.IdApplication)
+  def close(stopSpark: Boolean) {
+    //println(s"this.IdApplication: ${this.IdApplication}, IdApplication: ${IdApplication}")
+    application_closeAll(IdApplication)
     this.spark.catalog.clearCache()
-    this.spark.close()
+    if (stopSpark) {
+      this.spark.close()
+      this.spark.stop()
+    }
     if (RegisterInControl) this.CONTROL_connection.connection.close()
     if (ImpalaEnabled) this.impala_connection.connection.close()
     
     if (GlobalSettings.externalBBDD_conf.Using_HIVE.getActive() == true || GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE() == true ) {
       val connHIVE = GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(this)
-      connHIVE.connection.close()
+      if (connHIVE != null) {
+        if (connHIVE.connection != null)
+          connHIVE.connection.close()
+      }
     }
+  }
+  
+  def close() {
+    close(if (GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) false else true)
     
   }
   
@@ -537,6 +548,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (RegisterInControl) {
        val ExecResult1 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
        val ExecResult2 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+       //println(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
     }
       
   }
