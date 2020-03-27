@@ -346,6 +346,26 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   private val numPartitionsForDQFiles: Integer = 2
   
+  //FROM 2.5 
+  //ADD AVRO SUPPORT
+  private var _avro_format: String = huemulBigDataGov.GlobalSettings.getAVRO_format()
+  def getAVRO_format(): String = {return  _avro_format}
+  def setAVRO_format(value: String) {_avro_format = value} 
+  
+  /*
+  private var _Tablecodec_compression: String = null
+  def getTableCodec_compression(): String = {return  _Tablecodec_compression}
+  def setTableCodec_compression(value: String) {_Tablecodec_compression = value} 
+  */
+  
+  private def _getSaveFormat(storageType: huemulType_StorageType): String = {
+    return if (storageType == huemulType_StorageType.AVRO)
+      this.getAVRO_format()
+    else 
+      storageType.toString()
+     
+  }
+  
   /****** METODOS DEL LADO DEL "USUARIO" **************************/
   
   private var autoCast: Boolean = true
@@ -709,8 +729,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError(s"huemul_Table Error: PartitionField shouldn't be defined if TableType is ${this._TableType}",1036)
       
     //from 2.2 --> validate tableType with Format
-    if (this._TableType == huemulType_Tables.Transaction && !(this.getStorageType == huemulType_StorageType.PARQUET || this.getStorageType == huemulType_StorageType.ORC || this.getStorageType == huemulType_StorageType.DELTA))
-      raiseError(s"huemul_Table Error: Transaction Tables only available with PARQUET, DELTA or ORC StorageType ",1057)
+    if (this._TableType == huemulType_Tables.Transaction && !(this.getStorageType == huemulType_StorageType.PARQUET || 
+                                                              this.getStorageType == huemulType_StorageType.ORC || 
+                                                              this.getStorageType == huemulType_StorageType.DELTA ||
+                                                              this.getStorageType == huemulType_StorageType.AVRO
+                                                              ))
+      raiseError(s"huemul_Table Error: Transaction Tables only available with PARQUET, DELTA, AVRO or ORC StorageType ",1057)
+      
       
     //Fron 2.2 --> validate tableType HBASE and turn on globalSettings
     if (this.getStorageType == huemulType_StorageType.HBASE && !huemulBigDataGov.GlobalSettings.getHBase_available)
@@ -1883,7 +1908,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var lCreateTableScript: String = "" 
     //FROM 2.4 --> INCLUDE SPECIAL OPTIONS FOR DATABRICKS
     if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
-      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC || getStorageType == huemulType_StorageType.DELTA) {
+      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC || 
+          getStorageType == huemulType_StorageType.DELTA   || getStorageType == huemulType_StorageType.AVRO) {
         //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
                                      CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
@@ -1898,7 +1924,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                      TBLPROPERTIES ("hbase.table.name"="${getHBaseNamespace(huemulType_InternalTableType.Normal)}:${getHBaseTableName(huemulType_InternalTableType.Normal)}")"""
       }
     } else {
-      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC || getStorageType == huemulType_StorageType.DELTA) {
+      if (getStorageType == huemulType_StorageType.PARQUET || getStorageType == huemulType_StorageType.ORC || 
+          getStorageType == huemulType_StorageType.DELTA   || getStorageType == huemulType_StorageType.AVRO) {
         //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
                                      CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
@@ -1932,7 +1959,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var lCreateTableScript: String = "" 
     //FROM 2.4 --> INCLUDE SPECIAL OPTIONS FOR DATABRICKS
     if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
-      if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC ) {
+      if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC || getStorageType_DQResult == huemulType_StorageType.AVRO ) {
       //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
                                    CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)} (${getColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
@@ -1950,7 +1977,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    LOCATION '${getFullNameWithPath_DQ()}'"""
       }
     }  else {
-      if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC) {
+      if (getStorageType_DQResult == huemulType_StorageType.PARQUET || getStorageType_DQResult == huemulType_StorageType.ORC || getStorageType_DQResult == huemulType_StorageType.AVRO) {
       //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
                                    CREATE EXTERNAL TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.DQ)} (${getColumns_CreateTable(true, huemulType_InternalTableType.DQ) })
@@ -1998,6 +2025,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                      """USING DELTA
                                         PARTITIONED BY (MDM_columnName)""" 
                                     }
+                                    else if (getStorageType_OldValueTrace == huemulType_StorageType.AVRO) {
+                                     s"""USING AVRO
+                                        PARTITIONED BY (MDM_columnName)""" 
+                                    }
                                    }
                                    LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
                                     //${if (_StorageType_OldValueTrace == "csv") {s"""
@@ -2027,6 +2058,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.DELTA) {
                                      """PARTITIONED BY (MDM_columnName STRING)
                                        STORED AS DELTA""" 
+                                    }
+                                    else if (getStorageType_OldValueTrace == huemulType_StorageType.AVRO) {
+                                     s"""PARTITIONED BY (MDM_columnName STRING)
+                                       STORED AS AVRO""" 
                                     }
                                    }
                                    LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
@@ -2487,7 +2522,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         //Exist, copy for use
         val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
         //Open actual file
-        val DFTempCopy = huemulBigDataGov.spark.read.format(this.getStorageType.toString()).load(FullPathString)
+        val DFTempCopy = huemulBigDataGov.spark.read.format( _getSaveFormat(this.getStorageType)).load(FullPathString)
         val tempPath = huemulBigDataGov.GlobalSettings.GetDebugTempPath(huemulBigDataGov, huemulBigDataGov.ProcessNameCall, TempAlias)
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"copy to temp dir: $tempPath ")
         if (this.getNumPartitions == null || this.getNumPartitions <= 0)
@@ -2680,7 +2715,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           oldDataFrameExists = true
           
           //Open actual file
-          val DFTempCopy = huemulBigDataGov.spark.read.format(this.getStorageType.toString()).load(this.getFullNameWithPath())
+          val DFTempCopy = huemulBigDataGov.spark.read.format(_getSaveFormat(this.getStorageType)).load(this.getFullNameWithPath())
           
           //2.0: save previous to backup
           var tempPath: String = null
@@ -2699,14 +2734,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           }
           
           if (this.getNumPartitions == null || this.getNumPartitions <= 0)
-            DFTempCopy.write.mode(SaveMode.Overwrite).format(this.getStorageType.toString()).save(tempPath)     //2.2 -> this._StorageType.toString() instead of "parquet"
+            DFTempCopy.write.mode(SaveMode.Overwrite).format(_getSaveFormat(this.getStorageType)).save(tempPath)     //2.2 -> this._StorageType.toString() instead of "parquet"
           else
-            DFTempCopy.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format(this.getStorageType.toString()).save(tempPath)   //2.2 -> this._StorageType.toString() instead of "parquet"
+            DFTempCopy.repartition(this.getNumPartitions).write.mode(SaveMode.Overwrite).format(_getSaveFormat(this.getStorageType)).save(tempPath)   //2.2 -> this._StorageType.toString() instead of "parquet"
           DFTempCopy.unpersist()
          
           //Open temp file
           if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"open temp old df: $tempPath ")
-          val DFTempOpen = huemulBigDataGov.spark.read.format(this.getStorageType.toString()).load(tempPath)  //2.2 --> read.format(this._StorageType.toString()).load(tempPath)    instead of  read.parquet(tempPath)   
+          val DFTempOpen = huemulBigDataGov.spark.read.format(_getSaveFormat(this.getStorageType)).load(tempPath)  //2.2 --> read.format(this._StorageType.toString()).load(tempPath)    instead of  read.parquet(tempPath)   
           DFTempOpen.createOrReplaceTempView(TempAlias)        
         }
       }
@@ -3295,7 +3330,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           }
         }
         else 
-          DF_Final.write.mode(localSaveMode).format(this.getStorageType.toString()).save(getFullNameWithPath())
+          DF_Final.write.mode(localSaveMode).format(_getSaveFormat(this.getStorageType)).save(getFullNameWithPath())
         
         
         //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
@@ -3336,7 +3371,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           LocalControl.NewStep("Save: OverWrite partition with new data")
           if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${FullPath} ")     
           
-          DF_Final.write.mode(SaveMode.Append).format(this.getStorageType.toString()).partitionBy(_PartitionField).save(getFullNameWithPath())
+          DF_Final.write.mode(SaveMode.Append).format(_getSaveFormat(this.getStorageType)).partitionBy(_PartitionField).save(getFullNameWithPath())
                 
           //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
   
@@ -3437,13 +3472,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     try {      
       LocalControl.NewStep("Save: OldVT Result: Saving Old Value Trace result")
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_OldValueTrace()} ")
-      if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC || getStorageType_OldValueTrace == huemulType_StorageType.DELTA){
-        DF_Final.write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
+      if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC || 
+          getStorageType_OldValueTrace == huemulType_StorageType.DELTA   || getStorageType_OldValueTrace == huemulType_StorageType.AVRO){
+        DF_Final.write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(_getSaveFormat(getStorageType_OldValueTrace)).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       }
       else
-        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").option("emptyValue", "").option("treatEmptyValuesAsNulls", "false").option("nullValue", "null").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
+        DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).option("delimiter", "\t").option("emptyValue", "").option("treatEmptyValuesAsNulls", "false").option("nullValue", "null").format(_getSaveFormat(getStorageType_OldValueTrace)).save(getFullNameWithPath_OldValueTrace())
       
     } catch {
       case e: Exception => 
@@ -3529,7 +3565,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       } else {
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_DQ()} ")        
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(this.getStorageType_DQResult.toString()).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
-        DF_Final.write.mode(SaveMode.Append).format(this.getStorageType_DQResult.toString()).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
+        DF_Final.write.mode(SaveMode.Append).format(_getSaveFormat(this.getStorageType_DQResult)).partitionBy("dq_control_id").save(getFullNameWithPath_DQ())
       }
       
     } catch {
