@@ -66,6 +66,16 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   var DataRDD: RDD[String] = null
   var DataRaw: DataFrame = null // Store the loaded data from Avro or other future format
   
+  //FROM 2.5 
+  //ADD AVRO SUPPORT
+  private var _avro_format: String = huemulBigDataGov.GlobalSettings.getAVRO_format()
+  def getAVRO_format(): String = {return  _avro_format}
+  def setAVRO_format(value: String) {_avro_format = value} 
+  
+  private var _avro_compression: String = huemulBigDataGov.GlobalSettings.getAVRO_compression()
+  def getAVRO_compression(): String = {return  _avro_compression}
+  def setAVRO_compression(value: String) {_avro_compression = value} 
+  
   //from 2.4
   /**
    * get extended info for PDF Files
@@ -331,8 +341,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           huemulBigDataGov.logMessageInfo("Opening AVRO data file and building DF DataRaw")
 
           this.DataRaw= huemulBigDataGov.spark.read
-            .format("avro")
-            .option("compression","snappy")
+            .format(this.getAVRO_format())
+            .option("compression",this.getAVRO_compression())
             .schema( this.DataFramehuemul.getDataSchema())
             .load(this.FileName)
 
