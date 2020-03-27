@@ -2,6 +2,7 @@ package com.huemulsolutions.bigdata.datalake
 
 import org.apache.spark.rdd._
 import java.util.Calendar
+import org.apache.spark.sql._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import com.huemulsolutions.bigdata.common._
@@ -113,7 +114,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   }
   
    /**
-   * Register DF to Data.DataDF, and asigne alias (NEW 2.3.4)
+   * Register DF to Data.DataDF, and assign alias (NEW 2.5)
    *
    * @param rowData   DataFrame Data
    * @param Alias     DataFrame Alias
