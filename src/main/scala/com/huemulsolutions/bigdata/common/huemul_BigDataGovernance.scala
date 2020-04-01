@@ -845,6 +845,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     _huemul_showDemoLines = value
   }
   
+  //replicated in huemul_columns
+  def getCaseType(tableStorage: com.huemulsolutions.bigdata.tables.huemulType_StorageType.huemulType_StorageType, value: String): String = {
+    return if (tableStorage == com.huemulsolutions.bigdata.tables.huemulType_StorageType.AVRO) value.toLowerCase() else value
+  }
  
   /**
    * Get execution Id from spark monitoring url
