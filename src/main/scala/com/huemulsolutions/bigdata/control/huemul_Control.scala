@@ -813,7 +813,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         control_Columns_addOrUpd( LocalNewTable_id
                                  ,Column_Id
                                  ,i
-                                 ,x.get_MyName()
+                                 ,x.get_MyName(DefMaster.getStorageType)
                                  ,x.Description
                                  ,null //--as Column_Formula
                                  ,x.DataType.sql
@@ -863,9 +863,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
          x.Relationship.foreach { y => 
            control_TablesRelCol_add (IdRel
                                      ,PK_Id
-                                     ,y.PK.get_MyName()
+                                     ,y.PK.get_MyName(InstanceTable.getStorageType)
                                      ,LocalNewTable_id
-                                     ,y.FK.get_MyName() 
+                                     ,y.FK.get_MyName(DefMaster.getStorageType) 
                                      ,Control_ClassName)
           }
       }
