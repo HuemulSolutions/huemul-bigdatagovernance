@@ -817,6 +817,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                                  ,x.Description
                                  ,null //--as Column_Formula
                                  ,x.DataType.sql
+                                 ,x.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), DefMaster.getStorageType).sql
                                  ,false //--as Column_SensibleData
                                  ,x.getMDM_EnableDTLog
                                  ,x.getMDM_EnableOldValue
@@ -2483,6 +2484,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_Column_Description: String
                              ,p_Column_Formula: String
                              ,p_Column_DataType: String
+                             ,p_Column_DataTypeDeploy: String
                              ,p_Column_SensibleData: Boolean
                              ,p_Column_EnableDTLog: Boolean
                              ,p_Column_EnableOldValue: Boolean
@@ -2526,7 +2528,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           SET column_position	            = ${p_Column_Position}				
         		 ,column_description			    = CASE WHEN mdm_manualchange = 1 THEN column_description ELSE ${ReplaceSQLStringNulls(p_Column_Description,1000)}	END
         		 ,column_formula				      = CASE WHEN mdm_manualchange = 1 THEN column_formula ELSE ${ReplaceSQLStringNulls(p_Column_Formula,1000)}	END			
-        		 ,column_datatype				      = ${ReplaceSQLStringNulls(p_Column_DataType,50)}				
+        		 ,column_datatype				      = ${ReplaceSQLStringNulls(p_Column_DataType,50)}
+        	${if (getVersionFull() >= 20500) s",column_datatypedeploy = ${ReplaceSQLStringNulls(p_Column_DataTypeDeploy,50)} " else ""}	 
         		 ,column_sensibledata			    = CASE WHEN mdm_manualchange = 1 THEN column_sensibledata ELSE ${if (p_Column_SensibleData) "1" else "0"}	END		
         		 ,column_enabledtlog			    = ${if (p_Column_EnableDTLog) "1" else "0"}
         		 ,column_enableoldvalue			  = ${if (p_Column_EnableOldValue) "1" else "0"}
@@ -2561,6 +2564,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								 ,column_description
                       								 ,column_formula
                       								 ,column_datatype
+    ${if (getVersionFull() >= 20500) s",column_datatypedeploy" else ""}	 
                       								 ,column_sensibledata
                       								 ,column_enabledtlog
                       								 ,column_enableoldvalue
@@ -2592,6 +2596,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			 ,${ReplaceSQLStringNulls(p_Column_Description,1000)}
             			 ,${ReplaceSQLStringNulls(p_Column_Formula,1000)}
             			 ,${ReplaceSQLStringNulls(p_Column_DataType,50)}
+ ${if (getVersionFull() >= 20500) s",${ReplaceSQLStringNulls(p_Column_DataTypeDeploy,50)}" else ""}	             			 
             			 ,${if (p_Column_SensibleData) "1" else "0"}
             			 ,${if (p_Column_EnableDTLog) "1" else "0"}
             			 ,${if (p_Column_EnableOldValue) "1" else "0"}

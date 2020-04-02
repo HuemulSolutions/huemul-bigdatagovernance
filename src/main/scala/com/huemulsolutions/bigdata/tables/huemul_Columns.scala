@@ -3,6 +3,8 @@ package com.huemulsolutions.bigdata.tables
 import org.apache.spark.sql.types._
 import huemulType_SecurityLevel._
 import com.huemulsolutions.bigdata.tables.huemulType_StorageType._
+import com.huemulsolutions.bigdata.common.huemulType_bigDataProvider._
+import com.huemulsolutions.bigdata.common.huemulType_bigDataProvider
 
 /**
  Define Data Schema for master and dimensional models <br>
@@ -488,6 +490,18 @@ class huemul_Columns(param_DataType: DataType
       else if (DataType == DataTypes.ShortType) "tinyint"
       else if (DataType == DataTypes.BinaryType) "binary"
       else "string"
-        
+  }
+  
+  //from 2.5 --> return data type with avro and spark < 2.4 compatibility
+  def getDataTypeDeploy(bigDataProvider: huemulType_bigDataProvider, storageType: huemulType_StorageType ): DataType = {
+    var result = this.DataType
+    if (storageType == huemulType_StorageType.AVRO && 
+        bigDataProvider != huemulType_bigDataProvider.databricks &&
+        ( result.sql.toUpperCase().contains("DATE") || result.sql.toUpperCase().contains("TIMESTAMP"))
+       ) {
+      result = StringType
+    }
+    
+    return result
   }
 }

@@ -597,6 +597,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       x.setAccessible(true)
       var dataField = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = dataField.get_MyName(this.getStorageType).toLowerCase()
+      val _dataType  = dataField.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
       
       if (!(dataField.getIsPK && _numPKColumns == 1) && (_colMyName != "hs_rowKey".toLowerCase())) {        
         
@@ -614,13 +615,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
         else {
           //create StructType
-          fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}${if (dataField.DataType == TimestampType || dataField.DataType == DateType || dataField.DataType == DecimalType || dataField.DataType.typeName.toLowerCase().contains("decimal")) "" else "#b"}"""
+          fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}${if (_dataType == TimestampType || _dataType == DateType || _dataType == DecimalType || _dataType.typeName.toLowerCase().contains("decimal")) "" else "#b"}"""
           
         }
         
         if (tableType != huemulType_InternalTableType.OldValueTrace) {
           if (dataField.getMDM_EnableOldValue)
-            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}${__old}${if (dataField.DataType == TimestampType || dataField.DataType == DateType || dataField.DataType == DecimalType || dataField.DataType.typeName.toLowerCase().contains("decimal") ) "" else "#b"}"""
+            fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}${__old}${if (_dataType == TimestampType || _dataType == DateType || _dataType == DecimalType || _dataType.typeName.toLowerCase().contains("decimal") ) "" else "#b"}"""
           if (dataField.getMDM_EnableDTLog) 
             fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}${__fhChange}"""
           if (dataField.getMDM_EnableProcessLog)
@@ -963,7 +964,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       x.setAccessible(true)
       var Field = x.get(this).asInstanceOf[huemul_Columns]
-      (x,Field.getHBaseCatalogFamily(), Field.getHBaseCatalogColumn(), Field.DataType)
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
+      (x,Field.getHBaseCatalogFamily(), Field.getHBaseCatalogColumn(), _dataType)
     }
     
     return result
@@ -1029,12 +1031,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
-      
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
       //create StructType
-      fieldsStruct.append( StructField(_colMyName, Field.DataType , nullable = Field.getNullable , null))
+      fieldsStruct.append( StructField(_colMyName, _dataType , nullable = Field.getNullable , null))
 
       if (Field.getMDM_EnableOldValue) {
-        fieldsStruct.append( StructField(_colMyName.concat(__old), Field.DataType , nullable = true , null))
+        fieldsStruct.append( StructField(_colMyName.concat(__old), _dataType , nullable = true , null))
       }
       if (Field.getMDM_EnableDTLog) {
         fieldsStruct.append( StructField(_colMyName.concat(__fhChange), TimestampType , nullable = true , null))
@@ -1108,13 +1110,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
-      
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
       //Field.Set_MyName(x.getName)
       Result.append(Field)
                       
       
       if (Field.getMDM_EnableOldValue) {
-        val MDM_EnableOldValue = new huemul_Columns(Field.DataType, false, s"Old value for ${_colMyName}")
+        val MDM_EnableOldValue = new huemul_Columns(_dataType, false, s"Old value for ${_colMyName}")
         MDM_EnableOldValue.Set_MyName(s"${_colMyName}${__old}")
         Result.append(MDM_EnableOldValue)        
       } 
@@ -1161,7 +1163,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (getStorageType == huemulType_StorageType.HBASE && _numPKColumns > 1) {
       fieldList.filter { x => x.getName == "hs_rowKey" }.foreach { x =>
         var Field = x.get(this).asInstanceOf[huemul_Columns]
-        var DataTypeLocal = Field.DataType.sql
+        val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), __storageType)
+        var DataTypeLocal = _dataType.sql
       
         ColumnsCreateTable += s"$coma${x.getName} ${DataTypeLocal} \n"
         coma = ","
@@ -1173,9 +1176,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
-      var DataTypeLocal = Field.DataType.sql
-      //from 2.5 --> replace DECIMAL to STRING when storage type = AVRO. this happen because AVRO doesn't support DECIMAL TYPE.
-      if (__storageType == huemulType_StorageType.AVRO && DataTypeLocal.toUpperCase().contains("DECIMAL")) {
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), __storageType)
+      var DataTypeLocal = _dataType.sql
+      //from 2.5 --> replace DECIMAL to STRING when storage type = AVRO. this happen because AVRO outside DATABRICKS doesn't support DECIMAL, DATE AND TIMESTAMP TYPE.
+      if (    huemulBigDataGov.GlobalSettings.getBigDataProvider() != huemulType_bigDataProvider.databricks 
+          && __storageType == huemulType_StorageType.AVRO 
+          && (  DataTypeLocal.toUpperCase().contains("DECIMAL") || 
+                DataTypeLocal.toUpperCase().contains("DATE") || 
+                DataTypeLocal.toUpperCase().contains("TIMESTAMP")) 
+          ) {
         DataTypeLocal = StringType.sql
       }
       val _colMyName = Field.get_MyName(__storageType)
@@ -1280,8 +1289,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
+      
       val NewColumnCast = ApplyAutoCast(if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"${Field.get_SQLForInsert()} " else s"New.${Field.get_MappedName()}"
-                                        ,Field.DataType.sql)
+                                        ,_dataType.sql)
         
      
       //New value (from field or compute column )
@@ -1295,14 +1306,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       } else {
         if (_colMyName.toLowerCase() == "MDM_fhNew".toLowerCase()) {
           if (_colMyName.toLowerCase() == this.getPartitionField.toLowerCase())
-            StringSQL_partition += s"${coma}CAST(now() AS ${Field.DataType.sql} ) as ${_colMyName} \n"
+            StringSQL_partition += s"${coma}CAST(now() AS ${_dataType.sql} ) as ${_colMyName} \n"
           else {   
-            StringSQL += s",CAST(now() AS ${Field.DataType.sql} ) as ${_colMyName} \n"
+            StringSQL += s",CAST(now() AS ${_dataType.sql} ) as ${_colMyName} \n"
             coma = ","
           }
             
         } else if (_colMyName.toLowerCase() == "MDM_ProcessNew".toLowerCase()) {
-          StringSQL += s"${coma}CAST('${processName}' AS ${Field.DataType.sql} ) as ${_colMyName} \n"
+          StringSQL += s"${coma}CAST('${processName}' AS ${_dataType.sql} ) as ${_colMyName} \n"
           coma = ","
         }
       }
@@ -1398,10 +1409,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
-      val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
+      
+      val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",_dataType.sql)
       //string for key on
       if (Field.getIsPK){
-        val NewPKSentence = if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} )" else NewColumnCast
+        val NewPKSentence = if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"CAST(${Field.get_SQLForInsert()} as ${_dataType.sql} )" else NewColumnCast
         StringSQL_LeftJoin += s"${coma}Old.${_colMyName} AS ${_colMyName} \n"
         StringSQl_PK += s" $sand Old.${_colMyName} = ${NewPKSentence}  " 
         sand = " and "
@@ -1414,28 +1427,28 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         //String for new DataFrame fulljoin
         if (columnExist){
-          StringSQL_LeftJoin += s"${coma}cast(old.${_colMyName} as ${Field.DataType.sql} ) as old_${_colMyName} \n"
+          StringSQL_LeftJoin += s"${coma}cast(old.${_colMyName} as ${_dataType.sql} ) as old_${_colMyName} \n"
           //StringSQL_LeftJoin += s"${coma}old.${_colMyName} as old_${_colMyName} \n"
         }
         else
-          StringSQL_LeftJoin += s"${coma}cast(null as ${Field.DataType.sql} ) as old_${_colMyName} \n"
+          StringSQL_LeftJoin += s"${coma}cast(null as ${_dataType.sql} ) as old_${_colMyName} \n"
         
         //New value (from field or compute column )
         if (huemulBigDataGov.HasName(Field.get_MappedName()))
           StringSQL_LeftJoin += s",${NewColumnCast} as new_${_colMyName} \n"
         if (huemulBigDataGov.HasName(Field.get_SQLForInsert()))
-          StringSQL_LeftJoin += s",CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} ) as new_insert_${_colMyName} \n"
+          StringSQL_LeftJoin += s",CAST(${Field.get_SQLForInsert()} as ${_dataType.sql} ) as new_insert_${_colMyName} \n"
         if (huemulBigDataGov.HasName(Field.get_SQLForUpdate()))
-          StringSQL_LeftJoin += s",CAST(${Field.get_SQLForUpdate()} as ${Field.DataType.sql} ) as new_update_${_colMyName} \n"
+          StringSQL_LeftJoin += s",CAST(${Field.get_SQLForUpdate()} as ${_dataType.sql} ) as new_update_${_colMyName} \n"
           
         if (Field.getMDM_EnableOldValue || Field.getMDM_EnableDTLog || Field.getMDM_EnableProcessLog || Field.getMDM_EnableOldValue_FullTrace) {
           //Change field, take update field if exist, otherwise use get_name()
           if (huemulBigDataGov.HasName(Field.get_MappedName())) {
-            val NewFieldTXT = ApplyAutoCast(if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),Field.DataType.sql)
+            val NewFieldTXT = ApplyAutoCast(if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),_dataType.sql)
             var OldFieldTXT = if (columnExist) "old.".concat(_colMyName) else "null"
             //from 2.5 --> add cast to avro timestamp dataType
-            if (this.getStorageType == huemulType_StorageType.AVRO && Field.DataType.sql.toUpperCase().contains("TIMESTAMP") )
-              OldFieldTXT =   ApplyAutoCast(OldFieldTXT,Field.DataType.sql)
+            //if (this.getStorageType == huemulType_StorageType.AVRO && (Field._DataType.sql.toUpperCase().contains("TIMESTAMP") || Field._DataType.sql.toUpperCase().contains("DATE")))
+            //  OldFieldTXT =   ApplyAutoCast(OldFieldTXT,Field._DataType.sql)
             StringSQL_LeftJoin += s",CAST(CASE WHEN ${NewFieldTXT} = ${OldFieldTXT} or (${NewFieldTXT} is null and ${OldFieldTXT} is null) THEN 0 ELSE 1 END as Integer ) as __Change_${_colMyName}  \n"
           }
           else {
@@ -1448,9 +1461,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
         if (Field.getMDM_EnableOldValue){
           if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${_colMyName}${__old}".toLowerCase()}.length == 0) //no existe columna en dataframe
-            StringSQL_LeftJoin += s",CAST(null AS ${Field.DataType.sql}) as old_${_colMyName}${__old} \n"
+            StringSQL_LeftJoin += s",CAST(null AS ${_dataType.sql}) as old_${_colMyName}${__old} \n"
           else //existe columna en dataframe
-            StringSQL_LeftJoin += s",CAST(old.${_colMyName}${__old} AS ${Field.DataType.sql}) as old_${_colMyName}${__old} \n"
+            StringSQL_LeftJoin += s",CAST(old.${_colMyName}${__old} AS ${_dataType.sql}) as old_${_colMyName}${__old} \n"
         }
         if (Field.getMDM_EnableDTLog){
           if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${_colMyName}${__fhChange}".toLowerCase()}.length == 0) //no existe columna en dataframe
@@ -1516,8 +1529,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType_OldValueTrace)
-      
-      val StringSQL =  s"${StringSQl_PK_base}, CAST(new_${_colMyName} as string) AS ${__MDM_newValue}, CAST(old_${_colMyName} as string) AS ${__MDM_oldValue}, CAST(${_MDM_AutoInc} AS BIGINT) as ${__MDM_AutoInc}, '${Control.Control_Id}' as processExec_id, now() as ${__MDM_fhChange}, cast('$ProcessName' as string) as ${__MDM_ProcessChange}, cast('${_colMyName.toLowerCase()}' as string) as ${__MDM_columnName} FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${_colMyName} = 1 "
+      val _dataType_MDM_fhChange = MDM_fhChange.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType_OldValueTrace)
+      var __MDM_fhChange_cast: String = if (_dataType_MDM_fhChange == MDM_fhChange.DataType) s"now() as ${__MDM_fhChange}" else s"CAST(now() as STRING) as ${__MDM_fhChange}"
+      val StringSQL =  s"${StringSQl_PK_base}, CAST(new_${_colMyName} as string) AS ${__MDM_newValue}, CAST(old_${_colMyName} as string) AS ${__MDM_oldValue}, CAST(${_MDM_AutoInc} AS BIGINT) as ${__MDM_AutoInc}, '${Control.Control_Id}' as processExec_id, ${__MDM_fhChange_cast}, cast('$ProcessName' as string) as ${__MDM_ProcessChange}, cast('${_colMyName.toLowerCase()}' as string) as ${__MDM_columnName} FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${_colMyName} = 1 "
       val aliasFullTrace: String = s"__SQL_ovt_full_${_colMyName}"
       
       val tempSQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery(aliasFullTrace,StringSQL) 
@@ -1558,11 +1572,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
-      val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",Field.DataType.sql)
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
+      
+      val NewColumnCast = ApplyAutoCast(s"New.${Field.get_MappedName()}",_dataType.sql)
       //string for key on
       if (Field.getIsPK){
-        val NewPKSentence = if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} )" else NewColumnCast
-        StringSQL_FullJoin += s"${coma}CAST(coalesce(Old.${_colMyName}, ${NewPKSentence}) as ${Field.DataType.sql}) AS ${_colMyName} \n"
+        val NewPKSentence = if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"CAST(${Field.get_SQLForInsert()} as ${_dataType.sql} )" else NewColumnCast
+        StringSQL_FullJoin += s"${coma}CAST(coalesce(Old.${_colMyName}, ${NewPKSentence}) as ${_dataType.sql}) AS ${_colMyName} \n"
         StringSQl_PK += s" $sand Old.${_colMyName} = ${NewPKSentence}  " 
         sand = " and "
 
@@ -1574,26 +1590,26 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         //String for new DataFrame fulljoin
         if (columnExist)
-          StringSQL_FullJoin += s"${coma}cast(old.${_colMyName} as ${Field.DataType.sql} ) as old_${_colMyName} \n"
+          StringSQL_FullJoin += s"${coma}cast(old.${_colMyName} as ${_dataType.sql} ) as old_${_colMyName} \n"
         else
-          StringSQL_FullJoin += s"${coma}cast(null as ${Field.DataType.sql} ) as old_${_colMyName} \n"
+          StringSQL_FullJoin += s"${coma}cast(null as ${_dataType.sql} ) as old_${_colMyName} \n"
         
         //New value (from field or compute column )
         if (huemulBigDataGov.HasName(Field.get_MappedName()))
           StringSQL_FullJoin += s",${NewColumnCast} as new_${_colMyName} \n"
         if (huemulBigDataGov.HasName(Field.get_SQLForInsert()))
-          StringSQL_FullJoin += s",CAST(${Field.get_SQLForInsert()} as ${Field.DataType.sql} ) as new_insert_${_colMyName} \n"
+          StringSQL_FullJoin += s",CAST(${Field.get_SQLForInsert()} as ${_dataType.sql} ) as new_insert_${_colMyName} \n"
         if (huemulBigDataGov.HasName(Field.get_SQLForUpdate()))
-          StringSQL_FullJoin += s",CAST(${Field.get_SQLForUpdate()} as ${Field.DataType.sql} ) as new_update_${_colMyName} \n"
+          StringSQL_FullJoin += s",CAST(${Field.get_SQLForUpdate()} as ${_dataType.sql} ) as new_update_${_colMyName} \n"
           
         if (Field.getMDM_EnableOldValue || Field.getMDM_EnableDTLog || Field.getMDM_EnableProcessLog || Field.getMDM_EnableOldValue_FullTrace) {
           //Change field, take update field if exist, otherwise use get_name()
           if (huemulBigDataGov.HasName(Field.get_MappedName())) {
-            val NewFieldTXT = ApplyAutoCast(if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),Field.DataType.sql)
+            val NewFieldTXT = ApplyAutoCast(if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) Field.get_SQLForUpdate() else "new.".concat(Field.get_MappedName()),_dataType.sql)
             var OldFieldTXT = if (columnExist) "old.".concat(_colMyName) else "null"
             //from 2.5 --> add cast to avro timestamp dataType
-            if (this.getStorageType == huemulType_StorageType.AVRO && Field.DataType.sql.toUpperCase().contains("TIMESTAMP") )
-              OldFieldTXT =   ApplyAutoCast(OldFieldTXT,Field.DataType.sql)
+            //if (this.getStorageType == huemulType_StorageType.AVRO && (Field._DataType.sql.toUpperCase().contains("TIMESTAMP") || Field._DataType.sql.toUpperCase().contains("DATE")) )
+            //  OldFieldTXT =   ApplyAutoCast(OldFieldTXT,Field._DataType.sql)
             StringSQL_FullJoin += s",CAST(CASE WHEN ${NewFieldTXT} = ${OldFieldTXT} or (${NewFieldTXT} is null and ${OldFieldTXT} is null) THEN 0 ELSE 1 END as Integer ) as __Change_${_colMyName}  \n"
           }
           else {
@@ -1606,9 +1622,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
         if (Field.getMDM_EnableOldValue){
           if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${_colMyName}${__old}".toLowerCase()}.length == 0) //no existe columna en dataframe
-            StringSQL_FullJoin += s",CAST(null AS ${Field.DataType.sql}) as old_${_colMyName}${__old} \n"
+            StringSQL_FullJoin += s",CAST(null AS ${_dataType.sql}) as old_${_colMyName}${__old} \n"
           else //existe columna en dataframe
-            StringSQL_FullJoin += s",CAST(old.${_colMyName}${__old} AS ${Field.DataType.sql}) as old_${_colMyName}${__old} \n"
+            StringSQL_FullJoin += s",CAST(old.${_colMyName}${__old} AS ${_dataType.sql}) as old_${_colMyName}${__old} \n"
         }
         if (Field.getMDM_EnableDTLog){
           if (OfficialColumns.filter { y => y.name.toLowerCase() == s"${_colMyName}${__fhChange}".toLowerCase()}.length == 0) //no existe columna en dataframe
@@ -1718,6 +1734,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
       
       //string for key on
       if (Field.getIsPK){
@@ -1731,7 +1748,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         else {          
           StringSQL += s""" ${coma}CASE WHEN ___ActionType__ = 'NEW'    THEN ${if (this.huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"new_insert_${_colMyName}" //si tiene valor en SQL insert, lo usa
                                                                                else if (this.huemulBigDataGov.HasName(Field.get_MappedName())) s"new_${_colMyName}"     //si no, si tiene nombre de campo en DataFrame nuevo, lo usa 
-                                                                               else ApplyAutoCast(Field.getDefaultValue,Field.DataType.sql)                        //si no tiene campo asignado, pone valor por default
+                                                                               else ApplyAutoCast(Field.getDefaultValue,_dataType.sql)                        //si no tiene campo asignado, pone valor por default
                                                                            }
                                         WHEN ___ActionType__ = 'UPDATE' THEN ${if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) s"new_update_${_colMyName}"  //si tiene valor en SQL update, lo usa
                                                                                else if (Field.get_ReplaceValueOnUpdate() && this.huemulBigDataGov.HasName(Field.get_MappedName())) s"new_${_colMyName}"  //Si hay que reemplaar el valor antiguo con uno nuevo, y está seteado un campo en del dataframe, lo usa
@@ -2023,12 +2040,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
+      val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
       
       if (_PartitionField.toLowerCase() == _colMyName.toLowerCase() ) {
         if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
           PartitionForCreateTable += s"${coma_partition}${_PartitionField}" //without datatype
         } else {
-          PartitionForCreateTable += s"${coma_partition}${_PartitionField} ${Field.DataType.sql}"
+          PartitionForCreateTable += s"${coma_partition}${_PartitionField} ${_dataType.sql}"
         }
           coma_partition = ","
       }
@@ -3114,6 +3132,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.HasName(x.get_MappedName())) {
         //val ColumnNames = if (UseAliasColumnName) x.get_MappedName() else x.get_MyName()
         val ColumnNames = x.get_MyName(getStorageType)
+        val _dataType  = x.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
+        
         val ColumnInSchema = Schema.filter { y => y.name.toLowerCase() == ColumnNames.toLowerCase() }
         if (ColumnInSchema == null || ColumnInSchema.length == 0)
           raiseError(s"huemul_Table Error: column missing in Schema ${ColumnNames}", 1038)
@@ -3121,8 +3141,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           raiseError(s"huemul_Table Error: multiples columns found in Schema with name ${ColumnNames}", 1039)
         
           val dataType = ColumnInSchema(0).dataType
-        if (dataType != x.DataType) {
-          Errores = Errores.concat(s"Error Column ${ColumnNames}, Requiered: ${x.DataType}, actual: ${dataType}  \n")
+        if (dataType != _dataType) {
+          Errores = Errores.concat(s"Error Column ${ColumnNames}, Requiered: ${_dataType}, actual: ${dataType}  \n")
         }
       }
     }
