@@ -500,7 +500,12 @@ class huemul_Columns(param_DataType: DataType
         ( result.sql.toUpperCase().contains("DATE") || result.sql.toUpperCase().contains("TIMESTAMP"))
        ) {
       result = StringType
-    }
+    } else if (storageType == huemulType_StorageType.AVRO && 
+        bigDataProvider == huemulType_bigDataProvider.databricks &&
+        ( result.sql.toUpperCase().contains("SMALLINT") )
+       ) {
+      result = IntegerType
+    } 
     
     return result
   }
