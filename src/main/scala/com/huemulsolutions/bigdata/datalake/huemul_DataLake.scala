@@ -64,7 +64,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   //RAW_OpenFile(RAW_File_Info, year, mes, day, hora, min, seg, AdditionalParams)
   
   var DataRDD: RDD[String] = null
-  var DataRaw: DataFrame = null // Store the loaded data from Avro or other future format
+  var DataRawDF: DataFrame = null // Store the loaded data from Avro or other future format
   
   //FROM 2.5 
   //ADD AVRO SUPPORT
@@ -340,10 +340,21 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         } else if (this.SettingInUse.FileType == huemulType_FileType.AVRO_FILE) {
           huemulBigDataGov.logMessageInfo("Opening AVRO data file and building DF DataRaw")
 
-          this.DataRaw= huemulBigDataGov.spark.read
+          this.DataRawDF= huemulBigDataGov.spark.read
             .format(this.getAVRO_format())
-            .option("compression",this.getAVRO_compression())
-            .schema( this.DataFramehuemul.getDataSchema())
+            .option(if (this.getAVRO_compression() == null) "" else "compression",if (this.getAVRO_compression() == null) "" else this.getAVRO_compression())
+            //.schema( this.DataFramehuemul.getDataSchema())
+            .load(this.FileName)
+
+        } else if (this.SettingInUse.FileType == huemulType_FileType.DELTA_FILE ||
+                   this.SettingInUse.FileType == huemulType_FileType.ORC_FILE || 
+                   this.SettingInUse.FileType == huemulType_FileType.PARQUET_FILE ) {
+          huemulBigDataGov.logMessageInfo(s"Opening ${this.SettingInUse.FileType} data file and building DF DataRaw")
+
+          val _format = this.SettingInUse.FileType.toString().replace("_FILE", "")
+          
+          this.DataRawDF= huemulBigDataGov.spark.read
+            .format(_format)
             .load(this.FileName)
 
         } else {
