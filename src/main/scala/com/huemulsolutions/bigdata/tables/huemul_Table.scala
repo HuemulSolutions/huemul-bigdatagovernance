@@ -1508,7 +1508,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val __MDM_ProcessChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_ProcessChange")
     val __MDM_columnName = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_columnName")
     val __MDM_fhChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_fhChange")
-    
+    val __processExec_id = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "processExec_id")
     
     //Get PK
     var StringSQl_PK_base: String = "SELECT "
@@ -1531,7 +1531,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val _colMyName = Field.get_MyName(this.getStorageType_OldValueTrace)
       val _dataType_MDM_fhChange = MDM_fhChange.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType_OldValueTrace)
       var __MDM_fhChange_cast: String = if (_dataType_MDM_fhChange == MDM_fhChange.DataType) s"now() as ${__MDM_fhChange}" else s"CAST(now() as STRING) as ${__MDM_fhChange}"
-      val StringSQL =  s"${StringSQl_PK_base}, CAST(new_${_colMyName} as string) AS ${__MDM_newValue}, CAST(old_${_colMyName} as string) AS ${__MDM_oldValue}, CAST(${_MDM_AutoInc} AS BIGINT) as ${__MDM_AutoInc}, '${Control.Control_Id}' as processExec_id, ${__MDM_fhChange_cast}, cast('$ProcessName' as string) as ${__MDM_ProcessChange}, cast('${_colMyName.toLowerCase()}' as string) as ${__MDM_columnName} FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${_colMyName} = 1 "
+      val StringSQL =  s"${StringSQl_PK_base}, CAST(new_${_colMyName} as string) AS ${__MDM_newValue}, CAST(old_${_colMyName} as string) AS ${__MDM_oldValue}, CAST(${_MDM_AutoInc} AS BIGINT) as ${__MDM_AutoInc}, cast('${Control.Control_Id}' as string) as ${__processExec_id}, ${__MDM_fhChange_cast}, cast('$ProcessName' as string) as ${__MDM_ProcessChange}, cast('${_colMyName.toLowerCase()}' as string) as ${__MDM_columnName} FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${_colMyName} = 1 "
       val aliasFullTrace: String = s"__SQL_ovt_full_${_colMyName}"
       
       val tempSQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery(aliasFullTrace,StringSQL) 
@@ -2251,7 +2251,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   */
   
-  private def DF_ForeingKeyMasterAuto(warning_exclude: Boolean): huemul_DataQualityResult = {
+  private def DF_ForeingKeyMasterAuto(warning_exclude: Boolean, LocalControl: huemul_Control): huemul_DataQualityResult = {
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayFK = this.getForeingKey()
     val DataBaseName = this.getDataBase(this._DataBase)
@@ -2364,6 +2364,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                         , x.getNotification() //from 2.1, before -->huemulType_DQNotification.ERROR //dq_error_notification 
                         , Result.Error_Code //error_code
                         , s"(${Result.Error_Code}) FK ERROR ON ${pk_table_name}"// dq_error_description
+                        , LocalControl
                         )
         
       }
@@ -2383,6 +2384,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                   ,dq_error_notification: huemulType_DQNotification.huemulType_DQNotification
                   ,error_code: Integer
                   ,dq_error_description: String
+                  ,LocalControl: huemul_Control
                   ) {
     //get SQL to save error details to DQ_Error_Table
         val SQL_ProcessToDQDetail = this.DataFramehuemul.DQ_GenQuery( fromSQL   
@@ -2398,7 +2400,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         //Save errors to disk
         if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && DetailDF != null && this.getSaveDQResult) {
-          Control.NewStep("Start Save DQ Error Details for FK ")                
+          LocalControl.NewStep("Start Save DQ Error Details for FK ")                
           if (!savePersist_DQ(Control, DetailDF)){
             huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
           }
@@ -2604,7 +2606,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //Save errors to disk
     if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && ResultDQ.DetailErrorsDF != null && this.getSaveDQResult) {
-      Control.NewStep("Start Save DQ Error Details ")                
+      LocalControl.NewStep("Start Save DQ Error Details ")                
       if (!savePersist_DQ(Control, ResultDQ.DetailErrorsDF)){
         huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
       }
@@ -3196,7 +3198,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val DQResult_EXCLUDE = DF_DataQualityMasterAuto(IsSelectiveUpdate, LocalControl, true)
       //Foreing Keys by Columns
       LocalControl.NewStep("Start ForeingKey WARNING_EXCLUDE ")
-      val FKResult_EXCLUDE = DF_ForeingKeyMasterAuto(true)
+      val FKResult_EXCLUDE = DF_ForeingKeyMasterAuto(true, LocalControl)
       
       //from 2.1: exclude_warnings, update DataFramehuemul 
       excludeRows(LocalControl)
@@ -3212,7 +3214,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val DQResult = DF_DataQualityMasterAuto(IsSelectiveUpdate, LocalControl, false)
       //Foreing Keys by Columns
       LocalControl.NewStep("Start ForeingKey ERROR AND WARNING ")
-      val FKResult = DF_ForeingKeyMasterAuto(false)
+      val FKResult = DF_ForeingKeyMasterAuto(false, LocalControl)
       
       
       LocalControl.NewStep("Validating errors ")
@@ -3448,6 +3450,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                           , huemulType_DQNotification.WARNING //dq_error_notification 
                           , Values.DQ_ErrorCode //error_code
                           , s"(1055) huemul_Table Warning: new values inserted to master or reference table"// dq_error_description
+                          ,LocalControl
                           )
         }
       }
@@ -3609,7 +3612,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     DF_huemul.setDataFrame(DF_Final, DF_huemul.Alias, false) 
     
     //from 2.0: update dq and ovt used
-    LocalControl.RegisterMASTER_UPDATE_isused(this)
+    Control.RegisterMASTER_UPDATE_isused(this)
     
       
       
