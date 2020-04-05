@@ -52,7 +52,7 @@ import org.apache.log4j.Level
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.4"
+  val currentVersion: String = "2.5"
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -845,6 +845,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     _huemul_showDemoLines = value
   }
   
+  //replicated in huemul_columns
+  def getCaseType(tableStorage: com.huemulsolutions.bigdata.tables.huemulType_StorageType.huemulType_StorageType, value: String): String = {
+    return if (tableStorage == com.huemulsolutions.bigdata.tables.huemulType_StorageType.AVRO) value.toLowerCase() else value
+  }
  
   /**
    * Get execution Id from spark monitoring url

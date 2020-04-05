@@ -2,6 +2,7 @@ package com.huemulsolutions.bigdata.datalake
 
 import org.apache.spark.rdd._
 import java.util.Calendar
+import org.apache.spark.sql._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import com.huemulsolutions.bigdata.common._
@@ -63,6 +64,17 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   //RAW_OpenFile(RAW_File_Info, year, mes, day, hora, min, seg, AdditionalParams)
   
   var DataRDD: RDD[String] = null
+  var DataRawDF: DataFrame = null // Store the loaded data from Avro or other future format
+  
+  //FROM 2.5 
+  //ADD AVRO SUPPORT
+  private var _avro_format: String = huemulBigDataGov.GlobalSettings.getAVRO_format()
+  def getAVRO_format(): String = {return  _avro_format}
+  def setAVRO_format(value: String) {_avro_format = value} 
+  
+  private var _avro_compression: String = huemulBigDataGov.GlobalSettings.getAVRO_compression()
+  def getAVRO_compression(): String = {return  _avro_compression}
+  def setAVRO_compression(value: String) {_avro_compression = value} 
   
   //from 2.4
   /**
@@ -111,6 +123,18 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     
   }
   
+   /**
+   * Register DF to Data.DataDF, and assign alias (NEW 2.5)
+   *
+   * @param rowData   DataFrame Data
+   * @param Alias     DataFrame Alias
+   */
+  def DF_from_RAW(rowData: DataFrame, Alias: String): Unit = {
+    DataFramehuemul.setDataFrame(rowData,Alias,false)
+    this.StopRead_dt = huemulBigDataGov.getCurrentDateTimeJava()
+    //Register use in control
+    Control.RegisterRAW_USE(this, Alias)
+  }
   
   /***
    * ConvertSchemaLocal: Transforma un string en un objeto RAW
@@ -266,6 +290,20 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     try {
         this.StartRead_dt = huemulBigDataGov.getCurrentDateTimeJava()
         /************************************************************************/
+        /********   GET  FIELDS   ********************************/
+        /************************************************************************/ 
+        //Fields
+        var fieldsDetail : StructType = CreateSchema(this.SettingInUse.DataSchemaConf, _allColumnsAsString)
+           
+        this.DataFramehuemul.SetDataSchema(fieldsDetail)
+        if (this.huemulBigDataGov.DebugMode) {
+          huemulBigDataGov.logMessageDebug("printing DataSchema from settings: ")
+          this.DataFramehuemul.getDataSchema().printTreeString()
+        }
+        
+        huemulBigDataGov.logMessageInfo("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString())    
+      
+        /************************************************************************/
         /********   OPEN FILE   *********************************/
         /************************************************************************/
         //Open File 
@@ -299,6 +337,26 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           this.DataRDD = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDD_Base)
           this.DataRDD_extended = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDDPDF_Data)
           this.DataRDD_Metadata = pdfResult.RDDPDF_Metadata
+        } else if (this.SettingInUse.FileType == huemulType_FileType.AVRO_FILE) {
+          huemulBigDataGov.logMessageInfo("Opening AVRO data file and building DF DataRaw")
+
+          this.DataRawDF= huemulBigDataGov.spark.read
+            .format(this.getAVRO_format())
+            .option(if (this.getAVRO_compression() == null) "" else "compression",if (this.getAVRO_compression() == null) "" else this.getAVRO_compression())
+            //.schema( this.DataFramehuemul.getDataSchema())
+            .load(this.FileName)
+
+        } else if (this.SettingInUse.FileType == huemulType_FileType.DELTA_FILE ||
+                   this.SettingInUse.FileType == huemulType_FileType.ORC_FILE || 
+                   this.SettingInUse.FileType == huemulType_FileType.PARQUET_FILE ) {
+          huemulBigDataGov.logMessageInfo(s"Opening ${this.SettingInUse.FileType} data file and building DF DataRaw")
+
+          val _format = this.SettingInUse.FileType.toString().replace("_FILE", "")
+          
+          this.DataRawDF= huemulBigDataGov.spark.read
+            .format(_format)
+            .load(this.FileName)
+
         } else {
           LocalErrorCode = 3006
           this.RaiseError_RAW("huemul_DataLake Error: FileType missing (add this.FileType setting in DataLake definition)",LocalErrorCode)
@@ -348,20 +406,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           
         }
         
-        
-        /************************************************************************/
-        /********   GET  FIELDS   ********************************/
-        /************************************************************************/ 
-        //Fields
-        var fieldsDetail : StructType = CreateSchema(this.SettingInUse.DataSchemaConf, _allColumnsAsString)
-           
-        this.DataFramehuemul.SetDataSchema(fieldsDetail)
-        if (this.huemulBigDataGov.DebugMode) {
-          huemulBigDataGov.logMessageDebug("printing DataSchema from settings: ")
-          this.DataFramehuemul.getDataSchema().printTreeString()
-        }
-        
-        huemulBigDataGov.logMessageInfo("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString())                        
+                            
     } catch {
       case e: Exception => {
         huemulBigDataGov.logMessageError("Error Code")
