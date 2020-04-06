@@ -157,6 +157,14 @@ Finalmente, también automatiza la generación de código a partir de las defini
          <version>1.1.2</version>
      </dependency>
 	
+	<!-- https://mvnrepository.com/artifact/com.hortonworks.hive/hive-warehouse-connector -->
+	<dependency>
+	    <groupId>com.hortonworks.hive</groupId>
+	    <artifactId>hive-warehouse-connector_2.11</artifactId>
+	    <version>1.0.0.3.1.0.0-78</version>
+	</dependency>
+		
+		
 		
 		
 	<!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core -->
