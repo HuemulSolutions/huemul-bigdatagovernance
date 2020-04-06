@@ -1506,7 +1506,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val __MDM_oldValue = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_oldValue")
     val __MDM_AutoInc = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_AutoInc")
     val __MDM_ProcessChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_ProcessChange")
-    val __MDM_columnName = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_columnName")
+    val __MDM_columnName = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_columnName").toLowerCase() //because it's partitioned column
     val __MDM_fhChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_fhChange")
     val __processExec_id = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "processExec_id")
     
@@ -3635,7 +3635,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_OldValueTrace()} ")
       if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC || 
           getStorageType_OldValueTrace == huemulType_StorageType.DELTA   || getStorageType_OldValueTrace == huemulType_StorageType.AVRO){
-        DF_Final.write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(_getSaveFormat(getStorageType_OldValueTrace)).save(getFullNameWithPath_OldValueTrace())
+        DF_Final.write.mode(SaveMode.Append).partitionBy("mdm_columnname").format(_getSaveFormat(getStorageType_OldValueTrace)).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       }
@@ -3677,7 +3677,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (this.getStorageType_OldValueTrace != huemulType_StorageType.DELTA) {
           LocalControl.NewStep("Save: OldVT Result: Repair Hive Metadata")
           val _refreshTable: String = s"MSCK REPAIR TABLE ${_tableNameOldValueTrace}"
-          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"REFRESH TABLE ${_tableNameOldValueTrace}")
+          if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"RMSCK REPAIR TABLE ${_tableNameOldValueTrace}")
           //new from 2.3
           runSQLexternalTable(_refreshTable, false)        
         }
@@ -3860,6 +3860,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //FOR HIVE
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE())
         huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlDrop01)
+        
+      //FOR HIVE WAREHOUSE CONNECTOR
+      if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE())
+        huemulBigDataGov.hive_HWC.execute_NoResulSet(sqlDrop01)
     } else {
       /**** D R O P   F O R    O T H E R S ******/
       
@@ -3874,6 +3878,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //FOR HIVE
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getActive())
         huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlDrop01)
+        
+      //FOR HIVE WAREHOUSE CONNECTOR
+      if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HWC.getActive())
+        huemulBigDataGov.hive_HWC.execute_NoResulSet(sqlDrop01)
     }
     
   }
@@ -3891,6 +3899,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //FOR HIVE
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE())
           huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlSentence)
+          
+      //FOR HIVE WAREHOUSE CONNECTOR
+      if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE())
+          huemulBigDataGov.hive_HWC.execute_NoResulSet(sqlSentence)
     } else {
       /**** D R O P   F O R   O T H E R ******/
       
@@ -3901,6 +3913,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //FOR HIVE
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getActive())
         huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(huemulBigDataGov).ExecuteJDBC_NoResulSet(sqlSentence)
+    
+      //FOR HIVE WAREHOUSE CONNECTOR
+      if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HWC.getActive())
+        huemulBigDataGov.hive_HWC.execute_NoResulSet(sqlSentence)
     
     }
   }
@@ -3922,3 +3938,4 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
 
 }
+
