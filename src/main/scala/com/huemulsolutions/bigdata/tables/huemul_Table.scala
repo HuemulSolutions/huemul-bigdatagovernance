@@ -3863,7 +3863,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
       //FOR HIVE WAREHOUSE CONNECTOR
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE())
-        huemulBigDataGov.hive_HWC.execute_NoResulSet(sqlDrop01)
+        huemulBigDataGov.getHive_HWC.execute_NoResulSet(sqlDrop01)
     } else {
       /**** D R O P   F O R    O T H E R S ******/
       
@@ -3881,7 +3881,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
       //FOR HIVE WAREHOUSE CONNECTOR
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HWC.getActive())
-        huemulBigDataGov.hive_HWC.execute_NoResulSet(sqlDrop01)
+        huemulBigDataGov.getHive_HWC.execute_NoResulSet(sqlDrop01)
     }
     
   }
@@ -3902,7 +3902,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           
       //FOR HIVE WAREHOUSE CONNECTOR
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE())
-          huemulBigDataGov.hive_HWC.execute_NoResulSet(sqlSentence)
+          huemulBigDataGov.getHive_HWC.execute_NoResulSet(sqlSentence)
     } else {
       /**** D R O P   F O R   O T H E R ******/
       
@@ -3916,7 +3916,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
       //FOR HIVE WAREHOUSE CONNECTOR
       if (huemulBigDataGov.GlobalSettings.externalBBDD_conf.Using_HWC.getActive())
-        huemulBigDataGov.hive_HWC.execute_NoResulSet(sqlSentence)
+        huemulBigDataGov.getHive_HWC.execute_NoResulSet(sqlSentence)
     
     }
   }
