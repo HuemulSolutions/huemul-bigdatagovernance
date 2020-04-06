@@ -504,7 +504,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         """)
   }
                 
-  
+  val hive_HWC = new huemul_ExternalHWC(this)
   
   
   /*********************
@@ -537,6 +537,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           connHIVE.connection.close()
       }
     }
+    
+    //FROM 2.5 --> ADD HORTONWORKS WAREHOSUE CONNECTOR
+    if (GlobalSettings.externalBBDD_conf.Using_HWC.getActive() == true || GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE() == true) {
+      hive_HWC.close
+    }
+        
   }
   
   def close() {
