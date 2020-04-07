@@ -52,7 +52,7 @@ import org.apache.log4j.Level
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.4"
+  val currentVersion: String = "2.5"
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -504,8 +504,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         """)
   }
                 
+  private var hive_HWC: huemul_ExternalHWC = null
+  def getHive_HWC: huemul_ExternalHWC = {return hive_HWC}
   
-  
+  if (GlobalSettings.externalBBDD_conf.Using_HWC.getActive() == true || GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE() == true) {
+    hive_HWC = new huemul_ExternalHWC(this)
+  }
   
   /*********************
    * START METHOD
@@ -537,6 +541,13 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           connHIVE.connection.close()
       }
     }
+    
+    //FROM 2.5 --> ADD HORTONWORKS WAREHOSUE CONNECTOR
+    if (GlobalSettings.externalBBDD_conf.Using_HWC.getActive() == true || GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE() == true) {
+      if (getHive_HWC != null)
+        getHive_HWC.close
+    }
+        
   }
   
   def close() {
@@ -845,6 +856,10 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     _huemul_showDemoLines = value
   }
   
+  //replicated in huemul_columns
+  def getCaseType(tableStorage: com.huemulsolutions.bigdata.tables.huemulType_StorageType.huemulType_StorageType, value: String): String = {
+    return if (tableStorage == com.huemulsolutions.bigdata.tables.huemulType_StorageType.AVRO) value.toLowerCase() else value
+  }
  
   /**
    * Get execution Id from spark monitoring url

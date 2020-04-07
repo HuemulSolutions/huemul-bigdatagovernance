@@ -2,6 +2,9 @@ package com.huemulsolutions.bigdata.tables
 
 import org.apache.spark.sql.types._
 import huemulType_SecurityLevel._
+import com.huemulsolutions.bigdata.tables.huemulType_StorageType._
+import com.huemulsolutions.bigdata.common.huemulType_bigDataProvider._
+import com.huemulsolutions.bigdata.common.huemulType_bigDataProvider
 
 /**
  Define Data Schema for master and dimensional models <br>
@@ -419,11 +422,17 @@ class huemul_Columns(param_DataType: DataType
     this.MyName = pname
   }
   
-   def get_MyName(): String = {
+  //replicated en huemul_BigDataGovernance
+  def getCaseType(tableStorage: huemulType_StorageType, value: String): String = {
+    return if (tableStorage == huemulType_StorageType.AVRO) value.toLowerCase() else value
+  }
+  
+   def get_MyName(tableStorage: huemulType_StorageType): String = {
     if (this.MyName == null || this.MyName == "")
       sys.error(s"Huemul ERROR: MUST call 'ApplyTableDefinition' in table definition, (field description: ${this.Description} )")
 
-    return this.MyName
+    
+    return getCaseType(tableStorage,this.MyName)
   }
   
   def get_MappedName(): String = {
@@ -468,7 +477,7 @@ class huemul_Columns(param_DataType: DataType
   }
   
   def getHBaseCatalogFamily(): String = {return _hive_df}
-  def getHBaseCatalogColumn(): String = {return if (_hive_col == null) get_MyName() else _hive_col}
+  def getHBaseCatalogColumn(): String = {return if (_hive_col == null) get_MyName(huemulType_StorageType.HBASE) else _hive_col}
   
   def getHBaseDataType(): String = {
     return if (DataType == DataTypes.StringType) "string"
@@ -481,6 +490,23 @@ class huemul_Columns(param_DataType: DataType
       else if (DataType == DataTypes.ShortType) "tinyint"
       else if (DataType == DataTypes.BinaryType) "binary"
       else "string"
-        
+  }
+  
+  //from 2.5 --> return data type with avro and spark < 2.4 compatibility
+  def getDataTypeDeploy(bigDataProvider: huemulType_bigDataProvider, storageType: huemulType_StorageType ): DataType = {
+    var result = this.DataType
+    if (storageType == huemulType_StorageType.AVRO && 
+        bigDataProvider != huemulType_bigDataProvider.databricks &&
+        ( result.sql.toUpperCase().contains("DATE") || result.sql.toUpperCase().contains("TIMESTAMP"))
+       ) {
+      result = StringType
+    } else if (storageType == huemulType_StorageType.AVRO && 
+        bigDataProvider == huemulType_bigDataProvider.databricks &&
+        ( result.sql.toUpperCase().contains("SMALLINT") )
+       ) {
+      result = IntegerType
+    } 
+    
+    return result
   }
 }

@@ -870,7 +870,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
           Values.Table_Name =dfTableName
           Values.BBDD_Name =dfDataBaseName
           Values.DF_Alias =AliasToQuery
-          Values.ColumnName =if (x.getFieldName == null) null else x.getFieldName.get_MyName()
+          Values.ColumnName =if (x.getFieldName == null) null else x.getFieldName.get_MyName(dMaster.getStorageType)
           Values.DQ_Name =x.getMyName()
           Values.DQ_Description =s"(Id ${x.getId}) ${x.getDescription}"
           Values.DQ_QueryLevel =x.getQueryLevel() // .getDQ_QueryLevel
@@ -910,7 +910,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
             val SQL_Detail = DQ_GenQuery(AliasToQuery
                                         ,s"not (${x.getSQLFormula()})"
                                         ,!(x.getFieldName == null) //asField
-                                        ,if (x.getFieldName == null) "all" else x.getFieldName.get_MyName() //fieldName
+                                        ,if (x.getFieldName == null) "all" else x.getFieldName.get_MyName(dMaster.getStorageType) //fieldName
                                         ,Values.DQ_Id
                                         ,x.getNotification()
                                         ,x.getErrorCode()

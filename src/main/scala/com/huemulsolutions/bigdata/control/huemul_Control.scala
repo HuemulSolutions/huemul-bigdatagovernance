@@ -813,10 +813,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         control_Columns_addOrUpd( LocalNewTable_id
                                  ,Column_Id
                                  ,i
-                                 ,x.get_MyName()
+                                 ,x.get_MyName(DefMaster.getStorageType)
                                  ,x.Description
                                  ,null //--as Column_Formula
                                  ,x.DataType.sql
+                                 ,x.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), DefMaster.getStorageType).sql
                                  ,false //--as Column_SensibleData
                                  ,x.getMDM_EnableDTLog
                                  ,x.getMDM_EnableOldValue
@@ -863,9 +864,9 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
          x.Relationship.foreach { y => 
            control_TablesRelCol_add (IdRel
                                      ,PK_Id
-                                     ,y.PK.get_MyName()
+                                     ,y.PK.get_MyName(InstanceTable.getStorageType)
                                      ,LocalNewTable_id
-                                     ,y.FK.get_MyName() 
+                                     ,y.FK.get_MyName(DefMaster.getStorageType) 
                                      ,Control_ClassName)
           }
       }
@@ -2283,7 +2284,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         huemulBigDataGov.logMessageInfo("control version: insert new version")
         val ExecResultCol = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           INSERT INTO control_config (config_id, version_mayor, version_minor, version_patch)
-          VALUES (1,2,2,0)
+          VALUES (1,2,5,0)
           """)
           
           _version_mayor = 2
@@ -2483,6 +2484,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                              ,p_Column_Description: String
                              ,p_Column_Formula: String
                              ,p_Column_DataType: String
+                             ,p_Column_DataTypeDeploy: String
                              ,p_Column_SensibleData: Boolean
                              ,p_Column_EnableDTLog: Boolean
                              ,p_Column_EnableOldValue: Boolean
@@ -2526,7 +2528,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           SET column_position	            = ${p_Column_Position}				
         		 ,column_description			    = CASE WHEN mdm_manualchange = 1 THEN column_description ELSE ${ReplaceSQLStringNulls(p_Column_Description,1000)}	END
         		 ,column_formula				      = CASE WHEN mdm_manualchange = 1 THEN column_formula ELSE ${ReplaceSQLStringNulls(p_Column_Formula,1000)}	END			
-        		 ,column_datatype				      = ${ReplaceSQLStringNulls(p_Column_DataType,50)}				
+        		 ,column_datatype				      = ${ReplaceSQLStringNulls(p_Column_DataType,50)}
+        	${if (getVersionFull() >= 20500) s",column_datatypedeploy = ${ReplaceSQLStringNulls(p_Column_DataTypeDeploy,50)} " else ""}	 
         		 ,column_sensibledata			    = CASE WHEN mdm_manualchange = 1 THEN column_sensibledata ELSE ${if (p_Column_SensibleData) "1" else "0"}	END		
         		 ,column_enabledtlog			    = ${if (p_Column_EnableDTLog) "1" else "0"}
         		 ,column_enableoldvalue			  = ${if (p_Column_EnableOldValue) "1" else "0"}
@@ -2561,6 +2564,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                       								 ,column_description
                       								 ,column_formula
                       								 ,column_datatype
+    ${if (getVersionFull() >= 20500) s",column_datatypedeploy" else ""}	 
                       								 ,column_sensibledata
                       								 ,column_enabledtlog
                       								 ,column_enableoldvalue
@@ -2592,6 +2596,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             			 ,${ReplaceSQLStringNulls(p_Column_Description,1000)}
             			 ,${ReplaceSQLStringNulls(p_Column_Formula,1000)}
             			 ,${ReplaceSQLStringNulls(p_Column_DataType,50)}
+ ${if (getVersionFull() >= 20500) s",${ReplaceSQLStringNulls(p_Column_DataTypeDeploy,50)}" else ""}	             			 
             			 ,${if (p_Column_SensibleData) "1" else "0"}
             			 ,${if (p_Column_EnableDTLog) "1" else "0"}
             			 ,${if (p_Column_EnableOldValue) "1" else "0"}

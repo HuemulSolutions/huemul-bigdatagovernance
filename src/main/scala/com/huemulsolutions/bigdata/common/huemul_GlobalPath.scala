@@ -103,6 +103,16 @@ class huemul_GlobalPath() extends Serializable {
     * 
     */
     
+    //FROM 2.5 
+    //ADD AVRO SUPPORT
+    private var _avro_format: String = "com.databricks.spark.avro"
+    def getAVRO_format(): String = {return  _avro_format}
+    def setAVRO_format(value: String) {_avro_format = value} 
+    
+    private var _avro_compression: String = "snappy"
+    def getAVRO_compression(): String = {return  _avro_compression}
+    def setAVRO_compression(value: String) {_avro_compression = value} 
+    
     
     /**
      Returns true if path has value, otherwise return false
