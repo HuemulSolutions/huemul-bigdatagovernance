@@ -403,7 +403,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false).setHBaseCatalogMapping("loginfo")
   val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false).setHBaseCatalogMapping("loginfo")
   
-  val MDM_columnName = new huemul_Columns (StringType, true, "Column Name", false).setHBaseCatalogMapping("loginfo")
+  val mdm_columnname = new huemul_Columns (StringType, true, "Column Name", false).setHBaseCatalogMapping("loginfo")
   
   //from 2.2 --> add rowKey compatibility with HBase
   val hs_rowKey = new huemul_Columns (StringType, true, "Concatenated PK", false).setHBaseCatalogMapping("loginfo")
@@ -608,8 +608,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           }
         }
         else if (tableType == huemulType_InternalTableType.OldValueTrace) {
-          //create StructType MDM_columnName
-          if ("MDM_columnName".toLowerCase() != _colMyName) {
+          //create StructType mdm_columnname
+          if ("mdm_columnname".toLowerCase() != _colMyName) {
             fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}#b"""
           }
         }
@@ -911,11 +911,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
        
       if (tableType == huemulType_InternalTableType.OldValueTrace) {
-        b = b.filter { x => x.getName == "MDM_columnName" || x.getName == "MDM_newValue" || x.getName == "MDM_oldValue" || x.getName == "MDM_AutoInc" ||
+        b = b.filter { x => x.getName == "mdm_columnname" || x.getName == "MDM_newValue" || x.getName == "MDM_oldValue" || x.getName == "MDM_AutoInc" ||
                             x.getName == "MDM_fhChange" || x.getName == "MDM_ProcessChange" || x.getName == "processExec_id"  }
       } else {
         //exclude OldValuestrace columns
-        b = b.filter { x => x.getName != "MDM_columnName" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue" && x.getName != "MDM_AutoInc" && x.getName != "processExec_id"  }
+        b = b.filter { x => x.getName != "mdm_columnname" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue" && x.getName != "MDM_AutoInc" && x.getName != "processExec_id"  }
         
         if (this._TableType == huemulType_Tables.Transaction) 
           b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"   }
@@ -1201,12 +1201,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
       }
       else if (tableType == huemulType_InternalTableType.OldValueTrace) {
-        //create StructType MDM_columnName
+        //create StructType mdm_columnname
         //FROM 2.4 --> INCLUDE PARTITIONED COLUMN IN CREATE TABLE ONLY FOR databricks COMPATIBILITY
         if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
           ColumnsCreateTable += s"$coma${_colMyName} ${DataTypeLocal} \n"
           coma = ","
-        } else if ("MDM_columnName".toLowerCase() != _colMyName.toLowerCase()) {
+        } else if ("mdm_columnname".toLowerCase() != _colMyName.toLowerCase()) {
           ColumnsCreateTable += s"$coma${_colMyName} ${DataTypeLocal} \n"
           coma = ","
         }
@@ -1506,7 +1506,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val __MDM_oldValue = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_oldValue")
     val __MDM_AutoInc = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_AutoInc")
     val __MDM_ProcessChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_ProcessChange")
-    val __MDM_columnName = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_columnName").toLowerCase() //because it's partitioned column
+    val __mdm_columnname = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "mdm_columnname").toLowerCase() //because it's partitioned column
     val __MDM_fhChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_fhChange")
     val __processExec_id = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "processExec_id")
     
@@ -1531,7 +1531,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val _colMyName = Field.get_MyName(this.getStorageType_OldValueTrace)
       val _dataType_MDM_fhChange = MDM_fhChange.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType_OldValueTrace)
       var __MDM_fhChange_cast: String = if (_dataType_MDM_fhChange == MDM_fhChange.DataType) s"now() as ${__MDM_fhChange}" else s"CAST(now() as STRING) as ${__MDM_fhChange}"
-      val StringSQL =  s"${StringSQl_PK_base}, CAST(new_${_colMyName} as string) AS ${__MDM_newValue}, CAST(old_${_colMyName} as string) AS ${__MDM_oldValue}, CAST(${_MDM_AutoInc} AS BIGINT) as ${__MDM_AutoInc}, cast('${Control.Control_Id}' as string) as ${__processExec_id}, ${__MDM_fhChange_cast}, cast('$ProcessName' as string) as ${__MDM_ProcessChange}, cast('${_colMyName.toLowerCase()}' as string) as ${__MDM_columnName} FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${_colMyName} = 1 "
+      val StringSQL =  s"${StringSQl_PK_base}, CAST(new_${_colMyName} as string) AS ${__MDM_newValue}, CAST(old_${_colMyName} as string) AS ${__MDM_oldValue}, CAST(${_MDM_AutoInc} AS BIGINT) as ${__MDM_AutoInc}, cast('${Control.Control_Id}' as string) as ${__processExec_id}, ${__MDM_fhChange_cast}, cast('$ProcessName' as string) as ${__MDM_ProcessChange}, cast('${_colMyName.toLowerCase()}' as string) as ${__mdm_columnname} FROM $Alias WHERE ___ActionType__ = 'UPDATE' and __Change_${_colMyName} = 1 "
       val aliasFullTrace: String = s"__SQL_ovt_full_${_colMyName}"
       
       val tempSQL_OldValueFullTrace_DF = huemulBigDataGov.DF_ExecuteQuery(aliasFullTrace,StringSQL) 
@@ -2162,19 +2162,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.OldValueTrace)} (${getColumns_CreateTable(true, huemulType_InternalTableType.OldValueTrace) })
                                     ${if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET) {
                                      """USING PARQUET
-                                        PARTITIONED BY (MDM_columnName)""" 
+                                        PARTITIONED BY (mdm_columnname)""" 
                                     }
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.ORC) {
                                      """USING ORC
-                                        PARTITIONED BY (MDM_columnName)""" 
+                                        PARTITIONED BY (mdm_columnname)""" 
                                     }
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.DELTA) {
                                      """USING DELTA
-                                        PARTITIONED BY (MDM_columnName)""" 
+                                        PARTITIONED BY (mdm_columnname)""" 
                                     }
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.AVRO) {
                                      s"""USING AVRO
-                                        PARTITIONED BY (MDM_columnName)""" 
+                                        PARTITIONED BY (mdm_columnname)""" 
                                     }
                                    }
                                    LOCATION '${getFullNameWithPath_OldValueTrace()}'"""
@@ -2195,19 +2195,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                       """
                                     }
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET) {
-                                     """PARTITIONED BY (MDM_columnName STRING)
+                                     """PARTITIONED BY (mdm_columnname STRING)
                                        STORED AS PARQUET""" 
                                     }
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.ORC) {
-                                     """PARTITIONED BY (MDM_columnName STRING)
+                                     """PARTITIONED BY (mdm_columnname STRING)
                                        STORED AS ORC""" 
                                     }
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.DELTA) {
-                                     """PARTITIONED BY (MDM_columnName STRING)
+                                     """PARTITIONED BY (mdm_columnname STRING)
                                        STORED AS DELTA""" 
                                     }
                                     else if (getStorageType_OldValueTrace == huemulType_StorageType.AVRO) {
-                                     s"""PARTITIONED BY (MDM_columnName STRING)
+                                     s"""PARTITIONED BY (mdm_columnname STRING)
                                        STORED AS AVRO""" 
                                     }
                                    }
@@ -3636,7 +3636,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC || 
           getStorageType_OldValueTrace == huemulType_StorageType.DELTA   || getStorageType_OldValueTrace == huemulType_StorageType.AVRO){
         DF_Final.write.mode(SaveMode.Append).partitionBy("mdm_columnname").format(_getSaveFormat(getStorageType_OldValueTrace)).save(getFullNameWithPath_OldValueTrace())
-        //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("MDM_columnName").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
+        //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("mdm_columnname").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       }
       else
