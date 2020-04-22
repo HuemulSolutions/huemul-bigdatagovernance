@@ -8,8 +8,8 @@ import org.apache.spark.sql.functions._
 
 import java.lang.Long
 import scala.collection.mutable._
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.permission.FsPermission
+//import org.apache.hadoop.fs.FileSystem
+//import org.apache.hadoop.fs.permission.FsPermission
 import huemulType_Tables._
 import huemulType_StorageType._
 //import com.huemulsolutions.bigdata._
@@ -2338,7 +2338,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Values.DQ_SQLFormula =SQLLeft
       Values.DQ_ErrorCode = Result.Error_Code
       Values.DQ_toleranceError_Rows =0
-      Values.DQ_toleranceError_Percent =null
+      Values.DQ_toleranceError_Percent =null  
       Values.DQ_ResultDQ =Result.Description
       Values.DQ_NumRowsOK =numTotal - TotalLeft
       Values.DQ_NumRowsError =TotalLeft
@@ -2661,7 +2661,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //**************************************************//
       LocalControl.NewStep("Selective Update: Select Old Table")                                             
       val TempAlias: String = s"__${this.TableName}_old"
-      val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
+      //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
       
       if (!huemulBigDataGov.HasName(PartitionValueForSelectiveUpdate) && _TableType == huemulType_Tables.Transaction)
         raiseError(s"huemul_Table Error: Partition Value not defined", 1044)
@@ -2673,6 +2673,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                       this.getFullNameWithPath()
       
       val FullPath = new org.apache.hadoop.fs.Path(FullPathString)
+      //Google FS compatibility
+      val fs = FullPath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
       
       if (fs.exists(FullPath)){
         //Exist, copy for use
@@ -2833,7 +2835,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep("Ref & Master: Select Old Table")      
       val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
       val TempAlias: String = s"__${this.TableName}_old"
-      val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
+      //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
       
       var oldDataFrameExists = false
       
@@ -2866,7 +2868,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           //DFHBase.show()
         }
       } else {
-        if (fs.exists(new org.apache.hadoop.fs.Path(this.getFullNameWithPath()))){
+        val lpath = new org.apache.hadoop.fs.Path(this.getFullNameWithPath())
+        val fs = lpath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
+        if (fs.exists(lpath)){
           //Exist, copy for use
           oldDataFrameExists = true
           
@@ -2885,6 +2889,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           }
           
           val fsPath = new org.apache.hadoop.fs.Path(tempPath)
+          val fs = fsPath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
           if (fs.exists(fsPath)){  
             fs.delete(fsPath, true)
           }
@@ -3288,8 +3293,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        val ProdFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}=${PartitionValue}")
        val ManualFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}=${PartitionValue}")
        
-       val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
-       org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
+       val fsProd = ProdFullPath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) //FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
+       val fsMan = ManualFullPath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
+       org.apache.hadoop.fs.FileUtil.copy(fsProd, ProdFullPath, fsMan, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
        
        val DestTableName: String = InternalGetTable(DestEnvironment)
        if (this.getStorageType != huemulType_StorageType.DELTA) {
@@ -3300,8 +3306,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        val ProdFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}")
        val ManualFullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath2(DestEnvironment)}/${_PartitionField.toLowerCase()}")
        
-       val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
-       org.apache.hadoop.fs.FileUtil.copy(fs, ProdFullPath, fs, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
+       val fsProd = ProdFullPath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) //FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
+       val fsMan = ManualFullPath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
+       
+       org.apache.hadoop.fs.FileUtil.copy(fsProd, ProdFullPath, fsMan, ManualFullPath, false, true, huemulBigDataGov.spark.sparkContext.hadoopConfiguration)
     }
     
   }
@@ -3506,7 +3514,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         } else {
           this.PartitionValue = DFDistinct(0).getAs[String](_PartitionField)
           val FullPath = new org.apache.hadoop.fs.Path(s"${getFullNameWithPath()}/${_PartitionField.toLowerCase()}=${this.PartitionValue}")
-          val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)   
+          val fs = FullPath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)   
           
           //if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
           if (this.getStorageType == huemulType_StorageType.DELTA) {

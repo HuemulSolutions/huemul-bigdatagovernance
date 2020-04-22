@@ -2140,7 +2140,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             val backupPath = x.getAs[String]("tableuse_pathbackup")
             this.NewStep(s"Backup: drop file ${backupPath} ")
             val backupPath_hdfs = new org.apache.hadoop.fs.Path(backupPath)
-            val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
+            val fs = backupPath_hdfs.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
             if (fs.exists(backupPath_hdfs)){
               fs.delete(backupPath_hdfs, true)
             }   
