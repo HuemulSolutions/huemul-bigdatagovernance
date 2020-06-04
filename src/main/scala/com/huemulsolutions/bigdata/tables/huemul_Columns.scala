@@ -511,7 +511,7 @@ class huemul_Columns(param_DataType: DataType
   }
   
   
-  
+  //from 2.6
   private var _partitionedPosition: Integer = null
   private var _partitionedDropBeforeSave: Boolean = true
   def setPartitionColumn(position: Integer, dropBeforeInsert: Boolean): huemul_Columns = {
