@@ -509,4 +509,28 @@ class huemul_Columns(param_DataType: DataType
     
     return result
   }
+  
+  
+  
+  private var _partitionedPosition: Integer = null
+  private var _partitionedDropBeforeSave: Boolean = true
+  def setPartitionColumn(position: Integer, dropBeforeInsert: Boolean): huemul_Columns = {
+    if (DefinitionIsClose) {
+      sys.error("You can't change value of setPartitionColumn, definition is close")
+      return this
+    }
+   
+    if (position < 0) {
+      sys.error("position value must be >= 0")
+      return this
+    }
+
+    _partitionedPosition = position
+    _partitionedDropBeforeSave = dropBeforeInsert
+    
+    return this;
+  }
+  
+  
+ 
 }
