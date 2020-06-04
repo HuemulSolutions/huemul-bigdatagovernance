@@ -77,7 +77,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def setPK_externalCode(value: String) {
     _PK_externalCode = value  
   }
-  
+
+  private var _PkNotification:huemulType_DQNotification = huemulType_DQNotification.ERROR
+
+  /** Set Primary Key notification level: ERROR(default),WARNING, WARNING_EXCLUDE
+   * @author  christian.sattler@gmail.com
+   * @since   2.[6]
+   * @group   column_attribute
+   *
+   * @param value   huemulType_DQNotification ERROR,WARNING, WARNING_EXCLUDE
+   * @return        huemul_Columns
+   */
+  def setPkNotification(value: huemulType_DQNotification ) = {
+    _PkNotification = value
+  }
+
   private def _storageType_default = huemulType_StorageType.PARQUET
   /**
    Save DQ Result to disk, only if DQ_SaveErrorDetails in GlobalPath is true
@@ -2406,8 +2420,231 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           }
         }
   }
-  
-  private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean, LocalControl: huemul_Control, warning_exclude: Boolean): huemul_DataQualityResult = {
+
+  /** DQ validation helper, if a DQ rule exists, ensures that it only runs once for WARNING_EXCLUDE or (ERROR/WARNING)
+   *
+   * @author  christian.sattler@gmail.com
+   * @since   2.[6]
+   *
+   * @param warningExclude          indicate if its processing WARNING_EXCLUDE rule notification
+   * @param dqNotification          Data quality rule on column/field
+   * @param attributeNotification   Notification at attribute level (for all data quality rules for attribute)
+   * @return                        [Boolean] true if its apply for the given parameters
+   */
+  // Todo: Revisar la jeraquia del notify de regla especifico vs del atributo
+  private def validateDQRun(warningExclude:Boolean
+                            , dqNotification:huemulType_DQNotification
+                            , attributeNotification:huemulType_DQNotification ): Boolean = (
+    (warningExclude
+      && ((dqNotification == huemulType_DQNotification.WARNING_EXCLUDE && attributeNotification== null)
+      || (attributeNotification == huemulType_DQNotification.WARNING_EXCLUDE)))
+      || (!warningExclude
+      && (dqNotification != huemulType_DQNotification.WARNING_EXCLUDE
+      || (attributeNotification != huemulType_DQNotification.WARNING_EXCLUDE && attributeNotification != null)))
+    )
+
+
+  /** Generate Data Quality Rules (huemul_DataQuality] for min/max rules at attributes
+   *
+   * TODO Documentar
+   *  1) Warning Exclude -> min, max or minmax -> 1 rule
+   *  2) Error or Warning -> it separete if one is warning and the other is error -> 2 rules
+   *
+   * @author  christian.sattler@gmail.com
+   * @since   2.[6]
+   *
+   * @param dqWarningExclude        true is its es WARNING_EXCLUDE notrification
+   * @param columnDefinition        huemul_Columns column definition
+   * @param dqRuleDescription       Data quality rule description
+   * @param dqErrorCode             Data quality error code
+   * @param minValue                Min value (length, decimal, datetime)
+   * @param maxValue                Max value (length, decimal, datetime)
+   * @param minValueNotification    Min notification level
+   * @param maxValueNotification    Max Notification level
+   * @param attributeNotification   Global attribute notification level
+   * @param sqlMinSentence          SQL Sentences/rule for min rule
+   * @param sqlMaxSentence          SQL Sentences/rule for max rule
+   * @param minExternalCode         Min rule external error code
+   * @param maxExternalCode         Max rule external error code
+   * @return                        List[huemul_DataQuality] list de data quality rules to apply
+   */
+  private def dqRuleMinMax(dqWarningExclude:Boolean
+                           , columnDefinition:huemul_Columns
+                           , dqRuleDescription:String
+                           , dqErrorCode:Integer
+                           , minValue:String
+                           , maxValue:String
+                           , minValueNotification: huemulType_DQNotification
+                           , maxValueNotification: huemulType_DQNotification
+                           , attributeNotification: huemulType_DQNotification
+                           , sqlMinSentence:String
+                           , sqlMaxSentence:String
+                           , minExternalCode:String
+                           , maxExternalCode:String):List[huemul_DataQuality] = {
+    var listDqRule:List[huemul_DataQuality] = List[huemul_DataQuality]()
+    val colMyName = columnDefinition.get_MyName(this.getStorageType)
+    var SQLFormula : HashMap[String,String] = new HashMap[String,String]
+    var notificationMin:huemulType_DQNotification = null
+    var notificationMax:huemulType_DQNotification = null
+    var externalCode:String = null
+
+    if (minValue != null && validateDQRun(dqWarningExclude,minValueNotification,attributeNotification) ){
+      SQLFormula += ( "Min" -> s" ${sqlMinSentence} ")
+      notificationMin = if (attributeNotification == null) minValueNotification else attributeNotification
+      externalCode = minExternalCode
+    }
+
+    if (maxValue != null && validateDQRun(dqWarningExclude,maxValueNotification,attributeNotification)) {
+      SQLFormula += ("Max" -> s" ${sqlMaxSentence} ")
+      notificationMax = if (attributeNotification == null) maxValueNotification else attributeNotification
+      externalCode = if (externalCode == null) maxExternalCode else externalCode
+    }
+
+    if (notificationMin == notificationMax || notificationMin == null || notificationMax == null ) {
+      val ruleMinMax = new huemul_DataQuality(
+        columnDefinition
+        , s"${SQLFormula.keys.mkString("/")} ${dqRuleDescription} ${colMyName}"
+        , s" (${SQLFormula.values.mkString(" and ")}) or (${colMyName} is null) "
+        , dqErrorCode
+        , huemulType_DQQueryLevel.Row
+        , if (notificationMin == null ) notificationMax else notificationMin
+        , true
+        , externalCode)
+      ruleMinMax.setTolerance(0L, null)
+      listDqRule  = listDqRule :+ ruleMinMax
+    } else {
+      val ruleMin: huemul_DataQuality = new huemul_DataQuality(
+        columnDefinition
+        , s"Min ${dqRuleDescription} ${colMyName}"
+        , s" (${SQLFormula("Min")}) or (${colMyName} is null) "
+        , dqErrorCode
+        , huemulType_DQQueryLevel.Row
+        , notificationMin
+        , true
+        , if (minExternalCode != null && minExternalCode.nonEmpty)
+          minExternalCode else maxExternalCode)
+      ruleMin.setTolerance(0L, null)
+      listDqRule = listDqRule :+ ruleMin
+
+      val ruleMax: huemul_DataQuality = new huemul_DataQuality(
+        columnDefinition
+        , s"Max ${dqRuleDescription} ${colMyName}"
+        , s" (${SQLFormula("Max")}) or (${colMyName} is null) "
+        , dqErrorCode
+        , huemulType_DQQueryLevel.Row
+        , notificationMax
+        , true
+        , if (maxExternalCode != null && maxExternalCode.nonEmpty)
+          maxExternalCode else minExternalCode)
+      ruleMax.setTolerance(0L, null)
+      listDqRule = listDqRule :+ ruleMax
+
+    }
+    listDqRule
+  }
+
+  /** Save the records from the base table records with WARNING_EXCLUDE, WARNING & ERROR
+   * @author  christian.sattler@gmail.com
+   * @since   2.[6]
+   *
+   * @param warningExclude  It separates WARNING_EXCLUDE (true) from ERROR/WARNING (false)
+   * @param ResultDQ        DQ Rules execution result
+   * @param LocalControl    huemul_control refernce for logging
+   * @return                [[com.huemulsolutions.bigdata.dataquality.huemul_DataQualityResult]] with new records
+   */
+  def RuleTypeAggSaveData (warningExclude:Boolean
+                           , ResultDQ:huemul_DataQualityResult
+                           , LocalControl: huemul_Control) = {
+
+    //.filter( f => (typeOpr == "pk" && f.DQ_ErrorCode == 1018) || (typeOpr == "uk" && f.DQ_ErrorCode == 2006) )
+    //get on sentence, until now it only process pk and unique rules
+    val dqResultData:List[huemul_DQRecord] = ResultDQ
+      .getDQResult()
+      .filter( f => (
+        ((warningExclude && f.DQ_Notification == huemulType_DQNotification.WARNING_EXCLUDE)
+          || ((!warningExclude && f.DQ_Notification != huemulType_DQNotification.WARNING_EXCLUDE)))
+          && (f.DQ_ErrorCode == 1018 || f.DQ_ErrorCode == 2006)) )
+      .toList
+
+    //Start loop each pk, uk data rule with error, warning or warning_exclude
+    for(dqKeyRule <- dqResultData ) {
+      val typeOpr:String = if (dqKeyRule.DQ_ErrorCode==1018) "pk" else "uk"
+      val dqId = dqKeyRule.DQ_Id
+      val notification:huemulType_DQNotification = dqKeyRule.DQ_Notification
+      val stepRunType = notification match {
+        case huemulType_DQNotification.WARNING_EXCLUDE => "WARNING_EXCLUDE"
+        case huemulType_DQNotification.WARNING => "WARNING"
+        case _ => "ERROR"
+      }
+      val colData:List[huemul_Columns] = getColumns()
+        .filter(f => (typeOpr == "pk" && f.getIsPK)
+          || (typeOpr == "uk" && f.getIsUnique && f.getMyName(this.getStorageType).toLowerCase() == dqKeyRule.ColumnName.toLowerCase()))
+        .toList
+      val keyColumns:String = colData.head.getMyName(this.getStorageType)
+      val joinColList:String = colData.map(m => m.getMyName(this.getStorageType)).mkString(",")
+      val sourceAlias:String = this.DataFramehuemul.Alias
+      val keyJoinSql = colData
+        .map(m => s" $typeOpr.${m.getMyName(this.getStorageType)} = dup.${m.getMyName(this.getStorageType)}").mkString(" and ")
+
+      LocalControl.NewStep(s"Step: DQ Result: Get detail for ${typeOpr.toUpperCase} $stepRunType (step1)")
+      val step1SQL = s"""SELECT $joinColList, COUNT(1) as Cantidad
+                        | FROM $sourceAlias
+                        | GROUP BY $joinColList
+                        | HAVING COUNT(1) > 1 """.stripMargin
+      log.trace(s"Step: DQ Result: Step1 Sql : $step1SQL")
+      val dfDupRecords:DataFrame = huemulBigDataGov.DF_ExecuteQuery(s"___temp_${typeOpr}_det_01", step1SQL)
+      dfDupRecords.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+
+      //Broadcast Hint
+      var broadcastHint : String = if (dfDupRecords.count() < 50000) "/*+ BROADCAST(dup) */" else ""
+
+      //get rows duplicated
+      LocalControl.NewStep(s"Step: DQ Result: Get detail for ${typeOpr.toUpperCase} $stepRunType (step2)")
+      val step2SQL =s"""SELECT $broadcastHint $typeOpr.*
+                       | FROM $sourceAlias $typeOpr
+                       | INNER JOIN ___temp_${typeOpr}_det_01 dup
+                       |  ON $keyJoinSql""".stripMargin
+      log.trace(s"Step: DQ Result: Step2 Sql : $step2SQL")
+      val dfDupRecordsDetail:DataFrame = huemulBigDataGov.DF_ExecuteQuery(s"___temp_${typeOpr}_det_02", step2SQL)
+      dfDupRecordsDetail.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+      val numReg = dfDupRecordsDetail.count()
+
+      val dqSqlTableSentence = this.DataFramehuemul.DQ_GenQuery(
+        s"___temp_${typeOpr}_det_02"
+        , null
+        , true
+        , keyColumns
+        , dqId
+        , notification
+        , dqKeyRule.DQ_ErrorCode
+        , s"(${dqKeyRule.DQ_ErrorCode}) ${typeOpr.toUpperCase} $stepRunType ON ${keyJoinSql} ($numReg reg)"// dq_error_description
+      )
+      log.trace(s"Step: DQ Result: Step3 Sql : $dqSqlTableSentence")
+
+      //Execute query
+      LocalControl.NewStep(s"Step: DQ Result: Get detail for ${typeOpr.toUpperCase} $stepRunType (step3, $numReg rows)")
+      var dfErrorRecords = huemulBigDataGov.DF_ExecuteQuery(s"temp_DQ_KEY", dqSqlTableSentence)
+      dfErrorRecords.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+      val numCount = dfErrorRecords.count()
+      if (ResultDQ.DetailErrorsDF == null)
+        ResultDQ.DetailErrorsDF = dfErrorRecords
+      else
+        ResultDQ.DetailErrorsDF = ResultDQ.DetailErrorsDF.union(dfErrorRecords)
+
+    }
+  }
+
+  /**
+   *
+   * @param IsSelectiveUpdate
+   * @param LocalControl
+   * @param warning_exclude
+   * @return
+   */
+  private def DF_DataQualityMasterAuto(IsSelectiveUpdate: Boolean
+                                       , LocalControl: huemul_Control
+                                       , warning_exclude: Boolean): huemul_DataQualityResult = {
+
     var Result: huemul_DataQualityResult = new huemul_DataQualityResult()
     val ArrayDQ: ArrayBuffer[huemul_DataQuality] = new ArrayBuffer[huemul_DataQuality]()
     
@@ -2428,192 +2665,265 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       Result.isError = true
       Result.Description += "\nhuemul_Table Error: PK not defined"
       Result.Error_Code = 1017
-    }  
-    
-    if (!warning_exclude) { 
-      val DQ_PK : huemul_DataQuality = new huemul_DataQuality(null, s"PK Validation",s"count(1) = count(distinct ${SQL_PK} )", 1018, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, getPK_externalCode )
-      DQ_PK.setTolerance(0, null)
-      ArrayDQ.append(DQ_PK)    
-     
-      //*********************************
-      //Aplicar DQ según definición de campos en DataDefDQ: Unique Values   
-      //*********************************
-      SQL_Unique_FinalTable().foreach { x => 
-        if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD $x")
-        
-        val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(x, s"UNIQUE Validation ",s"count(1) = count(distinct ${x.get_MyName(this.getStorageType)} )", 2006, huemulType_DQQueryLevel.Aggregate,huemulType_DQNotification.ERROR, true, x.getIsUnique_externalCode )
-        DQ_UNIQUE.setTolerance(0, null)
-        ArrayDQ.append(DQ_UNIQUE) 
+    }
+
+    // Validate Primary Key Rule
+    if (SQL_PK != null && validateDQRun(warning_exclude, _PkNotification, null )) {
+      log.info(s"DQ Rule: Validate PK for columns ${SQL_PK}")
+      val dqPk: huemul_DataQuality = new huemul_DataQuality(
+        null
+        , s"PK Validation"
+        , s"count(1) = count(distinct ${SQL_PK} )"
+        , 1018
+        , huemulType_DQQueryLevel.Aggregate
+        , _PkNotification
+        , true
+        , getPK_externalCode)
+      dqPk.setTolerance(0L, null)
+      ArrayDQ.append(dqPk)
+    }
+
+    //Apply Data Quality according to field definition in DataDefDQ: Unique Values
+    //Note: It doesn't apply getDQ_Notification, it must be explicit se the notification
+    SQL_Unique_FinalTable()
+      .filter(f => validateDQRun(warning_exclude, f.getIsUnique_Notification, null ))
+      .foreach { x =>
+        log.trace(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD ${x.getMyName(this.getStorageType)}")
+
+        val DQ_UNIQUE : huemul_DataQuality = new huemul_DataQuality(
+          x
+          , s"UNIQUE Validation ${x.getMyName(this.getStorageType)}"
+          ,s"count(1) = count(distinct ${x.getMyName(this.getStorageType)} )"
+          , 2006
+          , huemulType_DQQueryLevel.Aggregate
+          , x.getIsUnique_Notification
+          , true
+          , x.getIsUnique_externalCode )
+        DQ_UNIQUE.setTolerance(0L, null)
+        ArrayDQ.append(DQ_UNIQUE)
       }
-    }
-    
-    
-    //Aplicar DQ según definición de campos en DataDefDQ: Acepta nulos (nullable)
-    SQL_NotNull_FinalTable(warning_exclude).foreach { x => 
-      val _colMyName = x.get_MyName(this.getStorageType)
-      if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD ${_colMyName}")
-      
-        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(x, s"Not Null for field ${_colMyName} ", s"${_colMyName} IS NOT NULL",1023, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, x.getNullable_externalCode)
-        NotNullDQ.setTolerance(0, null)
+
+    //Apply Data Quality according to field definition in DataDefDQ: Accept nulls (nullable)
+    //Note: It doesn't apply getDQ_Notification, it must be explicit se the notification
+    //Note: If it has default value nos consider if it is NOT NULL
+    //ToDO: Checks te notes for default values
+    SQL_NotNull_FinalTable(warning_exclude)
+      .filter( f => (!f.getNullable  && (f.getDefaultValue == null || f.getDefaultValue == "null"))
+        && validateDQRun(warning_exclude, f.getDQ_Nullable_Notification, null ) )
+      .foreach { x =>
+        val colMyName = x.get_MyName(this.getStorageType)
+        log.trace(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD $colMyName")
+
+        val NotNullDQ : huemul_DataQuality = new huemul_DataQuality(
+          x
+          , s"Not Null for field ${colMyName} "
+          , s"${colMyName} IS NOT NULL"
+          , 1023
+          , huemulType_DQQueryLevel.Row
+          , x.getDQ_Nullable_Notification
+          , true
+          , x.getNullable_externalCode)
+        NotNullDQ.setTolerance(0L, null)
         ArrayDQ.append(NotNullDQ)
-    }
-    
-    //VAlidación DQ_RegExp
-    getColumns().filter { x => x.getDQ_RegExp != null && warning_exclude == false}.foreach { x => 
-        val _colMyName = x.get_MyName(this.getStorageType)
-        var SQLFormula : String = s"""${_colMyName} rlike "${x.getDQ_RegExp}" """
+      }
 
-        var tand = ""
-                  
-        SQLFormula = s" (${SQLFormula}) or (${_colMyName} is null) "
-        val RegExp : huemul_DataQuality = new huemul_DataQuality(x, s"RegExp Column ${_colMyName}",SQLFormula, 1041, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, x.getDQ_RegExp_externalCode  )
-        
-        RegExp.setTolerance(0, null)
-        ArrayDQ.append(RegExp)
-    }
-    
-   
-    //VAlidación DQ máximo y mínimo largo de texto
-    getColumns().filter { x => (x.getDQ_MinLen != null || x.getDQ_MaxLen != null) && warning_exclude == false  }.foreach { x => 
-        val _colMyName = x.get_MyName(this.getStorageType)
-        var SQLFormula : String = ""
+    //Validación DQ_RegExp
+    getColumns().filter {
+      x => x.getDQ_RegExpression != null && validateDQRun(warning_exclude, x.getDQ_RegExpression_Notification, x.getDQ_Notification)
+    }.foreach { x =>
+      val _colMyName = x.get_MyName(this.getStorageType)
+      val SQLFormula : String = s"""${_colMyName} rlike "${x.getDQ_RegExpression}" """
 
-        var tand = ""
-        if (x.getDQ_MinLen != null){
-          SQLFormula += s"length(${_colMyName}) >= ${x.getDQ_MinLen}"
-          tand = " and "
-        }
-        
-        if (x.getDQ_MaxLen != null)
-          SQLFormula += s" $tand length(${_colMyName}) <= ${x.getDQ_MaxLen}"
-                  
-        SQLFormula = s" (${SQLFormula}) or (${_colMyName} is null) "
-        val MinMaxLen : huemul_DataQuality = new huemul_DataQuality(x, s"length DQ for Column ${_colMyName}",SQLFormula, 1020, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, if (x.getDQ_MinLen_externalCode == null) x.getDQ_MaxLen_externalCode else x.getDQ_MinLen_externalCode )
-        MinMaxLen.setTolerance(0, null)
-        ArrayDQ.append(MinMaxLen)
+      val RegExp : huemul_DataQuality = new huemul_DataQuality(
+        x
+        , s"RegExp Column ${_colMyName}"
+        , s" (${SQLFormula}) or (${_colMyName} is null) "
+        , 1041
+        , huemulType_DQQueryLevel.Row
+        , if (x.getDQ_Notification == null) x.getDQ_RegExpression_Notification else x.getDQ_Notification
+        , true
+        , x.getDQ_RegExpression_externalCode  )
+
+      RegExp.setTolerance(0L, null)
+      ArrayDQ.append(RegExp)
     }
-    
-    //VAlidación DQ máximo y mínimo de números
-    getColumns().filter { x => (x.getDQ_MinDecimalValue != null || x.getDQ_MaxDecimalValue != null) && warning_exclude == false  }.foreach { x => 
-        val _colMyName = x.get_MyName(this.getStorageType)
-        var SQLFormula : String = ""
-        var tand = ""
-        if (x.getDQ_MinDecimalValue != null){
-          SQLFormula += s"${_colMyName} >= ${x.getDQ_MinDecimalValue}"
-          tand = " and "
-        }
-        
-        if (x.getDQ_MaxDecimalValue != null)
-          SQLFormula += s" $tand ${_colMyName} <= ${x.getDQ_MaxDecimalValue}"
-        
-        SQLFormula = s" (${SQLFormula}) or (${_colMyName} is null) "
-        val MinMaxNumber : huemul_DataQuality = new huemul_DataQuality(x, s"Number range DQ for Column ${_colMyName}", SQLFormula,1021, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true,if (x.getDQ_MinDecimalValue_externalCode == null) x.getDQ_MaxDecimalValue_externalCode else x.getDQ_MinDecimalValue_externalCode)
-        MinMaxNumber.setTolerance(0, null)         
-        ArrayDQ.append(MinMaxNumber)
-    }
-    
-    //VAlidación DQ máximo y mínimo de fechas
-    getColumns().filter { x => (x.getDQ_MinDateTimeValue != null || x.getDQ_MaxDateTimeValue != null) && warning_exclude == false  }.foreach { x => 
-        val _colMyName = x.get_MyName(this.getStorageType)
-        var SQLFormula : String = ""
-        var tand = ""
-        if (x.getDQ_MinDateTimeValue != null){
-          SQLFormula += s"${_colMyName} >= '${x.getDQ_MinDateTimeValue}'"
-          tand = " and "
-        }
-        
-        if (x.getDQ_MaxDateTimeValue != null)
-          SQLFormula += s" $tand ${_colMyName} <= '${x.getDQ_MaxDateTimeValue}'"
-          
-        SQLFormula = s" (${SQLFormula}) or (${_colMyName} is null) "
-        val MinMaxDT : huemul_DataQuality = new huemul_DataQuality(x, s"DateTime range DQ Column ${_colMyName} ", SQLFormula, 1022, huemulType_DQQueryLevel.Row,huemulType_DQNotification.ERROR, true, if (x.getDQ_MinDateTimeValue_externalCode == null) x.getDQ_MaxDateTimeValue_externalCode else x.getDQ_MinDateTimeValue_externalCode)
-        MinMaxDT.setTolerance(0, null)
-        ArrayDQ.append(MinMaxDT)
-    }
-    
-    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(this.getDataQuality(warning_exclude), ArrayDQ, this.DataFramehuemul.Alias, this, this.getSaveDQErrorOnce)
-    
-    if (ResultDQ.isError){
-      Result.isError = true
+
+
+    //Validate DQ rule max/mín length the field
+    getColumns()
+      .filter { x =>(
+        (x.getDQ_MinLen != null && validateDQRun(warning_exclude,x.getDQ_MinLen_Notification,x.getDQ_Notification) )
+          || (x.getDQ_MaxLen != null && validateDQRun(warning_exclude,x.getDQ_MaxLen_Notification,x.getDQ_Notification) )
+        )}
+      .foreach { x =>
+        val colMyName = x.getMyName(this.getStorageType)
+        val dqRules:List[huemul_DataQuality] = dqRuleMinMax(
+          warning_exclude
+          , x
+          , "length DQ for Colum"
+          , 1020
+          , if (x.getDQ_MinLen != null) x.getDQ_MinLen.toString else null
+          , if (x.getDQ_MaxLen != null) x.getDQ_MaxLen.toString else null
+          , x.getDQ_MinLen_Notification
+          , x.getDQ_MaxLen_Notification
+          , x.getDQ_Notification
+          , s"length(${colMyName}) >= ${x.getDQ_MinLen}"
+          , s"length(${colMyName}) <= ${x.getDQ_MaxLen}"
+          , x.getDQ_MinLen_externalCode
+          , x.getDQ_MaxLen_externalCode)
+
+        dqRules.foreach(dq => ArrayDQ.append(dq))
+      }
+
+    //Validate DQ rule max/mín number value
+    getColumns()
+      .filter { x => (
+        (x.getDQ_MinDecimalValue != null && validateDQRun(warning_exclude, x.getDQ_MinDecimalValue_Notification, x.getDQ_Notification))
+          || (x.getDQ_MaxDecimalValue != null && validateDQRun(warning_exclude, x.getDQ_MaxDecimalValue_Notification, x.getDQ_Notification))
+        )}
+      .foreach { x =>
+        val colMyName = x.get_MyName(this.getStorageType)
+        val dqRules:List[huemul_DataQuality] = dqRuleMinMax(
+          warning_exclude
+          , x
+          , "Number DQ for Column"
+          , 1021
+          , if (x.getDQ_MinDecimalValue != null) x.getDQ_MinDecimalValue.toString else null
+          , if (x.getDQ_MaxDecimalValue != null) x.getDQ_MaxDecimalValue.toString else null
+          , x.getDQ_MinDecimalValue_Notification
+          , x.getDQ_MinDecimalValue_Notification
+          , x.getDQ_Notification
+          , s" ${colMyName} >= ${x.getDQ_MinDecimalValue} "
+          , s" ${colMyName} <= ${x.getDQ_MaxDecimalValue} "
+          , x.getDQ_MinDecimalValue_externalCode
+          , x.getDQ_MaxDecimalValue_externalCode)
+
+        dqRules.foreach(dq => ArrayDQ.append(dq))
+      }
+
+    //Validación DQ máximo y mínimo de fechas
+    getColumns()
+      .filter { x => (
+        (x.getDQ_MinDateTimeValue != null && validateDQRun(warning_exclude, x.getDQ_MinDateTimeValue_Notification, x.getDQ_Notification) )
+          || (x.getDQ_MaxDateTimeValue != null && validateDQRun(warning_exclude, x.getDQ_MaxDateTimeValue_Notification, x.getDQ_Notification))
+        )}
+      .foreach { x =>
+        val colMyName = x.get_MyName(this.getStorageType)
+        val dqRules:List[huemul_DataQuality] = dqRuleMinMax(
+          warning_exclude
+          , x
+          , "DateTime DQ for Column"
+          , 1022
+          , x.getDQ_MinDateTimeValue
+          , x.getDQ_MaxDateTimeValue
+          , x.getDQ_MinDateTimeValue_Notification
+          , x.getDQ_MinDateTimeValue_Notification
+          , x.getDQ_Notification
+          , s" ${colMyName} >= '${x.getDQ_MinDateTimeValue}' "
+          , s" ${colMyName} <= '${x.getDQ_MaxDateTimeValue}' "
+          , x.getDQ_MinDateTimeValue_externalCode
+          , x.getDQ_MaxDateTimeValue_externalCode)
+
+        dqRules.foreach(dq => ArrayDQ.append(dq))
+      }
+
+    log.debug(s"DF_SAVE DQ: DQ Rule size ${ArrayDQ.size}")
+    ArrayDQ.foreach(x => log.debug(s"DF_SAVE DQ: Rule - ${x.getDescription()}"))
+
+    val ResultDQ = this.DataFramehuemul.DF_RunDataQuality(
+      this.getDataQuality(warning_exclude)
+      , ArrayDQ
+      , this.DataFramehuemul.Alias
+      , this
+      , this.getSaveDQErrorOnce)
+
+    val stepRunType = if (warning_exclude) "warning_exclude" else "error"
+
+    // 2.[6] add condition if its has warning and warning_exclude=true
+    if (ResultDQ.isError || (ResultDQ.isWarning && warning_exclude)){
+
+      Result.isWarning = ResultDQ.isWarning
+      Result.isError = ResultDQ.isError
       Result.Description += s"\n${ResultDQ.Description}"
       Result.Error_Code = ResultDQ.Error_Code
-      
-      //version 2.0: add PK error detail
-      val NumReg = ResultDQ.getDQResult().filter { dqres => dqres.DQ_ErrorCode == 1018 }.length
-      if (NumReg == 1) {
-        //get on sentence
-        var SQL_PK_on: String = ""   
-        var SQL_PK_firstCol: String = ""
-        getColumns().filter { x_cols => x_cols.getIsPK == true }.foreach { x_cols => 
-            val _colMyName = x_cols.get_MyName(this.getStorageType)
-            if (SQL_PK_on.length() > 0) 
-              SQL_PK_on = s"${SQL_PK_on} and "
-            
-            if (SQL_PK_firstCol.length() == 0)
-              SQL_PK_firstCol = _colMyName
-        
-            SQL_PK_on = s"${SQL_PK_on} PK.${_colMyName} = dup.${_colMyName} "
-        }    
-        
-        
-        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step1)")
-        //PK error found, get PK duplicated
-        val df_detail_01 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_01", s""" SELECT ${SQL_PK}, COUNT(1) as Cantidad
-                                                                                   FROM ${this.DataFramehuemul.Alias}
-                                                                                   GROUP BY ${SQL_PK}
-                                                                                   HAVING COUNT(1) > 1
-                                                                                """)
-                                                                                
-        df_detail_01.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
-        val numReg_01 = df_detail_01.count()
-         //Broadcast
-        var _NumRows_PK: String = ""
-        if (numReg_01 < 50000)
-          _NumRows_PK = "/*+ BROADCAST(dup) */"
-          
-        //get rows duplicated
-        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step2)")
-        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT ${_NumRows_PK} PK.*
-                                                                                   FROM ${this.DataFramehuemul.Alias} PK
-                                                                                     INNER JOIN ___temp_pk_det_01 dup
-                                                                                        ON ${SQL_PK_on}
-                                                                                """)   
-        df_detail_02.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
-        val numReg = df_detail_02.count()                                                                                 
-                                                                              
-        val DQ_Id_PK = ResultDQ.getDQResult().filter { dqres => dqres.DQ_ErrorCode == 1018 }(0).DQ_Id
-        val SQL_Detail = this.DataFramehuemul.DQ_GenQuery( "___temp_pk_det_02"   //sqlfrom
-                                                          , null           //sqlwhere
-                                                          , true            //haveField
-                                                          , SQL_PK_firstCol      //fieldname
-                                                          , DQ_Id_PK
-                                                          , huemulType_DQNotification.ERROR //dq_error_notification 
-                                                          , 1018 //error_code
-                                                          , s"(1018) PK ERROR ON ${SQL_PK_on} ($numReg reg)"// dq_error_description
-                                                          )
-                             
-        //Execute query
-        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step3, $numReg rows)")
-        var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ_PK", SQL_Detail)
-        DF_EDetail.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
-        val numCount = DF_EDetail.count()
-        if (ResultDQ.DetailErrorsDF == null)
-          ResultDQ.DetailErrorsDF = DF_EDetail
-        else
-          ResultDQ.DetailErrorsDF = ResultDQ.DetailErrorsDF.union(DF_EDetail)
-      }
+
+      //version 2.6: add PK error detail
+      RuleTypeAggSaveData(warning_exclude, ResultDQ, LocalControl)
+
+//      //version 2.0: add PK error detail
+//      val NumReg = ResultDQ.getDQResult().filter { dqres => dqres.DQ_ErrorCode == 1018 }.length
+//      if (NumReg == 1) {
+//        //get on sentence
+//        var SQL_PK_on: String = ""
+//        var SQL_PK_firstCol: String = ""
+//        getColumns().filter { x_cols => x_cols.getIsPK == true }.foreach { x_cols =>
+//            val _colMyName = x_cols.get_MyName(this.getStorageType)
+//            if (SQL_PK_on.length() > 0)
+//              SQL_PK_on = s"${SQL_PK_on} and "
+//
+//            if (SQL_PK_firstCol.length() == 0)
+//              SQL_PK_firstCol = _colMyName
+//
+//            SQL_PK_on = s"${SQL_PK_on} PK.${_colMyName} = dup.${_colMyName} "
+//        }
+//
+//
+//        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step1)")
+//        //PK error found, get PK duplicated
+//        val df_detail_01 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_01", s""" SELECT ${SQL_PK}, COUNT(1) as Cantidad
+//                                                                                   FROM ${this.DataFramehuemul.Alias}
+//                                                                                   GROUP BY ${SQL_PK}
+//                                                                                   HAVING COUNT(1) > 1
+//                                                                                """)
+//
+//        df_detail_01.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+//        val numReg_01 = df_detail_01.count()
+//         //Broadcast
+//        var _NumRows_PK: String = ""
+//        if (numReg_01 < 50000)
+//          _NumRows_PK = "/*+ BROADCAST(dup) */"
+//
+//        //get rows duplicated
+//        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step2)")
+//        val df_detail_02 = huemulBigDataGov.DF_ExecuteQuery("___temp_pk_det_02", s""" SELECT ${_NumRows_PK} PK.*
+//                                                                                   FROM ${this.DataFramehuemul.Alias} PK
+//                                                                                     INNER JOIN ___temp_pk_det_01 dup
+//                                                                                        ON ${SQL_PK_on}
+//                                                                                """)
+//        df_detail_02.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+//        val numReg = df_detail_02.count()
+//
+//        val DQ_Id_PK = ResultDQ.getDQResult().filter { dqres => dqres.DQ_ErrorCode == 1018 }(0).DQ_Id
+//        val SQL_Detail = this.DataFramehuemul.DQ_GenQuery( "___temp_pk_det_02"   //sqlfrom
+//                                                          , null           //sqlwhere
+//                                                          , true            //haveField
+//                                                          , SQL_PK_firstCol      //fieldname
+//                                                          , DQ_Id_PK
+//                                                          , huemulType_DQNotification.ERROR //dq_error_notification
+//                                                          , 1018 //error_code
+//                                                          , s"(1018) PK ERROR ON ${SQL_PK_on} ($numReg reg)"// dq_error_description
+//                                                          )
+//
+//        //Execute query
+//        LocalControl.NewStep(s"Step: DQ Result: Get detail error for PK Error (step3, $numReg rows)")
+//        var DF_EDetail = huemulBigDataGov.DF_ExecuteQuery("temp_DQ_PK", SQL_Detail)
+//        DF_EDetail.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+//        val numCount = DF_EDetail.count()
+//        if (ResultDQ.DetailErrorsDF == null)
+//          ResultDQ.DetailErrorsDF = DF_EDetail
+//        else
+//          ResultDQ.DetailErrorsDF = ResultDQ.DetailErrorsDF.union(DF_EDetail)
+//      }
     }
     
     //Save errors to disk
     if (huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && ResultDQ.DetailErrorsDF != null && this.getSaveDQResult) {
-      LocalControl.NewStep("Start Save DQ Error Details ")                
+      LocalControl.NewStep(s"Start Save DQ $stepRunType Details ")
       if (!savePersist_DQ(Control, ResultDQ.DetailErrorsDF)){
-        huemulBigDataGov.logMessageWarn("Warning: DQ error can't save to disk")
+        huemulBigDataGov.logMessageWarn(s"Warning: DQ $stepRunType can't save to disk")
       }
     }
-    
-    
-    
+
     return Result
   }
   
