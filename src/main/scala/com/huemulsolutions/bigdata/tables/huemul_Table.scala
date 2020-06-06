@@ -197,6 +197,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getBusiness_ResponsibleName: String = {return _Business_ResponsibleName}
   private var _Business_ResponsibleName   : String= ""
   
+  
+  private var _partitionFieldValueTemp: String = ""
   /**
     Fields used to partition table 
    */
@@ -205,23 +207,30 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (DefinitionIsClose)
       this.raiseError("You can't change value of PartitionField, definition is close", 1033)
     else {
-      //_PartitionField = value
-      
-      //from 2.6 --> add to list
-      val partitionCol = getColumns().filter { x => x.get_MyName(this.getStorageType).toUpperCase == value.toUpperCase  }
-      if (partitionCol.length == 1) {
-        //from 2.6 --> add column to partitionColumn list
-        partitionCol(0).setPartitionColumn(1, true)
-      } else {
-        this.raiseError(s"Partition Column name '$value' not found", 1064)
-      }
+      _partitionFieldValueTemp = value
     }
   }
   
   //from 2.6 --> return array with partitionColumns defined (ordered)
-  def getPartitionList: ArrayBuffer[huemul_Columns] = {
-     return getColumns().filter { x => x.getPartitionColumnPosition >= 1 }
-                                          .sortBy { x => x.getPartitionColumnPosition }
+  def getPartitionList: Array[huemul_Columns] = {
+     val partListOrder = getALLDeclaredFields(true).filter { x => x.setAccessible(true) 
+                                                     x.get(this).isInstanceOf[huemul_Columns] && 
+                                                     x.get(this).asInstanceOf[huemul_Columns].getPartitionColumnPosition >= 1
+                                             }.sortBy { x => x.setAccessible(true)
+                                                             x.get(this).asInstanceOf[huemul_Columns].getPartitionColumnPosition}
+                                             
+     //val b2 = partListOrder.ma
+     //                                        }.map { x => x.setAccessible(true) 
+     //                                                        x.get(this).asInstanceOf[huemul_Columns]}
+     val result = partListOrder.map { x => x.setAccessible(true) 
+       x.get(this).asInstanceOf[huemul_Columns]  
+     }                                         
+    
+                                         
+    return result
+     
+     //return getColumns().filter { x => x.getPartitionColumnPosition >= 1 }
+     //                                     .sortBy { x => x.getPartitionColumnPosition }
      
   }
   
@@ -760,10 +769,40 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (this.getStorageType_OldValueTrace == null)
       raiseError(s"huemul_Table Error: HBase is not available for OldValueTraceTable",1063)
       
+    if (_partitionFieldValueTemp != null && _partitionFieldValueTemp != "") {
+      val partitionCol2 =  getALLDeclaredFields().filter { x => x.setAccessible(true) 
+                                                               x.get(this).isInstanceOf[huemul_Columns] && x.getName.toUpperCase() == _partitionFieldValueTemp.toUpperCase() }
+    
+     
+      if (partitionCol2.length == 1) {
+        partitionCol2(0).setAccessible(true)
+        val DataField = partitionCol2(0).get(this).asInstanceOf[huemul_Columns]
+        DataField.setPartitionColumn(1, true)
+      } else 
+        this.raiseError(s"Partition Column name '${_partitionFieldValueTemp}' not found", 1064)
+    }
+    
+      /*
+    val partitionCol =  getALLDeclaredFields().filter { x => x.setAccessible(true) 
+                                                             x.get(this).isInstanceOf[huemul_Columns] }
+    &&
+                                                             x.getName.toUpperCase() == _partitionFieldValueTemp.toUpperCase()
+      //getColumns().filter { x => x.get_MyName(this.getStorageType).toUpperCase == value.toUpperCase  }
+    if (partitionCol.length == 1) {
+          //from 2.6 --> add column to partitionColumn list
+          partitionCol(0).setPartitionColumn(1, true)
+        } else {
+          this.raiseError(s"Partition Column name '$value' not found", 1064)
+        }
+      }
+    }
+    * 
+    */
+        
+      
     if (this._TableType == null)
       raiseError(s"huemul_Table Error: TableType must be defined",1034)
-    else if (this._TableType == huemulType_Tables.Transaction && getPartitionField == "")
-      raiseError(s"huemul_Table Error: Partitions should be defined if TableType is Transactional, use column.setPartitionColumn",1035)
+    
     //from 2.6 --> allow partitionColumns in all tables, this check was disabled
     //else if (this._TableType != huemulType_Tables.Transaction && getPartitionField != "")
     //  raiseError(s"huemul_Table Error: PartitionField shouldn't be defined if TableType is ${this._TableType}",1036)
@@ -892,6 +931,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         _HBase_rowKeyCalc = s"concat(${_HBase_rowKeyCalc})"
     }
     
+    if (this._TableType == huemulType_Tables.Transaction && getPartitionField == "")
+      raiseError(s"huemul_Table Error: Partitions should be defined if TableType is Transactional, use column.setPartitionColumn",1035)
+    
     
     if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"HuemulControl: register metadata")
     //Register TableName and fields
@@ -984,12 +1026,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //from 2.6 --> change logic
       //exclude partitioned columns
       val rest_array = c.filter { x => x.setAccessible(true) 
+                                     x.get(this).isInstanceOf[huemul_Columns] &&
                                      x.get(this).asInstanceOf[huemul_Columns].getPartitionColumnPosition == 0}
       
       //from 2.6
       //get partitioned columns ordered by getPartitionColumnPosition
       val partitionlast = pClass.getDeclaredFields().filter { x => x.setAccessible(true)
-                                      x.get(this).isInstanceOf[huemul_Columns]
+                                      x.get(this).isInstanceOf[huemul_Columns] &&
                                       x.get(this).asInstanceOf[huemul_Columns].getPartitionColumnPosition >= 1 }
                                 .sortBy { x => x.setAccessible(true)
                                           x.get(this).asInstanceOf[huemul_Columns].getPartitionColumnPosition }
@@ -1395,7 +1438,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Step 1: full join of both DataSet, old for actual recordset, new for new DataFrame
     StringSQL = s"""SELECT ${StringSQL}
                     ,${StringSQL_hash} as ${__MDM_hash}
-                    ${StringSQL_partition}
+                    ,${StringSQL_partition}
                     FROM $OfficialAlias new
                           """
        
@@ -2742,8 +2785,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //from 2.6 --> validate numpartitions = numvalues
       //if (!huemulBigDataGov.HasName(PartitionValueForSelectiveUpdate) && _TableType == huemulType_Tables.Transaction)
-      if (PartitionValuesForSelectiveUpdate.length == getPartitionList.length ) 
-        raiseError(s"huemul_Table Error: Partition Value not defined", 1044)
+      if (getPartitionList.length > 0 && (PartitionValuesForSelectiveUpdate.length != getPartitionList.length ||
+                                          PartitionValuesForSelectiveUpdate.filter { x => x == null }.length > 0)) 
+        raiseError(s"huemul_Table Error: Partition Value not defined (partitions: ${getPartitionList.mkString(",") }, values: ${PartitionValuesForSelectiveUpdate.mkString(",")}) ", 1044)
         
       
       var FullPathString = this.getFullNameWithPath()
@@ -3275,13 +3319,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     _NumRows_Excluded = 0  
       
+    var partitionValueString = ""
+    if (PartitionValueForSelectiveUpdate != null)
+      partitionValueString = PartitionValueForSelectiveUpdate.mkString(", ")
+    
     var LocalControl = new huemul_Control(huemulBigDataGov, Control ,huemulType_Frequency.ANY_MOMENT, false )
     LocalControl.AddParamInformation("AliasNewData", AliasNewData)
     LocalControl.AddParamInformation("IsInsert", IsInsert.toString())
     LocalControl.AddParamInformation("IsUpdate", IsUpdate.toString())
     LocalControl.AddParamInformation("IsDelete", IsDelete.toString())
     LocalControl.AddParamInformation("IsSelectiveUpdate", IsSelectiveUpdate.toString())
-    LocalControl.AddParamInformation("PartitionValueForSelectiveUpdate", PartitionValueForSelectiveUpdate.mkString(", "))
+    LocalControl.AddParamInformation("PartitionValueForSelectiveUpdate", partitionValueString)
     
     var result : Boolean = true
     var ErrorCode: Integer = null
