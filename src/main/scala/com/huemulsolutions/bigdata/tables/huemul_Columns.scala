@@ -137,7 +137,7 @@ class huemul_Columns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   private var _IsUnique: Boolean = false
   private var _IsUniqueExternalCode: String = "HUEMUL_DQ_003"
-  private var _IsUniqueNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _IsUniqueNotification: huemulType_DQNotification = _
 
   /** Get Unique External Error Code
    * @since   2.1
@@ -210,7 +210,7 @@ class huemul_Columns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   private var _Nullable: Boolean = false
   private var _NullableExternalCode: String = "HUEMUL_DQ_004"
-  private var _NullableNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _NullableNotification: huemulType_DQNotification = _
 
   /** Get Nullable External Error Code
    * @since   2.1
@@ -476,12 +476,23 @@ class huemul_Columns(dataType: DataType
   // Data Quality Rules
   // ******************************************************************************************************************
 
+  /** Define le notification hierarchy between attribute global notification and attribute data quality rule
+   * @author  christian.sattle@gmail.com
+   * @since   2.[6]
+   * @group   column_data_quality
+   *
+   * @param attributeNotification  Notification level attribute data quality rule
+   * @return                      Notification level
+   */
+  private[bigdata] def getDQHierarchyNotificationLevel(attributeNotification: huemulType_DQNotification) :huemulType_DQNotification =
+    if (attributeNotification == null) getDQ_NotificationX else attributeNotification
+
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MIN length -----------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   private var _DQMinLen: Integer = _
   private var _DQMinLenExternalCode: String = "HUEMUL_DQ_006"
-  private var _DQMinLenNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _DQMinLenNotification: huemulType_DQNotification = _
 
   /** Get data quality min length error code
    * @since   1.1
@@ -554,7 +565,7 @@ class huemul_Columns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   private var _DQMaxLen: Integer = _
   private var _DQMaxLenExternalCode: String = "HUEMUL_DQ_006"
-  private var _DQMaxLenNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _DQMaxLenNotification: huemulType_DQNotification = _
 
   /** Get data quality max length error code
    * @since   1.1
@@ -629,7 +640,7 @@ class huemul_Columns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   private var _DQMinDecimalValue: Decimal = _
   private var _DQMinDecimalValueExternalCode: String = "HUEMUL_DQ_007"
-  private var _DQMinDecimalValueNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _DQMinDecimalValueNotification: huemulType_DQNotification = _
 
   /** Get data quality min decimal value error code
    * @since   1.1
@@ -704,7 +715,7 @@ class huemul_Columns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   private var _DQMaxDecimalValue: Decimal = _
   private var _DQMaxDecimalValueExternalCode: String = "HUEMUL_DQ_007"
-  private var _DQMaxDecimalValueNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _DQMaxDecimalValueNotification: huemulType_DQNotification = _
 
   /** Get data quality max decimal value error code
    * @since   1.1
@@ -778,7 +789,7 @@ class huemul_Columns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   private var _DQMinDateTimeValue: String = _
   private var _DQMinDateTimeValueExternalCode: String = "HUEMUL_DQ_008"
-  private var _DQMinDateTimeValueNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _DQMinDateTimeValueNotification: huemulType_DQNotification = _
 
   /** Get data quality min date time value error code
    * @since   1.1
@@ -855,7 +866,7 @@ class huemul_Columns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   private var _DQMaxDateTimeValue: String = _
   private var _DQMaxDateTimeValueExternalCode: String = "HUEMUL_DQ_008"
-  private var _DQMaxDateTimeValueNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _DQMaxDateTimeValueNotification: huemulType_DQNotification = _
 
   /** Get data quality max date time value error code
    * @since   1.1
@@ -934,7 +945,7 @@ class huemul_Columns(dataType: DataType
   // ToDo: Validate Regular Expression
   private var _DQRegExp: String = _
   private var _DQRegExpExternalCode: String = "HUEMUL_DQ_005"
-  private var _DQRegExpNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
+  private var _DQRegExpNotification: huemulType_DQNotification = _
 
   /** Get data quality regular expression error code
    * @since   1.1
@@ -1014,7 +1025,7 @@ class huemul_Columns(dataType: DataType
   // Column data quality notification ---------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // Column Data Rule Notification Level ERROR(default), WARNING or WARNING_EXCLUDE for all column data rules
-  private var _DQNotification: huemulType_DQNotification = _
+  private var _DQNotification: huemulType_DQNotification = huemulType_DQNotification.ERROR
 
   /** Set de Error Notification Level for the column data quality for all column data rules
    *
@@ -1038,7 +1049,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_Notification: huemulType_DQNotification = _DQNotification
+  def getDQ_NotificationX: huemulType_DQNotification = _DQNotification
 
   // ******************************************************************************************************************
   // MDM Properties
