@@ -17,6 +17,8 @@ import org.apache.spark.sql.types._
  * @example
  * {{{
  * val countryId: huemul_Columns = new huemul_Columns (IntegerType, true,"Country Identification")
+ *
+ * val description: huemul_Columns = new huemul_Columns (StringType, true,"Country Description")
  * }}}
  *
  * @constructor Create a new huemul_Columns with a `dataType`, `isRequired`, and `description`.
