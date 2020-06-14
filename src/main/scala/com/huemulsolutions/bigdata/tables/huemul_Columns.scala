@@ -512,11 +512,13 @@ class huemul_Columns(param_DataType: DataType
   
   
   //from 2.6
-  private var _partitionedPosition: Integer = 0
-  private var _partitionedDropBeforeSave: Boolean = true
-  def getPartitionColumnPosition: Integer = {return _partitionedPosition}
-  def getPartitionDropBeforeSave: Boolean = {return _partitionedDropBeforeSave}
-  def setPartitionColumn(position: Integer, dropBeforeInsert: Boolean = true): huemul_Columns = {
+  private var _partitionPosition: Integer = 0
+  private var _partitionDropBeforeSave: Boolean = true
+  private var _partitionOneValuePerProcess: Boolean = true
+  def getPartitionColumnPosition: Integer = _partitionPosition
+  def getPartitionDropBeforeSave: Boolean = _partitionDropBeforeSave
+  def getPartitionOneValuePerProcess: Boolean = _partitionOneValuePerProcess
+  def setPartitionColumn(position: Integer, dropBeforeInsert: Boolean = true, oneValuePerProcess: Boolean = true): huemul_Columns = {
     if (DefinitionIsClose) {
       sys.error("You can't change value of setPartitionColumn, definition is close")
       return this
@@ -527,10 +529,11 @@ class huemul_Columns(param_DataType: DataType
       return this
     }
 
-    _partitionedPosition = position
-    _partitionedDropBeforeSave = dropBeforeInsert
+    _partitionPosition = position
+    _partitionDropBeforeSave = dropBeforeInsert
+    _partitionOneValuePerProcess = oneValuePerProcess
     
-    return this;
+    this
   }
   
   
