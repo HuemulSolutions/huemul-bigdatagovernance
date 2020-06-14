@@ -2,17 +2,13 @@ package com.huemulsolutions.bigdata.tables
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.util._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 
 import java.lang.Long
 import scala.collection.mutable._
-//import org.apache.hadoop.fs.FileSystem
-//import org.apache.hadoop.fs.permission.FsPermission
 import huemulType_Tables._
 import huemulType_StorageType._
-//import com.huemulsolutions.bigdata._
 import com.huemulsolutions.bigdata.dataquality.huemul_DataQuality
 import com.huemulsolutions.bigdata.dataquality.huemul_DataQualityResult
 import com.huemulsolutions.bigdata.common._
@@ -21,17 +17,8 @@ import com.huemulsolutions.bigdata.control.huemulType_Frequency
 import com.huemulsolutions.bigdata.control.huemulType_Frequency._
 
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel
-import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
-//import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel.huemulType_DQQueryLevel
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification
-import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
-//import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification.huemulType_DQNotification
 import com.huemulsolutions.bigdata.dataquality.huemul_DQRecord
-//import com.huemulsolutions.bigdata.control.huemulType_Frequency
-//import com.huemulsolutions.bigdata.control.huemulType_Frequency.huemulType_Frequency
-//import com.huemulsolutions.bigdata.control.huemulType_Frequency.huemulType_Frequency
-//import com.huemulsolutions.bigdata.tables.huemulType_Tables.huemulType_Tables
-import com.huemulsolutions.bigdata.tables.huemulType_InternalTableType._
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
 import com.huemulsolutions.bigdata.tables.huemulType_InternalTableType.huemulType_InternalTableType
 
@@ -239,6 +226,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
      return getPartitionList.map { x => x.get_MyName(this.getStorageType) }.mkString(",")
      
   }
+
+  //from 2.6 --> method to save data
+  private def getPartitionListForSave: Array[String] = {
+    return getPartitionList.map { x => x.get_MyName(this.getStorageType) }
+
+  }
   
   //From 2.6 --> drop this attribute
   //private var _PartitionField   : String= null
@@ -345,7 +338,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    DataQuality: max N° records, null does'nt apply  DQ , 0 value doesn't accept new records (raiseError if new record found)
    If table is empty, DQ doesn't apply
    */
-  def setDQ_MaxNewRecords_Num(value: Long) {
+  def setDQ_MaxNewRecords_Num(value: java.lang.Long) {
     if (DefinitionIsClose)
       this.raiseError("You can't change value of DQ_MaxNewRecords_Num, definition is close", 1033)
     else
@@ -777,7 +770,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (partitionCol2.length == 1) {
         partitionCol2(0).setAccessible(true)
         val DataField = partitionCol2(0).get(this).asInstanceOf[huemul_Columns]
-        DataField.setPartitionColumn(1, true)
+        DataField.setPartitionColumn(1, true, true)
       } else 
         this.raiseError(s"Partition Column name '${_partitionFieldValueTemp}' not found", 1064)
     }
@@ -1381,7 +1374,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
       val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
-      
+
       val NewColumnCast = ApplyAutoCast(if (huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"${Field.get_SQLForInsert()} " else s"New.${Field.get_MappedName()}"
                                         ,_dataType.sql)
         
@@ -1433,7 +1426,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val __MDM_hash = huemulBigDataGov.getCaseType( this.getStorageType, "MDM_hash")
     
     //from 2.6 --> create partitions sql (replace commented text)
-    val StringSQL_partition = partitionList.sortBy { x => x.getPartitionColumnPosition}.map{x =>x.get_MyName(this.getStorageType)}.mkString(",")
+    val StringSQL_partition = partitionList.sortBy { x => x.getPartitionColumnPosition}.map{x =>
+      val _colMyName = x.get_MyName(this.getStorageType)
+      val _dataType  = x.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
+
+      val NewColumnCast = ApplyAutoCast(if (huemulBigDataGov.HasName(x.get_SQLForInsert())) s"${x.get_SQLForInsert()} " else s"New.${x.get_MappedName()}"
+                                        ,_dataType.sql)
+
+      val result = s"${NewColumnCast} as ${_colMyName} \n"
+
+      result
+    }.mkString(",")
     
     //Step 1: full join of both DataSet, old for actual recordset, new for new DataFrame
     StringSQL = s"""SELECT ${StringSQL}
@@ -3264,13 +3267,21 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
+    var Result: Boolean = false
     val newValue: ArrayBuffer[String] = new ArrayBuffer[String]()
     newValue.append(PartitionValueForSelectiveUpdate)
-    
-    return executeSelectiveUpdate(NewAlias, newValue, storageLevelOfDF)
+
+    val whoExecute = getClassAndPackage()
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+      Result = executeSelectiveUpdate(NewAlias, newValue, storageLevelOfDF)
+    else {
+      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+    }
+
+    return Result
   }
   
-  def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: ArrayBuffer[String], storageLevelOfDF: org.apache.spark.storage.StorageLevel ): Boolean = {   
+  def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: ArrayBuffer[String], storageLevelOfDF: org.apache.spark.storage.StorageLevel ): Boolean = {
     var Result: Boolean = false
       
     val whoExecute = getClassAndPackage()  
@@ -3660,7 +3671,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           if (getPartitionList.length == 0) //save without partitions
             DF_Final.write.mode(localSaveMode).format(_getSaveFormat(this.getStorageType)).save(getFullNameWithPath())
           else  //save with partitions
-            DF_Final.write.mode(localSaveMode).format(_getSaveFormat(this.getStorageType)).partitionBy(getPartitionField).save(getFullNameWithPath())
+            DF_Final.write.mode(localSaveMode).format(_getSaveFormat(this.getStorageType)).partitionBy(getPartitionListForSave:_*).save(getFullNameWithPath())
         }
         
         
@@ -3682,22 +3693,37 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
          
         //drop old partitions only if one of them was marked as dropBeforeInsert
-        if (!continueSearch && dropPartitions.length > 0) {
+        if (!continueSearch && dropPartitions.nonEmpty) {
           this.PartitionValue = new ArrayBuffer[String]
           //get partitions value to drop
           LocalControl.NewStep("Save: Get partitions values to delete (distinct)")
-          val partitionFieldsName = dropPartitions.map { x => x.get_MyName(getStorageType) }.mkString(",")
-          var DFDistinct_step = DF_Final.select(partitionFieldsName).distinct()
+          //val partitionFieldsName = dropPartitions.map { x => x.get_MyName(getStorageType) }.mkString(",")
+          var DFDistinct_step = DF_Final.select(dropPartitions.map(name => col(name.get_MyName(getStorageType))): _*).distinct()
+          //var DFDistinct_step = DF_Final.select(getPartitionListForSave.map(name => col(name)): _*).distinct()
           
           //add columns cast
           dropPartitions.foreach { x => 
             DFDistinct_step = DFDistinct_step.withColumn( x.get_MyName(getStorageType), DF_Final.col(x.get_MyName(getStorageType)).cast(StringType))  
           }
-          
+
+          if (huemulBigDataGov.DebugMode) {
+            huemulBigDataGov.logMessageDebug("show distinct values to delete")
+            DFDistinct_step.show()
+          }
+
           //get data
           val DFDistinct = DFDistinct_step.collect()
-          
-          //get data values
+
+          //validate num distinct values per column according to definition
+          //add columns cast
+          dropPartitions.foreach { x =>
+            val numDistinctValues = DFDistinct_step.select(x.get_MyName(getStorageType)).distinct().count()
+            if (x.getPartitionOneValuePerProcess && numDistinctValues > 1) {
+              raiseError(s"huemul_Table Error: N° values in partition wrong for column ${x.get_MyName(getStorageType)}!, expected: 1, real: ${numDistinctValues}",1015)
+            }
+          }
+
+            //get data values
           DFDistinct.foreach { xData => 
             var pathToDelete: String = ""
             var whereToDelete: ArrayBuffer[String] = new ArrayBuffer[String]
@@ -3712,8 +3738,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             this.PartitionValue.append(pathToDelete)
             
             LocalControl.NewStep(s"Save: deleting partition ${pathToDelete} ")
-            pathToDelete = pathToDelete.concat(getFullNameWithPath())
-            
+            pathToDelete = getFullNameWithPath().concat(pathToDelete)
+
+            if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"deleting $pathToDelete")
             //create fileSystema link
             val FullPath = new org.apache.hadoop.fs.Path(pathToDelete)
             val fs = FullPath.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)   
@@ -3722,7 +3749,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
               //FROM 2.4 --> NEW DELETE FOR DATABRICKS             
               val FullPath = new org.apache.hadoop.fs.Path(getFullNameWithPath())
               if (fs.exists(FullPath)) {
-                val strSQL_delete: String = s"DELETE FROM delta.`${getFullNameWithPath}` WHERE ${whereToDelete.mkString(" and ")} "
+                val strSQL_delete: String = s"DELETE FROM delta.`${getFullNameWithPath()}` WHERE ${whereToDelete.mkString(" and ")} "
                 if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(strSQL_delete)
                 val dfDelete = huemulBigDataGov.spark.sql(strSQL_delete)
               }
@@ -3741,7 +3768,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         LocalControl.NewStep("Save: OverWrite partition with new data")
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath()} ")     
           
-        DF_Final.write.mode(SaveMode.Append).format(_getSaveFormat(this.getStorageType)).partitionBy(getPartitionField).save(getFullNameWithPath())
+        DF_Final.write.mode(SaveMode.Append).format(_getSaveFormat(this.getStorageType)).partitionBy(getPartitionListForSave:_*).save(getFullNameWithPath())
         
         
         /*
@@ -3789,10 +3816,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     } catch {
       case e: Exception => 
-        
+
+        if (this.Error_Code == null || this.Error_Code == 0) {
+          this.Error_Text = s"huemul_Table Error: write in disk failed. ${e.getMessage}"
+          this.Error_Code = 1026
+        } else
+          this.Error_Text =  this.Error_Text.concat(s"huemul_Table Error: write in disk failed. ${e.getMessage}")
+
         this.Error_isError = true
-        this.Error_Text = s"huemul_Table Error: write in disk failed. ${e.getMessage}"
-        this.Error_Code = 1026
+
         Result = false
         LocalControl.Control_Error.GetError(e, getClass.getSimpleName, this.Error_Code)
     }
