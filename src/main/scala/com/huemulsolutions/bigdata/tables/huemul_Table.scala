@@ -3023,7 +3023,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           
           //Open actual file
           val DFTempCopy = huemulBigDataGov.spark.read.format(_getSaveFormat(this.getStorageType)).load(this.getFullNameWithPath())
-          
+          if (huemulBigDataGov.DebugMode) DFTempCopy.printSchema()
+
           //2.0: save previous to backup
           var tempPath: String = null
           if (huemulBigDataGov.GlobalSettings.MDM_SaveBackup && this._SaveBackup){
@@ -3049,7 +3050,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
          
           //Open temp file
           if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"open temp old df: $tempPath ")
-          val DFTempOpen = huemulBigDataGov.spark.read.format(_getSaveFormat(this.getStorageType)).load(tempPath)  //2.2 --> read.format(this._StorageType.toString()).load(tempPath)    instead of  read.parquet(tempPath)   
+          val DFTempOpen = huemulBigDataGov.spark.read.format(_getSaveFormat(this.getStorageType)).load(tempPath)  //2.2 --> read.format(this._StorageType.toString()).load(tempPath)    instead of  read.parquet(tempPath)
+          if (huemulBigDataGov.DebugMode) DFTempOpen.printSchema()
           DFTempOpen.createOrReplaceTempView(TempAlias)        
         }
       }
@@ -3117,6 +3119,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
      
       //STEP 2: Execute final table // Add debugmode and getnumpartitions in v1.3 
       DataFramehuemul._CreateFinalQuery(AliasNewData , SQLFinalTable, huemulBigDataGov.DebugMode , this.getNumPartitions, this, storageLevelOfDF)
+      if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.printSchema()
       if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.show()
       
       
@@ -3410,6 +3413,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       //Compare schemas final table
       LocalControl.NewStep("Compare Schema Final DF")
+      if (huemulBigDataGov.DebugMode) this.DataFramehuemul.DataFrame.printSchema()
       val ResultCompareSchemaFinal = CompareSchema(this.getColumns(), this.DataFramehuemul.DataFrame.schema) 
       if (ResultCompareSchemaFinal != "") {
         ErrorCode = 1014
@@ -3668,6 +3672,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           }
         }
         else {
+          if (huemulBigDataGov.DebugMode) DF_Final.printSchema()
           if (getPartitionList.length == 0) //save without partitions
             DF_Final.write.mode(localSaveMode).format(_getSaveFormat(this.getStorageType)).save(getFullNameWithPath())
           else  //save with partitions
