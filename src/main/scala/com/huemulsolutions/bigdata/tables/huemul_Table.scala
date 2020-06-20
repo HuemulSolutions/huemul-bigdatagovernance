@@ -1225,9 +1225,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    */
   private def getColumns_CreateTable(ForHive: Boolean = false, tableType: huemulType_InternalTableType = huemulType_InternalTableType.Normal ): String = {
     //WARNING!!! Any changes you make to this code, repeat it in getHBaseCatalogForHIVE
-    val fieldList = getALLDeclaredFields(false,true,tableType)
+    val partitionColumnToEnd = if (getStorageType == huemulType_StorageType.HBASE) false else true
+    val fieldList = getALLDeclaredFields(false,partitionColumnToEnd,tableType)
     val NumFields = fieldList.filter { x => x.setAccessible(true)
-                                      x.get(this).isInstanceOf[huemul_Columns] }.length
+      x.get(this).isInstanceOf[huemul_Columns] }.length
     
     //set name according to getStorageType (AVRO IS LowerCase)
     val __storageType =  if (tableType == huemulType_InternalTableType.Normal) this.getStorageType
@@ -1297,7 +1298,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       else {
         //create StructType
         //if (getPartitionField != null && getPartitionField.toLowerCase() != _colMyName.toLowerCase()) {
-        if (Field.getPartitionColumnPosition == 0) {
+        if (Field.getPartitionColumnPosition == 0 || getStorageType == huemulType_StorageType.HBASE) {
           ColumnsCreateTable += s"$coma${_colMyName} ${DataTypeLocal} \n"
           coma = ","
         } else if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
