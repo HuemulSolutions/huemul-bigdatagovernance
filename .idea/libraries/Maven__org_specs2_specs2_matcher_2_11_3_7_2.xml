@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.specs2:specs2-matcher_2.11:3.7.2">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/specs2/specs2-matcher_2.11/3.7.2/specs2-matcher_2.11-3.7.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/specs2/specs2-matcher_2.11/3.7.2/specs2-matcher_2.11-3.7.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/specs2/specs2-matcher_2.11/3.7.2/specs2-matcher_2.11-3.7.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

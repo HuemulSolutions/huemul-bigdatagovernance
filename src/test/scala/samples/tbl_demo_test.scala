@@ -32,6 +32,7 @@ class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_
   
   val codigo_id: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo")
   codigo_id.setIsPK (true)
+  codigo_id.setPartitionColumn(2,false, true)
   codigo_id.setIsUnique ( true)
   codigo_id.setDQ_MaxDateTimeValue ( "")
   codigo_id.setDQ_MinDateTimeValue ( "")
