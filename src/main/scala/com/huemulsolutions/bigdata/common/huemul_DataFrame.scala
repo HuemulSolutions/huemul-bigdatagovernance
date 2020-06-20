@@ -854,7 +854,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
           }
           
           //set user message
-          x.ResultDQ = s"DQ ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}, Name: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Error: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Error %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
+          x.ResultDQ = s"DQ ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}, Name: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Not meets: ${DQWithError}(tolerance:${x.getToleranceError_Rows}), Not meets %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
           if (huemulBigDataGov.DebugMode || IsError) huemulBigDataGov.logMessageDebug(x.ResultDQ)
                          
           var dfTableName: String = null
