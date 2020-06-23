@@ -45,14 +45,14 @@ import org.apache.log4j.Level
 
 /** huemul_BigDataGovernance es la clase inicial de la librería huemul-bigdata
  *
- *  @constructor create a new person with a name and age.
+ *  @constructor create a new huemul BigData Governances instance
  *  @param appName nombre de la aplicación
  *  @param args argumentos de la aplicación
  *  @param globalSettings configuración de rutas y Bases de datos
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.5.1"
+  val currentVersion: String = "2.6"
   val GlobalSettings = globalSettings
   val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
