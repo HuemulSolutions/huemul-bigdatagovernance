@@ -63,6 +63,13 @@ class huemul_Columns(dataType: DataType
    */
   def setDefinitionIsClose() {_DefinitionIsClose = true}
 
+  /** Set column definition to close
+   * @since   2.6
+   * @group   column_other
+   */
+  def getDefinitionIsClose: Boolean =  {_DefinitionIsClose}
+
+
   // ------------------------------------------------------------------------------------------------------------------
   // Utilities  -------------------------------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
@@ -75,7 +82,7 @@ class huemul_Columns(dataType: DataType
    * @return  true if it definition is not closed
    */
   private def checkNotCloseDefinition(propertyName:String):Boolean = {
-    if (_DefinitionIsClose) {
+    if (getDefinitionIsClose) {
       throw new Exception(s"You can't change properties $propertyName value on column, definition is close")
     }
     true
@@ -192,7 +199,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getIsUnique_Notification:  huemulType_DQNotification = _IsUniqueNotification
+  def getIsUnique_Notification:  huemulType_DQNotification = getDQHierarchyNotificationLevel(_IsUniqueNotification)
 
 
   /** Set column attribute to unique
@@ -266,7 +273,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_Nullable_Notification:  huemulType_DQNotification = _NullableNotification
+  def getDQ_Nullable_Notification:  huemulType_DQNotification = getDQHierarchyNotificationLevel(_NullableNotification)
 
   /** Set column null attribute
    * @since   1.1
@@ -276,7 +283,7 @@ class huemul_Columns(dataType: DataType
    */
   @deprecated("this method will be removed, instead use setNullable(externalCode:String = null): huemul_Columns", "3.0")
   def setNullable(value: Boolean) {
-    if (_DefinitionIsClose && value)
+    if (getDefinitionIsClose && value)
       sys.error("You can't change value of setNullable, definition is close")
     else
       _Nullable = value
@@ -487,7 +494,7 @@ class huemul_Columns(dataType: DataType
    * @return                      Notification level
    */
   private[bigdata] def getDQHierarchyNotificationLevel(attributeNotification: huemulType_DQNotification) :huemulType_DQNotification =
-    if (attributeNotification == null) getDQ_NotificationX else attributeNotification
+    if (attributeNotification == null) getDQ_Notification else attributeNotification
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MIN length -----------------------------------------------------------------------------------
@@ -548,7 +555,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_MinLen_Notification:  huemulType_DQNotification = _DQMinLenNotification
+  def getDQ_MinLen_Notification:  huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMinLenNotification)
 
   /** Set data quality min length value
    * @since   1.1
@@ -622,7 +629,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_MaxLen_Notification: huemulType_DQNotification = _DQMaxLenNotification
+  def getDQ_MaxLen_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMaxLenNotification)
 
   /** Set data quality max length value
    * @author  christian.sattler@gmail.com
@@ -698,7 +705,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_MinDecimalValue_Notification: huemulType_DQNotification = _DQMinDecimalValueNotification
+  def getDQ_MinDecimalValue_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMinDecimalValueNotification)
 
   /** Set data quality min decimal value
    * @since   1.1
@@ -772,7 +779,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_MaxDecimalValue_Notification: huemulType_DQNotification = _DQMaxDecimalValueNotification
+  def getDQ_MaxDecimalValue_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMaxDecimalValueNotification)
 
   /** Set data quality max decimal value
    * @since   1.1
@@ -849,7 +856,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_MinDateTimeValue_Notification: huemulType_DQNotification = _DQMinDateTimeValueNotification
+  def getDQ_MinDateTimeValue_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMinDateTimeValueNotification)
 
   /** Set data quality min date time value
    * @since   1.1
@@ -926,7 +933,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_MaxDateTimeValue_Notification: huemulType_DQNotification = _DQMaxDateTimeValueNotification
+  def getDQ_MaxDateTimeValue_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMaxDateTimeValueNotification)
 
   /** Set data quality max date time value
    * @since   1.1
@@ -1007,7 +1014,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_RegExpression_Notification: huemulType_DQNotification = _DQRegExpNotification
+  def getDQ_RegExpression_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQRegExpNotification)
 
   /** Set data quality regular expression
    * @since   1.1
@@ -1051,7 +1058,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification]]
    */
-  def getDQ_NotificationX: huemulType_DQNotification = _DQNotification
+  def getDQ_Notification: huemulType_DQNotification = _DQNotification
 
   // ******************************************************************************************************************
   // MDM Properties
@@ -1457,7 +1464,7 @@ class huemul_Columns(dataType: DataType
   def getPartitionDropBeforeSave: Boolean = _partitionDropBeforeSave
   def getPartitionOneValuePerProcess: Boolean = _partitionOneValuePerProcess
   def setPartitionColumn(position: Integer, dropBeforeInsert: Boolean = true, oneValuePerProcess: Boolean = true): huemul_Columns = {
-    if (DefinitionIsClose) {
+    if (getDefinitionIsClose) {
       sys.error("You can't change value of setPartitionColumn, definition is close")
       return this
     }

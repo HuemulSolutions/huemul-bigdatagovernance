@@ -6,13 +6,15 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import java.lang.Long
 
+import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification.huemulType_DQNotification
+
 import scala.collection.mutable._
 import huemulType_Tables._
 import huemulType_StorageType._
 import org.apache.log4j
 import org.apache.log4j.Level
 //import com.huemulsolutions.bigdata._
-=======
+
 
 import com.huemulsolutions.bigdata.dataquality.huemul_DataQuality
 import com.huemulsolutions.bigdata.dataquality.huemul_DataQualityResult
@@ -76,15 +78,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var _PkNotification:huemulType_DQNotification = huemulType_DQNotification.ERROR
 
   /** Set Primary Key notification level: ERROR(default),WARNING, WARNING_EXCLUDE
-   * @author  christian.sattler@gmail.com
+   * @author  christian.sattler@gmail.com; update: sebas_rod@hotmail.com
    * @since   2.[6]
    * @group   column_attribute
    *
    * @param value   huemulType_DQNotification ERROR,WARNING, WARNING_EXCLUDE
    * @return        huemul_Columns
+   * @note 2020-06-17 by sebas_rod@hotmail.com: add huemul_Table as return
    */
-  def setPkNotification(value: huemulType_DQNotification ) = {
+  def setPkNotification(value: huemulType_DQNotification ): huemul_Table = {
     _PkNotification = value
+    this
   }
 
   private def _storageType_default = huemulType_StorageType.PARQUET
@@ -2809,7 +2813,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Apply Data Quality according to field definition in DataDefDQ: Unique Values
     //Note: It doesn't apply getDQ_Notification, it must be explicit se the notification
     SQL_Unique_FinalTable()
-      .filter(f => validateDQRun(warning_exclude, f.getDQHierarchyNotificationLevel(f.getIsUnique_Notification) ))
+      .filter(f => validateDQRun(warning_exclude, f.getIsUnique_Notification ))
       .foreach { x =>
         log.trace(s"DF_SAVE DQ: VALIDATE UNIQUE FOR FIELD ${x.getMyName(this.getStorageType)}")
 
@@ -2819,7 +2823,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           ,s"count(1) = count(distinct ${x.getMyName(this.getStorageType)} )"
           , 2006
           , huemulType_DQQueryLevel.Aggregate
-          , x.getDQHierarchyNotificationLevel(x.getIsUnique_Notification)
+          , x.getIsUnique_Notification
           , true
           , x.getIsUnique_externalCode )
         DQ_UNIQUE.setTolerance(0L, null)
@@ -2831,7 +2835,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //ToDO: Checks te notes for default values
     SQL_NotNull_FinalTable(warning_exclude)
       .filter( f => (!f.getNullable  && (f.getDefaultValue == null || f.getDefaultValue == "null"))
-        && validateDQRun(warning_exclude, f.getDQHierarchyNotificationLevel(f.getDQ_Nullable_Notification) ) )
+        && validateDQRun(warning_exclude, f.getDQ_Nullable_Notification ) )
       .foreach { x =>
         val colMyName = x.get_MyName(this.getStorageType)
         log.trace(s"DF_SAVE DQ: VALIDATE NOT NULL FOR FIELD $colMyName")
@@ -2842,7 +2846,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           , s"${colMyName} IS NOT NULL"
           , 1023
           , huemulType_DQQueryLevel.Row
-          , x.getDQHierarchyNotificationLevel(x.getDQ_Nullable_Notification)
+          , x.getDQ_Nullable_Notification
           , true
           , x.getNullable_externalCode)
         NotNullDQ.setTolerance(0L, null)
@@ -2851,7 +2855,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
 
     //Validación DQ_RegExp
     getColumns().filter {
-      x => x.getDQ_RegExpression != null && validateDQRun(warning_exclude, x.getDQHierarchyNotificationLevel(x.getDQ_RegExpression_Notification))
+      x => x.getDQ_RegExpression != null && validateDQRun(warning_exclude, x.getDQ_RegExpression_Notification)
     }.foreach { x =>
       val _colMyName = x.getMyName(this.getStorageType)
       val SQLFormula : String = s"""${_colMyName} rlike "${x.getDQ_RegExpression}" """
@@ -2862,7 +2866,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         , s" (${SQLFormula}) or (${_colMyName} is null) "
         , 1041
         , huemulType_DQQueryLevel.Row
-        , x.getDQHierarchyNotificationLevel(x.getDQ_RegExpression_Notification)
+        , x.getDQ_RegExpression_Notification
         , true
         , x.getDQ_RegExpression_externalCode  )
 
@@ -2874,8 +2878,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Validate DQ rule max/mín length the field
     getColumns()
       .filter { x =>(
-        (x.getDQ_MinLen != null && validateDQRun(warning_exclude, x.getDQHierarchyNotificationLevel(x.getDQ_MinLen_Notification)) )
-          || (x.getDQ_MaxLen != null && validateDQRun(warning_exclude,x.getDQHierarchyNotificationLevel(x.getDQ_MaxLen_Notification)) )
+        (x.getDQ_MinLen != null && validateDQRun(warning_exclude, x.getDQ_MinLen_Notification) )
+          || (x.getDQ_MaxLen != null && validateDQRun(warning_exclude,x.getDQ_MaxLen_Notification) )
         )}
       .foreach { x =>
         val colMyName = x.getMyName(this.getStorageType)
@@ -2886,8 +2890,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           , 1020
           , if (x.getDQ_MinLen != null) x.getDQ_MinLen.toString else null
           , if (x.getDQ_MaxLen != null) x.getDQ_MaxLen.toString else null
-          , x.getDQHierarchyNotificationLevel(x.getDQ_MinLen_Notification)
-          , x.getDQHierarchyNotificationLevel(x.getDQ_MaxLen_Notification)
+          , x.getDQ_MinLen_Notification
+          , x.getDQ_MaxLen_Notification
           , s"length(${colMyName}) >= ${x.getDQ_MinLen}"
           , s"length(${colMyName}) <= ${x.getDQ_MaxLen}"
           , x.getDQ_MinLen_externalCode
@@ -2899,8 +2903,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Validate DQ rule max/mín number value
     getColumns()
       .filter { x => (
-        (x.getDQ_MinDecimalValue != null && validateDQRun(warning_exclude, x.getDQHierarchyNotificationLevel(x.getDQ_MinDecimalValue_Notification) ) )
-          || (x.getDQ_MaxDecimalValue != null && validateDQRun(warning_exclude, x.getDQHierarchyNotificationLevel(x.getDQ_MaxDecimalValue_Notification) ))
+        (x.getDQ_MinDecimalValue != null && validateDQRun(warning_exclude, x.getDQ_MinDecimalValue_Notification ) )
+          || (x.getDQ_MaxDecimalValue != null && validateDQRun(warning_exclude, x.getDQ_MaxDecimalValue_Notification ))
         )}
       .foreach { x =>
         val colMyName = x.getMyName(this.getStorageType)
@@ -2911,8 +2915,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           , 1021
           , if (x.getDQ_MinDecimalValue != null) x.getDQ_MinDecimalValue.toString else null
           , if (x.getDQ_MaxDecimalValue != null) x.getDQ_MaxDecimalValue.toString else null
-          , x.getDQHierarchyNotificationLevel(x.getDQ_MinDecimalValue_Notification)
-          , x.getDQHierarchyNotificationLevel(x.getDQ_MinDecimalValue_Notification)
+          , x.getDQ_MinDecimalValue_Notification
+          , x.getDQ_MaxDecimalValue_Notification
           , s" ${colMyName} >= ${x.getDQ_MinDecimalValue} "
           , s" ${colMyName} <= ${x.getDQ_MaxDecimalValue} "
           , x.getDQ_MinDecimalValue_externalCode
@@ -2924,8 +2928,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Validación DQ máximo y mínimo de fechas
     getColumns()
       .filter { x => (
-        (x.getDQ_MinDateTimeValue != null && validateDQRun(warning_exclude, x.getDQHierarchyNotificationLevel(x.getDQ_MinDateTimeValue_Notification) ) )
-          || (x.getDQ_MaxDateTimeValue != null && validateDQRun(warning_exclude, x.getDQHierarchyNotificationLevel(x.getDQ_MaxDateTimeValue_Notification) ))
+        (x.getDQ_MinDateTimeValue != null && validateDQRun(warning_exclude, x.getDQ_MinDateTimeValue_Notification ) )
+          || (x.getDQ_MaxDateTimeValue != null && validateDQRun(warning_exclude, x.getDQ_MaxDateTimeValue_Notification ))
         )}
       .foreach { x =>
         val colMyName = x.getMyName(this.getStorageType)
@@ -2936,8 +2940,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           , 1022
           , x.getDQ_MinDateTimeValue
           , x.getDQ_MaxDateTimeValue
-          , x.getDQHierarchyNotificationLevel(x.getDQ_MinDateTimeValue_Notification)
-          , x.getDQHierarchyNotificationLevel(x.getDQ_MinDateTimeValue_Notification)
+          , x.getDQ_MinDateTimeValue_Notification
+          , x.getDQ_MaxDateTimeValue_Notification
           , s" ${colMyName} >= '${x.getDQ_MinDateTimeValue}' "
           , s" ${colMyName} <= '${x.getDQ_MaxDateTimeValue}' "
           , x.getDQ_MinDateTimeValue_externalCode
