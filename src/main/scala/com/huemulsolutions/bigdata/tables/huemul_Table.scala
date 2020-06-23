@@ -2060,25 +2060,24 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        
     return StringSQL 
   }
-  
+
   /**
-  CREATE SQL SCRIPT FIELDS FOR VALIDATE NOT NULL ATTRIBUTES
+  CREATE SQL SCRIPT FIELDS FOR VALIDATE NOT NULL ATTRIBUTES //warning_exclude: Boolean
    */
-  private def SQL_NotNull_FinalTable(warning_exclude: Boolean): ArrayBuffer[huemul_Columns] = {
+  private def SQL_NotNull_FinalTable(): ArrayBuffer[huemul_Columns] = {
     var StringSQL: ArrayBuffer[huemul_Columns] = new ArrayBuffer[huemul_Columns]()
     getALLDeclaredFields().filter { x => x.setAccessible(true)
-                                          x.get(this).isInstanceOf[huemul_Columns] &&
-                                         !x.get(this).asInstanceOf[huemul_Columns].getNullable && 
-                                         warning_exclude == false &&
-                                         huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
-    .foreach { x =>     
-      //Get field
-      var Field = x.get(this).asInstanceOf[huemul_Columns]
-      
-      StringSQL.append(Field)
-    }
-       
-    return StringSQL 
+         x.get(this).isInstanceOf[huemul_Columns] &&
+        !x.get(this).asInstanceOf[huemul_Columns].getNullable && //warning_exclude == false &&
+        huemulBigDataGov.HasName(x.get(this).asInstanceOf[huemul_Columns].get_MappedName)}
+      .foreach { x =>
+        //Get field
+        var Field = x.get(this).asInstanceOf[huemul_Columns]
+
+        StringSQL.append(Field)
+      }
+
+    return StringSQL
   }
   
   /**
@@ -2833,8 +2832,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //Apply Data Quality according to field definition in DataDefDQ: Accept nulls (nullable)
     //Note: If it has default value and it is NOT NULL it will not be evaluated
     //ToDO: Checks te notes for default values
-    SQL_NotNull_FinalTable(warning_exclude)
-      .filter( f => (!f.getNullable  && (f.getDefaultValue == null || f.getDefaultValue == "null"))
+    SQL_NotNull_FinalTable()
+      .filter( f => (!f.getNullable  && (f.getDefaultValue == null || f.getDefaultValue.equals("null")))
         && validateDQRun(warning_exclude, f.getDQ_Nullable_Notification ) )
       .foreach { x =>
         val colMyName = x.get_MyName(this.getStorageType)
