@@ -55,7 +55,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _DataBase = value
   }
-  private var _DataBase: ArrayBuffer[huemul_KeyValuePath] = null
+  private var _DataBase: ArrayBuffer[huemul_KeyValuePath] = _
     
   /**
    Type of Table (Reference; Master; Transaction
@@ -66,11 +66,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _TableType = value
   }
-  def getTableType: huemulType_Tables = {return _TableType}
+  def getTableType: huemulType_Tables = { _TableType}
   private var _TableType : huemulType_Tables = huemulType_Tables.Transaction
   
   private var _PK_externalCode: String = "HUEMUL_DQ_002"
-  def getPK_externalCode: String = {return if (_PK_externalCode==null) "HUEMUL_DQ_002" else _PK_externalCode }
+  def getPK_externalCode: String = { if (_PK_externalCode==null) "HUEMUL_DQ_002" else _PK_externalCode }
   def setPK_externalCode(value: String) {
     _PK_externalCode = value  
   }
@@ -101,7 +101,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _SaveDQResult = value
   }
-  def getSaveDQResult: Boolean = {return _SaveDQResult}
+  def getSaveDQResult: Boolean = { _SaveDQResult}
   private var _SaveDQResult : Boolean = true
   
   /**
@@ -113,9 +113,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _SaveBackup = value
   }
-  def getSaveBackup: Boolean = {return _SaveBackup}
+  def getSaveBackup: Boolean = { _SaveBackup}
   private var _SaveBackup : Boolean = false
-  def _getBackupPath(): String = {return _BackupPath }
+  def _getBackupPath(): String = { _BackupPath }
   private var _BackupPath: String = ""
   
   /**
@@ -127,8 +127,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _StorageType = value
   }
-  def getStorageType: huemulType_StorageType = {return _StorageType}
-  private var _StorageType : huemulType_StorageType = null
+  def getStorageType: huemulType_StorageType = { _StorageType}
+  private var _StorageType : huemulType_StorageType = _
   
   
   /**
@@ -150,7 +150,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         else if (_StorageType_DQResult == null && getStorageType == huemulType_StorageType.HBASE ) _storageType_default  
         else getStorageType
   }
-  private var _StorageType_DQResult : huemulType_StorageType = null
+  private var _StorageType_DQResult : huemulType_StorageType = _
   
   /**
    Type of Persistent storage (parquet, csv, json) for DQ
@@ -171,7 +171,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         else if (_StorageType_OldValueTrace == null && getStorageType == huemulType_StorageType.HBASE ) _storageType_default  
         else getStorageType    
   }
-  private var _StorageType_OldValueTrace : huemulType_StorageType = null
+  private var _StorageType_OldValueTrace : huemulType_StorageType = _
   
   //val _StorageType_OldValueTrace: String = "parquet"  //csv, json, parquet, orc
   /**
@@ -183,7 +183,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _Description = value
   }
-  def getDescription: String = {return _Description}
+  def getDescription: String = { _Description}
   private var _Description   : String= ""
   
   /**
@@ -195,7 +195,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _IT_ResponsibleName = value
   }
-  def getIT_ResponsibleName: String = {return _IT_ResponsibleName}
+  def getIT_ResponsibleName: String = { _IT_ResponsibleName}
   private var _IT_ResponsibleName   : String= ""
   
   /**
@@ -207,7 +207,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _Business_ResponsibleName = value
   }
-  def getBusiness_ResponsibleName: String = {return _Business_ResponsibleName}
+  def getBusiness_ResponsibleName: String = { _Business_ResponsibleName}
   private var _Business_ResponsibleName   : String= ""
   
   
@@ -240,7 +240,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
      }                                         
     
                                          
-    return result
+     result
      
      //return getColumns().filter { x => x.getPartitionColumnPosition >= 1 }
      //                                     .sortBy { x => x.getPartitionColumnPosition }
@@ -249,13 +249,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   
   //from 2.6 --> change code, get results from huemul_Columns.getPartitionColumnPosition
   def getPartitionField: String = {
-     return getPartitionList.map { x => x.get_MyName(this.getStorageType) }.mkString(",")
+      getPartitionList.map { x => x.get_MyName(this.getStorageType) }.mkString(",")
      
   }
 
   //from 2.6 --> method to save data
   private def getPartitionListForSave: Array[String] = {
-    return getPartitionList.map { x => x.get_MyName(this.getStorageType) }
+     getPartitionList.map { x => x.get_MyName(this.getStorageType) }
 
   }
   
@@ -272,7 +272,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       _LocalPath = value
   }
   private var _LocalPath   : String= ""
-  def getLocalPath: String = {return if (_LocalPath == null) "null/"
+  def getLocalPath: String = { if (_LocalPath == null) "null/"
                                      else if (_LocalPath.takeRight(1) != "/") _LocalPath.concat("/")
                                      else _LocalPath }
   
@@ -283,8 +283,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _GlobalPaths = value
   }
-  def getGlobalPaths: ArrayBuffer[huemul_KeyValuePath] = {return _GlobalPaths}
-  private var _GlobalPaths: ArrayBuffer[huemul_KeyValuePath] = null
+  def getGlobalPaths: ArrayBuffer[huemul_KeyValuePath] = { _GlobalPaths}
+  private var _GlobalPaths: ArrayBuffer[huemul_KeyValuePath] = _
   
   def WhoCanRun_executeFull_addAccess(ClassName: String, PackageName: String) {
     if (DefinitionIsClose)
@@ -292,7 +292,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _WhoCanRun_executeFull.AddAccess(ClassName, PackageName)
   }
-  def getWhoCanRun_executeFull: huemul_Authorization = {return _WhoCanRun_executeFull}
+  def getWhoCanRun_executeFull: huemul_Authorization = { _WhoCanRun_executeFull}
   private var _WhoCanRun_executeFull: huemul_Authorization = new huemul_Authorization()
   
   def WhoCanRun_executeOnlyInsert_addAccess(ClassName: String, PackageName: String) {
@@ -301,7 +301,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _WhoCanRun_executeOnlyInsert.AddAccess(ClassName, PackageName)
   }
-  def getWhoCanRun_executeOnlyInsert: huemul_Authorization = {return _WhoCanRun_executeOnlyInsert}
+  def getWhoCanRun_executeOnlyInsert: huemul_Authorization = { _WhoCanRun_executeOnlyInsert}
   private var _WhoCanRun_executeOnlyInsert: huemul_Authorization = new huemul_Authorization()
   
   def WhoCanRun_executeOnlyUpdate_addAccess(ClassName: String, PackageName: String) {
@@ -310,7 +310,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _WhoCanRun_executeOnlyUpdate.AddAccess(ClassName, PackageName)
   }
-  def getWhoCanRun_executeOnlyUpdate: huemul_Authorization = {return _WhoCanRun_executeOnlyUpdate}
+  def getWhoCanRun_executeOnlyUpdate: huemul_Authorization = { _WhoCanRun_executeOnlyUpdate}
   private var _WhoCanRun_executeOnlyUpdate: huemul_Authorization = new huemul_Authorization()
   
   /**
@@ -322,8 +322,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _Frequency = value
   }
-  private var _Frequency: huemulType_Frequency = null
-  def getFrequency: huemulType_Frequency = {return _Frequency}
+  private var _Frequency: huemulType_Frequency = _
+  def getFrequency: huemulType_Frequency = { _Frequency}
   
   /**
    * SaveDQErrorOnce: false (default value) to save DQ result to disk only once (all together)
@@ -336,7 +336,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       _SaveDQErrorOnce = value
   }
   private var _SaveDQErrorOnce: Boolean = false
-  def getSaveDQErrorOnce: Boolean = {return _SaveDQErrorOnce}
+  def getSaveDQErrorOnce: Boolean = { _SaveDQErrorOnce}
   
   //from 2.3 --> #85 add new options to determine whether create External Table
   //var createExternalTable_Normal: Boolean = true
@@ -370,8 +370,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _DQ_MaxNewRecords_Num = value
   }
-  def getDQ_MaxNewRecords_Num: Long = {return _DQ_MaxNewRecords_Num}
-  private var _DQ_MaxNewRecords_Num: Long = null
+  def getDQ_MaxNewRecords_Num: Long = { _DQ_MaxNewRecords_Num}
+  private var _DQ_MaxNewRecords_Num: Long = _
   /**
    DataQuality: Max % new records vs old records, null does'n apply DQ, 0% doesn't accept new records (raiseError if new record found), 100%-> 0.1 accept double old records)
    */
@@ -381,8 +381,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _DQ_MaxNewRecords_Perc = value
   }
-  def getDQ_MaxNewRecords_Perc: Decimal = {return _DQ_MaxNewRecords_Perc}
-  private var _DQ_MaxNewRecords_Perc: Decimal = null
+  def getDQ_MaxNewRecords_Perc: Decimal = { _DQ_MaxNewRecords_Perc}
+  private var _DQ_MaxNewRecords_Perc: Decimal = _
   
   //V1.3 --> set num partitions with repartition
   /**
@@ -394,7 +394,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _NumPartitions = value
   }
-  def getNumPartitions: Integer = {return _NumPartitions}
+  def getNumPartitions: Integer = { _NumPartitions}
   private var _NumPartitions : Integer = 0
   
   private val numPartitionsForDQFiles: Integer = 2
@@ -402,7 +402,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   //FROM 2.5 
   //ADD AVRO SUPPORT
   private var _avro_format: String = huemulBigDataGov.GlobalSettings.getAVRO_format()
-  def getAVRO_format(): String = {return  _avro_format}
+  def getAVRO_format(): String = {  _avro_format}
   def setAVRO_format(value: String) {_avro_format = value} 
   
   /*
@@ -435,9 +435,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   //private var CreateInHive: Boolean = true
   private var CreateTableScript: String = ""
   private var PartitionValue: ArrayBuffer[String] = new ArrayBuffer[String]  //column,value
-  def getPartitionValue(): String = {return if (PartitionValue.length > 0) PartitionValue(0) else ""}
-  var _tablesUseId: String = null
-  private var DF_DQErrorDetails: DataFrame = null
+  def getPartitionValue(): String = { if (PartitionValue.length > 0) PartitionValue(0) else ""}
+  var _tablesUseId: String = _
+  private var DF_DQErrorDetails: DataFrame = _
   
   /*  ********************************************************************************
    *****   F I E L D   P R O P E R T I E S    **************************************** 
@@ -456,22 +456,22 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private val hs_rowKey_name: String = "hs_rowKey"
 
 
-  val MDM_newValue = new huemul_Columns (StringType, true, "New value updated in table", false).setHBaseCatalogMapping("loginfo")
-  val MDM_oldValue = new huemul_Columns (StringType, true, "Old value", false).setHBaseCatalogMapping("loginfo")
-  val MDM_AutoInc = new huemul_Columns (LongType, true, "auto incremental for version control", false).setHBaseCatalogMapping("loginfo")
-  val processExec_id = new huemul_Columns (StringType, true, "Process Execution Id (control model)", false).setHBaseCatalogMapping("loginfo")
+  val MDM_newValue:huemul_Columns = new huemul_Columns (StringType, true, "New value updated in table", false).setHBaseCatalogMapping("loginfo")
+  val MDM_oldValue:huemul_Columns = new huemul_Columns (StringType, true, "Old value", false).setHBaseCatalogMapping("loginfo")
+  val MDM_AutoInc:huemul_Columns = new huemul_Columns (LongType, true, "auto incremental for version control", false).setHBaseCatalogMapping("loginfo")
+  val processExec_id:huemul_Columns = new huemul_Columns (StringType, true, "Process Execution Id (control model)", false).setHBaseCatalogMapping("loginfo")
   
-  val MDM_fhNew = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false).setHBaseCatalogMapping("loginfo")
-  val MDM_ProcessNew = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false).setHBaseCatalogMapping("loginfo")
-  val MDM_fhChange = new huemul_Columns (TimestampType, false, "fecha / hora de último cambio de valor en los campos de negocio", false).setHBaseCatalogMapping("loginfo")
-  val MDM_ProcessChange = new huemul_Columns (StringType, false, "Nombre del proceso que cambió los datos", false).setHBaseCatalogMapping("loginfo")
-  val MDM_StatusReg = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false).setHBaseCatalogMapping("loginfo")
-  val MDM_hash = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false).setHBaseCatalogMapping("loginfo")
+  val MDM_fhNew:huemul_Columns = new huemul_Columns (TimestampType, true, "Fecha/hora cuando se insertaron los datos nuevos", false).setHBaseCatalogMapping("loginfo")
+  val MDM_ProcessNew:huemul_Columns = new huemul_Columns (StringType, false, "Nombre del proceso que insertó los datos", false).setHBaseCatalogMapping("loginfo")
+  val MDM_fhChange:huemul_Columns = new huemul_Columns (TimestampType, false, "fecha / hora de último cambio de valor en los campos de negocio", false).setHBaseCatalogMapping("loginfo")
+  val MDM_ProcessChange:huemul_Columns = new huemul_Columns (StringType, false, "Nombre del proceso que cambió los datos", false).setHBaseCatalogMapping("loginfo")
+  val MDM_StatusReg:huemul_Columns = new huemul_Columns (IntegerType, true, "indica si el registro fue insertado en forma automática por otro proceso (1), o fue insertado por el proceso formal (2), si está eliminado (-1)", false).setHBaseCatalogMapping("loginfo")
+  val MDM_hash:huemul_Columns = new huemul_Columns (StringType, true, "Valor hash de los datos de la tabla", false).setHBaseCatalogMapping("loginfo")
   
-  val mdm_columnname = new huemul_Columns (StringType, true, "Column Name", false).setHBaseCatalogMapping("loginfo")
+  val mdm_columnname:huemul_Columns = new huemul_Columns (StringType, true, "Column Name", false).setHBaseCatalogMapping("loginfo")
   
   //from 2.2 --> add rowKey compatibility with HBase
-  val hs_rowKey = new huemul_Columns (StringType, true, "Concatenated PK", false).setHBaseCatalogMapping("loginfo")
+  val hs_rowKey:huemul_Columns = new huemul_Columns (StringType, true, "Concatenated PK", false).setHBaseCatalogMapping("loginfo")
   
   var AdditionalRowsForDistint: String = ""
   private var DefinitionIsClose: Boolean = false
@@ -480,11 +480,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * from Global path (small files, large files, DataBase, etc)
    */
   def globalPath()  : String= {
-    return getPath(_GlobalPaths)
+     getPath(_GlobalPaths)
   }
   
   def globalPath(ManualEnvironment: String)  : String= {
-    return getPath(_GlobalPaths, ManualEnvironment)
+     getPath(_GlobalPaths, ManualEnvironment)
   }
   
   
@@ -492,36 +492,36 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * Get Fullpath hdfs = GlobalPaths + LocalPaths + TableName  
    */
   def getFullNameWithPath() : String = {
-    return globalPath + getLocalPath + TableName
+     globalPath + getLocalPath + TableName
   }
   
   /**
    * Get Fullpath hdfs for DQ results = GlobalPaths + DQError_Path + TableName + "_dq"
    */
   def getFullNameWithPath_DQ() : String = {
-    return this.getPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + TableName + "_dq"
+     this.getPath(huemulBigDataGov.GlobalSettings.DQError_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + TableName + "_dq"
   }
   
   /**
    * Get Fullpath hdfs for _oldvalue results = GlobalPaths + DQError_Path + TableName + "_oldvalue"
    */
   def getFullNameWithPath_OldValueTrace() : String = {
-    return this.getPath(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + TableName + "_oldvalue"
+     this.getPath(huemulBigDataGov.GlobalSettings.MDM_OldValueTrace_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + TableName + "_oldvalue"
   }
   
    /**
    * Get Fullpath hdfs for backpu  = Backup_Path + database + TableName + "_backup"
    */
   def getFullNameWithPath_Backup(control_id: String) : String = {
-    return this.getPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + 'c' + control_id + '/' + TableName + "_backup"
+     this.getPath(huemulBigDataGov.GlobalSettings.MDM_Backup_Path) + this.getDataBase(this._DataBase) + '/' + getLocalPath + 'c' + control_id + '/' + TableName + "_backup"
   }
   
   def getFullNameWithPath2(ManualEnvironment: String) : String = {
-    return globalPath(ManualEnvironment) + getLocalPath + TableName
+     globalPath(ManualEnvironment) + getLocalPath + TableName
   }
     
   def getFullPath() : String = {
-    return globalPath + getLocalPath 
+     globalPath + getLocalPath
   }
   
   
@@ -535,7 +535,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       _TableWasRegistered = true
     }
     
-    return internalGetTable(huemulType_InternalTableType.Normal)
+     internalGetTable(huemulType_InternalTableType.Normal)
   }
   
   //new from 2.1
@@ -543,7 +543,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * Return DataBaseName.TableName for DQ
    */
   def getTable_DQ(): String = {
-    return internalGetTable(huemulType_InternalTableType.DQ)
+     internalGetTable(huemulType_InternalTableType.DQ)
   }
   
   //new from 2.1
@@ -551,15 +551,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    * Return DataBaseName.TableName for OldValueTrace
    */
   def getTable_OldValueTrace(): String = {
-    return internalGetTable(huemulType_InternalTableType.OldValueTrace)
+     internalGetTable(huemulType_InternalTableType.OldValueTrace)
   }
   
   //new from 2.2
   /**
    * Define HBase Table and namespace 
    */
-  private var _hbase_namespace: String = null
-  private var _hbase_tableName: String = null
+  private var _hbase_namespace: String = _
+  private var _hbase_tableName: String = _
   def setHBaseTableName(namespace: String, tableName: String = null) {
     _hbase_namespace = namespace
     _hbase_tableName = tableName
@@ -577,7 +577,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError(s"huemul_Table Error: Type '${internalTableType}' doesn't exist in InternalGetTable method (getHBaseNamespace)", 1059)
     }
     
-     return valueName
+      valueName
     
   }
   
@@ -593,7 +593,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError(s"huemul_Table Error: Type '${internalTableType}' doesn't exist in InternalGetTable method (getHBaseTableName)", 1060)
     }
      
-    return valueName
+     valueName
   }
   
   /**
@@ -640,7 +640,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
          }
       }""".stripMargin
     
-    return result
+     result
   }
   
   
@@ -698,7 +698,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
     
-    return fields
+     fields
   }
  
   
@@ -734,35 +734,35 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _getTable = s"${_tableName}"    
     
-    return _getTable 
+     _getTable
   }
    
   def getCurrentDataBase(): String = {
-    return s"${getDataBase(_DataBase)}"
+     s"${getDataBase(_DataBase)}"
   }
   
   /**
    * Return DataBaseName.TableName
    */
   private def InternalGetTable(ManualEnvironment: String): String = {
-    return s"${getDataBase(this._DataBase, ManualEnvironment)}.${TableName}"
+     s"${getDataBase(this._DataBase, ManualEnvironment)}.${TableName}"
   }
   
   
   def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    return huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)  
+     huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)
   }
   
   def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    return huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)  
+     huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)
   }
   
   def getPath(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    return huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)  
+     huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)
   }
   
   def getPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    return huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)  
+     huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)
   }
   
   
@@ -775,7 +775,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
    
   var Error_isError: Boolean = false
   var Error_Text: String = ""
-  var Error_Code: Integer = null
+  var Error_Code: Integer = _
   //var HasColumns: Boolean = false
   var HasPK: Boolean = false
   
@@ -976,7 +976,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //  raiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional (invalid name ${this.getPartitionField} )",1035)
       
     DefinitionIsClose = true
-    return true
+     true
   }
   
   def _setAutoIncUpate(value: Long) = {
@@ -987,7 +987,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     _ControlTableId = value
   }
   
-  def _getControlTableId(): String = {return _ControlTableId}
+  def _getControlTableId(): String = { _ControlTableId}
   
   /**
    * Get all declared fields from class
@@ -1072,7 +1072,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
 
     
-    return c
+     c
   }
   
   /**
@@ -1089,17 +1089,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       (x,Field.getHBaseCatalogFamily(), Field.getHBaseCatalogColumn(), _dataType)
     }
     
-    return result
+     result
   }
   
   //private var _SQL_OldValueFullTrace_DF: DataFrame = null 
   private var _MDM_AutoInc: Long = 0
   private var _ControlTableId: String = null
-  def _getMDM_AutoInc(): Long = {return _MDM_AutoInc}
+  def _getMDM_AutoInc(): Long = { _MDM_AutoInc}
   private var _table_dq_isused: Int = 0
-  def _getTable_dq_isused(): Int = {return _table_dq_isused}
+  def _getTable_dq_isused(): Int = { _table_dq_isused}
   private var _table_ovt_isused: Int = 0
-  def _getTable_ovt_isused(): Int = {return _table_ovt_isused}
+  def _getTable_ovt_isused(): Int = { _table_ovt_isused}
   private var _NumRows_New: Long = null
   private var _NumRows_Update: Long = null
   private var _NumRows_Updatable: Long = null
@@ -1109,31 +1109,31 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var _NumRows_Excluded: Long = 0
   
   def NumRows_New(): Long = {
-    return _NumRows_New
+     _NumRows_New
   }
   
   def NumRows_Update(): Long = {
-    return _NumRows_Update
+     _NumRows_Update
   }
   
   def NumRows_Updatable(): Long = {
-    return _NumRows_Updatable
+     _NumRows_Updatable
   }
   
   def NumRows_Delete(): Long = {
-    return _NumRows_Delete
+     _NumRows_Delete
   }
   
   def NumRows_Total(): Long = {
-    return _NumRows_Total
+     _NumRows_Total
   }
   
   def NumRows_NoChange(): Long = {
-    return _NumRows_NoChange
+     _NumRows_NoChange
   }
   
   def NumRows_Excluded(): Long = {
-    return _NumRows_Excluded
+     _NumRows_Excluded
   }
    /*  ********************************************************************************
    *****   F I E L D   M E T H O D S    **************************************** 
@@ -1168,7 +1168,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     }
     if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"N° Total: ${fieldsStruct.length}")
-    return StructType.apply(fieldsStruct)
+
+    StructType.apply(fieldsStruct)
   }
   
   def getDataQuality(warning_exclude: Boolean): ArrayBuffer[huemul_DataQuality] = {
@@ -1189,7 +1190,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
       }
     
-    return Result
+     Result
   }
   
   def getForeingKey(): ArrayBuffer[huemul_Table_Relationship] = {
@@ -1206,7 +1207,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
       }
     
-    return Result
+     Result
   }
   
   /**
@@ -1254,7 +1255,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
               
     }
     
-    return Result
+     Result
   }
   
   
@@ -1356,7 +1357,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
     
-    return ColumnsCreateTable
+     ColumnsCreateTable
   }
   
   
@@ -1388,7 +1389,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     
        
-    return StringSQL 
+     StringSQL
   }
   
   /**
@@ -1484,7 +1485,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                     FROM $OfficialAlias new
                           """
        
-    return StringSQL 
+     StringSQL
   }
   
   /**
@@ -1519,12 +1520,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     StringSQL = s"""SELECT DISTINCT ${StringSQL}
                      FROM $NewAlias"""
        
-    return StringSQL 
+     StringSQL
   }
   
   
   private def ApplyAutoCast(ColumnName: String, DataType: String): String = {
-    return if (autoCast) s"CAST($ColumnName AS $DataType)" else ColumnName
+     if (autoCast) s"CAST($ColumnName AS $DataType)" else ColumnName
   }
   
   
@@ -1635,7 +1636,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    on $StringSQl_PK  
                           """
        
-    return StringSQL_LeftJoin 
+     StringSQL_LeftJoin
   }
   
   
@@ -1798,7 +1799,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                    on $StringSQl_PK  
                           """
        
-    return StringSQL_FullJoin 
+     StringSQL_FullJoin
   }
   
   /**
@@ -1854,7 +1855,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     StringSQL += s""" ,___ActionType__
                       FROM $NewAlias New 
                   """
-    return StringSQL 
+     StringSQL
   }
    
   
@@ -1919,7 +1920,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                   """
     
            
-    return StringSQL 
+     StringSQL
   }
   
   /**
@@ -1990,7 +1991,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     StringSQL += s""" FROM $NewAlias New 
                   """
                
-    return StringSQL 
+     StringSQL
   }
   
   
@@ -2049,7 +2050,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        
     StringSQL += s"FROM $NewAlias New\n" 
      
-    return StringSQL
+     StringSQL
   }
   
   
@@ -2070,7 +2071,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       StringSQL.append(Field)
     }
        
-    return StringSQL 
+     StringSQL
   }
 
   /**
@@ -2089,7 +2090,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         StringSQL.append(Field)
       }
 
-    return StringSQL
+     StringSQL
   }
   
   /**
@@ -2123,7 +2124,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         StringSQL.append(Field.get_MyName(this.getStorageType))
     }
        
-    return StringSQL 
+     StringSQL
   }
   
   /**
@@ -2163,14 +2164,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (!OneColumnMapped)
         raiseError(s"huemul_Table Error: Only PK mapped, no columns mapped for update",1042)
     
-    return PKNotMapped
+     PKNotMapped
   }
   
   
   /*  ********************************************************************************
    *****   T A B L E   M E T H O D S    **************************************** 
    ******************************************************************************** */
-  def getSQLCreateTableScript(): String = {return DF_CreateTableScript}
+  def getSQLCreateTableScript(): String = { DF_CreateTableScript}
   private def DF_CreateTableScript(): String = {
               
     //var coma_partition = ""
@@ -2253,7 +2254,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       
-    return lCreateTableScript    
+     lCreateTableScript
   }
   
   /**
@@ -2305,7 +2306,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       
-    return lCreateTableScript    
+     lCreateTableScript
   }
   
   
@@ -2380,7 +2381,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     if (huemulBigDataGov.DebugMode)
       huemulBigDataGov.logMessageDebug(s"Create Table sentence: ${lCreateTableScript} ")
       
-    return lCreateTableScript    
+     lCreateTableScript
   }
   
   
@@ -2534,7 +2535,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       DF_Distinct.unpersist()
     }
     
-    return Result
+     Result
   }
   
   private def DF_ProcessToDQ(fromSQL: String
@@ -2993,7 +2994,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
 
-    return Result
+     Result
   }
   
   
@@ -3009,7 +3010,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         ColumnName = x.get(this).asInstanceOf[huemul_Columns].get_MyName(this.getStorageType)
     }
     
-    return ColumnName
+     ColumnName
   }
   
  
@@ -3467,7 +3468,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
     } while (Invoker == null) 
     
-    return new huemul_AuthorizationPair(ClassNameInvoker,PackageNameInvoker)
+     new huemul_AuthorizationPair(ClassNameInvoker,PackageNameInvoker)
   }
   
   def executeFull(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
@@ -3480,17 +3481,17 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
     }
     
-    return Result
+     Result
   }
   
   //2.1: compatibility with previous version
   def executeOnlyInsert(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
-    return executeOnlyInsert(NewAlias, storageLevelOfDF, false)
+     executeOnlyInsert(NewAlias, storageLevelOfDF, false)
   }
   
   //2.1: add RegisterOnlyInsertInDQ params
   def executeOnlyInsert(NewAlias: String, RegisterOnlyInsertInDQ: Boolean): Boolean = {
-    return executeOnlyInsert(NewAlias, null, RegisterOnlyInsertInDQ)
+     executeOnlyInsert(NewAlias, null, RegisterOnlyInsertInDQ)
   }
   
   //2.1: introduce RegisterOnlyInsertInDQ
@@ -3506,7 +3507,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
     }
          
-    return Result
+     Result
   }
   
   def executeOnlyUpdate(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {   
@@ -3521,7 +3522,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
     
-    return Result
+     Result
         
   }
   
@@ -3537,7 +3538,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
 
-    return Result
+     Result
   }
   
   def executeSelectiveUpdate(NewAlias: String, PartitionValueForSelectiveUpdate: ArrayBuffer[String], storageLevelOfDF: org.apache.spark.storage.StorageLevel ): Boolean = {
@@ -3550,7 +3551,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName().replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
     }
     
-    return Result
+     Result
         
   }
   
@@ -3575,7 +3576,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
     
-    return Errores
+     Errores
   }
   
   /**
@@ -3711,7 +3712,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         LocalControl.FinishProcessError()
     }
     
-    return result
+     result
   }
   
   /*
@@ -4163,7 +4164,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
       
       
-    return Result
+     Result
     
   }
     
@@ -4245,7 +4246,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
       
-    return Result
+     Result
     
   }
   
@@ -4334,7 +4335,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       }
     }
       
-    return Result
+     Result
     
   }
   
@@ -4348,7 +4349,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val EmptyDF = huemulBigDataGov.spark.createDataFrame(EmptyRDD, SchemaForEmpty)
     EmptyDF.createOrReplaceTempView(Alias)
     
-    return EmptyDF
+     EmptyDF
   }
   
   def DF_from_SQL(Alias: String, sql: String, SaveInTemp: Boolean = true, NumPartitions: Integer = null) {
