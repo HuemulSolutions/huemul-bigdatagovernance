@@ -3736,11 +3736,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val warning_Exclude_detail = Control.control_getDQResultForWarningExclude()
     if (warning_Exclude_detail.length > 0) {
       //get PK
-      var dq_StringSQL_PK: String = ""
-      var dq_StringSQL_PK_join: String = ""
-      var dq_firstPK: String = null
-      var coma: String = ""
-      var _and: String = ""
+      //var dq_StringSQL_PK: String = ""
+      //var dq_StringSQL_PK_join: String = ""
+      //var dq_firstPK: String = null
+      //var coma: String = ""
+      //var _and: String = ""
+
+      /*
       getALLDeclaredFields().filter { x => x.setAccessible(true)
                                            x.get(this).isInstanceOf[huemul_Columns] &&
                                            x.get(this).asInstanceOf[huemul_Columns].getIsPK }
@@ -3754,20 +3756,23 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         coma = ","
         _and = " and "
       }
-      
+      */
       
       //get DQ with WARNING_EXCLUDE > 0 rows
-      var dq_id_list: String = ""
+      var dq_id_list: String = warning_Exclude_detail.mkString(",")
+      /*
       coma = ""
       warning_Exclude_detail.foreach { x => 
         dq_id_list += s"""${coma}"${x}"""" 
         coma = ","
       }
+
+       */
       val _tableNameDQ: String = internalGetTable(huemulType_InternalTableType.DQ)
       
       //get PK Details
       LocalControl.NewStep("WARNING_EXCLUDE: Get details")
-      val DQ_Det = huemulBigDataGov.DF_ExecuteQuery("__DQ_Det", s"""SELECT DISTINCT ${dq_StringSQL_PK} FROM ${_tableNameDQ} WHERE dq_control_id="${Control.Control_Id}" AND dq_dq_id in ($dq_id_list)""")
+      val DQ_Det = huemulBigDataGov.DF_ExecuteQuery("__DQ_Det", s"""SELECT DISTINCT mdm_hash FROM ${_tableNameDQ} WHERE dq_control_id="${Control.Control_Id}" AND dq_dq_id in ($dq_id_list)""")
       //Broadcast
       _NumRows_Excluded = DQ_Det.count()
       var apply_broadcast: String = ""
@@ -3777,7 +3782,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       //exclude
       LocalControl.NewStep(s"WARNING_EXCLUDE: EXCLUDE rows")
       huemulBigDataGov.logMessageInfo(s"WARNING_EXCLUDE: ${_NumRows_Excluded} rows excluded")
-      DataFramehuemul.DF_from_SQL(DataFramehuemul.Alias, s"SELECT $apply_broadcast PK.* FROM ${DataFramehuemul.Alias} PK LEFT JOIN __DQ_Det EXCLUDE ON ${dq_StringSQL_PK_join} WHERE EXCLUDE.${dq_firstPK} IS NULL ")
+      DataFramehuemul.DF_from_SQL(DataFramehuemul.Alias, s"SELECT $apply_broadcast PK.* FROM ${DataFramehuemul.Alias} PK LEFT JOIN __DQ_Det EXCLUDE ON PK.mdm_hash = EXCLUDE.mdm_hash WHERE EXCLUDE.mdm_hash IS NULL ")
       
       if (_TableType == huemulType_Tables.Transaction)
         this.UpdateStatistics(LocalControl, "WARNING_EXCLUDE", null)
