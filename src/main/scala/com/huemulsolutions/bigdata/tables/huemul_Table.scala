@@ -442,8 +442,20 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /*  ********************************************************************************
    *****   F I E L D   P R O P E R T I E S    **************************************** 
    ******************************************************************************** */
-  
-  
+  private val MDM_newValue_name: String = "MDM_newValue"
+  private val MDM_oldValue_name: String = "MDM_oldValue"
+  private val MDM_AutoInc_name: String = "MDM_AutoInc"
+  private val processExec_id_name: String= "processExec_id"
+  private val MDM_fhNew_name: String = "MDM_fhNew"
+  private val MDM_ProcessNew_name: String = "MDM_ProcessNew"
+  private val MDM_fhChange_name: String = "MDM_fhChange"
+  private val MDM_ProcessChange_name: String = "MDM_ProcessChange"
+  private val MDM_StatusReg_name: String = "MDM_StatusReg"
+  private val MDM_hash_name: String = "MDM_hash"
+  private val mdm_columnname_name: String = "mdm_columnname"
+  private val hs_rowKey_name: String = "hs_rowKey"
+
+
   val MDM_newValue = new huemul_Columns (StringType, true, "New value updated in table", false).setHBaseCatalogMapping("loginfo")
   val MDM_oldValue = new huemul_Columns (StringType, true, "Old value", false).setHBaseCatalogMapping("loginfo")
   val MDM_AutoInc = new huemul_Columns (LongType, true, "auto incremental for version control", false).setHBaseCatalogMapping("loginfo")
@@ -596,7 +608,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val __ProcessLog = huemulBigDataGov.getCaseType( this.getStorageType, "_ProcessLog")
     
     //create fields
-    var fields: String = s""""${if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey"}":{"cf":"rowkey","col":"key","type":"string"} """
+    var fields: String = s""""${if (_numPKColumns == 1) _HBase_PKColumn else hs_rowKey_name}":{"cf":"rowkey","col":"key","type":"string"} """
     getALLDeclaredFields().filter { x => x.setAccessible(true) 
                 x.get(this).isInstanceOf[huemul_Columns] 
     } foreach { x =>
@@ -652,7 +664,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       val _colMyName = dataField.get_MyName(this.getStorageType).toLowerCase()
       val _dataType  = dataField.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
       
-      if (!(dataField.getIsPK && _numPKColumns == 1) && (_colMyName != "hs_rowKey".toLowerCase())) {        
+      if (!(dataField.getIsPK && _numPKColumns == 1) && (_colMyName != hs_rowKey_name.toLowerCase())) {
         
         if (tableType == huemulType_InternalTableType.DQ) {
           //create StructType
@@ -662,7 +674,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         }
         else if (tableType == huemulType_InternalTableType.OldValueTrace) {
           //create StructType mdm_columnname
-          if ("mdm_columnname".toLowerCase() != _colMyName) {
+          if (mdm_columnname_name.toLowerCase() != _colMyName) {
             fields = fields + s""",${dataField.getHBaseCatalogFamily()}:${dataField.getHBaseCatalogColumn()}#b"""
           }
         }
@@ -1001,18 +1013,18 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
        
       if (tableType == huemulType_InternalTableType.OldValueTrace) {
-        b = b.filter { x => x.getName == "mdm_columnname" || x.getName == "MDM_newValue" || x.getName == "MDM_oldValue" || x.getName == "MDM_AutoInc" ||
-                            x.getName == "MDM_fhChange" || x.getName == "MDM_ProcessChange" || x.getName == "processExec_id"  }
+        b = b.filter { x => x.getName == mdm_columnname_name || x.getName == MDM_newValue_name || x.getName == MDM_oldValue_name || x.getName == MDM_AutoInc_name ||
+                            x.getName == MDM_fhChange_name || x.getName == MDM_ProcessChange_name || x.getName == processExec_id_name  }
       } else {
         //exclude OldValuestrace columns
-        b = b.filter { x => x.getName != "mdm_columnname" && x.getName != "MDM_newValue" && x.getName != "MDM_oldValue" && x.getName != "MDM_AutoInc" && x.getName != "processExec_id"  }
+        b = b.filter { x => x.getName != mdm_columnname_name && x.getName != MDM_newValue_name && x.getName != MDM_oldValue_name && x.getName != MDM_AutoInc_name && x.getName != processExec_id_name  }
         
         if (this._TableType == huemulType_Tables.Transaction) 
-          b = b.filter { x => x.getName != "MDM_ProcessChange" && x.getName != "MDM_fhChange" && x.getName != "MDM_StatusReg"   }
+          b = b.filter { x => x.getName != MDM_ProcessChange_name && x.getName != MDM_fhChange_name && x.getName != MDM_StatusReg_name   }
         
         //       EXCLUDE FOR PARQUET, ORC, ETC             OR            EXCLUDE FOR HBASE AND NUM PKs == 1
         if (getStorageType != huemulType_StorageType.HBASE || (getStorageType == huemulType_StorageType.HBASE && _numPKColumns == 1) )
-          b = b.filter { x => x.getName != "hs_rowKey"  }
+          b = b.filter { x => x.getName != hs_rowKey_name  }
         
       }
       
@@ -1271,7 +1283,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //for HBase, add hs_rowKey as Key column
     if (getStorageType == huemulType_StorageType.HBASE && _numPKColumns > 1) {
-      fieldList.filter { x => x.getName == "hs_rowKey" }.foreach { x =>
+      fieldList.filter { x => x.getName == hs_rowKey_name }.foreach { x =>
         var Field = x.get(this).asInstanceOf[huemul_Columns]
         val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), __storageType)
         var DataTypeLocal = _dataType.sql
@@ -1282,7 +1294,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }                                      
     
     fieldList.filter { x => x.setAccessible(true)
-                                      x.get(this).isInstanceOf[huemul_Columns] && x.getName != "hs_rowKey" }
+                                      x.get(this).isInstanceOf[huemul_Columns] && x.getName != hs_rowKey_name }
     .foreach { x =>     
       //Get field
       var Field = x.get(this).asInstanceOf[huemul_Columns]
@@ -1316,7 +1328,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (huemulBigDataGov.GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) {
           ColumnsCreateTable += s"$coma${_colMyName} ${DataTypeLocal} \n"
           coma = ","
-        } else if ("mdm_columnname".toLowerCase() != _colMyName.toLowerCase()) {
+        } else if (mdm_columnname_name.toLowerCase() != _colMyName.toLowerCase()) {
           ColumnsCreateTable += s"$coma${_colMyName} ${DataTypeLocal} \n"
           coma = ","
         }
@@ -1424,7 +1436,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         * 
         */
       } else {
-        if (_colMyName.toLowerCase() == "MDM_fhNew".toLowerCase()) {
+        if (_colMyName.toLowerCase() == MDM_fhNew_name.toLowerCase()) {
           //if (_colMyName.toLowerCase() == this.getPartitionField.toLowerCase())
           //  StringSQL_partition += s"${coma}CAST(now() AS ${_dataType.sql} ) as ${_colMyName} \n"
           //else {   
@@ -1432,7 +1444,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           coma = ","
           //}
             
-        } else if (_colMyName.toLowerCase() == "MDM_ProcessNew".toLowerCase()) {
+        } else if (_colMyName.toLowerCase() == MDM_ProcessNew_name.toLowerCase()) {
           StringSQL += s"${coma}CAST('${processName}' AS ${_dataType.sql} ) as ${_colMyName} \n"
           coma = ","
         }
@@ -1450,7 +1462,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     StringSQL_hash += "),256) "
     
     //set name according to getStorageType (AVRO IS LowerCase)
-    val __MDM_hash = huemulBigDataGov.getCaseType( this.getStorageType, "MDM_hash")
+    val __MDM_hash = huemulBigDataGov.getCaseType( this.getStorageType, MDM_hash_name)
     
     //from 2.6 --> create partitions sql (replace commented text)
     val StringSQL_partition = partitionList.sortBy { x => x.getPartitionColumnPosition}.map{x =>
@@ -1633,13 +1645,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def OldValueTrace_save(Alias: String, ProcessName: String, LocalControl: huemul_Control) = {
        
     //set name according to getStorageType (AVRO IS LowerCase)
-    val __MDM_newValue = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_newValue")
-    val __MDM_oldValue = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_oldValue")
-    val __MDM_AutoInc = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_AutoInc")
-    val __MDM_ProcessChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_ProcessChange")
-    val __mdm_columnname = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "mdm_columnname").toLowerCase() //because it's partitioned column
-    val __MDM_fhChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "MDM_fhChange")
-    val __processExec_id = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, "processExec_id")
+    val __MDM_newValue = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, MDM_newValue_name)
+    val __MDM_oldValue = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, MDM_oldValue_name)
+    val __MDM_AutoInc = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, MDM_AutoInc_name)
+    val __MDM_ProcessChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, MDM_ProcessChange_name)
+    val __mdm_columnname = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, mdm_columnname_name).toLowerCase() //because it's partitioned column
+    val __MDM_fhChange = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, MDM_fhChange_name)
+    val __processExec_id = huemulBigDataGov.getCaseType( this.getStorageType_OldValueTrace, processExec_id_name)
     
     //Get PK
     var StringSQl_PK_base: String = "SELECT "
@@ -1814,9 +1826,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         StringSQL += s" ${coma}${_colMyName} as ${_colMyName} \n"
         
       } else {
-        if (   _colMyName.toLowerCase() == "MDM_fhNew".toLowerCase() || _colMyName.toLowerCase() == "MDM_ProcessNew".toLowerCase() || _colMyName.toLowerCase() == "MDM_fhChange".toLowerCase()
-            || _colMyName.toLowerCase() == "MDM_ProcessChange".toLowerCase() || _colMyName.toLowerCase() == "MDM_StatusReg".toLowerCase() || _colMyName.toLowerCase() == "hs_rowKey".toLowerCase()
-            || _colMyName.toLowerCase() == "MDM_hash".toLowerCase())
+        if (   _colMyName.toLowerCase() == MDM_fhNew_name.toLowerCase() || _colMyName.toLowerCase() == MDM_ProcessNew_name.toLowerCase() || _colMyName.toLowerCase() == MDM_fhChange_name.toLowerCase()
+            || _colMyName.toLowerCase() == MDM_ProcessChange_name.toLowerCase() || _colMyName.toLowerCase() == MDM_StatusReg_name.toLowerCase() || _colMyName.toLowerCase() == hs_rowKey_name.toLowerCase()
+            || _colMyName.toLowerCase() == MDM_hash_name.toLowerCase())
           StringSQL += s"${coma}old_${_colMyName}  \n"
         else {          
           StringSQL += s""" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' THEN ${if (this.huemulBigDataGov.HasName(Field.get_SQLForUpdate())) s"new_update_${_colMyName}"  //si tiene valor en SQL update, lo usa
@@ -1872,9 +1884,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         StringSQL += s" ${coma}${_colMyName} as ${_colMyName} \n"
         
       } else {
-        if (   _colMyName.toLowerCase() == "MDM_fhNew".toLowerCase()         || _colMyName.toLowerCase() == "MDM_ProcessNew".toLowerCase() || _colMyName.toLowerCase() == "MDM_fhChange".toLowerCase()
-            || _colMyName.toLowerCase() == "MDM_ProcessChange".toLowerCase() || _colMyName.toLowerCase() == "MDM_StatusReg".toLowerCase()  || _colMyName.toLowerCase() == "hs_rowKey".toLowerCase() 
-            || _colMyName.toLowerCase() == "MDM_hash".toLowerCase())
+        if (   _colMyName.toLowerCase() == MDM_fhNew_name.toLowerCase()         || _colMyName.toLowerCase() == MDM_ProcessNew_name.toLowerCase() || _colMyName.toLowerCase() == MDM_fhChange_name.toLowerCase()
+            || _colMyName.toLowerCase() == MDM_ProcessChange_name.toLowerCase() || _colMyName.toLowerCase() == MDM_StatusReg_name.toLowerCase()  || _colMyName.toLowerCase() == hs_rowKey_name.toLowerCase()
+            || _colMyName.toLowerCase() == MDM_hash_name.toLowerCase())
           StringSQL += s"${coma}old_${_colMyName}  \n"
         else {          
           StringSQL += s""" ${coma}CASE WHEN ___ActionType__ = 'NEW'    THEN ${if (this.huemulBigDataGov.HasName(Field.get_SQLForInsert())) s"new_insert_${_colMyName}" //si tiene valor en SQL insert, lo usa
@@ -1936,9 +1948,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
       
-      if (     _colMyName.toLowerCase() == "MDM_fhNew".toLowerCase()         || _colMyName.toLowerCase() == "MDM_ProcessNew".toLowerCase() || _colMyName.toLowerCase() == "MDM_fhChange".toLowerCase()
-            || _colMyName.toLowerCase() == "MDM_ProcessChange".toLowerCase() || _colMyName.toLowerCase() == "MDM_StatusReg".toLowerCase()  || _colMyName.toLowerCase() == "hs_rowKey".toLowerCase() 
-            || _colMyName.toLowerCase() == "MDM_hash".toLowerCase())
+      if (     _colMyName.toLowerCase() == MDM_fhNew_name.toLowerCase()         || _colMyName.toLowerCase() == MDM_ProcessNew_name.toLowerCase() || _colMyName.toLowerCase() == MDM_fhChange_name.toLowerCase()
+            || _colMyName.toLowerCase() == MDM_ProcessChange_name.toLowerCase() || _colMyName.toLowerCase() == MDM_StatusReg_name.toLowerCase()  || _colMyName.toLowerCase() == hs_rowKey_name.toLowerCase()
+            || _colMyName.toLowerCase() == MDM_hash_name.toLowerCase())
         StringSQL += s"${coma}old_${_colMyName}  \n"
       else 
         StringSQL += s" ${coma}${_colMyName}  \n"
@@ -1965,7 +1977,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     StringSQL_hash += "),256) "
                 
     //set name according to getStorageType (AVRO IS LowerCase)
-    val __MDM_hash = huemulBigDataGov.getCaseType( this.getStorageType, "MDM_hash")
+    val __MDM_hash = huemulBigDataGov.getCaseType( this.getStorageType, MDM_hash_name)
     
     //Include HashFields to SQL
     StringSQL += s""",${StringSQL_hash} as ${__MDM_hash} \n"""
@@ -1987,7 +1999,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val __old = huemulBigDataGov.getCaseType( this.getStorageType, "_old")
     val __fhChange = huemulBigDataGov.getCaseType( this.getStorageType, "_fhChange")
     val __ProcessLog = huemulBigDataGov.getCaseType( this.getStorageType, "_ProcessLog")
-    val __MDM_hash = huemulBigDataGov.getCaseType( this.getStorageType, "MDM_hash")
+    val __MDM_hash = huemulBigDataGov.getCaseType( this.getStorageType, MDM_hash_name)
     
     var StringSQL: String = "SELECT "
     
@@ -2002,19 +2014,19 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       var Field = x.get(this).asInstanceOf[huemul_Columns]
       val _colMyName = Field.get_MyName(this.getStorageType)
       
-      if (_colMyName.toLowerCase() == "MDM_fhNew".toLowerCase())
+      if (_colMyName.toLowerCase() == MDM_fhNew_name.toLowerCase())
         StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'NEW' THEN now() ELSE old_${_colMyName} END as ${_colMyName} \n"
-      else if (_colMyName.toLowerCase() == "MDM_ProcessNew".toLowerCase())
+      else if (_colMyName.toLowerCase() == MDM_ProcessNew_name.toLowerCase())
         StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'NEW' THEN '$ProcessName' ELSE old_${_colMyName} END as ${_colMyName} \n"
-      else if (_colMyName.toLowerCase() == "MDM_fhChange".toLowerCase())
+      else if (_colMyName.toLowerCase() == MDM_fhChange_name.toLowerCase())
         StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' AND SameHashKey = 0 THEN now() ELSE old_${_colMyName} END as ${_colMyName} \n"
-      else if (_colMyName.toLowerCase() == "MDM_ProcessChange".toLowerCase())
+      else if (_colMyName.toLowerCase() == MDM_ProcessChange_name.toLowerCase())
         StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' AND SameHashKey = 0 THEN '$ProcessName' ELSE old_${_colMyName} END as ${_colMyName} \n"
-      else if (_colMyName.toLowerCase() == "MDM_StatusReg".toLowerCase())
+      else if (_colMyName.toLowerCase() == MDM_StatusReg_name.toLowerCase())
         StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' THEN CAST(2 as Int) WHEN ___ActionType__ = 'NEW' THEN CAST(2 as Int) WHEN ___ActionType__ = 'DELETE' THEN CAST(-1 AS Int)  ELSE CAST(old_${_colMyName} AS Int) END as ${_colMyName} \n"
-      else if (_colMyName.toLowerCase() == "MDM_hash".toLowerCase())
+      else if (_colMyName.toLowerCase() == MDM_hash_name.toLowerCase())
         StringSQL += s"${coma}${__MDM_hash} \n"
-      else if (_colMyName.toLowerCase() == "hs_rowKey".toLowerCase()){
+      else if (_colMyName.toLowerCase() == hs_rowKey_name.toLowerCase()){
         if (getStorageType == huemulType_StorageType.HBASE && _numPKColumns > 1)
           StringSQL += s"${coma}${_HBase_rowKeyCalc} as ${_colMyName} \n"
       }
@@ -3915,7 +3927,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                     ,getHBaseTableName(huemulType_InternalTableType.Normal)
                                     ,this.getNumPartitions //numPartitions
                                     ,OnlyInsert
-                                    ,if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey" //PKName
+                                    ,if (_numPKColumns == 1) _HBase_PKColumn else hs_rowKey_name //PKName
                                     ,getALLDeclaredFields_forHBase(getALLDeclaredFields(false))
                                     )
           }
@@ -4170,8 +4182,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath_OldValueTrace()} ")
       if (getStorageType_OldValueTrace == huemulType_StorageType.PARQUET || getStorageType_OldValueTrace == huemulType_StorageType.ORC || 
           getStorageType_OldValueTrace == huemulType_StorageType.DELTA   || getStorageType_OldValueTrace == huemulType_StorageType.AVRO){
-        DF_Final.write.mode(SaveMode.Append).partitionBy("mdm_columnname").format(_getSaveFormat(getStorageType_OldValueTrace)).save(getFullNameWithPath_OldValueTrace())
-        //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy("mdm_columnname").format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
+        DF_Final.write.mode(SaveMode.Append).partitionBy(mdm_columnname_name).format(_getSaveFormat(getStorageType_OldValueTrace)).save(getFullNameWithPath_OldValueTrace())
+        //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).partitionBy(mdm_columnname_name).format(getStorageType_OldValueTrace.toString()).save(getFullNameWithPath_OldValueTrace())
         //DF_Final.coalesce(numPartitionsForDQFiles).write.mode(SaveMode.Append).format(_StorageType_OldValueTrace).save(GetFullNameWithPath_OldValueTrace())
       }
       else
@@ -4255,7 +4267,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                                   ,getHBaseTableName(huemulType_InternalTableType.DQ)
                                   ,this.getNumPartitions //numPartitions
                                   ,true
-                                  ,if (_numPKColumns == 1) _HBase_PKColumn else "hs_rowkey" //PKName
+                                  ,if (_numPKColumns == 1) _HBase_PKColumn else hs_rowKey_name //PKName
                                   ,getALLDeclaredFields_forHBase(getALLDeclaredFields(false))
                                   )      
       } else {
