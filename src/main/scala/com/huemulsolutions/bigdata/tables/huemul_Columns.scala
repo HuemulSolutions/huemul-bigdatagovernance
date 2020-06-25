@@ -1283,7 +1283,7 @@ class huemul_Columns(dataType: DataType
    * @param tableStorage  [[com.huemulsolutions.bigdata.tables.huemulType_StorageType]] Identify storage type PARQUET, etc.
    * @return
    */
-  @deprecated("this method will be removed, instead use setMapping(): huemul_Columns", "3.0")
+  @deprecated("this method will be removed, instead use getMyName(): huemul_Columns", "3.0")
   def get_MyName(tableStorage: huemulType_StorageType): String = getMyName(tableStorage)
 
   /** Convert column name caso for compatibility between table storage's
@@ -1307,7 +1307,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return String
    */
-  @deprecated("this method will be removed, instead use setMapping(): huemul_Columns", "3.0")
+  @deprecated("this method will be removed, instead use getMappedName(): huemul_Columns", "3.0")
   def get_MappedName(): String = getMappedName
 
   /**
@@ -1320,7 +1320,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return
    */
-  @deprecated("this method will be removed, instead use setMapping(): huemul_Columns", "3.0")
+  @deprecated("this method will be removed, instead use getReplaceValueOnUpdate(): huemul_Columns", "3.0")
   def get_ReplaceValueOnUpdate(): Boolean = getReplaceValueOnUpdate
 
   /**
@@ -1346,7 +1346,7 @@ class huemul_Columns(dataType: DataType
    *
    * @return
    */
-  @deprecated("this method will be removed, instead use setMapping(): huemul_Columns", "3.0")
+  @deprecated("this method will be removed, instead use getSQLForInsert(): huemul_Columns", "3.0")
   def get_SQLForInsert(): String = getSQLForInsert
 
   /** Set mapping DataFrame fields to Table Fields for insert and update.
