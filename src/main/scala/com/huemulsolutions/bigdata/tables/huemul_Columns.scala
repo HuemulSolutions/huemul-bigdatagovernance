@@ -1262,7 +1262,7 @@ class huemul_Columns(dataType: DataType
    *
    * @param name  Column Name
    */
-  def setMyName(name: String) {
+  private[bigdata] def setMyName(name: String) {
     this._MyName = name
   }
 
