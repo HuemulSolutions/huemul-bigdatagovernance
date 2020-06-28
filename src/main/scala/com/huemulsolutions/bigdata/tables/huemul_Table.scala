@@ -370,8 +370,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     else
       _DQ_MaxNewRecords_Num = value
   }
-  def getDQ_MaxNewRecords_Num: Long = { _DQ_MaxNewRecords_Num}
-  private var _DQ_MaxNewRecords_Num: Long = _
+  def getDQ_MaxNewRecords_Num: java.lang.Long = { _DQ_MaxNewRecords_Num}
+  private var _DQ_MaxNewRecords_Num: java.lang.Long = _
   /**
    DataQuality: Max % new records vs old records, null does'n apply DQ, 0% doesn't accept new records (raiseError if new record found), 100%-> 0.1 accept double old records)
    */
@@ -456,32 +456,32 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private val hs_rowKeyInternamName2: String = "hs_rowKey"
 
   private var nameForMDM_newValue: String = MDM_newValueInternamName2
-  def setNameForMDM_newValue(value: String): huemul_Table = {
+  private def setNameForMDM_newValue(value: String): huemul_Table = {
     nameForMDM_newValue = value
     this
   }
-  def getNameForMDM_newValue: String = nameForMDM_newValue
+  private def getNameForMDM_newValue: String = nameForMDM_newValue
 
   private var nameForMDM_oldValue: String = MDM_oldValueInternamName2
-  def setNameForMDM_oldValue(value: String): huemul_Table = {
+  private def setNameForMDM_oldValue(value: String): huemul_Table = {
     nameForMDM_oldValue = value
     this
   }
-  def getNameForMDM_oldValue: String = nameForMDM_oldValue
+  private def getNameForMDM_oldValue: String = nameForMDM_oldValue
 
   private var nameForMDM_AutoInc: String = MDM_AutoIncInternamName2
-  def setNameForMDM_AutoInc(value: String): huemul_Table = {
+  private def setNameForMDM_AutoInc(value: String): huemul_Table = {
     nameForMDM_AutoInc = value
     this
   }
-  def getNameForMDM_AutoInc: String = nameForMDM_AutoInc
+  private def getNameForMDM_AutoInc: String = nameForMDM_AutoInc
 
   private var nameForprocessExec_id: String = processExec_idInternamName2
-  def setNameForprocessExec_id(value: String): huemul_Table = {
+  private def setNameForprocessExec_id(value: String): huemul_Table = {
     nameForprocessExec_id = value
     this
   }
-  def getNameForprocessExec_id: String = nameForprocessExec_id
+  private def getNameForprocessExec_id: String = nameForprocessExec_id
 
   private var nameForMDM_fhNew: String = MDM_fhNewInternamName2
   def setNameForMDM_fhNew(value: String): huemul_Table = {
@@ -526,11 +526,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getNameForMDM_hash: String = nameForMDM_hash
 
   private var nameForMdm_columnname: String = mdm_columnnameInternamName2
-  def setNameFormdm_columnname(value: String): huemul_Table = {
+  private def setNameFormdm_columnname(value: String): huemul_Table = {
     nameForMdm_columnname = value
     this
   }
-  def getNameFormdm_columnname: String = nameForMdm_columnname
+  private def getNameFormdm_columnname: String = nameForMdm_columnname
 
 
 
@@ -948,13 +948,13 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
                 x.get(this).isInstanceOf[huemul_Columns] || x.get(this).isInstanceOf[huemul_DataQuality] || x.get(this).isInstanceOf[huemul_Table_Relationship]  
     } foreach { x =>
       x.setAccessible(true)
-          
       //Nombre de campos
       if (x.get(this).isInstanceOf[huemul_Columns]) {
+        //println(s"nombre ${x.getName}, hash1: ${MDM_hashInternamName2}, hashFinal: ${getNameForMDM_hash} ")
         val DataField = x.get(this).asInstanceOf[huemul_Columns]
-        if (x.getName.toLowerCase().equals(MDM_hashInternamName2.toLowerCase()))
+        if (x.getName.toLowerCase().equals(MDM_hashInternamName2.toLowerCase())) {
           DataField.setMyName(getNameForMDM_hash)
-        else if (x.getName.toLowerCase().equals(MDM_StatusRegInternamName2.toLowerCase()))
+        } else if (x.getName.toLowerCase().equals(MDM_StatusRegInternamName2.toLowerCase()))
           DataField.setMyName(getNameForMDM_StatusReg)
         else if (x.getName.toLowerCase().equals(MDM_ProcessChangeInternamName2.toLowerCase()))
           DataField.setMyName(getNameForMDM_ProcessChange)
@@ -968,9 +968,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           DataField.setMyName(getNameForMDM_AutoInc)
         else if (x.getName.toLowerCase().equals(MDM_oldValueInternamName2.toLowerCase()))
           DataField.setMyName(getNameForMDM_oldValue)
-        else if (x.getName.toLowerCase().equals(MDM_newValueInternamName2.toLowerCase()))
+        else if (x.getName.toLowerCase().equals(MDM_newValueInternamName2.toLowerCase())) {
           DataField.setMyName(getNameForMDM_newValue)
-        else
+        } else
           DataField.setMyName(x.getName)
         
         if (DataField.getDQ_MaxLen != null && DataField.getDQ_MaxLen < 0)
@@ -1035,20 +1035,23 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     getALLDeclaredFields(OnlyUserDefined = false,PartitionColumnToEnd = false,huemulType_InternalTableType.OldValueTrace).filter { x => x.setAccessible(true)
                 x.get(this).isInstanceOf[huemul_Columns] } foreach { x =>
       x.setAccessible(true)
-          
       val DataField = x.get(this).asInstanceOf[huemul_Columns]
-      DataField.setMyName(x.getName)
-      DataField.setDefinitionIsClose()
+
+      if (!DataField.getDefinitionIsClose) {
+        DataField.setMyName(x.getName)
+        DataField.setDefinitionIsClose()
+      }
     }
                 
     //add DQ and OVT
     getALLDeclaredFields(OnlyUserDefined = false,PartitionColumnToEnd = false,huemulType_InternalTableType.DQ).filter { x => x.setAccessible(true)
                 x.get(this).isInstanceOf[huemul_Columns] } foreach { x =>
       x.setAccessible(true)
-          
       val DataField = x.get(this).asInstanceOf[huemul_Columns]
-      DataField.setMyName(x.getName)
-      DataField.setDefinitionIsClose()
+      if (!DataField.getDefinitionIsClose) {
+        DataField.setMyName(x.getName)
+        DataField.setDefinitionIsClose()
+      }
     }
     
     
@@ -1072,12 +1075,12 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //from 2.6 --> disabled this code, is controlled before
     //if (this.getTableType == huemulType_Tables.Transaction && !PartitionFieldValid)
     //  raiseError(s"huemul_Table Error: PartitionField should be defined if TableType is Transactional (invalid name ${this.getPartitionField} )",1035)
-      
+    //getColumns.foreach(x=>println(x.getMyName(this.getStorageType)))
     DefinitionIsClose = true
      true
   }
   
-  def _setAutoIncUpate(value: Long) = {
+  def _setAutoIncUpate(value: java.lang.Long) = {
     _MDM_AutoInc = value
   }
   
@@ -1191,54 +1194,57 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   }
   
   //private var _SQL_OldValueFullTrace_DF: DataFrame = null 
-  private var _MDM_AutoInc: Long = 0
+  private var _MDM_AutoInc: java.lang.Long = 0
   private var _ControlTableId: String = _
-  def _getMDM_AutoInc(): Long = { _MDM_AutoInc}
+  def _getMDM_AutoInc(): java.lang.Long = { _MDM_AutoInc}
   private var _table_dq_isused: Int = 0
   def _getTable_dq_isused(): Int = { _table_dq_isused}
   private var _table_ovt_isused: Int = 0
   def _getTable_ovt_isused(): Int = { _table_ovt_isused}
-  private var _NumRows_New: Long = null
-  private var _NumRows_Update: Long = null
-  private var _NumRows_Updatable: Long = null
-  private var _NumRows_Delete: Long = null
-  private var _NumRows_Total: Long = null
-  private var _NumRows_NoChange: Long = null
-  private var _NumRows_Excluded: Long = 0
+  private var _NumRows_New: java.lang.Long = null
+  private var _NumRows_Update: java.lang.Long = null
+  private var _NumRows_Updatable: java.lang.Long = null
+  private var _NumRows_Delete: java.lang.Long = null
+  private var _NumRows_Total: java.lang.Long = null
+  private var _NumRows_NoChange: java.lang.Long = null
+  private var _NumRows_Excluded: java.lang.Long = 0
   
-  def NumRows_New(): Long = {
+  def NumRows_New(): java.lang.Long = {
      _NumRows_New
   }
   
-  def NumRows_Update(): Long = {
+  def NumRows_Update(): java.lang.Long = {
      _NumRows_Update
   }
   
-  def NumRows_Updatable(): Long = {
+  def NumRows_Updatable(): java.lang.Long = {
      _NumRows_Updatable
   }
   
-  def NumRows_Delete(): Long = {
+  def NumRows_Delete(): java.lang.Long = {
      _NumRows_Delete
   }
   
-  def NumRows_Total(): Long = {
+  def NumRows_Total(): java.lang.Long = {
      _NumRows_Total
   }
   
-  def NumRows_NoChange(): Long = {
+  def NumRows_NoChange(): java.lang.Long = {
      _NumRows_NoChange
   }
   
-  def NumRows_Excluded(): Long = {
+  def NumRows_Excluded(): java.lang.Long = {
      _NumRows_Excluded
   }
    /*  ********************************************************************************
    *****   F I E L D   M E T H O D S    **************************************** 
    ******************************************************************************** */
   def getSchema(): StructType = {
-    val fieldsStruct = new ArrayBuffer[StructField]();
-    
+    //val fieldsStruct = new ArrayBuffer[StructField]();
+
+
+
+    /*
     val __old = huemulBigDataGov.getCaseType( this.getStorageType, "_old")
     val __fhChange = huemulBigDataGov.getCaseType( this.getStorageType, "_fhChange")
     val __ProcessLog = huemulBigDataGov.getCaseType( this.getStorageType, "_ProcessLog")
@@ -1267,6 +1273,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     }
     if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"N° Total: ${fieldsStruct.length}")
 
+     */
+
+    val fieldsStruct: ArrayBuffer[StructField] = getColumns().map(x=> new StructField(x.getMyName(this.getStorageType), x.DataType , nullable = x.getNullable , null))
     StructType.apply(fieldsStruct)
   }
   
@@ -1314,8 +1323,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def getColumns(): ArrayBuffer[huemul_Columns] = {
     val Result: ArrayBuffer[huemul_Columns] = new ArrayBuffer[huemul_Columns]()
     val fieldList = getALLDeclaredFields()
-    val NumFields = fieldList.filter { x => x.setAccessible(true)
-                                      x.get(this).isInstanceOf[huemul_Columns] }.length
+    //val NumFields = fieldList.filter { x => x.setAccessible(true)
+    //                                  x.get(this).isInstanceOf[huemul_Columns] }.length
     
     //set name according to getStorageType (AVRO IS LowerCase)
     val __old = huemulBigDataGov.getCaseType( this.getStorageType, "_old")
@@ -1329,8 +1338,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     .foreach { x =>
       //Get field
       val Field = x.get(this).asInstanceOf[huemul_Columns]
-      val _colMyName = Field.getMyName(this.getStorageType)
+      var _colMyName = Field.getMyName(this.getStorageType)
       val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
+
       //Field.setMyName(x.getName)
       Result.append(Field)
 
@@ -2416,7 +2426,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   CREATE TABLE SCRIPT TO SAVE OLD VALUE TRACE 
    */
   private def DF_CreateTable_OldValueTrace_Script(): String = {
-    var coma_partition = ""
+    //var coma_partition = ""
     
     var lCreateTableScript: String = "" 
     //FROM 2.4 --> INCLUDE SPECIAL OPTIONS FOR DATABRICKS
@@ -2550,7 +2560,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         broadcast_sql = "/*+ BROADCAST(PK) */"
         
       //Step2: left join with TABLE MASTER DATA
-      val AliasLeft: String = s"___${x.MyName}_FKRuleLeft__"
+      //val AliasLeft: String = s"___${x.MyName}_FKRuleLeft__"
       
       val pk_table_name = pk_InstanceTable.internalGetTable(huemulType_InternalTableType.Normal)
       val SQLLeft: String = s"""SELECT $broadcast_sql FK.* 
@@ -3135,8 +3145,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         raiseError(s"huemul_Table Error: PK not defined: $PKNotMapped",1017)
       
       //Get N° rows from user dataframe
-      val NumRowsUserData: Long = this.DataFramehuemul.DataFrame.count()
-      var NumRowsOldDataFrame: Long = 0
+      val NumRowsUserData: java.lang.Long = this.DataFramehuemul.DataFrame.count()
+      var NumRowsOldDataFrame: java.lang.Long = 0
       //**************************************************//
       //STEP 2:   CREATE BACKUP
       //**************************************************//
