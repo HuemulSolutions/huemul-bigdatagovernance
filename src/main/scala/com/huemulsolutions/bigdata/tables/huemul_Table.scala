@@ -1535,15 +1535,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         } else {
           partitionList.append(Field)
         }
-        /*
-        if (_colMyName.toLowerCase() == this.getPartitionField.toLowerCase())
-          StringSQL_partition += s",${NewColumnCast} as ${_colMyName} \n"
-        else {
-          StringSQL += s"${coma}${NewColumnCast} as ${_colMyName} \n"
-          coma = ","
-        }
-        * 
-        */
+
       } else {
         if (_colMyName.toLowerCase() == getNameForMDM_fhNew.toLowerCase()) {
           val colUserName = Field.getCaseType(this.getStorageType,getNameForMDM_fhNew) //from 2.6 #112
@@ -1558,7 +1550,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           
        
       if (Field.UsedForCheckSum) {
-        StringSQL_hash += s"""$coma_hash${if (Field.getNullable) s"coalesce($NewColumnCast,'null')" else NewColumnCast}"""
+        StringSQL_hash += s"""$coma_hash${s"coalesce($NewColumnCast,'null')" }"""
         coma_hash = ","
       }
       
@@ -2069,7 +2061,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         StringSQL += s""",${_colMyName}${__ProcessLog} \n"""
        
       if (Field.UsedForCheckSum) {
-        StringSQL_hash += s"""$coma_hash${if (Field.getNullable) s"coalesce(${_colMyName},'null')" else _colMyName}"""
+        StringSQL_hash += s"""$coma_hash${s"coalesce(${_colMyName},'null')"}"""
         coma_hash = ","
       }
         
