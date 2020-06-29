@@ -833,8 +833,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         huemulBigDataGov.logMessageWarn("0 rows in DF, nothing to evaluate")
       } else {
         getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
-          x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId}")
-          x.NumRowsTotal = if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) 1 else DQTotalRows
+          x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId()}")
+          x.NumRowsTotal = if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) 1L else DQTotalRows
           x.ResultDQ = ""
           
           val DQWithError = x.NumRowsTotal - x.NumRowsOK
