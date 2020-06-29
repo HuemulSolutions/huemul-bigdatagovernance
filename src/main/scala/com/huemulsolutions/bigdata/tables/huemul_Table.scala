@@ -3858,40 +3858,11 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private def excludeRows(LocalControl: huemul_Control): Unit = {
     //Add from 2.1: exclude DQ from WARNING_EXCLUDE
     val warning_Exclude_detail = Control.control_getDQResultForWarningExclude()
-    if (warning_Exclude_detail.length > 0) {
-      //get PK
-      //var dq_StringSQL_PK: String = ""
-      //var dq_StringSQL_PK_join: String = ""
-      //var dq_firstPK: String = null
-      //var coma: String = ""
-      //var _and: String = ""
+    if (warning_Exclude_detail.nonEmpty) {
 
-      /*
-      getALLDeclaredFields().filter { x => x.setAccessible(true)
-                                           x.get(this).isInstanceOf[huemul_Columns] &&
-                                           x.get(this).asInstanceOf[huemul_Columns].getIsPK }
-      .foreach { x =>
-        var Field = x.get(this).asInstanceOf[huemul_Columns]
-        val _colMyName = Field.getMyName(this.getStorageType)
-        dq_StringSQL_PK += s" ${coma}${_colMyName}"
-        dq_StringSQL_PK_join += s" ${_and} PK.${_colMyName} = EXCLUDE.${_colMyName}" 
-        if (dq_firstPK == null)
-          dq_firstPK = _colMyName
-        coma = ","
-        _and = " and "
-      }
-      */
-      
       //get DQ with WARNING_EXCLUDE > 0 rows
       val dq_id_list: String = warning_Exclude_detail.mkString(",")
-      /*
-      coma = ""
-      warning_Exclude_detail.foreach { x => 
-        dq_id_list += s"""${coma}"${x}"""" 
-        coma = ","
-      }
 
-       */
       val _tableNameDQ: String = internalGetTable(huemulType_InternalTableType.DQ)
       
       //get PK Details
@@ -3907,7 +3878,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       LocalControl.NewStep(s"WARNING_EXCLUDE: EXCLUDE rows")
       huemulBigDataGov.logMessageInfo(s"WARNING_EXCLUDE: ${_NumRows_Excluded} rows excluded")
       DataFramehuemul.DF_from_SQL(DataFramehuemul.Alias, s"SELECT $apply_broadcast PK.* FROM ${DataFramehuemul.Alias} PK LEFT JOIN __DQ_Det EXCLUDE ON PK.mdm_hash = EXCLUDE.mdm_hash WHERE EXCLUDE.mdm_hash IS NULL ")
-      
+
+      //from 2.6
+      DataFramehuemul.DataFrame.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
+
       if (_TableType == huemulType_Tables.Transaction)
         this.UpdateStatistics(LocalControl, "WARNING_EXCLUDE", null)
       else 
