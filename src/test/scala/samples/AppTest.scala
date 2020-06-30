@@ -5,7 +5,7 @@ import Assert._
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
 import com.huemulsolutions.bigdata.control.huemulType_Frequency
-import org.apache.derby.impl.services.locks.Control
+
 
 
 @Test

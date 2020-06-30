@@ -41,6 +41,10 @@ Finalmente, también automatiza la generación de código a partir de las defini
       <organization>Huemul Solutions</organization>
       <organizationUrl>http://www.HuemulSolutions.com</organizationUrl>
     </developer>
+      <developer>
+          <name>Christian Sattler</name>
+          <email>christian.sattler@gmail.com</email>
+      </developer>
   </developers>
   
 	<distributionManagement>

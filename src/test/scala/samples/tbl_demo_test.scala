@@ -28,7 +28,8 @@ class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_
   this.WhoCanRun_executeFull_addAccess("classname","package") 
   this.WhoCanRun_executeOnlyInsert_addAccess("classname","package")
   this.WhoCanRun_executeOnlyUpdate_addAccess("classname","package")
-  
+
+  this.setNameForMDM_hash("myTempHash")
   
   val codigo_id: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo")
   codigo_id.setIsPK (true)
