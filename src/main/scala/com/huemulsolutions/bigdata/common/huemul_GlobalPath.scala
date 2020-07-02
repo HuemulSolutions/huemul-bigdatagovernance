@@ -18,6 +18,16 @@ class huemul_GlobalPath() extends Serializable {
      **/
     var GlobalEnvironments: String = "prod, desa, qa" //prod: PRODUCCION, desa: DESARROLLO, qa: ambientes previos a producción
     var ImpalaEnabled: Boolean = false
+
+    //from 2.6 --> reduce validation to use in notebooks
+  /**set validation level of globalSettings
+   *
+   */
+  private var validationLevel: String = "FULL"
+    def setValidationLight(): Unit = {
+      validationLevel = "LOW"
+    }
+    def getValidationLevel: String = validationLevel
     
     var CONTROL_Driver: String = "org.postgresql.Driver"
     val CONTROL_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
@@ -82,7 +92,7 @@ class huemul_GlobalPath() extends Serializable {
     
     //from 2.4 --> bigData provider for technical configuration
     private var _bigDataProvider: huemulType_bigDataProvider = huemulType_bigDataProvider.None
-    def getBigDataProvider(): huemulType_bigDataProvider = {return _bigDataProvider}
+    def getBigDataProvider(): huemulType_bigDataProvider =  _bigDataProvider
     def setBigDataProvider(value: huemulType_bigDataProvider) {
       _bigDataProvider = value
     }
@@ -90,7 +100,7 @@ class huemul_GlobalPath() extends Serializable {
     //FROM 2.2
     //Add Hbase available
     private var _HBase_available: Boolean = false
-    def getHBase_available(): Boolean = {return _HBase_available}
+    def getHBase_available(): Boolean =  _HBase_available
     def setHBase_available() {
       _HBase_available = true
     }
@@ -99,18 +109,18 @@ class huemul_GlobalPath() extends Serializable {
     def setHBase_formatTable(value: String) {
       _HBase_formatTable = value
     }
-    def getHBase_formatTable(): String = {return _HBase_formatTable}
+    def getHBase_formatTable(): String =  _HBase_formatTable
     * 
     */
     
     //FROM 2.5 
     //ADD AVRO SUPPORT
     private var _avro_format: String = "com.databricks.spark.avro"
-    def getAVRO_format(): String = {return  _avro_format}
+    def getAVRO_format(): String =   _avro_format
     def setAVRO_format(value: String) {_avro_format = value} 
     
     private var _avro_compression: String = "snappy"
-    def getAVRO_compression(): String = {return  _avro_compression}
+    def getAVRO_compression(): String =   _avro_compression
     def setAVRO_compression(value: String) {_avro_compression = value} 
     
     
@@ -119,15 +129,15 @@ class huemul_GlobalPath() extends Serializable {
      */
     def ValidPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): Boolean = {
       val Result = Division.filter { x => x.environment == ManualEnvironment }
-      return if (Result == null || Result.length == 0) false else true
+       if (Result == null || Result.isEmpty) false else true
     }
     
     def GetPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
       val Result = Division.filter { x => x.environment == huemulBigDataGov.Environment }
-      if (Result == null || Result.length == 0)
+      if (Result == null || Result.isEmpty)
         sys.error(s"DAPI Error: environment '${huemulBigDataGov.Environment}' must be set")
         
-      return Result(0).Value
+      Result(0).Value
     }
     
     /**
@@ -135,32 +145,32 @@ class huemul_GlobalPath() extends Serializable {
      */
     def GetPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
       val Result = Division.filter { x => x.environment == ManualEnvironment }
-      if (Result == null || Result.length == 0)
+      if (Result == null || Result.isEmpty)
         sys.error(s"DAPI Error: environment '${ManualEnvironment}' must be set")
         
-      return Result(0).Value
+      Result(0).Value
     }
     
     def GetDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-      return GetPath(huemulBigDataGov, Division)
+      GetPath(huemulBigDataGov, Division)
     }
     
     /**
      Get DataBase Name with manual environment setting
      */
     def GetDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-      return GetPath(huemulBigDataGov, Division, ManualEnvironment)
+      GetPath(huemulBigDataGov, Division, ManualEnvironment)
     }
     
     
     //TEMP
     def GetDebugTempPath(huemulBigDataGov: huemul_BigDataGovernance, function_name: String, table_name: String): String = {        
-      return s"${GetPath(huemulBigDataGov, TEMPORAL_Path)}$function_name/$table_name"
+      s"${GetPath(huemulBigDataGov, TEMPORAL_Path)}$function_name/$table_name"
     }
     
     //to save DF directly from DF without DataGovernance
     def GetPathForSaveTableWithoutDG(huemulBigDataGov: huemul_BigDataGovernance,globalPath: ArrayBuffer[huemul_KeyValuePath], localPath_name: String, table_name: String): String = {        
-      return s"${GetPath(huemulBigDataGov, globalPath)}$localPath_name/$table_name"
+      s"${GetPath(huemulBigDataGov, globalPath)}$localPath_name/$table_name"
     }
     
     
