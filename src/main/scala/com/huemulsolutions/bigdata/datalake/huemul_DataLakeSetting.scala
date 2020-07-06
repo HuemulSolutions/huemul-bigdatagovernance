@@ -129,13 +129,13 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
   /***
    * FieldName for N° Rows in control line
    */
-  var LogNumRows_FieldName2: String = ""
-  def getLogNumRowsColumnName: String = LogNumRows_FieldName2
+  var LogNumRows_FieldName: String = ""
+  def getLogNumRowsColumnName: String = LogNumRows_FieldName
   /*** for Header, set column name that have the rows count
    *
    */
   def setLogNumRowsColumnName(value: String ): huemul_DataLakeSetting = {
-    LogNumRows_FieldName2 = value
+    LogNumRows_FieldName = value
     this
   }
   
