@@ -59,7 +59,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   //var Error_Text: String = ""  
   private var rawFiles_id: String = ""
   def setrawFiles_id(id: String) {rawFiles_id = id}
-  def getrawFiles_id(): String = {return rawFiles_id}
+  def getrawFiles_id(): String =  rawFiles_id
   //RAW_OpenFile(RAW_File_Info, year, mes, day, hora, min, seg, AdditionalParams)
   
   var DataRDD: RDD[String] = _
@@ -68,11 +68,11 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   //FROM 2.5 
   //ADD AVRO SUPPORT
   private var _avro_format: String = huemulBigDataGov.GlobalSettings.getAVRO_format()
-  def getAVRO_format(): String = {return  _avro_format}
+  def getAVRO_format(): String =   _avro_format
   def setAVRO_format(value: String) {_avro_format = value} 
   
   private var _avro_compression: String = huemulBigDataGov.GlobalSettings.getAVRO_compression()
-  def getAVRO_compression(): String = {return  _avro_compression}
+  def getAVRO_compression(): String =   _avro_compression
   def setAVRO_compression(value: String) {_avro_compression = value} 
   
   //from 2.4
@@ -101,7 +101,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     _Frequency = value
   }
   private var _Frequency: huemulType_Frequency = huemulType_Frequency.ANY_MOMENT
-  def getFrequency: huemulType_Frequency = {return _Frequency} 
+  def getFrequency: huemulType_Frequency =  _Frequency
   
   def RaiseError_RAW(txt: String, Error_Code: Integer) {
     Error.ControlError_Message = txt
@@ -248,7 +248,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    */
   
   def ConvertSchema(row : String) : Row = {
-    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, _allColumnsAsString, null)
+     ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, _allColumnsAsString, null)
     //SchemaConf: huemul_DataLakeSchemaConf, Schema: StructType,
   }
   
@@ -259,7 +259,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    */
   
   def ConvertSchema(row : String, customColumn: String) : Row = {
-    return ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, _allColumnsAsString, customColumn)
+     ConvertSchemaLocal(this.SettingInUse.DataSchemaConf, row, _allColumnsAsString, customColumn)
     //SchemaConf: huemul_DataLakeSchemaConf, Schema: StructType,
   }
   
@@ -421,7 +421,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
       }
     }
     
-    return !this.Error_isError
+     !this.Error_isError
   }
   
   def CreateSchema(SchemaConf: huemul_DataLakeSchemaConf, allColumnsAsString: Boolean = false): StructType = {
@@ -439,7 +439,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
       fieldsDetail.append(new StructField(localCustomColumn.getcolumnName_Business, if (allColumnsAsString) StringType else localCustomColumn.getDataType, nullable = true))
     }
     
-    return StructType(fieldsDetail)
+    StructType(fieldsDetail)
   }
    
 /** Genera el codigo inicial para una tabla y el proceso que masteriza dicha tabla
@@ -789,7 +789,7 @@ ${LocalMapping}
       }
     }
     
-    return Control   
+    Control
   }
   
 }
