@@ -7,7 +7,6 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
-import huemulType_FileType._
 import scala.collection.mutable._
 import com.huemulsolutions.bigdata.tables._
 import com.huemulsolutions.bigdata.tables.huemulType_Tables._
@@ -42,7 +41,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   /***
    * Information about interfaces
    */
-  var SettingInUse: huemul_DataLakeSetting = null
+  var SettingInUse: huemul_DataLakeSetting = _
   
   /***
    * get execution's info about rows and DF
@@ -51,9 +50,9 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   var Log: huemul_DataLakeLogInfo = new huemul_DataLakeLogInfo()
   
    
-  var FileName: String = null //Name who was read
-  var StartRead_dt: Calendar = null
-  var StopRead_dt: Calendar = null
+  var FileName: String = _ //Name who was read
+  var StartRead_dt: Calendar = _
+  var StopRead_dt: Calendar = _
 
   var Error: huemul_ControlError = new huemul_ControlError(huemulBigDataGov)
   var Error_isError: Boolean = false
@@ -63,8 +62,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   def getrawFiles_id(): String = {return rawFiles_id}
   //RAW_OpenFile(RAW_File_Info, year, mes, day, hora, min, seg, AdditionalParams)
   
-  var DataRDD: RDD[String] = null
-  var DataRawDF: DataFrame = null // Store the loaded data from Avro or other future format
+  var DataRDD: RDD[String] = _
+  var DataRawDF: DataFrame = _ // Store the loaded data from Avro or other future format
   
   //FROM 2.5 
   //ADD AVRO SUPPORT
@@ -84,7 +83,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * pos 2: line length with trim
    * pos 3: text line
    */
-  var DataRDD_extended: RDD[(Int, Int, Int, String)] = null
+  var DataRDD_extended: RDD[(Int, Int, Int, String)] = _
   
   //from 2.4
   /**
@@ -92,7 +91,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * pos 0: attribute name
    * pos 1: attribute value
    */
-  var DataRDD_Metadata: Array[(String, String)] = null
+  var DataRDD_Metadata: Array[(String, String)] = _
   
   
   private var _allColumnsAsString: Boolean = true 
@@ -445,10 +444,10 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    
 /** Genera el codigo inicial para una tabla y el proceso que masteriza dicha tabla
  *
- *  @param Param_PackageBase es el package base (ejemplo: your.application)
+ *  @param PackageBase es el package base (ejemplo: your.application)
  *  @param PackageProject es la ruta del package del proyecto (ejemplo "sbif")
- *  @param Param_ObjectName es el nombre de objeto que tendra tu masterizacion "process_[[modulo]]_[[entidad]]" (ejemplo process_comun_institucion )
- *  @param TableName es el nombre de la tabla "tbl_[[modulo]]_[[entidad]]" (ejemplo tbl_comun_institucion)
+ *  @param NewObjectName es el nombre de objeto que tendra tu masterizacion "process_[[modulo]]_[[entidad]]" (ejemplo process_comun_institucion )
+ *  @param NewTableName es el nombre de la tabla "tbl_[[modulo]]_[[entidad]]" (ejemplo tbl_comun_institucion)
  *  @param TableType es el tipo de tabla (master y reference para tablas maestras, Transaction para tablas particionadas por periodo con informacion transaccional)
  *  @param Frecuency indica si la tabla transaccional tiene particion mensual, diaria. Además indica la periocididad de actualización del proceso
  *  @param AutoMapping true para indicar que los nombres de columnas en raw son iguales a la tabla, indicar false si los nombres de columnas en raw son distintos a tabla 
