@@ -92,9 +92,9 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
    * pos 1: attribute value
    */
   var DataRDD_Metadata: Array[(String, String)] = _
-  
-  
-  private var _allColumnsAsString: Boolean = true 
+
+
+  private val _allColumnsAsString: Boolean = true
   //def allColumnsAsString(value: Boolean) {_allColumnsAsString = value}
   
   def setFrequency(value: huemulType_Frequency) {
@@ -272,7 +272,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     val DateProcess = huemulBigDataGov.setDateTime(year, month, day, hour, min, sec)
     var LocalErrorCode: Integer = null
     if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug("N° array config: " + this.SettingByDate.length.toString)
-    val DataResult = this.SettingByDate.filter { x => DateProcess.getTimeInMillis >= x.StartDate.getTimeInMillis && DateProcess.getTimeInMillis <= x.EndDate.getTimeInMillis  }
+    val DataResult = this.SettingByDate.filter { x => DateProcess.getTimeInMillis >= x.getStartDate.getTimeInMillis && DateProcess.getTimeInMillis <= x.getEndDate.getTimeInMillis  }
     
     if (DataResult.isEmpty) {
       LocalErrorCode = 3003 
@@ -290,9 +290,9 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         this.StartRead_dt = huemulBigDataGov.getCurrentDateTimeJava()
         /************************************************************************/
         /********   GET  FIELDS   ********************************/
-        /************************************************************************/ 
-        //Fields
-        var fieldsDetail : StructType = CreateSchema(this.SettingInUse.DataSchemaConf, _allColumnsAsString)
+      /** **********************************************************************/
+      //Fields
+      val fieldsDetail: StructType = CreateSchema(this.SettingInUse.DataSchemaConf, _allColumnsAsString)
            
         this.DataFramehuemul.SetDataSchema(fieldsDetail)
         if (this.huemulBigDataGov.DebugMode) {
@@ -300,7 +300,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           this.DataFramehuemul.getDataSchema().printTreeString()
         }
         
-        huemulBigDataGov.logMessageInfo("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols.toString)
+        huemulBigDataGov.logMessageInfo("N° Columns in RowFile: " + this.DataFramehuemul.getNumCols().toString)
       
         /************************************************************************/
         /********   OPEN FILE   *********************************/
@@ -314,7 +314,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         }
         huemulBigDataGov.logMessageInfo("Reading File: " + this.FileName)
         
-        if (this.SettingInUse.FileType == huemulType_FileType.TEXT_FILE) {
+        if (this.SettingInUse.getFileType == huemulType_FileType.TEXT_FILE) {
           this.DataRDD = huemulBigDataGov.spark.sparkContext.textFile(this.FileName)
           
           if (this.DataRDD  == null) {
@@ -327,16 +327,16 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
             if (huemulBigDataGov.gethuemul_showDemoLines() )
               huemulBigDataGov.logMessageInfo(x) 
             }
-        } else if (this.SettingInUse.FileType == huemulType_FileType.PDF_FILE) {
+        } else if (this.SettingInUse.getFileType == huemulType_FileType.PDF_FILE) {
           val _PDFFile = huemulBigDataGov.spark.sparkContext.binaryFiles(this.FileName).collect()
                 
           val pdfResult = new huemul_DataLakePDF()
-          pdfResult.openPDF(_PDFFile, this.SettingInUse.rowDelimiterForPDF)
+          pdfResult.openPDF(_PDFFile, this.SettingInUse.getRowDelimiterForPDF)
           
           this.DataRDD = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDD_Base)
           this.DataRDD_extended = huemulBigDataGov.spark.sparkContext.parallelize(pdfResult.RDDPDF_Data)
           this.DataRDD_Metadata = pdfResult.RDDPDF_Metadata
-        } else if (this.SettingInUse.FileType == huemulType_FileType.AVRO_FILE) {
+        } else if (this.SettingInUse.getFileType == huemulType_FileType.AVRO_FILE) {
           huemulBigDataGov.logMessageInfo("Opening AVRO data file and building DF DataRaw")
 
           this.DataRawDF= huemulBigDataGov.spark.read
@@ -345,12 +345,12 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
             //.schema( this.DataFramehuemul.getDataSchema())
             .load(this.FileName)
 
-        } else if (this.SettingInUse.FileType == huemulType_FileType.DELTA_FILE ||
-                   this.SettingInUse.FileType == huemulType_FileType.ORC_FILE || 
-                   this.SettingInUse.FileType == huemulType_FileType.PARQUET_FILE ) {
-          huemulBigDataGov.logMessageInfo(s"Opening ${this.SettingInUse.FileType} data file and building DF DataRaw")
+        } else if (this.SettingInUse.getFileType == huemulType_FileType.DELTA_FILE ||
+                   this.SettingInUse.getFileType == huemulType_FileType.ORC_FILE ||
+                   this.SettingInUse.getFileType == huemulType_FileType.PARQUET_FILE ) {
+          huemulBigDataGov.logMessageInfo(s"Opening ${this.SettingInUse.getFileType} data file and building DF DataRaw")
 
-          val _format = this.SettingInUse.FileType.toString.replace("_FILE", "")
+          val _format = this.SettingInUse.getFileType.toString.replace("_FILE", "")
           
           this.DataRawDF= huemulBigDataGov.spark.read
             .format(_format)
@@ -398,8 +398,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           this.Log.LogDF = huemulBigDataGov.spark.createDataFrame(rowRDD, this.Log.LogSchema)
           
           if (huemulBigDataGov.DebugMode) this.Log.LogDF.show()
-          if (this.SettingInUse.LogNumRows_FieldName != null) {
-            this.Log.DataNumRows = this.Log.LogDF.first().getAs[String](this.SettingInUse.LogNumRows_FieldName).toLong 
+          if (this.SettingInUse.getLogNumRowsColumnName != null) {
+            this.Log.DataNumRows = this.Log.LogDF.first().getAs[String](this.SettingInUse.getLogNumRowsColumnName).toLong
             huemulBigDataGov.logMessageDebug("N° Rows according Log: " + this.Log.DataNumRows.toString)
           }
           

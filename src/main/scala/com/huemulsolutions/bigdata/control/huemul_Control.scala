@@ -589,7 +589,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , dapi_raw.LogicalName
                          , dapi_raw.GroupName.toUpperCase()
                          , dapi_raw.Description
-                         , dapi_raw.SettingInUse.ContactName
+                         , dapi_raw.SettingInUse.getContactName
                          , dapi_raw.getFrequency.toString()
                          , Control_ClassName
                          )
@@ -606,19 +606,19 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         
         val ExecResultDet = control_RAWFilesDet_add(LocalRawFiles_id
                              ,RAWFilesDet_id
-                             ,x.StartDate
-                             ,x.EndDate
-                             ,x.FileName
-                             ,x.LocalPath
-                             ,x.GetPath(x.GlobalPath)
+                             ,x.getStartDate
+                             ,x.getEndDate
+                             ,x.getFileName
+                             ,x.getLocalPath
+                             ,x.GetPath(x.getGlobalPath)
                              ,x.DataSchemaConf.ColSeparatorType.toString()
                              ,GetCharRepresentation(x.DataSchemaConf.ColSeparator)
                              ,""  //rawfilesdet_data_headcolstring
                              ,x.LogSchemaConf.ColSeparatorType.toString()
                              ,GetCharRepresentation(x.LogSchemaConf.ColSeparator) 
                              ,""  //rawfilesdet_log_headcolstring
-                             ,x.LogNumRows_FieldName 
-                             ,x.ContactName 
+                             ,x.getLogNumRowsColumnName
+                             ,x.getContactName
                              ,Control_ClassName
                              )
             
@@ -628,7 +628,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         //Add Query Info
       val rawQuery_Id = huemulBigDataGov.huemul_GetUniqueId()
       var InsertInQueryCol: Boolean = false
-      if (dapi_raw.SettingInUse.StartDate == x.StartDate) {
+      if (dapi_raw.SettingInUse.getStartDate == x.getStartDate) {
         InsertInQueryCol = true
         
         val rawDuration = huemulBigDataGov.getDateTimeDiff(dapi_raw.StartRead_dt, dapi_raw.StopRead_dt ) 
