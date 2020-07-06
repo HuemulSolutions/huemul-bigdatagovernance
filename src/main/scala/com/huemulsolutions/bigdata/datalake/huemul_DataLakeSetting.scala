@@ -60,19 +60,19 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
   
   
   private var use_year: Integer = _
-  def getuse_year: Integer = {return use_year}
+  def getuse_year: Integer =  use_year
   private var use_month: Integer = _
-  def getuse_month: Integer = {return use_month}
+  def getuse_month: Integer =  use_month
   private var use_day: Integer = _
-  def getuse_day: Integer = {return use_day}
+  def getuse_day: Integer =  use_day
   private var use_hour: Integer = _
-  def getuse_hour: Integer = {return use_hour}
+  def getuse_hour: Integer =  use_hour
   private var use_minute: Integer = _
-  def getuse_minute: Integer = {return use_minute}
+  def getuse_minute: Integer =  use_minute
   private var use_second: Integer = _
-  def getuse_second: Integer = {return use_second}
+  def getuse_second: Integer =  use_second
   private var use_params: String = ""
-  def getuse_params: String = {return use_params}
+  def getuse_params: String =  use_params
   
   def SetParamsInUse(ano: Integer, mes: Integer, dia: Integer, hora: Integer, min: Integer, seg: Integer, AdditionalParams: String){
     use_year = ano
@@ -86,24 +86,24 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
   
   
   def GetFullNameWithPath() : String = {
-    return GetPath(GlobalPath) + LocalPath + FileName
+    GetPath(GlobalPath) + LocalPath + FileName
   }
   
   
   def GetDataBase(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    return huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)  
+    huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)
   }
   
   def GetDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    return huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)  
+    huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)
   }
   
   def GetPath(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    return huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)  
+    huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)
   }
   
   def GetPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    return huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)  
+    huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)
   }
   
 }
