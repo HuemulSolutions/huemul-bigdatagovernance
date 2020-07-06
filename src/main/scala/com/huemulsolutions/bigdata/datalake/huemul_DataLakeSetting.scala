@@ -10,15 +10,15 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
   /***
    * Start date for this configuration
    */
-  var StartDate : Calendar = null 
+  var StartDate : Calendar = _
   /***
    * End date for this configuration
    */
-  var EndDate : Calendar = null
+  var EndDate : Calendar = _
   /***
    * Type (example: TEXT_FILE, EXCEL_FILE)
    */
-  var FileType: huemulType_FileType = null
+  var FileType: huemulType_FileType = _
   /***
    * File Name (example: "PLAN-CTAS.TXT")
    */
@@ -30,7 +30,7 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
   /***
    * from Global path
    */
-  var GlobalPath  : ArrayBuffer[huemul_KeyValuePath] = null
+  var GlobalPath  : ArrayBuffer[huemul_KeyValuePath] = _
   /***
    * Responsible contact to resolve doubt or errors
    */
@@ -59,17 +59,17 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
   var rowDelimiterForPDF: String = "\\n"
   
   
-  private var use_year: Integer = null
+  private var use_year: Integer = _
   def getuse_year: Integer = {return use_year}
-  private var use_month: Integer = null
+  private var use_month: Integer = _
   def getuse_month: Integer = {return use_month}
-  private var use_day: Integer = null
+  private var use_day: Integer = _
   def getuse_day: Integer = {return use_day}
-  private var use_hour: Integer = null
+  private var use_hour: Integer = _
   def getuse_hour: Integer = {return use_hour}
-  private var use_minute: Integer = null
+  private var use_minute: Integer = _
   def getuse_minute: Integer = {return use_minute}
-  private var use_second: Integer = null
+  private var use_second: Integer = _
   def getuse_second: Integer = {return use_second}
   private var use_params: String = ""
   def getuse_params: String = {return use_params}
