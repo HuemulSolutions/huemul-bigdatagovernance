@@ -71,7 +71,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   def getAVRO_format: String =   _avro_format
   def setAVRO_format(value: String) {_avro_format = value} 
   
-  private var _avro_compression: String = huemulBigDataGov.GlobalSettings.getAVRO_compression
+  private var _avro_compression: String = huemulBigDataGov.GlobalSettings.getAVRO_compression()
   def getAVRO_compression: String =   _avro_compression
   def setAVRO_compression(value: String) {_avro_compression = value} 
   
@@ -276,10 +276,10 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     
     if (DataResult.isEmpty) {
       LocalErrorCode = 3003 
-      RaiseError_RAW(s"huemul_DataLake Error: No definition found in ${this.LogicalName} (${this.SettingByDate.length.toString()})",LocalErrorCode)
+      RaiseError_RAW(s"huemul_DataLake Error: No definition found in ${this.LogicalName} (${this.SettingByDate.length.toString})",LocalErrorCode)
     } else if (DataResult.length > 1) {
       LocalErrorCode = 3004
-      RaiseError_RAW(s"huemul_DataLake Error: Multiple definitions found in ${this.LogicalName} (${this.SettingByDate.length.toString()})", LocalErrorCode )
+      RaiseError_RAW(s"huemul_DataLake Error: Multiple definitions found in ${this.LogicalName} (${this.SettingByDate.length.toString})", LocalErrorCode )
     } else if (DataResult.length == 1) {
        this.SettingInUse = DataResult(0)
     }         
@@ -319,7 +319,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           
           if (this.DataRDD  == null) {
             LocalErrorCode = 3009
-            this.RaiseError_RAW(s"huemul_DataLake Error: File doesn't exist ${FileName}",LocalErrorCode)
+            this.RaiseError_RAW(s"huemul_DataLake Error: File doesn't exist $FileName",LocalErrorCode)
           }     
           
           if (huemulBigDataGov.gethuemul_showDemoLines() ) huemulBigDataGov.logMessageInfo("2 first line example of file: " + this.FileName)
@@ -433,7 +433,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     //from 2.4 --> add custom columns at the end
     val localCustomColumn = SchemaConf.getCustomColumn()
     if ( localCustomColumn != null) {
-      fieldsDetail.append(new StructField(localCustomColumn.getcolumnName_Business, if (allColumnsAsString) StringType else localCustomColumn.getDataType, nullable = true))
+      fieldsDetail.append(StructField(localCustomColumn.getcolumnName_Business, if (allColumnsAsString) StringType else localCustomColumn.getDataType, nullable = true))
     }
     
     StructType(fieldsDetail)
@@ -505,8 +505,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
 
   /*
   instrucciones (parte a):
-     1. Crear una clase en el packete que contiene las tablas (${param_PackageBase}.tables.master) con el nombre "${NewTableName}"
-     2. copiar el codigo desde estas instrucciones hasta ***    M A S T E R   P R O C E S S     *** y pegarlo en "${NewTableName}"
+     1. Crear una clase en el packete que contiene las tablas ($param_PackageBase.tables.master) con el nombre "$NewTableName"
+     2. copiar el codigo desde estas instrucciones hasta ***    M A S T E R   P R O C E S S     *** y pegarlo en "$NewTableName"
      3. Revisar detalladamente la configuracion de la tabla
         3.1 busque el texto "[[LLENAR ESTE CAMPO]]" y reemplace la descripcion segun corresponda
      4. seguir las instrucciones "parte b"
@@ -519,7 +519,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   import org.apache.spark.sql.types._
 
 
-  class ${NewTableName}(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
+  class $NewTableName(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
     /**********   C O N F I G U R A C I O N   D E   L A   T A B L A   ****************************************/
     //Tipo de tabla, Master y Reference son catalogos sin particiones de periodo
     this.setTableType(huemulType_Tables.${TableType})
@@ -530,9 +530,9 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     //Ruta en HDFS donde se guardara el archivo PARQUET
     this.setGlobalPaths(huemulBigDataGov.GlobalSettings.MASTER_SmallFiles_Path)
     //Ruta en HDFS especifica para esta tabla (Globalpaths / localPath)
-    this.setLocalPath("${LocalPath}")
+    this.setLocalPath("$LocalPath")
     //Frecuencia de actualización
-    this.setFrequency(huemulType_Frequency.${Frecuency})
+    this.setFrequency(huemulType_Frequency.$Frecuency)
     //permite asignar un código de error personalizado al fallar la PK
     this.setPK_externalCode("COD_ERROR")
 
@@ -552,7 +552,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     ${
     if (TableType == huemulType_Tables.Transaction) {
     s"""  //columna de particion
-    this.setPartitionField("period_${PeriodName}")"""
+    this.setPartitionField("period_$PeriodName")"""
     } else ""}
     /**********   S E T E O   I N F O R M A T I V O   ****************************************/
     //Nombre del contacto de TI
@@ -569,7 +569,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
 
     /**********   S E G U R I D A D   ****************************************/
     //Solo estos package y clases pueden ejecutar en modo full, si no se especifica todos pueden invocar
-    //this.WhoCanRun_executeFull_addAccess("${param_ObjectName}", "${PackageBase}.${PackageProject}")
+    //this.WhoCanRun_executeFull_addAccess("$param_ObjectName", "$PackageBase.$PackageProject")
     //Solo estos package y clases pueden ejecutar en modo solo Insert, si no se especifica todos pueden invocar
     //this.WhoCanRun_executeOnlyInsert_addAccess("[[MyclassName]]", "[[my.package.path]]")
     //Solo estos package y clases pueden ejecutar en modo solo Update, si no se especifica todos pueden invocar
@@ -585,7 +585,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     """
     } else ""}
 
-  ${LocalColumns}
+  $LocalColumns
 
     //**********Atributos adicionales de DataQuality
     /*
@@ -661,27 +661,27 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
      4. cambiar el import you.package.tables._ por el nombre del paquete que contiene la definicion de la tabla.
   */
 
-  package ${param_PackageBase}.${PackageProject}
+  package $param_PackageBase.$PackageProject
 
   import com.huemulsolutions.bigdata.common._
   import com.huemulsolutions.bigdata.control._
   import java.util.Calendar;
   import org.apache.spark.sql.types._
-  import ${param_PackageBase}.tables.master._
-  import ${param_PackageBase}.${PackageProject}.datalake._
+  import $param_PackageBase.tables.master._
+  import $param_PackageBase.$PackageProject.datalake._
 
   //import com.huemulsolutions.bigdata.tables._
   //import com.huemulsolutions.bigdata.dataquality._
 
 
-  object ${param_ObjectName} {
+  object $param_ObjectName {
 
     /**
      * Este codigo se ejecuta cuando se llama el JAR desde spark2-submit. el codigo esta preparado para hacer reprocesamiento masivo.
     */
     def main(args : Array[String]) {
       //Creacion API
-      val huemulBigDataGov  = new huemul_BigDataGovernance(s"Masterizacion tabla ${NewTableName} - ${Symbol}{this.getClass.getSimpleName}", args, globalSettings.Global)
+      val huemulBigDataGov  = new huemul_BigDataGovernance(s"Masterizacion tabla $NewTableName - $Symbol{this.getClass.getSimpleName}", args, globalSettings.Global)
 
       /*************** PARAMETROS **********************/
       var param_year = huemulBigDataGov.arguments.GetValue("year", null, "Debe especificar el parametro año, ej: year=2017").toInt
@@ -767,8 +767,8 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         Control.NewStep("Asocia columnas de la tabla con nombres de campos de SQL")
         ${if (AutoMapping) s"""huemulTable.setMappingAuto()"""
         else { s"""
-        huemulTable.period_${PeriodName}.SetMapping("period_${PeriodName}")
-  ${LocalMapping}
+        huemulTable.period_$PeriodName.SetMapping("period_${PeriodName}")
+  $LocalMapping
         """
         }}
 
