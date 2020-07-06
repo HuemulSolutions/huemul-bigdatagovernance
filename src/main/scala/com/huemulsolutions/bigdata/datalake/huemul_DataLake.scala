@@ -431,7 +431,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     }
     
     //from 2.4 --> add custom columns at the end
-    val localCustomColumn = SchemaConf.getCustomColumn()
+    val localCustomColumn = SchemaConf.getCustomColumn
     if ( localCustomColumn != null) {
       fieldsDetail.append(StructField(localCustomColumn.getcolumnName_Business, if (allColumnsAsString) StringType else localCustomColumn.getDataType, nullable = true))
     }

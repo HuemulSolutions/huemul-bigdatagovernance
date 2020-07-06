@@ -1,10 +1,13 @@
 package com.huemulsolutions.bigdata.datalake
 
 import java.util.Calendar
+
 import scala.collection.mutable.ArrayBuffer
 import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 import com.huemulsolutions.bigdata.common.huemul_KeyValuePath
+import com.huemulsolutions.bigdata.datalake.huemulType_Separator.huemulType_Separator
 import huemulType_FileType._
+import org.apache.spark.sql.types.{DataType, StringType}
 
 class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends Serializable {
   /***
@@ -119,6 +122,58 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
    * Data Schema configuration
    */
   var DataSchemaConf: huemul_DataLakeSchemaConf = new  huemul_DataLakeSchemaConf()
+
+  /**
+   * set column delimiter type
+   * @param value: POSITION,CHARACTER, NONE
+   * @return
+   */
+  def setColumnDelimiterType(value: huemulType_Separator): huemul_DataLakeSetting = {
+    DataSchemaConf.ColSeparatorType = value
+    this
+  }
+
+  def setColumnDelimiter(value: String): huemul_DataLakeSetting = {
+    DataSchemaConf.ColSeparator = value
+    this
+  }
+
+  def setHeaderColumnsString(columnsList: String): huemul_DataLakeSetting = {
+    DataSchemaConf.setHeaderColumnsString(columnsList)
+    this
+  }
+
+  /**
+   * add columns definition
+   * @param columnNameBusiness column business name (official name)
+   * @param columnNameTI column technical name (for lineage)
+   * @param dataType column data Type
+   * @param description column description
+   * @param posStart start position (only for POSITION delimiter type, start on cero)
+   * @param posEnd end  position (only for POSITION delimiter type)
+   * @param applyTrim default false, true for auto trim
+   * @param convertToNull default false, true for convert text "null" to null
+   * @return
+   */
+  def addColumn(columnNameBusiness: String
+                 , columnNameTI: String = null
+                 , dataType: DataType = StringType
+                 , description: String = "[[missing description]]"
+                 , posStart: Integer = null
+                 , posEnd: Integer = null
+                 , applyTrim: Boolean = false
+                 , convertToNull: Boolean = false
+                ): huemul_DataLakeSetting = {
+    DataSchemaConf.AddColumns(columnNameBusiness
+            , columnNameTI
+            , dataType
+            , description
+            , posStart
+            , posEnd
+            , applyTrim
+            , convertToNull)
+    this
+  }
   
   /***
    * Log Schema configuration
