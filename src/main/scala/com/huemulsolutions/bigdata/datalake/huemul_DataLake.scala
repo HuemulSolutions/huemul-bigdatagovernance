@@ -174,7 +174,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
           DataArray_Dest(i) = if (_allColumnsAsString) temp1
                               else if (FieldSchema.getDataType == StringType) temp1
                               else if (FieldSchema.getDataType == IntegerType) temp1.toInt
-                              else if (FieldSchema.getDataType == DecimalType) Decimal.apply(temp1)
+                              else if (FieldSchema.getDataType.toString.toLowerCase().contains("decimal")) Decimal.apply(temp1)
                               else if (FieldSchema.getDataType == LongType) temp1.toLong
                               else if (FieldSchema.getDataType == DoubleType) temp1.toDouble
                               else if (FieldSchema.getDataType == ShortType) temp1.toShort
@@ -215,7 +215,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
         DataArray_Dest(i) =   if (_allColumnsAsString) temp1
                               else if (FieldSchema.getDataType == StringType) temp1
                               else if (FieldSchema.getDataType == IntegerType) temp1.toInt
-                              else if (FieldSchema.getDataType == DecimalType) Decimal.apply(temp1)
+                              else if (FieldSchema.getDataType.toString.toLowerCase().contains("decimal")) Decimal.apply(temp1)
                               else if (FieldSchema.getDataType == LongType) temp1.toLong
                               else if (FieldSchema.getDataType == DoubleType) temp1.toDouble
                               else if (FieldSchema.getDataType == ShortType) temp1.toShort
