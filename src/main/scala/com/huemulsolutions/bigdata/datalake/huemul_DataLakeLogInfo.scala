@@ -5,8 +5,8 @@ import org.apache.spark.sql._
 
 class huemul_DataLakeLogInfo extends Serializable {
 
-  var LogDF: DataFrame = null
-  var LogSchema: StructType = null
+  var LogDF: DataFrame = _
+  var LogSchema: StructType = _
   var DataFirstRow: String = ""
   //var Control_info_rows: Integer = null
   var DataNumRows: Long = -1

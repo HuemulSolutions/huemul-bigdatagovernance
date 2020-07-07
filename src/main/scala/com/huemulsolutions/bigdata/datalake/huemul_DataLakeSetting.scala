@@ -140,7 +140,7 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
 
   /**
    * set columns name from strings: ex: column1;column2;column3....
-   * @param columnsList
+   * @param columnsList column list ex: column1;column2;column3...
    * @return
    */
   def setColumnsString(columnsList: String): huemul_DataLakeSetting = {
