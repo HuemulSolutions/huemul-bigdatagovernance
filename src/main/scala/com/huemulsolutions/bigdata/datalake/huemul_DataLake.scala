@@ -522,7 +522,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
   class $NewTableName(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
     /**********   C O N F I G U R A C I O N   D E   L A   T A B L A   ****************************************/
     //Tipo de tabla, Master y Reference son catalogos sin particiones de periodo
-    this.setTableType(huemulType_Tables.${TableType})
+    this.setTableType(huemulType_Tables.$TableType)
     //Base de Datos en HIVE donde sera creada la tabla
     this.setDataBase(huemulBigDataGov.GlobalSettings.MASTER_DataBase)
     //Tipo de archivo que sera almacenado en HDFS
@@ -581,7 +581,7 @@ class huemul_DataLake(huemulBigDataGov: huemul_BigDataGovernance, Control: huemu
     ${
     if (TableType == huemulType_Tables.Transaction) {
     s"""  //Columna de period
-    val period_${PeriodName} = new huemul_Columns (StringType, true,"periodo de los datos").setIsPK()
+    val period_$PeriodName = new huemul_Columns (StringType, true,"periodo de los datos").setIsPK()
     """
     } else ""}
 
