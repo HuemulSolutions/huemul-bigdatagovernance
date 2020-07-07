@@ -138,10 +138,17 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
     this
   }
 
-  def setHeaderColumnsString(columnsList: String): huemul_DataLakeSetting = {
+  /**
+   * set columns name from strings: ex: column1;column2;column3....
+   * @param columnsList
+   * @return
+   */
+  def setColumnsString(columnsList: String): huemul_DataLakeSetting = {
     DataSchemaConf.setHeaderColumnsString(columnsList)
     this
   }
+
+
 
   /**
    * add columns definition
@@ -179,7 +186,36 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
    * Log Schema configuration
    */
   var LogSchemaConf: huemul_DataLakeSchemaConf = new  huemul_DataLakeSchemaConf()
-  
+
+  /**
+   * set column delimiter type for Header (if exists)
+   * @param value ex: POSITION, CHARACTER, NONE
+   * @return
+   */
+  def setHeaderColumnDelimiterType(value: huemulType_Separator): huemul_DataLakeSetting = {
+    LogSchemaConf.ColSeparatorType = value
+    this
+  }
+
+  /**
+   * set column delimiter for header
+   * @param value ex: \\|, \t, ;
+   * @return
+   */
+  def setHeaderColumnDelimiter(value: String): huemul_DataLakeSetting = {
+    LogSchemaConf.ColSeparator = value
+    this
+  }
+
+  /**
+   * set columns name for header
+   * @param columnsList ex: headerInfo1;headerInfo2;headerInfo3...
+   * @return
+   */
+  def setHeaderColumnsString(columnsList: String): huemul_DataLakeSetting = {
+    LogSchemaConf.setHeaderColumnsString(columnsList)
+    this
+  }
   
   /***
    * FieldName for N° Rows in control line
