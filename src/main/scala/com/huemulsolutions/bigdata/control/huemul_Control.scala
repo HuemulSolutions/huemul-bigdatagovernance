@@ -15,25 +15,8 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import huemulType_Frequency._
 import scala.collection.mutable.ArrayBuffer
-import org.apache.hadoop.fs.FileSystem
 
-class huemul_control_query extends Serializable  {
-  var query_id: String = null
-  var tableAlias_name: String = null
-  var table_name: String = null
-  var rawFilesDet_Id: String = null
-  var isRAW: Boolean = false
-  var isTable: Boolean = false
-  var isTemp: Boolean = false
-}
 
-class huemul_control_querycol extends Serializable {
-  var querycol_id: String = null
-  var query_id: String = null
-  var rawfilesdet_id: String = null
-  var column_id: String = null
-  var querycol_name: String = null
-}
 
 class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrequency: huemulType_Frequency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulBigDataGov = phuemulBigDataGov
