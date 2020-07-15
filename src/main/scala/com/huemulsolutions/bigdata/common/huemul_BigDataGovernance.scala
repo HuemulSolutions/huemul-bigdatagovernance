@@ -837,7 +837,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
     //System.out.logMessage(Random);
     val Final: String  = Fecha.concat(autoIncString.concat(Random.concat(MyId)))
-    Final;
+    Final
     
     //return this.spark.sql(s"select data_control.fabric_GetUniqueId(${this.IdSparkPort}) as NewId ").first().getAs[String]("NewId")
   }
@@ -1129,8 +1129,6 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   log_info.setLevel(Level.ALL)
 }
 
-case class TempHiveSchema(database_name: String, table_name: String, column_name: String, datetime_insert: String) extends Serializable {
-    
-}
+
     
 
