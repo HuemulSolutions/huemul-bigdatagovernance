@@ -3,14 +3,7 @@ package com.huemulsolutions.bigdata.common
 import scala.collection.mutable.ArrayBuffer
 import com.huemulsolutions.bigdata.common.huemulType_bigDataProvider._
 
-class huemul_KeyValuePath(Environment: String, PathOrDataBase: String) extends Serializable {
-  /**example: "prod, desa, qa"      
-     **/
-  val environment: String = Environment
-  /** Value: Path for Files, DataBase Name for hive tables 
-   */
-  val Value: String = PathOrDataBase
-}
+
 
 
 class huemul_GlobalPath() extends Serializable {
@@ -146,7 +139,7 @@ class huemul_GlobalPath() extends Serializable {
     def GetPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
       val Result = Division.filter { x => x.environment == ManualEnvironment }
       if (Result == null || Result.isEmpty)
-        sys.error(s"DAPI Error: environment '${ManualEnvironment}' must be set")
+        sys.error(s"DAPI Error: environment '$ManualEnvironment' must be set")
         
       Result(0).Value
     }
