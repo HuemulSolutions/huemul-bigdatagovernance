@@ -1001,7 +1001,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /**
    * Execute a SQL sentence, create a new alias and save de DF result into HDFS
    */
-  def DF_ExecuteQuery(Alias: String, SQL: String, numPartitions: Integer = 0): DataFrame = {
+  def DF_ExecuteQuery(Alias: String, SQL: String, numPartitions: Integer): DataFrame = {
     if (this.DebugMode && !HideLibQuery) logMessageDebug(SQL)        
     var SQL_DF = this.spark.sql(SQL)            //Ejecuta Query
     if (numPartitions != null && numPartitions > 0)
@@ -1023,12 +1023,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * Execute a SQL sentence, create a new alias and save de DF result into HDFS
    */
   def DF_ExecuteQuery(Alias: String, SQL: String): DataFrame = {
-    DF_ExecuteQuery(Alias, SQL )
+    DF_ExecuteQuery(Alias, SQL, 0 )
   }
   
   def DF_ExecuteQuery(Alias: String, SQL: String, Control: huemul_Control ): DataFrame = {
     val dt_start = getCurrentDateTimeJava()
-    val Result = DF_ExecuteQuery(Alias, SQL)
+    val Result = DF_ExecuteQuery(Alias, SQL, 0)
     val dt_end = getCurrentDateTimeJava()
     
     DF_SaveLineage(Alias
