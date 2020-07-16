@@ -16,8 +16,37 @@ class huemul_JDBCProperties(huemulBigDataGob: huemul_BigDataGovernance,  connect
   def StartConnection() {
     if (driver != null && driver != "")
       Class.forName(driver)
-    this.connection = DriverManager.getConnection(ConnectionString)
+
+    this.connection = if (getUserName == null) DriverManager.getConnection(ConnectionString) else DriverManager.getConnection(ConnectionString, getUserName, passwordConnection )
     this.statement = this.connection.createStatement()
+  }
+
+  private var userName: String = _
+  /**
+   * set userName to connect DB
+   * @param userName userName
+   * @return huemul_JDBCProperties
+   */
+  def setUserName(userName: String): huemul_JDBCProperties = {
+    this.userName = userName
+    this
+  }
+
+  /**
+   * get userName to connect to DB
+   * @return
+   */
+  def getUserName: String = userName
+
+  private var passwordConnection: String = _
+  /**
+   * set password to db connection
+   * @param password password
+   * @return
+   */
+  def setPassword(password: String): huemul_JDBCProperties = {
+    passwordConnection = password
+    this
   }
 
   /**

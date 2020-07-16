@@ -819,25 +819,25 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Return DataBaseName.TableName
    */
-  private def InternalGetTable(ManualEnvironment: String): String = {
+  private def internalGetTable(ManualEnvironment: String): String = {
      s"${getDataBase(this._DataBase, ManualEnvironment)}.$TableName"
   }
   
   
   def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-     huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)
+     huemulBigDataGov.GlobalSettings.getDataBase(huemulBigDataGov, Division)
   }
   
   def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-     huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)
+     huemulBigDataGov.GlobalSettings.getDataBase(huemulBigDataGov, Division, ManualEnvironment)
   }
   
   def getPath(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-     huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)
+     huemulBigDataGov.GlobalSettings.getPath(huemulBigDataGov, Division)
   }
   
   def getPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-     huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)
+     huemulBigDataGov.GlobalSettings.getPath(huemulBigDataGov, Division, ManualEnvironment)
   }
   
   
@@ -2320,7 +2320,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           getStorageType == huemulType_StorageType.DELTA   || getStorageType == huemulType_StorageType.AVRO) {
         //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
-                                     CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
+                                     CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(ForHive = true) })
                                      USING ${getStorageType.toString}
                                      ${if (PartitionForCreateTable.length() > 0) s"PARTITIONED BY ($PartitionForCreateTable)" else "" }
                                      LOCATION '${getFullNameWithPath()}'"""
@@ -3187,7 +3187,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         var DFTempOpen = huemulBigDataGov.spark.read.parquet(tempPath)
         //from 2.6 --> add partition columns and values
         var i: Int = 0
-        val partitionList = getPartitionList;
+        val partitionList = getPartitionList
         while (i < getPartitionList.length) {
           DFTempOpen = DFTempOpen.withColumn(partitionList(i).getMyName(getStorageType) , lit(PartitionValuesForSelectiveUpdate(i)))
           lineageWhere.append(s"${partitionList(i).getMyName(getStorageType)} = '${PartitionValuesForSelectiveUpdate(i)}'")
@@ -3573,10 +3573,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def executeFull(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
     var Result: Boolean = false
     val whoExecute = getClassAndPackage()  
-    if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = this.executeSave(NewAlias, IsInsert = true, IsUpdate = true, IsDelete = true, IsSelectiveUpdate = false, null, storageLevelOfDF, RegisterOnlyInsertInDQ = false)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
+      raiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}", 1008)
       
     }
     
@@ -3600,10 +3600,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
 
     val whoExecute = getClassAndPackage()  
-    if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = this.executeSave(NewAlias, IsInsert = true, IsUpdate = false, IsDelete = false, IsSelectiveUpdate = false, null, storageLevelOfDF, RegisterOnlyInsertInDQ = RegisterOnlyInsertInDQ)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
+      raiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}", 1010)
     }
          
      Result
@@ -3615,10 +3615,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError("huemul_Table Error: DoOnlyUpdatehuemul is not available for Transaction Tables", 1011)
       
     val whoExecute = getClassAndPackage()  
-    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = this.executeSave(NewAlias, IsInsert = false, IsUpdate = true, IsDelete = false, IsSelectiveUpdate = false, null, storageLevelOfDF, RegisterOnlyInsertInDQ = false)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+      raiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}",1012)
     }
     
      Result
@@ -3631,10 +3631,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     newValue.append(PartitionValueForSelectiveUpdate)
 
     val whoExecute = getClassAndPackage()
-    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = executeSelectiveUpdate(NewAlias, newValue, storageLevelOfDF)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}",1012)
     }
 
      Result
@@ -3644,10 +3644,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var Result: Boolean = false
       
     val whoExecute = getClassAndPackage()  
-    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = this.executeSave(NewAlias, IsInsert = false, IsUpdate = false, IsDelete = false, IsSelectiveUpdate = true, PartitionValueForSelectiveUpdate, storageLevelOfDF, RegisterOnlyInsertInDQ = false)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}",1012)
     }
     
      Result

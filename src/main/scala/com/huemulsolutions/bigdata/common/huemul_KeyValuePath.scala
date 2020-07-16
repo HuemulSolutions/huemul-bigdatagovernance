@@ -7,4 +7,36 @@ class huemul_KeyValuePath(Environment: String, PathOrDataBase: String) extends S
   /** Value: Path for Files, DataBase Name for hive tables
    */
   val Value: String = PathOrDataBase
+
+
+  //from 2.6.1 add user and password, issue #111
+  private var userName: String = _
+  /**
+   * set userName to connect DB
+   * @param user userName
+   * @return huemul_KeyValuePath
+   */
+  def setUserName(user: String): huemul_KeyValuePath = {
+    userName = user
+    this
+  }
+
+
+  /**
+   * get userName to connect to DB
+   * @return
+   */
+  def getUserName: String = userName
+
+  private var password: String = _
+  /**
+   * set password
+   * @param password password
+   * @return huemul_KeyValuePath
+   */
+  def setPassword(password: String): huemul_KeyValuePath = {
+    this.password = password
+    this
+  }
+  def getPassword: String = password
 }
