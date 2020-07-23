@@ -16,6 +16,10 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import huemulType_Frequency._
 
+import scala.collection.immutable.HashMap
+import scala.collection.mutable
+import scala.io.Source
+import scala.util.parsing.json.JSON
 import scala.collection.mutable.ArrayBuffer
 
 
@@ -2272,7 +2276,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         huemulBigDataGov.logMessageInfo("control version: insert new version")
         val ExecResultCol = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
           INSERT INTO control_config (config_id, version_mayor, version_minor, version_patch)
-          VALUES (1,2,5,0)
+          VALUES (1,2,6,1)
           """)
           
           _version_mayor = 2
@@ -3067,7 +3071,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     val controlDB=new huemul_ControlModel(huemulBigDataGov)
 
     // HashMap that stores the execution parameters for each category (runtime, sparkProperties & systemProperties)
-    var envParamHash:mutable.HashMap[String, HashMap[String,String]] = new mutable.HashMap[String,HashMap[String,String]]()
+    var envParamHash:HashMap[String, HashMap[String,String]] = new HashMap[String,HashMap[String,String]]()
 
     //Spark Api Rest url
     val urlSparkApi = s"${huemulBigDataGov.IdPortMonitoring}/api/v1/applications/${huemulBigDataGov.IdApplication}/environment"
