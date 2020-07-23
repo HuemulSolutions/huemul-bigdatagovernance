@@ -57,7 +57,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
     //try to get hive metadata from cache
     //var getFromHive: Boolean = true
-    val df_name: String = GlobalSettings.GetDebugTempPath(this, "internal", "temp_hive_metadata") + ".parquet"
+    val df_name: String = GlobalSettings.getDebugTempPath(this, "internal", "temp_hive_metadata") + ".parquet"
     
     //cache is set to true
     if (this.GlobalSettings.HIVE_HourToUpdateMetadata > 0 && getMetadataFromHive) {
@@ -270,55 +270,55 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   logMessageInfo(s"Start Validating GlobalSetings (level: ${this.GlobalSettings.getValidationLevel})..")
   var ErrorGlobalSettings: String = ""
   if (this.GlobalSettings.getValidationLevel.equals("FULL")) {
-    if (!this.GlobalSettings.ValidPath(globalSettings.RAW_SmallFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.RAW_SmallFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_SmallFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.RAW_BigFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.RAW_BigFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_BigFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_SmallFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.MASTER_SmallFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_SmallFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_BigFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.MASTER_BigFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_BigFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.MASTER_DataBase, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.MASTER_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_DataBase"
-    if (!this.GlobalSettings.ValidPath(globalSettings.DIM_SmallFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.DIM_SmallFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_SmallFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.DIM_BigFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.DIM_BigFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_BigFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.DIM_DataBase, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.DIM_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_DataBase"
-    if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_SmallFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.REPORTING_SmallFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_SmallFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_BigFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.REPORTING_BigFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_BigFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.REPORTING_DataBase, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.REPORTING_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_DataBase"
-    if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_SmallFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_SmallFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_SmallFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_BigFiles_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_BigFiles_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_BigFiles_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.ANALYTICS_DataBase, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_DataBase"
 
 
     if (this.GlobalSettings.MDM_SaveOldValueTrace) {
-      if (!this.GlobalSettings.ValidPath(globalSettings.MDM_OldValueTrace_Path, this.Environment))
+      if (!this.GlobalSettings.validPath(globalSettings.MDM_OldValueTrace_Path, this.Environment))
         ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_Path"
-      if (!this.GlobalSettings.ValidPath(globalSettings.MDM_OldValueTrace_DataBase, this.Environment))
+      if (!this.GlobalSettings.validPath(globalSettings.MDM_OldValueTrace_DataBase, this.Environment))
         ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_DataBase"
     }
 
     if (this.GlobalSettings.MDM_SaveBackup) {
-      if (!this.GlobalSettings.ValidPath(globalSettings.MDM_Backup_Path, this.Environment))
+      if (!this.GlobalSettings.validPath(globalSettings.MDM_Backup_Path, this.Environment))
         ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_Backup_Path"
     }
   }
 
-  if (!this.GlobalSettings.ValidPath(globalSettings.TEMPORAL_Path, this.Environment))
+  if (!this.GlobalSettings.validPath(globalSettings.TEMPORAL_Path, this.Environment))
     ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}TEMPORAL_Path"
   if (this.GlobalSettings.DQ_SaveErrorDetails) {
-    if (!this.GlobalSettings.ValidPath(globalSettings.DQError_Path, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.DQError_Path, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_Path"
-    if (!this.GlobalSettings.ValidPath(globalSettings.DQError_DataBase, this.Environment))
+    if (!this.GlobalSettings.validPath(globalSettings.DQError_DataBase, this.Environment))
       ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_DataBase"
   }
   logMessageInfo("End Validating GlobalSetings..")
@@ -404,8 +404,16 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * START SPARK AND CONTROL MODEL CONNECTION
    *************************/
-  @transient val CONTROL_connection= new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.CONTROL_Setting),GlobalSettings.CONTROL_Driver, DebugMode) // Connection = null
-  @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.GetPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode) //Connection = null
+  //from 2.6.1 add userName and password withou using connectionString
+  val controlUserName: String = GlobalSettings.getUserName(this, GlobalSettings.CONTROL_Setting)
+  val controlPassword: String = GlobalSettings.getPassword(this, GlobalSettings.CONTROL_Setting)
+  @transient val CONTROL_connection: huemul_JDBCProperties = new huemul_JDBCProperties(this
+    , GlobalSettings.getPath(this, GlobalSettings.CONTROL_Setting)
+    , GlobalSettings.CONTROL_Driver, DebugMode)
+    .setUserName(controlUserName)
+    .setPassword(controlPassword)
+
+  @transient val impala_connection = new huemul_JDBCProperties(this, GlobalSettings.getPath(this, GlobalSettings.IMPALA_Setting),"com.cloudera.impala.jdbc4.Driver", DebugMode)
   
   if (!TestPlanMode && RegisterInControl) { 
     logMessageInfo(s"establishing connection with control model")  
@@ -511,11 +519,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    *************************/
   
   def getPath(pathFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
-    GlobalSettings.GetPath(this, pathFromGlobal)
+    GlobalSettings.getPath(this, pathFromGlobal)
   }
   
   def getDataBase(dataBaseFromGlobal: ArrayBuffer[huemul_KeyValuePath]): String = {
-    GlobalSettings.GetDataBase(this, dataBaseFromGlobal)
+    GlobalSettings.getDataBase(this, dataBaseFromGlobal)
   }
   
   def close(stopSpark: Boolean) {
@@ -705,7 +713,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   def CreateTempTable(DF: DataFrame, Alias: String, CreateTable: Boolean, NumPartitionCoalesce: Integer ) {
     //Create parquet in temp folder
     if (CreateTable && SaveTempDF && SaveTempTables){
-      val FileToTemp: String = GlobalSettings.GetDebugTempPath(this, ProcessNameCall, Alias) + ".parquet"      
+      val FileToTemp: String = GlobalSettings.getDebugTempPath(this, ProcessNameCall, Alias) + ".parquet"
       logMessageInfo(s"path result for table alias $Alias: $FileToTemp ")
       //version 1.3 --> prueba para optimizar escritura temporal
       //Se aplica coalesce en vez de repartition para evitar el shuffle interno
@@ -837,7 +845,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
     //System.out.logMessage(Random);
     val Final: String  = Fecha.concat(autoIncString.concat(Random.concat(MyId)))
-    Final;
+    Final
     
     //return this.spark.sql(s"select data_control.fabric_GetUniqueId(${this.IdSparkPort}) as NewId ").first().getAs[String]("NewId")
   }
@@ -993,7 +1001,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /**
    * Execute a SQL sentence, create a new alias and save de DF result into HDFS
    */
-  def DF_ExecuteQuery(Alias: String, SQL: String, numPartitions: Integer = 0): DataFrame = {
+  def DF_ExecuteQuery(Alias: String, SQL: String, numPartitions: Integer): DataFrame = {
     if (this.DebugMode && !HideLibQuery) logMessageDebug(SQL)        
     var SQL_DF = this.spark.sql(SQL)            //Ejecuta Query
     if (numPartitions != null && numPartitions > 0)
@@ -1015,7 +1023,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * Execute a SQL sentence, create a new alias and save de DF result into HDFS
    */
   def DF_ExecuteQuery(Alias: String, SQL: String): DataFrame = {
-    DF_ExecuteQuery(Alias, SQL, 0)
+    DF_ExecuteQuery(Alias, SQL, 0 )
   }
   
   def DF_ExecuteQuery(Alias: String, SQL: String, Control: huemul_Control ): DataFrame = {
@@ -1117,7 +1125,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       else 
         Result = true
     } catch {
-      case e: Exception => 
+      case _: Exception =>
         Result = false
     }
     
@@ -1129,8 +1137,6 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   log_info.setLevel(Level.ALL)
 }
 
-case class TempHiveSchema(database_name: String, table_name: String, column_name: String, datetime_insert: String) extends Serializable {
-    
-}
+
     
 

@@ -10,7 +10,7 @@ object Init {
  
     val huemulBigDataGov  = new huemul_BigDataGovernance(s"BigData API", args, Global)
     
-    val Control = new huemul_Control(huemulBigDataGov,null, huemulType_Frequency.ANY_MOMENT, false, false)
+    new huemul_Control(huemulBigDataGov,null, huemulType_Frequency.ANY_MOMENT, false, false)
     //Control.Init_CreateTables()
   }
 }
