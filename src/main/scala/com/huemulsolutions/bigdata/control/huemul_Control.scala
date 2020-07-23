@@ -17,30 +17,7 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import huemulType_Frequency._
 
 import scala.collection.mutable.ArrayBuffer
-import org.apache.hadoop.fs.FileSystem
 
-import scala.collection.immutable.HashMap
-import scala.collection.mutable
-import scala.io.Source
-import scala.util.parsing.json.JSON
-
-class huemul_control_query extends Serializable  {
-  var query_id: String = null
-  var tableAlias_name: String = null
-  var table_name: String = null
-  var rawFilesDet_Id: String = null
-  var isRAW: Boolean = false
-  var isTable: Boolean = false
-  var isTemp: Boolean = false
-}
-
-class huemul_control_querycol extends Serializable {
-  var querycol_id: String = null
-  var query_id: String = null
-  var rawfilesdet_id: String = null
-  var column_id: String = null
-  var querycol_name: String = null
-}
 
 class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrequency: huemulType_Frequency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
   val huemulBigDataGov = phuemulBigDataGov
@@ -600,7 +577,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
                          , dapi_raw.LogicalName
                          , dapi_raw.GroupName.toUpperCase()
                          , dapi_raw.Description
-                         , dapi_raw.SettingInUse.ContactName
+                         , dapi_raw.SettingInUse.getContactName
                          , dapi_raw.getFrequency.toString()
                          , Control_ClassName
                          )
@@ -617,19 +594,19 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         
         val ExecResultDet = control_RAWFilesDet_add(LocalRawFiles_id
                              ,RAWFilesDet_id
-                             ,x.StartDate
-                             ,x.EndDate
-                             ,x.FileName
-                             ,x.LocalPath
-                             ,x.GetPath(x.GlobalPath)
+                             ,x.getStartDate
+                             ,x.getEndDate
+                             ,x.getFileName
+                             ,x.getLocalPath
+                             ,x.GetPath(x.getGlobalPath)
                              ,x.DataSchemaConf.ColSeparatorType.toString()
                              ,GetCharRepresentation(x.DataSchemaConf.ColSeparator)
                              ,""  //rawfilesdet_data_headcolstring
                              ,x.LogSchemaConf.ColSeparatorType.toString()
                              ,GetCharRepresentation(x.LogSchemaConf.ColSeparator) 
                              ,""  //rawfilesdet_log_headcolstring
-                             ,x.LogNumRows_FieldName 
-                             ,x.ContactName 
+                             ,x.getLogNumRowsColumnName
+                             ,x.getContactName
                              ,Control_ClassName
                              )
             
@@ -639,7 +616,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         //Add Query Info
       val rawQuery_Id = huemulBigDataGov.huemul_GetUniqueId()
       var InsertInQueryCol: Boolean = false
-      if (dapi_raw.SettingInUse.StartDate == x.StartDate) {
+      if (dapi_raw.SettingInUse.getStartDate == x.getStartDate) {
         InsertInQueryCol = true
         
         val rawDuration = huemulBigDataGov.getDateTimeDiff(dapi_raw.StartRead_dt, dapi_raw.StopRead_dt ) 
@@ -2151,7 +2128,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
             val backupPath = x.getAs[String]("tableuse_pathbackup")
             this.NewStep(s"Backup: drop file ${backupPath} ")
             val backupPath_hdfs = new org.apache.hadoop.fs.Path(backupPath)
-            val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
+            val fs = backupPath_hdfs.getFileSystem(huemulBigDataGov.spark.sparkContext.hadoopConfiguration) 
             if (fs.exists(backupPath_hdfs)){
               fs.delete(backupPath_hdfs, true)
             }   

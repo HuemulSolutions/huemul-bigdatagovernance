@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: com.hortonworks.hive:hive-warehouse-connector_2.11:1.0.0.3.1.0.0-78">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/hortonworks/hive/hive-warehouse-connector_2.11/1.0.0.3.1.0.0-78/hive-warehouse-connector_2.11-1.0.0.3.1.0.0-78.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/hortonworks/hive/hive-warehouse-connector_2.11/1.0.0.3.1.0.0-78/hive-warehouse-connector_2.11-1.0.0.3.1.0.0-78-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/hortonworks/hive/hive-warehouse-connector_2.11/1.0.0.3.1.0.0-78/hive-warehouse-connector_2.11-1.0.0.3.1.0.0-78-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

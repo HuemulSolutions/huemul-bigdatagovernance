@@ -1,19 +1,14 @@
 package com.huemulsolutions.bigdata.tables
 
 import scala.collection.mutable.ArrayBuffer
-import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 import com.huemulsolutions.bigdata.dataquality._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification.huemulType_DQNotification
 
-class huemul_Table_RelationshipColumns (pk: huemul_Columns, fk: huemul_Columns) {
-  var PK: huemul_Columns = pk
-  var FK: huemul_Columns = fk
-}
 
 class huemul_Table_Relationship(Class_TableName: Object, allowNull: Boolean) {
   val Relationship: ArrayBuffer[huemul_Table_RelationshipColumns] = new ArrayBuffer[huemul_Table_RelationshipColumns]()
-  var MyName: String = null
-  val AllowNull = allowNull
+  var MyName: String = _
+  val AllowNull: Boolean = allowNull
   def AddRelationship (PK: huemul_Columns, FK: huemul_Columns) {
       Relationship.append(new huemul_Table_RelationshipColumns(PK, FK) )
   }
@@ -24,7 +19,7 @@ class huemul_Table_Relationship(Class_TableName: Object, allowNull: Boolean) {
     _Notification = value
     this
   } 
-  def getNotification(): huemulType_DQNotification = {return _Notification}
+  def getNotification(): huemulType_DQNotification =  _Notification
   
   //From 2.1 --> apply broadcast
   private var _BroadcastJoin: Boolean = false
@@ -32,13 +27,13 @@ class huemul_Table_Relationship(Class_TableName: Object, allowNull: Boolean) {
     _BroadcastJoin = value
     this
   } 
-  def getBroadcastJoin(): Boolean = {return _BroadcastJoin}
+  def getBroadcastJoin(): Boolean =  _BroadcastJoin
   
   private var _externalCode: String = "HUEMUL_DQ_001"
   def getExternalCode: String = {return if (_externalCode==null) "HUEMUL_DQ_001" else _externalCode }
   def setExternalCode(value: String): huemul_Table_Relationship = {
     _externalCode = value  
-    return this
+    this
   }
   
 }
