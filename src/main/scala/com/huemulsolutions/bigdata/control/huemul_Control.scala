@@ -16,7 +16,7 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import huemulType_Frequency._
 
-import scala.collection.immutable.HashMap
+import scala.collection.mutable.HashMap
 import scala.io.Source
 import scala.util.parsing.json.JSON
 import scala.collection.mutable.ArrayBuffer
