@@ -6,7 +6,8 @@ package com.huemulsolutions.bigdata.control
 
 import org.apache.spark.sql.types._
 import org.apache.spark.sql._
-import java.util.Calendar;
+import java.util.Calendar
+
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.tables._
@@ -14,8 +15,8 @@ import com.huemulsolutions.bigdata.dataquality._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import huemulType_Frequency._
-import scala.collection.mutable.ArrayBuffer
 
+import scala.collection.mutable.ArrayBuffer
 
 
 class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent: huemul_Control, runFrequency: huemulType_Frequency, IsSingleton: Boolean = true, RegisterInControlLog: Boolean = true) extends Serializable  {
@@ -95,7 +96,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
            ,Control_ClassName
            )
           }
-  
+
+
+  //Stores Spark Session Environment parameter
+  saveSparkEnvParams()
+
   //Insert new record
   if (RegisterInControlLog)
   NewStep("Start")
@@ -3042,6 +3047,98 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     return ExecResult             
   }
-  
+
+  /** Get and save Spark Environment Parameters in controls database
+   *
+   *  @author    Christian.Sattler@gmail.com
+   *  @since     2.[6]
+   *  @group     control
+   *
+   *  @return    true is save was success, false on error/TestPlanMode enabled/RegisterInControl disable
+   */
+  def saveSparkEnvParams(): Boolean = {
+    // Only get Spark Environment parameters on Non-TestPlanMode run
+    if (huemulBigDataGov.TestPlanMode) return false
+
+    // Only on root control_Id will be register the parameters (Control_IdParent==null)
+    if (Control_IdParent!=null) return false
+
+    huemulBigDataGov.logMessageInfo("Getting Spark Environment Parameters")
+    val controlDB=new huemul_ControlModel(huemulBigDataGov)
+
+    // HashMap that stores the execution parameters for each category (runtime, sparkProperties & systemProperties)
+    var envParamHash:mutable.HashMap[String, HashMap[String,String]] = new mutable.HashMap[String,HashMap[String,String]]()
+
+    //Spark Api Rest url
+    val urlSparkApi = s"${huemulBigDataGov.IdPortMonitoring}/api/v1/applications/${huemulBigDataGov.IdApplication}/environment"
+
+    try {
+      val restGet = Source.fromURL(urlSparkApi)
+      val jsonData:String = restGet.mkString //retrieve JsonData
+      restGet.close()
+
+      val json = JSON.parseFull(jsonData)
+      val jsonMap:Map[String,Any] = json.get.asInstanceOf[Map[String, Any]]
+
+      // Get runtime Values
+      envParamHash += ("runtime" -> new HashMap[String,String]())
+      val dataRuntime= jsonMap("runtime").asInstanceOf[Map[String,Any]]
+      dataRuntime.keys.toList.foreach(f => envParamHash("runtime") += (f -> dataRuntime(f).toString))
+
+      // Get sparkProperties values
+      envParamHash += ("sparkProperties" -> new HashMap[String,String]())
+      val dataSparkProperties =  jsonMap("sparkProperties").asInstanceOf[List[Any]]
+      dataSparkProperties.foreach(f => envParamHash("sparkProperties") += (f.asInstanceOf[List[String]].head -> f.asInstanceOf[List[String]].last ))
+
+      // Get systemProperties values
+      envParamHash += ("systemProperties" -> new HashMap[String,String]())
+      val dataSystemProperties =  jsonMap("systemProperties").asInstanceOf[List[Any]]
+      dataSystemProperties.foreach(f => envParamHash("systemProperties") += (f.asInstanceOf[List[String]].head -> f.asInstanceOf[List[String]].last ))
+
+    }
+    catch {
+      case e: Exception =>
+        huemulBigDataGov.logMessageError("Error: could not get Spark Environment Params")
+        val error = new huemul_ControlError(huemulBigDataGov)
+        error.GetError(e,this.getClass.getName, 9999)
+        controlDB.registerError(error ,"huemulEnv")
+        return false
+    }
+
+    // Save Parameter to control table
+    try {
+
+      for((categoryType, paramsHash) <- envParamHash) {
+        for((envParamName,envParamValue) <- paramsHash ) {
+          if (huemulBigDataGov.RegisterInControl) {
+            val result: huemul_JDBCResult= controlDB.addControlProcessExecEnvDB(
+              this.Control_Id
+              , categoryType
+              , envParamName
+              , envParamValue
+              , this.getClass.getName)
+
+            //if there is an error during tabla insert, throw an error with the description
+            if (result!=null && result.IsError) {
+              throw new Exception(result.ErrorDescription)
+            }
+          }
+
+          if (huemulBigDataGov.DebugMode){
+            huemulBigDataGov.logMessageDebug(s"Environment: category: $categoryType, name: $envParamName, value: $envParamValue")
+          }
+        }
+      }
+    } catch {
+      case e: Exception =>
+        huemulBigDataGov.logMessageError("Error: could not save Spark Environment Params on table")
+        huemulBigDataGov.logMessageError(e)
+        // Note: No need to register error, controlDb has it done
+        return false
+    }
+
+    if (huemulBigDataGov.RegisterInControl) huemulBigDataGov.logMessageInfo("Spark Environment Parameters saved to control")
+    true
+  }
   
 }
