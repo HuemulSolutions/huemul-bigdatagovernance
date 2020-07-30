@@ -16,6 +16,7 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification._
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQQueryLevel._
 import huemulType_Frequency._
 
+import scala.collection.mutable
 import scala.collection.mutable.HashMap
 import scala.io.Source
 import scala.util.parsing.json.JSON
@@ -2279,8 +2280,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           """)
           
           _version_mayor = 2
-          _version_minor = 1
-          _version_patch = 0
+          _version_minor = 6
+          _version_patch = 1
       } else {
         _version_mayor = ExecResult.GetValue("version_mayor", ExecResult.ResultSet(0)).toString.toInt
         _version_minor = ExecResult.GetValue("version_minor", ExecResult.ResultSet(0)).toString.toInt
@@ -3067,10 +3068,10 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     if (Control_IdParent!=null) return false
 
     huemulBigDataGov.logMessageInfo("Getting Spark Environment Parameters")
-    val controlDB=new huemul_ControlModel(huemulBigDataGov)
+    val controlDB=new huemul_ControlModel(huemulBigDataGov, this.getVersionFull())
 
     // HashMap that stores the execution parameters for each category (runtime, sparkProperties & systemProperties)
-    var envParamHash:HashMap[String, HashMap[String,String]] = new HashMap[String,HashMap[String,String]]()
+    var envParamHash:mutable.HashMap[String, HashMap[String,String]] = new HashMap[String,HashMap[String,String]]()
 
     //Spark Api Rest url
     val urlSparkApi = s"${huemulBigDataGov.IdPortMonitoring}/api/v1/applications/${huemulBigDataGov.IdApplication}/environment"
@@ -3111,24 +3112,27 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     // Save Parameter to control table
     try {
 
-      for((categoryType, paramsHash) <- envParamHash) {
-        for((envParamName,envParamValue) <- paramsHash ) {
-          if (huemulBigDataGov.RegisterInControl) {
-            val result: huemul_JDBCResult= controlDB.addControlProcessExecEnvDB(
-              this.Control_Id
-              , categoryType
-              , envParamName
-              , envParamValue
-              , this.getClass.getName)
+      if (getVersionFull() >= 20601) {
+        NewStep("Get and save Spark Environment Parameters")
+        for ((categoryType, paramsHash) <- envParamHash) {
+          for ((envParamName, envParamValue) <- paramsHash) {
+            if (huemulBigDataGov.RegisterInControl) {
+              val result: huemul_JDBCResult = controlDB.addControlProcessExecEnvDB(
+                this.Control_Id
+                , categoryType
+                , envParamName
+                , envParamValue
+                , this.getClass.getName)
 
-            //if there is an error during tabla insert, throw an error with the description
-            if (result!=null && result.IsError) {
-              throw new Exception(result.ErrorDescription)
+              //if there is an error during tabla insert, throw an error with the description
+              if (result != null && result.IsError) {
+                throw new Exception(result.ErrorDescription)
+              }
             }
-          }
 
-          if (huemulBigDataGov.DebugMode){
-            huemulBigDataGov.logMessageDebug(s"Environment: category: $categoryType, name: $envParamName, value: $envParamValue")
+            if (huemulBigDataGov.DebugMode) {
+              huemulBigDataGov.logMessageDebug(s"Environment: category: $categoryType, name: $envParamName, value: $envParamValue")
+            }
           }
         }
       }

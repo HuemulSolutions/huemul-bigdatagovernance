@@ -17,7 +17,7 @@ import com.huemulsolutions.bigdata.common._
  * @param huemulBigDataGov  huemul main class of the big data governance framework
  *
  */
-private[bigdata] class huemul_ControlModel(huemulBigDataGov: huemul_BigDataGovernance) extends Serializable {
+private[bigdata] class huemul_ControlModel(huemulBigDataGov: huemul_BigDataGovernance, controlVersionFull: Integer) extends Serializable {
 
   //Constructor
   val _huemulBigDataGov: huemul_BigDataGovernance = huemulBigDataGov
@@ -61,6 +61,8 @@ private[bigdata] class huemul_ControlModel(huemulBigDataGov: huemul_BigDataGover
          |  ,${SQLStringNulls(huemulBigDataGov.getCurrentDateTime())}
          |  ,${SQLStringNulls(mdmProcessName, 200)}
          |)""".stripMargin)
+
+
   }
 
   /** Registe error in the control model database
