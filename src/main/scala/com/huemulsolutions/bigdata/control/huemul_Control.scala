@@ -1018,6 +1018,41 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     }
                         
   }
+
+  def RegisterMASTER_CREATE_UsePartition(DefMaster: huemul_Table, partitionValue: String, numRows: Long) {
+
+    if (huemulBigDataGov.RegisterInControl) {
+      //Insert control_TablesUse
+      DefMaster._tablesUseId = LocalIdStep
+
+      control_TablesUse_add(  DefMaster.TableName
+        ,DefMaster.getCurrentDataBase()
+        ,Control_ClassName
+        ,Control_Id
+        ,DefMaster._tablesUseId
+        ,this.getparamYear()
+        ,this.getparamMonth()
+        ,this.getparamDay()
+        ,this.getparamHour()
+        ,this.getparamMin()
+        ,this.getparamSec()
+        ,AdditionalParamsInfo
+        ,p_TableUse_Read = false //--as TableUse_Read
+        ,p_TableUse_Write = true //--as TableUse_Write
+        ,numRows //DefMaster.NumRows_New()
+        ,0L //DefMaster.NumRows_Update()
+        ,0L //DefMaster.NumRows_Updatable()
+        ,0L //DefMaster.NumRows_NoChange()
+        ,0L //DefMaster.NumRows_Delete()
+        ,0L //DefMaster.NumRows_Excluded()
+        ,numRows //DefMaster.NumRows_Total()
+        ,partitionValue //instead of DefMaster.getPartitionValue()
+        ,DefMaster._getBackupPath()
+        ,Control_ClassName
+      )
+    }
+
+  }
   
   def RegisterMASTER_CREATE_Use(DefMaster: huemul_Table) {     
       

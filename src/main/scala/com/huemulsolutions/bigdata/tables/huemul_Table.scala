@@ -1106,7 +1106,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     } 
     
     if (!OnlyUserDefined){ //all columns, including MDM
-      var b = pClass.getSuperclass().getDeclaredFields()
+      var b = pClass.getSuperclass.getDeclaredFields
       
        
       if (tableType == huemulType_InternalTableType.OldValueTrace) {
@@ -3785,9 +3785,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       LocalControl.NewStep("Start Save ")                
       if (savePersist(LocalControl, DataFramehuemul, OnlyInsert, IsSelectiveUpdate, RegisterOnlyInsertInDQ )){
-        LocalControl.NewStep("Register Master Information ")
-        Control.RegisterMASTER_CREATE_Use(this)
-      
         LocalControl.FinishProcessOK
       }
       else {
@@ -3974,6 +3971,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
         //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
+        LocalControl.NewStep("Register Master Information ")
+        Control.RegisterMASTER_CREATE_Use(this)
       }
       else{
         //get partition to start drop and all partitions before it (path)
@@ -3987,8 +3986,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
               continueSearch = false
           }
         }
-        
-         
+
+
         //drop old partitions only if one of them was marked as dropBeforeInsert
         if (!continueSearch && dropPartitions.nonEmpty) {
           this.PartitionValue = new ArrayBuffer[String]
@@ -4055,8 +4054,34 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             }
           }
         }
-        
-        
+
+        LocalControl.NewStep("Save: get Partition Detailes counts")
+        //get statistics 2.6.1
+        val groupNames: String = getPartitionList.map(name => col(name.getMyName(getStorageType))).mkString(",")
+        var DFDistinctControl_p1 = huemulBigDataGov.spark.sql(s"SELECT $groupNames,cast(count(1) as Long) as numRows FROM ${DF_huemul.Alias} group by $groupNames")
+
+        //cast to string
+        getPartitionList.foreach { x =>
+          DFDistinctControl_p1 = DFDistinctControl_p1.withColumn( x.getMyName(getStorageType), DF_Final.col(x.getMyName(getStorageType)).cast(StringType))
+        }
+        val DFDistinctControl = DFDistinctControl_p1.collect()
+
+        LocalControl.NewStep("Save: get Partition Details: save numRows to control model")
+        //for each row, save to tableUSes control model
+        DFDistinctControl.foreach { xData =>
+          var pathToSave: String = ""
+
+          //get columns name in order to create path to delete
+          getPartitionList.foreach { xPartitions =>
+            val colPartitionName = xPartitions.getMyName(getStorageType)
+            val colData = xData.getAs[String](colPartitionName)
+            pathToSave += s"/${colPartitionName.toLowerCase()}=$colData"
+          }
+          val numRows:java.lang.Long = xData.getAs[java.lang.Long]("numRows")
+
+          Control.RegisterMASTER_CREATE_UsePartition(this,pathToSave ,numRows )
+        }
+
         if (this.getNumPartitions > 0) {
           LocalControl.NewStep("Save: Set num FileParts")
           DF_Final = DF_Final.repartition(this.getNumPartitions)
@@ -4066,6 +4091,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath()} ")     
           
         DF_Final.write.mode(SaveMode.Append).format(_getSaveFormat(this.getStorageType)).partitionBy(getPartitionListForSave:_*).save(getFullNameWithPath())
+
+        //get staticstics from 2.6.1
+        var DFDistinct_step = DF_Final.select(dropPartitions.map(name => col(name.getMyName(getStorageType))): _*).distinct()
 
       }
     } catch {

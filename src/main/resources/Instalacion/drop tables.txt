@@ -38,3 +38,4 @@ drop table  control_query;
 drop table  control_querycolumn;
 drop table  control_querycolumnori;
 
+drop table control_processexecenv ;
