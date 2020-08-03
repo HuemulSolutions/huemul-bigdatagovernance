@@ -3993,10 +3993,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           this.PartitionValue = new ArrayBuffer[String]
           //get partitions value to drop
           LocalControl.NewStep("Save: Get partitions values to delete (distinct)")
-          //val partitionFieldsName = dropPartitions.map { x => x.getMyName(getStorageType) }.mkString(",")
           var DFDistinct_step = DF_Final.select(dropPartitions.map(name => col(name.getMyName(getStorageType))): _*).distinct()
-          //var DFDistinct_step = DF_Final.select(getPartitionListForSave.map(name => col(name)): _*).distinct()
-          
+
           //add columns cast
           dropPartitions.foreach { x => 
             DFDistinct_step = DFDistinct_step.withColumn( x.getMyName(getStorageType), DF_Final.col(x.getMyName(getStorageType)).cast(StringType))
@@ -4026,9 +4024,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             
             //get columns name in order to create path to delete
             dropPartitions.foreach { xPartitions =>
-                val colPartitionName = xPartitions.getMyName(getStorageType)
+                val colPartitionName = huemulBigDataGov.getCaseType(this.getStorageType,xPartitions.getMyName(getStorageType))
                 val colData = xData.getAs[String](colPartitionName)
-                pathToDelete += s"/${colPartitionName.toLowerCase()}=$colData"
+                pathToDelete += s"/${colPartitionName}=$colData"
                 whereToDelete.append(s"$colPartitionName = '$colData'")
             }
             this.PartitionValue.append(pathToDelete)
