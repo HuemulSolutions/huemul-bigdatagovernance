@@ -433,7 +433,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var PartitionValue: ArrayBuffer[String] = new ArrayBuffer[String]  //column,value
   def getPartitionValue(): String = { if (PartitionValue.length > 0) PartitionValue(0) else ""}
   var _tablesUseId: String = _
-  private var DF_DQErrorDetails: DataFrame = _
+  //private var DF_DQErrorDetails: DataFrame = _
   
   /*  ********************************************************************************
    *****   F I E L D   P R O P E R T I E S    **************************************** 
@@ -1327,14 +1327,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val __fhChange = huemulBigDataGov.getCaseType( this.getStorageType, "_fhChange")
     val __ProcessLog = huemulBigDataGov.getCaseType( this.getStorageType, "_ProcessLog")
     
-    var ColumnsCreateTable : String = ""
-    var coma: String = ""
+    //var ColumnsCreateTable : String = ""
+    //var coma: String = ""
     fieldList.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }
     .foreach { x =>
       //Get field
       val Field = x.get(this).asInstanceOf[huemul_Columns]
-      var _colMyName = Field.getMyName(this.getStorageType)
+      val _colMyName = Field.getMyName(this.getStorageType)
       val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
 
       //Field.setMyName(x.getName)
@@ -1370,8 +1370,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //WARNING!!! Any changes you make to this code, repeat it in getHBaseCatalogForHIVE
     val partitionColumnToEnd = if (getStorageType == huemulType_StorageType.HBASE) false else true
     val fieldList = getALLDeclaredFields(OnlyUserDefined = false,PartitionColumnToEnd = partitionColumnToEnd,tableType)
-    val NumFields = fieldList.filter { x => x.setAccessible(true)
-      x.get(this).isInstanceOf[huemul_Columns] }.length
+   // val NumFields = fieldList.filter { x => x.setAccessible(true)
+   //   x.get(this).isInstanceOf[huemul_Columns] }.length
     
     //set name according to getStorageType (AVRO IS LowerCase)
     val __storageType =  if (tableType == huemulType_InternalTableType.Normal) this.getStorageType
@@ -3306,7 +3306,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        * isUpdate: se aplica en SQL_Step1_FullJoin: si no permite update, cambia el tipo ___ActionType__ de UPDATE a EQUAL
        */
       
-      val OnlyInsert: Boolean = isInsert && !isUpdate
+      //val OnlyInsert: Boolean = isInsert && !isUpdate
       
       //All required fields have been set
       val SQL_Missing = missingRequiredFields(isSelectiveUpdate)
