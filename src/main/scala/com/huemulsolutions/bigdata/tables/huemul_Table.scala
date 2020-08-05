@@ -1388,7 +1388,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //for HBase, add hs_rowKey as Key column
     if (getStorageType == huemulType_StorageType.HBASE && _numPKColumns > 1) {
-      fieldList.filter { x => x.getName == hs_rowKeyInternamName2 }.foreach { x =>
+      fieldList.filter { x => x.setAccessible(true)
+        x.getName == hs_rowKeyInternamName2 }.foreach { x =>
         val Field = x.get(this).asInstanceOf[huemul_Columns]
         val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), __storageType)
         val DataTypeLocal = _dataType.sql
