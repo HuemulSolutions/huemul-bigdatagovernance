@@ -433,7 +433,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   private var PartitionValue: ArrayBuffer[String] = new ArrayBuffer[String]  //column,value
   def getPartitionValue(): String = { if (PartitionValue.length > 0) PartitionValue(0) else ""}
   var _tablesUseId: String = _
-  private var DF_DQErrorDetails: DataFrame = _
+  //private var DF_DQErrorDetails: DataFrame = _
   
   /*  ********************************************************************************
    *****   F I E L D   P R O P E R T I E S    **************************************** 
@@ -819,25 +819,25 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   /**
    * Return DataBaseName.TableName
    */
-  private def InternalGetTable(ManualEnvironment: String): String = {
+  private def internalGetTable(ManualEnvironment: String): String = {
      s"${getDataBase(this._DataBase, ManualEnvironment)}.$TableName"
   }
   
   
   def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-     huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)
+     huemulBigDataGov.GlobalSettings.getDataBase(huemulBigDataGov, Division)
   }
   
   def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-     huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)
+     huemulBigDataGov.GlobalSettings.getDataBase(huemulBigDataGov, Division, ManualEnvironment)
   }
   
   def getPath(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-     huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)
+     huemulBigDataGov.GlobalSettings.getPath(huemulBigDataGov, Division)
   }
   
   def getPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-     huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)
+     huemulBigDataGov.GlobalSettings.getPath(huemulBigDataGov, Division, ManualEnvironment)
   }
   
   
@@ -1106,7 +1106,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     } 
     
     if (!OnlyUserDefined){ //all columns, including MDM
-      var b = pClass.getSuperclass().getDeclaredFields()
+      var b = pClass.getSuperclass.getDeclaredFields
       
        
       if (tableType == huemulType_InternalTableType.OldValueTrace) {
@@ -1327,14 +1327,14 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     val __fhChange = huemulBigDataGov.getCaseType( this.getStorageType, "_fhChange")
     val __ProcessLog = huemulBigDataGov.getCaseType( this.getStorageType, "_ProcessLog")
     
-    var ColumnsCreateTable : String = ""
-    var coma: String = ""
+    //var ColumnsCreateTable : String = ""
+    //var coma: String = ""
     fieldList.filter { x => x.setAccessible(true)
                                       x.get(this).isInstanceOf[huemul_Columns] }
     .foreach { x =>
       //Get field
       val Field = x.get(this).asInstanceOf[huemul_Columns]
-      var _colMyName = Field.getMyName(this.getStorageType)
+      val _colMyName = Field.getMyName(this.getStorageType)
       val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), this.getStorageType)
 
       //Field.setMyName(x.getName)
@@ -1370,8 +1370,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     //WARNING!!! Any changes you make to this code, repeat it in getHBaseCatalogForHIVE
     val partitionColumnToEnd = if (getStorageType == huemulType_StorageType.HBASE) false else true
     val fieldList = getALLDeclaredFields(OnlyUserDefined = false,PartitionColumnToEnd = partitionColumnToEnd,tableType)
-    val NumFields = fieldList.filter { x => x.setAccessible(true)
-      x.get(this).isInstanceOf[huemul_Columns] }.length
+   // val NumFields = fieldList.filter { x => x.setAccessible(true)
+   //   x.get(this).isInstanceOf[huemul_Columns] }.length
     
     //set name according to getStorageType (AVRO IS LowerCase)
     val __storageType =  if (tableType == huemulType_InternalTableType.Normal) this.getStorageType
@@ -1388,7 +1388,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     
     //for HBase, add hs_rowKey as Key column
     if (getStorageType == huemulType_StorageType.HBASE && _numPKColumns > 1) {
-      fieldList.filter { x => x.getName == hs_rowKeyInternamName2 }.foreach { x =>
+      fieldList.filter { x => x.setAccessible(true)
+        x.getName == hs_rowKeyInternamName2 }.foreach { x =>
         val Field = x.get(this).asInstanceOf[huemul_Columns]
         val _dataType  = Field.getDataTypeDeploy(huemulBigDataGov.GlobalSettings.getBigDataProvider(), __storageType)
         val DataTypeLocal = _dataType.sql
@@ -2320,7 +2321,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
           getStorageType == huemulType_StorageType.DELTA   || getStorageType == huemulType_StorageType.AVRO) {
         //get from: https://docs.databricks.com/user-guide/tables.html (see Create Partitioned Table section)
         lCreateTableScript = s"""
-                                     CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(true) })
+                                     CREATE TABLE IF NOT EXISTS ${internalGetTable(huemulType_InternalTableType.Normal)} (${getColumns_CreateTable(ForHive = true) })
                                      USING ${getStorageType.toString}
                                      ${if (PartitionForCreateTable.length() > 0) s"PARTITIONED BY ($PartitionForCreateTable)" else "" }
                                      LOCATION '${getFullNameWithPath()}'"""
@@ -3187,7 +3188,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         var DFTempOpen = huemulBigDataGov.spark.read.parquet(tempPath)
         //from 2.6 --> add partition columns and values
         var i: Int = 0
-        val partitionList = getPartitionList;
+        val partitionList = getPartitionList
         while (i < getPartitionList.length) {
           DFTempOpen = DFTempOpen.withColumn(partitionList(i).getMyName(getStorageType) , lit(PartitionValuesForSelectiveUpdate(i)))
           lineageWhere.append(s"${partitionList(i).getMyName(getStorageType)} = '${PartitionValuesForSelectiveUpdate(i)}'")
@@ -3306,7 +3307,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
        * isUpdate: se aplica en SQL_Step1_FullJoin: si no permite update, cambia el tipo ___ActionType__ de UPDATE a EQUAL
        */
       
-      val OnlyInsert: Boolean = isInsert && !isUpdate
+      //val OnlyInsert: Boolean = isInsert && !isUpdate
       
       //All required fields have been set
       val SQL_Missing = missingRequiredFields(isSelectiveUpdate)
@@ -3573,10 +3574,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   def executeFull(NewAlias: String, storageLevelOfDF: org.apache.spark.storage.StorageLevel = null): Boolean = {
     var Result: Boolean = false
     val whoExecute = getClassAndPackage()  
-    if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeFull.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = this.executeSave(NewAlias, IsInsert = true, IsUpdate = true, IsDelete = true, IsSelectiveUpdate = false, null, storageLevelOfDF, RegisterOnlyInsertInDQ = false)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1008)
+      raiseError(s"huemul_Table Error: Don't have access to executeFull in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}", 1008)
       
     }
     
@@ -3600,10 +3601,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError("huemul_Table Error: DoOnlyInserthuemul is not available for Transaction Tables",1009)
 
     val whoExecute = getClassAndPackage()  
-    if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyInsert.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = this.executeSave(NewAlias, IsInsert = true, IsUpdate = false, IsDelete = false, IsSelectiveUpdate = false, null, storageLevelOfDF, RegisterOnlyInsertInDQ = RegisterOnlyInsertInDQ)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}", 1010)
+      raiseError(s"huemul_Table Error: Don't have access to executeOnlyInsert in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}", 1010)
     }
          
      Result
@@ -3615,10 +3616,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       raiseError("huemul_Table Error: DoOnlyUpdatehuemul is not available for Transaction Tables", 1011)
       
     val whoExecute = getClassAndPackage()  
-    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = this.executeSave(NewAlias, IsInsert = false, IsUpdate = true, IsDelete = false, IsSelectiveUpdate = false, null, storageLevelOfDF, RegisterOnlyInsertInDQ = false)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+      raiseError(s"huemul_Table Error: Don't have access to executeOnlyUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}",1012)
     }
     
      Result
@@ -3631,10 +3632,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     newValue.append(PartitionValueForSelectiveUpdate)
 
     val whoExecute = getClassAndPackage()
-    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = executeSelectiveUpdate(NewAlias, newValue, storageLevelOfDF)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}",1012)
     }
 
      Result
@@ -3644,10 +3645,10 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
     var Result: Boolean = false
       
     val whoExecute = getClassAndPackage()  
-    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName(), whoExecute.getLocalPackageName()))
+    if (this._WhoCanRun_executeOnlyUpdate.HasAccess(whoExecute.getLocalClassName, whoExecute.getLocalPackageName))
       Result = this.executeSave(NewAlias, IsInsert = false, IsUpdate = false, IsDelete = false, IsSelectiveUpdate = true, PartitionValueForSelectiveUpdate, storageLevelOfDF, RegisterOnlyInsertInDQ = false)
     else {
-      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName()}, Package: ${whoExecute.getLocalPackageName()}",1012)
+      raiseError(s"huemul_Table Error: Don't have access to executeSelectiveUpdate in ${this.getClass.getSimpleName.replace("$", "")}  : Class: ${whoExecute.getLocalClassName}, Package: ${whoExecute.getLocalPackageName}",1012)
     }
     
      Result
@@ -3785,9 +3786,6 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
       
       LocalControl.NewStep("Start Save ")                
       if (savePersist(LocalControl, DataFramehuemul, OnlyInsert, IsSelectiveUpdate, RegisterOnlyInsertInDQ )){
-        LocalControl.NewStep("Register Master Information ")
-        Control.RegisterMASTER_CREATE_Use(this)
-      
         LocalControl.FinishProcessOK
       }
       else {
@@ -3974,6 +3972,8 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         
         //val fs = FileSystem.get(huemulBigDataGov.spark.sparkContext.hadoopConfiguration)       
         //fs.setPermission(new org.apache.hadoop.fs.Path(GetFullNameWithPath()), new FsPermission("770"))
+        LocalControl.NewStep("Register Master Information ")
+        Control.RegisterMASTER_CREATE_Use(this)
       }
       else{
         //get partition to start drop and all partitions before it (path)
@@ -3987,17 +3987,15 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
               continueSearch = false
           }
         }
-        
-         
+
+
         //drop old partitions only if one of them was marked as dropBeforeInsert
         if (!continueSearch && dropPartitions.nonEmpty) {
           this.PartitionValue = new ArrayBuffer[String]
           //get partitions value to drop
           LocalControl.NewStep("Save: Get partitions values to delete (distinct)")
-          //val partitionFieldsName = dropPartitions.map { x => x.getMyName(getStorageType) }.mkString(",")
           var DFDistinct_step = DF_Final.select(dropPartitions.map(name => col(name.getMyName(getStorageType))): _*).distinct()
-          //var DFDistinct_step = DF_Final.select(getPartitionListForSave.map(name => col(name)): _*).distinct()
-          
+
           //add columns cast
           dropPartitions.foreach { x => 
             DFDistinct_step = DFDistinct_step.withColumn( x.getMyName(getStorageType), DF_Final.col(x.getMyName(getStorageType)).cast(StringType))
@@ -4027,9 +4025,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             
             //get columns name in order to create path to delete
             dropPartitions.foreach { xPartitions =>
-                val colPartitionName = xPartitions.getMyName(getStorageType)
+                val colPartitionName = huemulBigDataGov.getCaseType(this.getStorageType,xPartitions.getMyName(getStorageType))
                 val colData = xData.getAs[String](colPartitionName)
-                pathToDelete += s"/${colPartitionName.toLowerCase()}=$colData"
+                pathToDelete += s"/${colPartitionName}=$colData"
                 whereToDelete.append(s"$colPartitionName = '$colData'")
             }
             this.PartitionValue.append(pathToDelete)
@@ -4055,8 +4053,34 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
             }
           }
         }
-        
-        
+
+        LocalControl.NewStep("Save: get Partition Detailes counts")
+        //get statistics 2.6.1
+        val groupNames: String = getPartitionList.map(name => col(name.getMyName(getStorageType))).mkString(",")
+        var DFDistinctControl_p1 = huemulBigDataGov.spark.sql(s"SELECT $groupNames,cast(count(1) as Long) as numRows FROM ${DF_huemul.Alias} group by $groupNames")
+
+        //cast to string
+        getPartitionList.foreach { x =>
+          DFDistinctControl_p1 = DFDistinctControl_p1.withColumn( x.getMyName(getStorageType), DF_Final.col(x.getMyName(getStorageType)).cast(StringType))
+        }
+        val DFDistinctControl = DFDistinctControl_p1.collect()
+
+        LocalControl.NewStep("Save: get Partition Details: save numRows to control model")
+        //for each row, save to tableUSes control model
+        DFDistinctControl.foreach { xData =>
+          var pathToSave: String = ""
+
+          //get columns name in order to create path to delete
+          getPartitionList.foreach { xPartitions =>
+            val colPartitionName = xPartitions.getMyName(getStorageType)
+            val colData = xData.getAs[String](colPartitionName)
+            pathToSave += s"/${colPartitionName.toLowerCase()}=$colData"
+          }
+          val numRows:java.lang.Long = xData.getAs[java.lang.Long]("numRows")
+
+          Control.RegisterMASTER_CREATE_UsePartition(this,pathToSave ,numRows )
+        }
+
         if (this.getNumPartitions > 0) {
           LocalControl.NewStep("Save: Set num FileParts")
           DF_Final = DF_Final.repartition(this.getNumPartitions)
@@ -4066,6 +4090,9 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         if (huemulBigDataGov.DebugMode) huemulBigDataGov.logMessageDebug(s"saving path: ${getFullNameWithPath()} ")     
           
         DF_Final.write.mode(SaveMode.Append).format(_getSaveFormat(this.getStorageType)).partitionBy(getPartitionListForSave:_*).save(getFullNameWithPath())
+
+        //get staticstics from 2.6.1
+        var DFDistinct_step = DF_Final.select(dropPartitions.map(name => col(name.getMyName(getStorageType))): _*).distinct()
 
       }
     } catch {

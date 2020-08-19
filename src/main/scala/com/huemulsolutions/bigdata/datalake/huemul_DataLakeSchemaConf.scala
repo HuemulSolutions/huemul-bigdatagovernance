@@ -60,7 +60,7 @@ class huemul_DataLakeSchemaConf extends Serializable {
   }
   
   //new from 2.4
-  private var customColumn: huemul_DataLakeColumns = null
+  private var customColumn: huemul_DataLakeColumns = _
   
   //new from 2.4
   /**
@@ -81,24 +81,6 @@ class huemul_DataLakeSchemaConf extends Serializable {
   }
   
   //new from 2.4
-  def getCustomColumn(): huemul_DataLakeColumns = {return customColumn}
+  def getCustomColumn: huemul_DataLakeColumns =  customColumn
 }
 
-class huemul_DataLakeColumns(columnName_Business: String
-                          , columnName_TI: String 
-                          , DataType: DataType = StringType
-                          , Description: String = null
-                          , PosIni: Integer = null
-                          , PosFin: Integer = null
-                          , ApplyTrim: Boolean = false
-                          , ConvertToNull: Boolean = false) extends Serializable {
-  def getcolumnName_Business: String = {return columnName_Business}
-  def getcolumnName_TI: String  = {return columnName_TI}
-  def getDataType: DataType = {return DataType}
-  def getDescription: String = {return Description}
-  def getPosIni: Integer  = {return PosIni}
-  def getPosFin: Integer  = {return PosFin}
-  def getApplyTrim: Boolean = {return ApplyTrim}
-  def getConvertToNull: Boolean  = {return ConvertToNull}
-  
-}
