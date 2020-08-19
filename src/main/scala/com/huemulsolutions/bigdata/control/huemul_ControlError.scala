@@ -4,17 +4,17 @@ import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 import com.huemulsolutions.bigdata.datalake.huemul_DataLake
 
 class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends Serializable  {
-  var ControlError_Trace: String = null
-  var ControlError_ClassName: String = null
-  var ControlError_FileName: String = null
-  var ControlError_LineNumber: Integer = null
-  var ControlError_MethodName: String = null
-  var ControlError_Message: String = null
+  var ControlError_Trace: String = _
+  var ControlError_ClassName: String = _
+  var ControlError_FileName: String = _
+  var ControlError_LineNumber: Integer = _
+  var ControlError_MethodName: String = _
+  var ControlError_Message: String = _
   var ControlError_IsError: Boolean = false
-  var ControlError_ErrorCode: Integer = null
+  var ControlError_ErrorCode: Integer = _
   
   def IsOK(): Boolean = {
-    return !ControlError_IsError
+    !ControlError_IsError
   }
   
   /**
@@ -39,9 +39,9 @@ class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends S
     ControlError_IsError = true
     ControlError_ErrorCode = if (Error_Code == null) ControlError_ErrorCode else Error_Code
     ControlError_Trace = ""
-    e.getStackTrace().foreach { x => ControlError_Trace = ControlError_Trace + x + "\n" }
+    e.getStackTrace.foreach { x => ControlError_Trace = ControlError_Trace + x + "\n" }
     
-    e.getStackTrace().foreach { x => 
+    e.getStackTrace.foreach { x =>
       if (x.getClassName == GetClassName && ControlError_ClassName == null){
         ControlError_ClassName = x.getClassName
         ControlError_FileName = x.getFileName
@@ -52,8 +52,8 @@ class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends S
     }
     
     if (ControlError_ClassName == null) {
-      if (e.getStackTrace() == null || e.getStackTrace().length == 0 ) {
-        println(e.getStackTrace())
+      if (e.getStackTrace == null || e.getStackTrace.length == 0 ) {
+        println(e.getStackTrace)
         ControlError_ClassName = "NO INFORMATION AVAILABLE"
         ControlError_FileName = "NO INFORMATION AVAILABLE"
         ControlError_LineNumber = -1
@@ -71,7 +71,7 @@ class huemul_ControlError (huemulBigDataGov: huemul_BigDataGovernance) extends S
       }
     }
     
-    ControlError_Message = e.toString()
+    ControlError_Message = e.toString
     
     huemulBigDataGov.logMessageError("***************************************************************")
     huemulBigDataGov.logMessageError("huemulBigDataGov: Error Detail")

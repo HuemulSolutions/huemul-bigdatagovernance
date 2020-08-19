@@ -3,22 +3,19 @@ package com.huemulsolutions.bigdata.tables
 import com.huemulsolutions.bigdata.control.huemul_Control
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions._
 import com.huemulsolutions.bigdata.common.huemul_BigDataGovernance
 
 
-import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
+import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.spark.HBaseContext
 import org.apache.hadoop.hbase.spark.HBaseRDDFunctions._
-import org.apache.hadoop.hbase.client.{Connection,ConnectionFactory,HBaseAdmin,HTable,Put,Get}
+import org.apache.hadoop.hbase.client.ConnectionFactory
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.spark.KeyFamilyQualifier
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles
 import org.apache.hadoop.hbase.client.Delete
-import org.apache.hadoop.hbase.client.Admin
 //import org.apache.hadoop.hbase.HTableDescriptors // HTableDescriptor
 import org.apache.hadoop.hbase.HColumnDescriptor
-import org.apache.hive.jdbc.HiveConnection
 //import org.apache.hadoop.hbase.spark.datasources.HBaseTableCatalog
 
 
@@ -30,13 +27,13 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     //Crea tabla
     
     val hbaseConf = HBaseConfiguration.create()
-    val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
+   // val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
     
     
     val connection = ConnectionFactory.createConnection(hbaseConf)
-    val admin = connection.getAdmin()
+    val admin = connection.getAdmin
     
-    val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
+    val tableNameString: String = s"$HBase_Namespace:$HBase_tableName"
     val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
     
     if (admin.tableExists(tableName)) {
@@ -56,13 +53,13 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     //Crea tabla
     Control.NewStep(s"HBase: Create hBaseConfiguration and HBaseContext")
     val hbaseConf = HBaseConfiguration.create()
-    val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
+    //val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
     
     Control.NewStep("HBase: Create connection")
     val connection = ConnectionFactory.createConnection(hbaseConf)
-    val admin = connection.getAdmin()
+    val admin = connection.getAdmin
     
-    val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
+    val tableNameString: String = s"$HBase_Namespace:$HBase_tableName"
     val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
     
     Control.NewStep(s"HBase: Namespaces validation...")
@@ -71,7 +68,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     admin.close()
     connection.close()
     
-    return result
+    result
   }
   
   /*
@@ -90,7 +87,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
                 , isOnlyInsert: Boolean
                 , DF_ColumnPKName: String
                 ): Boolean = {
-    return saveToHBase(DF_to_save
+     saveToHBase(DF_to_save
                                     ,HBase_Namespace
                                     ,HBase_tableName
                                     ,numPartitions
@@ -108,10 +105,10 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
                 , DF_ColumnPKName: String
                 , huemulDeclaredFieldsForHBase : Array[(java.lang.reflect.Field, String, String, DataType)] //Optional
                 ): Boolean = {
-    var result: Boolean = true
+    val result: Boolean = true
     
-    var numPartition: String = if (numPartitions > 5) numPartitions.toString() else "5"
-    Control.NewStep(s"HBase: num partitions = ${numPartition} ")
+    val numPartition: String = if (numPartitions > 5) numPartitions.toString else "5"
+    Control.NewStep(s"HBase: num partitions = $numPartition")
 
     //get Schema
     val __schema = DF_to_save.schema
@@ -132,7 +129,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       var fam: String = "default"
       var nom: String = x.name
       var dataType: DataType = __schema.fields( __schema.fieldIndex(x.name)).dataType
-      var pos = __schema.fieldIndex(x.name)
+      val pos = __schema.fieldIndex(x.name)
 
       //Only if huemulDeclaredFields has value
       if (huemulDeclaredFieldsForHBase != null) {
@@ -159,7 +156,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     //map to HBase format (keyValue, family, colname, value)
     import huemulBigDataGov.spark.implicits._ 
     val __pdd_2 = DF_to_save.flatMap(row => {
-      val rowKey = row(indexPK).toString() //Bytes.toBytes(x._1)
+      val rowKey = row(indexPK).toString //Bytes.toBytes(x._1)
       
       for (ii <- 0 until __numCols2) yield {
           val colName = __valCols2(ii)._1.toString()
@@ -209,7 +206,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
      //Table Assign
     Control.NewStep(s"HBase: Set staging Folder and Family:Table Name")
     
-    val tableNameString: String = s"${HBase_Namespace}:${HBase_tableName}"
+    val tableNameString: String = s"$HBase_Namespace:$HBase_tableName"
     val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
     
     //Starting HBase
@@ -220,7 +217,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     //create table
     Control.NewStep("HBase: Create connection")
     val connection = ConnectionFactory.createConnection(hbaseConf)
-    val admin = connection.getAdmin()
+    val admin = connection.getAdmin
     
     Control.NewStep(s"HBase: Namespaces validation...")
     val _listNamespace = admin.listNamespaceDescriptors()
@@ -244,7 +241,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       val __newTable = new org.apache.hadoop.hbase.HTableDescriptor(tableName)
       
       //Add families
-      val a = __valCols2.map(x=>x._2).distinct.foreach { x => 
+      val a = __valCols2.map(x=>x._2).distinct.foreach { x =>
         __newTable.addFamily(new HColumnDescriptor(x))  
       }
       
@@ -297,7 +294,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     val __tdd_notnull = __pdd_2.filter(x=> x._2._3 != null)
     
     val stagingFolder = s"/tmp/user/${Control.getStepId}"
-    huemulBigDataGov.logMessageDebug(s"staging folder: ${stagingFolder}")
+    huemulBigDataGov.logMessageDebug(s"staging folder: $stagingFolder")
   
     Control.NewStep(s"HBase: insert and update values ")
     if (__tdd_notnull.count() > 0) {
@@ -330,7 +327,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
                                                 * 
                                                 */
   
-    return result
+    result
   }
   
   

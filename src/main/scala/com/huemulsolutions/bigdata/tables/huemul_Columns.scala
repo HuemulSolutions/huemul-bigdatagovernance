@@ -67,7 +67,7 @@ class huemul_Columns(dataType: DataType
    * @since   2.6
    * @group   column_other
    */
-  def getDefinitionIsClose: Boolean =  {_DefinitionIsClose}
+  def getDefinitionIsClose: Boolean =  _DefinitionIsClose
 
 
   // ------------------------------------------------------------------------------------------------------------------
@@ -1417,8 +1417,8 @@ class huemul_Columns(dataType: DataType
 
   /** Define family and column name on HBase Tables
    *
-   * @param df
-   * @param col
+   * @param df dataframe
+   * @param col column name
    * @return
    */
   def setHBaseCatalogMapping(df: String, col: String = null): huemul_Columns = {
