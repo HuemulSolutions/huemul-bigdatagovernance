@@ -16,8 +16,8 @@ Utilizando una metodología sólida que permite a los ingenieros de tu equipo cent
 ### ¿Cómo se genera el código?
 Hay dos formas de generar el código de tu solución
 
-1.  La primera forma es generar el código desde cero utilizando los [template que están disponibles acá](https://github.com/HuemulSolutions/BigDataGovernance_2.6_TemplateBase).
-2.  En la segunda forma solo debes crear la definición de tu interfaz de entrada utilizando el código de ejemplo "raw_entidad_mes.scala" (https://github.com/HuemulSolutions/BigDataGovernance_2.6_TemplateBase/blob/master/src/main/scala/com/yourcompany/yourapplication/datalake/raw_entidad_mes.scala), y luego puedes generar el código de tu tabla y el código de masterización en forma automática!. En el código de la tabla se implementa en forma automática validaciones de calidad de datos, y te permite agregar fácilmente otras validaciones más complejas.
+1.  La primera forma es generar el código desde cero utilizando los [template que están disponibles acá](https://github.com/HuemulSolutions/BigDataGovernance_2.6.1_TemplateBase).
+2.  En la segunda forma solo debes crear la definición de tu interfaz de entrada utilizando el código de ejemplo "raw_entidad_mes.scala" (https://github.com/HuemulSolutions/BigDataGovernance_2.6.1_TemplateBase/blob/master/src/main/scala/com/yourcompany/yourapplication/datalake/raw_entidad_mes.scala), y luego puedes generar el código de tu tabla y el código de masterización en forma automática!. En el código de la tabla se implementa en forma automática validaciones de calidad de datos, y te permite agregar fácilmente otras validaciones más complejas.
 
 ![Branching](https://HuemulSolutions.github.io/huemul_flujo_genera_codigo.png)
 
