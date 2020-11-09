@@ -338,7 +338,26 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
   //var createExternalTable_Normal: Boolean = true
   //var createExternalTable_DQ: Boolean = true
   //var createExternalTable_OVT: Boolean = true
-  
+
+  private var _statusDeleteAsDeleted: Boolean = true
+
+  /**
+   * set row missing behavior in reference and master tables (true: mdm_status = -1, false: mdm_status = old_mdm_status
+   * @return
+   */
+  def setRowStatusDeleteAsDeleted(value: Boolean): huemul_Table = {
+    _statusDeleteAsDeleted = value
+
+    this
+  }
+
+  /**
+   * get row missing behavior in reference and master tables
+   * @return
+   */
+  def getRowStatusDeleteAsDeleted: Boolean = {
+    _statusDeleteAsDeleted
+  }
 
   /**
    * Automatically map query names
@@ -2123,7 +2142,7 @@ class huemul_Table(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_C
         StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' AND SameHashKey = 0 THEN '$ProcessName' ELSE old_${_colMyName} END as $colUserName \n"
       } else if (_colMyName.toLowerCase() == getNameForMDM_StatusReg.toLowerCase()) {
         val colUserName = Field.getCaseType(this.getStorageType,getNameForMDM_StatusReg)//from 2.6 #112
-        StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' THEN CAST(2 as Int) WHEN ___ActionType__ = 'NEW' THEN CAST(2 as Int) WHEN ___ActionType__ = 'DELETE' THEN CAST(-1 AS Int)  ELSE CAST(old_${_colMyName} AS Int) END as $colUserName \n"
+        StringSQL += s" ${coma}CASE WHEN ___ActionType__ = 'UPDATE' THEN CAST(2 as Int) WHEN ___ActionType__ = 'NEW' THEN CAST(2 as Int) WHEN ___ActionType__ = 'DELETE' AND ${this.getRowStatusDeleteAsDeleted} = true THEN CAST(-1 AS Int)  ELSE CAST(old_${_colMyName} AS Int) END as $colUserName \n"
       } else if (_colMyName.toLowerCase() == getNameForMDM_hash.toLowerCase()) {
         val colUserName = Field.getCaseType(this.getStorageType,getNameForMDM_hash)//from 2.6 #112
         StringSQL += s"$coma${__MDM_hash} as $colUserName \n"

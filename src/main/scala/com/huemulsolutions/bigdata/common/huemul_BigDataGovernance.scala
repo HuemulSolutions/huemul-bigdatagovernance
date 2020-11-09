@@ -9,7 +9,7 @@ import java.util.TimeZone
 import java.util.concurrent.ThreadLocalRandom
 import java.text.SimpleDateFormat
 
-import scala.io.Source
+import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.sql.types.DecimalType
 import com.huemulsolutions.bigdata.control.huemul_JDBCProperties
@@ -41,7 +41,7 @@ import org.apache.log4j.{Level, Logger}
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.6.1"
+  val currentVersion: String = "2.6.2"
   val GlobalSettings: huemul_GlobalPath = globalSettings
   val warehouseLocation: String = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -404,7 +404,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   /*********************
    * START SPARK AND CONTROL MODEL CONNECTION
    *************************/
-  //from 2.6.1 add userName and password withou using connectionString
+  //from 2.6.2 add userName and password withou using connectionString
   val controlUserName: String = GlobalSettings.getUserName(this, GlobalSettings.CONTROL_Setting)
   val controlPassword: String = GlobalSettings.getPassword(this, GlobalSettings.CONTROL_Setting)
   @transient val CONTROL_connection: huemul_JDBCProperties = new huemul_JDBCProperties(this
@@ -584,7 +584,15 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
       //Get Id App from Spark URL Monitoring          
       try {
-        IdAppFromAPI = this.getIdFromExecution(URLMonitor)    
+        val (idFromURL2, result2) = this.getIdFromExecution(URLMonitor)
+
+        //get OK
+        if (result2 == 0)
+          IdAppFromAPI = idFromURL2
+        else
+          logMessageWarn("")
+
+
       } catch {
         case _: Exception =>
           StillAlive = false
@@ -860,19 +868,74 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   def getCaseType(tableStorage: com.huemulsolutions.bigdata.tables.huemulType_StorageType.huemulType_StorageType, value: String): String = {
     if (tableStorage == com.huemulsolutions.bigdata.tables.huemulType_StorageType.AVRO) value.toLowerCase() else value
   }
+
+  def getMovedHRef(html: String): String = {
+    val posIni: Int =  html.indexOf("""<a href="""")
+    var urlFound: String = null
+
+    if (posIni >= 0) {
+      val html2: String = html.substring(posIni + 9,html.length)
+      val posEnd: Int = html2.indexOf("""">""")
+
+      if (posEnd >= 0) {
+        urlFound = html2.substring(0,posEnd)
+      }
+
+    }
+
+    urlFound
+  }
  
   /**
    * Get execution Id from spark monitoring url
    */
- 
-  def getIdFromExecution(url: String): String = {
+  def getIdFromExecution(url: String, iterator: Int = 0): (String, Int) = {
+    if (iterator >= 3)
+      return (null, -10)
+
+    var result: Int = 1
     import spark.implicits._
-    val html = Source.fromURL(url)
-    val vals = spark.sparkContext.parallelize(
-               html.mkString :: Nil)
-               
-    //spark.read.json(vals).show(truncate = false)
-    spark.read.json(vals).select($"id").first().getString(0)
+
+    var idFromURL: String = ""
+
+    //try to open api
+    var html: BufferedSource = null
+    try {
+      html = Source.fromURL(url)
+    } catch {
+      case _ : java.net.ConnectException =>
+        //no connection found, stillAlive = false
+        return ("", -1)
+      case e : Exception =>
+        //other error, return 0
+        logMessageInfo(s"getIdFromExecution error: ${e.getMessage}")
+        return ("", 0)
+    }
+
+    //if connection, get Id
+    try {
+      val vals = spark.sparkContext.parallelize(html.mkString :: Nil)
+      //spark.read.json(vals).show(truncate = false)
+      idFromURL = spark.read.json(vals).select($"id").first().getString(0)
+
+      return (idFromURL, 1)
+    } catch {
+      case _ : Exception =>
+        result = -2
+    }
+
+    //error to get Id, try to read from html redirect location
+    val newURL = getMovedHRef(html.mkString)
+
+    if (newURL != null) {
+      //get new url, try to get Id
+      return getIdFromExecution(newURL, iterator + 1)
+    } else {
+      //not redirect url, throw error
+      return ("", -3)
+    }
+
+    (idFromURL, result)
   }
   
   
