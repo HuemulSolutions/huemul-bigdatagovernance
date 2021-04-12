@@ -41,7 +41,7 @@ import org.apache.log4j.{Level, Logger}
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.6.2"
+  val currentVersion: String = "2.6.3"
   val GlobalSettings: huemul_GlobalPath = globalSettings
   val warehouseLocation: String = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -271,61 +271,61 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   var ErrorGlobalSettings: String = ""
   if (this.GlobalSettings.getValidationLevel.equals("FULL")) {
     if (!this.GlobalSettings.validPath(globalSettings.RAW_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}RAW_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.RAW_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}RAW_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.MASTER_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MASTER_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.MASTER_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MASTER_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.MASTER_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MASTER_DataBase"
     if (!this.GlobalSettings.validPath(globalSettings.DIM_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DIM_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.DIM_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DIM_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.DIM_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DIM_DataBase"
     if (!this.GlobalSettings.validPath(globalSettings.REPORTING_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}REPORTING_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.REPORTING_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}REPORTING_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.REPORTING_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}REPORTING_DataBase"
     if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}ANALYTICS_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}ANALYTICS_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}ANALYTICS_DataBase"
 
 
     if (this.GlobalSettings.MDM_SaveOldValueTrace) {
       if (!this.GlobalSettings.validPath(globalSettings.MDM_OldValueTrace_Path, this.Environment))
-        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_Path"
+        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MDM_OldValueTrace_Path"
       if (!this.GlobalSettings.validPath(globalSettings.MDM_OldValueTrace_DataBase, this.Environment))
-        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_DataBase"
+        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MDM_OldValueTrace_DataBase"
     }
 
     if (this.GlobalSettings.MDM_SaveBackup) {
       if (!this.GlobalSettings.validPath(globalSettings.MDM_Backup_Path, this.Environment))
-        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_Backup_Path"
+        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MDM_Backup_Path"
     }
   }
 
   if (!this.GlobalSettings.validPath(globalSettings.TEMPORAL_Path, this.Environment))
-    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}TEMPORAL_Path"
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}TEMPORAL_Path"
   if (this.GlobalSettings.DQ_SaveErrorDetails) {
     if (!this.GlobalSettings.validPath(globalSettings.DQError_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DQError_Path"
     if (!this.GlobalSettings.validPath(globalSettings.DQError_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DQError_DataBase"
   }
   logMessageInfo("End Validating GlobalSetings..")
   
   
     
-  if (ErrorGlobalSettings.length()> 0) {
+  if (ErrorGlobalSettings.nonEmpty) {
     sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
   }
   
