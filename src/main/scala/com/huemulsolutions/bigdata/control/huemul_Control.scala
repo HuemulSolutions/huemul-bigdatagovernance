@@ -118,7 +118,11 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     var ContinueInLoop: Boolean = true
     
     var ApplicationInUse: String = null
+    val startWaitingTime: Calendar = Calendar.getInstance()
     while (ContinueInLoop) {
+      val minutesWait = phuemulBigDataGov.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
+      val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
+
       //Try to add Singleton Mode
       val Ejec = control_singleton_Add(Control_ClassName, huemulBigDataGov.IdApplication, Control_ClassName)
       
@@ -131,12 +135,13 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       if (!Ejec.IsError && ApplicationInUse == null)
         ContinueInLoop = false
       else {      
-        phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, appId: ${huemulBigDataGov.IdApplication} )")
+        phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, appId: ${huemulBigDataGov.IdApplication}) ${minutesWaiting} out of ${phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton} minutes")
         //if has error, verify other process still alive
         if (NumCycle == 1) //First cicle don't wait
           Thread.sleep(10000)
         
         NumCycle = 1
+        ContinueInLoop = minutesWaiting < phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton
         // Obtiene procesos pendientes
         
         huemulBigDataGov.application_StillAlive(ApplicationInUse)

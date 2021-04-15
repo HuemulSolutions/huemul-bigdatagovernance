@@ -482,7 +482,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       val minutesWait = this.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
       val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
 
-      logMessageWarn(s"waiting for singleton (${minutesWaiting} out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes ) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
+      logMessageWarn(s"waiting for singleton (${minutesWaiting} out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
 
       //from 2.6.3
       continueWaiting = minutesWaiting < globalSettings.getMaxMinutesWaitInSingleton
