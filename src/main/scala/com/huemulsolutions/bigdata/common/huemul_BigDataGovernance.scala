@@ -491,9 +491,11 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         continueWaiting = minutesWaiting < globalSettings.getMaxMinutesWaitInSingleton
       } else {
         //numAttempt is consecutive
-        if (numAttempt > globalSettings.getMaxAttemptApplicationInUse)
+        if (numAttempt > globalSettings.getMaxAttemptApplicationInUse) {
+          //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
+          application_closeAll(IdApplication)
           continueWaiting = false
-        else
+        } else
           numAttempt += 1
       }
     }
@@ -608,12 +610,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     //if URL Monitoring is for another execution
     if (StillAlive && IdAppFromAPI != IdAppFromDataFrame)
         StillAlive = false
-                
+
+    /*
     //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
     if (!StillAlive) {
       application_closeAll(ApplicationInUse)
     }
-    
+    */
+
     StillAlive
   }
   
