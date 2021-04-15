@@ -98,6 +98,17 @@ class huemul_GlobalPath() extends Serializable {
     _MaxMinutesWaitInSingleton = value;
   }
 
+  //from 2.6.3
+  private var _MaxAttemptApplicationInUse: Integer = 5
+  def getMaxAttemptApplicationInUse: Integer = _MaxAttemptApplicationInUse
+  /**
+   * set max attempt to check if applicationId is in use
+   * @param value
+   */
+  def setMaxAttemptApplicationInUse(value: Integer): Unit = {
+    _MaxAttemptApplicationInUse = value
+  }
+
   //from 2.4 --> bigData provider for technical configuration
   private var _bigDataProvider: huemulType_bigDataProvider = huemulType_bigDataProvider.None
   def getBigDataProvider(): huemulType_bigDataProvider =  _bigDataProvider

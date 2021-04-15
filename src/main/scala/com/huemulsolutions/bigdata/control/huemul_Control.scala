@@ -119,6 +119,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     var ApplicationInUse: String = null
     val startWaitingTime: Calendar = Calendar.getInstance()
+    var numAttempt: Integer = 0
     while (ContinueInLoop) {
       val minutesWait = phuemulBigDataGov.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
       val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
@@ -132,10 +133,15 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
         ApplicationInUse = Ejec.ResultSet(0).getAs[String]("application_id".toLowerCase())        
       
       //if don't have error, exit
-      if (!Ejec.IsError && ApplicationInUse == null)
-        ContinueInLoop = false
-      else {      
+      if (!Ejec.IsError && ApplicationInUse == null) {
+        if (numAttempt > phuemulBigDataGov.GlobalSettings.getMaxAttemptApplicationInUse)
+          ContinueInLoop = false
+        else
+          numAttempt += 1
+      } else {
+        numAttempt = 0
         phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, appId: ${huemulBigDataGov.IdApplication}) ${minutesWaiting} out of ${phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton} minutes")
+
         //if has error, verify other process still alive
         if (NumCycle == 1) //First cicle don't wait
           Thread.sleep(10000)
