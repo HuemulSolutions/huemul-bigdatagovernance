@@ -119,7 +119,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     
     var ApplicationInUse: String = null
     val startWaitingTime: Calendar = Calendar.getInstance()
-    var numAttempt: Integer = 0
+    var numAttempt: Integer = -1
     while (ContinueInLoop) {
       val minutesWait = phuemulBigDataGov.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
       val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
@@ -134,7 +134,8 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
       
       //if don't have error, exit
       if (!Ejec.IsError && ApplicationInUse == null) {
-        if (numAttempt > phuemulBigDataGov.GlobalSettings.getMaxAttemptApplicationInUse)
+        //numAttempt == -1 --> first attempt, exit immediately
+        if (numAttempt == -1 || numAttempt > phuemulBigDataGov.GlobalSettings.getMaxAttemptApplicationInUse)
           ContinueInLoop = false
         else
           numAttempt += 1

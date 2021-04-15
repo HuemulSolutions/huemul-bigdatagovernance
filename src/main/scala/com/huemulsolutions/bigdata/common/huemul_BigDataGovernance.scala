@@ -477,6 +477,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   if (RegisterInControl) {
     val startWaitingTime: Calendar = Calendar.getInstance()
     var continueWaiting: Boolean = application_StillAlive(IdApplication)
+    var numAttempt: Integer = 0
     while (continueWaiting) {
       Thread.sleep(10000)
       val minutesWait = this.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
@@ -485,10 +486,16 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       logMessageWarn(s"waiting for singleton (${minutesWaiting} out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
 
       //from 2.6.3
-      if (application_StillAlive(IdApplication))
+      if (application_StillAlive(IdApplication)) {
+        numAttempt = 0
         continueWaiting = minutesWaiting < globalSettings.getMaxMinutesWaitInSingleton
-      else
-        continueWaiting = false
+      } else {
+        //numAttempt is consecutive
+        if (numAttempt > globalSettings.getMaxAttemptApplicationInUse)
+          continueWaiting = false
+        else
+          numAttempt += 1
+      }
     }
 
     val Result = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
