@@ -2,13 +2,13 @@ package com.huemulsolutions.bigdata.common
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
+
 import java.io._
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.TimeZone
 import java.util.concurrent.ThreadLocalRandom
 import java.text.SimpleDateFormat
-
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.sql.types.DecimalType
@@ -469,29 +469,25 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     getColumnsAndTables(false)
     logMessageInfo("End get hive table metadata..")
   }
-
-  /*
-  if (!TestPlanMode) {
-    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
-    spark.sql("set").show()
-    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
-    spark.sql("set").filter("key='spark.driver.port'").show()
-    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
-    spark.sql("set").filter("key='spark.driver.port'").select("value").show()
-    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
-  }
-  * 
-  */
   
   val IdSparkPort: String = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").collectAsList().get(0).getAs[String]("value") else ""
   logMessageInfo(s"Port_Id: $IdSparkPort")
   
   //Process Registry
   if (RegisterInControl) {
-    while (application_StillAlive(IdApplication)) {
-      logMessageWarn(s"waiting for singleton Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
+    val startWaitingTime: Calendar = Calendar.getInstance()
+    var continueWaiting = true
+    while (application_StillAlive(IdApplication) && continueWaiting) {
       Thread.sleep(10000)
+      val minutesWait = this.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
+      val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
+
+      logMessageWarn(s"waiting for singleton (${minutesWaiting} out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes ) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
+
+      //from 2.6.3
+      continueWaiting = minutesWaiting < globalSettings.getMaxMinutesWaitInSingleton
     }
+
     val Result = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
                   insert into control_executors (application_id
                   							   , idsparkport
