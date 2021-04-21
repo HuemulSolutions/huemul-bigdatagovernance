@@ -138,6 +138,16 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           ContinueInLoop = false
         }
       } else {
+        //get applicationInUse
+        val getSingleton = control_singleton_get(Control_ClassName)
+        if (getSingleton.ResultSet != null && getSingleton.ResultSet.nonEmpty) {
+          //check if applicationInuse change since last cycle
+          if (ApplicationInUse != getSingleton.ResultSet(0).getAs[String]("application_id".toLowerCase())) {
+            numAttempt = 0
+            ApplicationInUse = getSingleton.ResultSet(0).getAs[String]("application_id".toLowerCase())
+          }
+        }
+
         phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, current appId: ${huemulBigDataGov.IdApplication}, waiting for: ${ApplicationInUse}) ${minutesWaiting} out of ${phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton} minutes, attempt ${numAttempt}")
         Thread.sleep(10000)
 
@@ -1306,6 +1316,16 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     }
     
      ExecResult
+  }
+
+  private def control_singleton_get (   p_singleton_id: String): huemul_JDBCResult =  {
+    var ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+              SELECT application_id
+              FROM control_singleton
+              WHERE singleton_id = ${ReplaceSQLStringNulls(p_singleton_id,100)}
+    """)
+
+    ExecResult
   }
   
   private def control_singleton_Add (   p_singleton_id: String
