@@ -473,7 +473,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   val IdSparkPort: String = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").collectAsList().get(0).getAs[String]("value") else ""
   logMessageInfo(s"Port_Id: $IdSparkPort")
   
-  //Process Registry
+  //Process Registry, check if port is still in use
   if (RegisterInControl) {
     val startWaitingTime: Calendar = Calendar.getInstance()
     var continueWaiting: Boolean = application_StillAlive(IdApplication)
@@ -598,7 +598,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         if (result2 == 0)
           IdAppFromAPI = idFromURL2
         else
-          logMessageWarn("")
+          logMessageWarn(s"can't get url: error: ${result2}")
 
 
       } catch {
@@ -915,6 +915,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     } catch {
       case _ : java.net.ConnectException =>
         //no connection found, stillAlive = false
+        if (DebugMode) logMessageInfo("no connection found, stillAlive = false")
         return ("", -1)
       case e : Exception =>
         //other error, return 0
@@ -928,9 +929,13 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       //spark.read.json(vals).show(truncate = false)
       idFromURL = spark.read.json(vals).select($"id").first().getString(0)
 
+      if (DebugMode) logMessageInfo("read from html to dataframe")
+      if (DebugMode) spark.read.json(vals).show()
+
       return (idFromURL, 1)
     } catch {
-      case _ : Exception =>
+      case e : Exception =>
+        if (DebugMode) logMessageWarn(e)
         result = -2
     }
 
@@ -942,6 +947,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       return getIdFromExecution(newURL, iterator + 1)
     } else {
       //not redirect url, throw error
+      if (DebugMode) logMessageWarn("new URL doesn't exists, error -3")
       return ("", -3)
     }
 
