@@ -483,7 +483,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       val minutesWait = this.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
       val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
 
-      logMessageWarn(s"waiting for singleton (${minutesWaiting} out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
+      logMessageError(s"waiting for singleton (${minutesWaiting} out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
 
       //from 2.6.3
       if (application_StillAlive(IdApplication)) {
@@ -493,7 +493,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         //numAttempt is consecutive
         if (numAttempt > globalSettings.getMaxAttemptApplicationInUse) {
           //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
-          application_closeAll(IdApplication)
+          application_closeAll(IdApplication, false)
           continueWaiting = false
         } else
           numAttempt += 1
@@ -536,7 +536,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   def close(stopSpark: Boolean) {
     //println(s"this.IdApplication: ${this.IdApplication}, IdApplication: ${IdApplication}")
-    application_closeAll(IdApplication)
+    application_closeAll(IdApplication, closeExecutors = true)
     this.spark.catalog.clearCache()
     if (stopSpark) {
       this.spark.close()
@@ -566,10 +566,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
   }
   
-  def application_closeAll(ApplicationInUse: String) {
+  def application_closeAll(ApplicationInUse: String, closeExecutors: Boolean) {
     if (RegisterInControl) {
-       val ExecResult1 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
-       val ExecResult2 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+      val ExecResult1 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+      if (closeExecutors) {
+        val ExecResult2 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+      }
        //println(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
     }
       
@@ -598,7 +600,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         if (result2 == 0)
           IdAppFromAPI = idFromURL2
         else
-          logMessageWarn(s"can't get url: error: ${result2}")
+          logMessageWarn(s"can't get url: return: ${result2}")
 
 
       } catch {
@@ -608,6 +610,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     }
                         
     //if URL Monitoring is for another execution
+    if (DebugMode) logMessageInfo(s"IdAppFromDataFrame: $IdAppFromDataFrame, IdAppFromAPI: $IdAppFromAPI")
     if (StillAlive && IdAppFromAPI != IdAppFromDataFrame)
         StillAlive = false
 
@@ -898,6 +901,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
  
   /**
    * Get execution Id from spark monitoring url
+   *
    */
   def getIdFromExecution(url: String, iterator: Int = 0): (String, Int) = {
     if (iterator >= 3)
@@ -932,7 +936,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       if (DebugMode) logMessageInfo("read from html to dataframe")
       if (DebugMode) spark.read.json(vals).show()
 
-      return (idFromURL, 1)
+      return (idFromURL, 0)
     } catch {
       case e : Exception =>
         if (DebugMode) logMessageWarn(e)

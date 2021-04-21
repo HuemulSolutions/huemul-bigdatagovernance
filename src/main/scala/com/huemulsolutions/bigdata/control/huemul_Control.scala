@@ -148,16 +148,16 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
           }
         }
 
-        phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, current appId: ${huemulBigDataGov.IdApplication}, waiting for: ${ApplicationInUse}) ${minutesWaiting} out of ${phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton} minutes, attempt ${numAttempt}")
+        phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, current appId: ${huemulBigDataGov.IdApplication}, waiting for: $ApplicationInUse) $minutesWaiting out of ${phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton} minutes, attempt $numAttempt/${phuemulBigDataGov.GlobalSettings.getMaxAttemptApplicationInUse}")
         Thread.sleep(10000)
 
         if (huemulBigDataGov.application_StillAlive(ApplicationInUse)) {
           numAttempt = 0
 
           //last connection still alive, keep connected until getMaxMinutesWaitInSingleton
-          if (minutesWaiting < phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton) {
+          if (minutesWaiting > phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton) {
             //force to close last connections
-            huemulBigDataGov.application_closeAll(ApplicationInUse)
+            huemulBigDataGov.application_closeAll(ApplicationInUse, closeExecutors = false)
             //force register record and exit
             numAttempt = phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton + 1
           }
@@ -167,7 +167,7 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
 
           if (numAttempt > phuemulBigDataGov.GlobalSettings.getMaxAttemptApplicationInUse) {
             //connection closed, force to delete last connections from control model
-            huemulBigDataGov.application_closeAll(ApplicationInUse)
+            huemulBigDataGov.application_closeAll(ApplicationInUse, closeExecutors = false)
           }
         }
       }
