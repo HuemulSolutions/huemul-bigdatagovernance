@@ -2,13 +2,13 @@ package com.huemulsolutions.bigdata.common
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
+
 import java.io._
 import java.text.DateFormat
 import java.util.Calendar
 import java.util.TimeZone
 import java.util.concurrent.ThreadLocalRandom
 import java.text.SimpleDateFormat
-
 import scala.io.{BufferedSource, Source}
 import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.sql.types.DecimalType
@@ -41,7 +41,7 @@ import org.apache.log4j.{Level, Logger}
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.6.2"
+  val currentVersion: String = "2.6.3"
   val GlobalSettings: huemul_GlobalPath = globalSettings
   val warehouseLocation: String = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -271,61 +271,61 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   var ErrorGlobalSettings: String = ""
   if (this.GlobalSettings.getValidationLevel.equals("FULL")) {
     if (!this.GlobalSettings.validPath(globalSettings.RAW_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}RAW_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.RAW_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}RAW_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}RAW_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.MASTER_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MASTER_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.MASTER_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MASTER_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.MASTER_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MASTER_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MASTER_DataBase"
     if (!this.GlobalSettings.validPath(globalSettings.DIM_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DIM_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.DIM_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DIM_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.DIM_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DIM_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DIM_DataBase"
     if (!this.GlobalSettings.validPath(globalSettings.REPORTING_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}REPORTING_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.REPORTING_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}REPORTING_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.REPORTING_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}REPORTING_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}REPORTING_DataBase"
     if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_SmallFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_SmallFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}ANALYTICS_SmallFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_BigFiles_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_BigFiles_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}ANALYTICS_BigFiles_Path"
     if (!this.GlobalSettings.validPath(globalSettings.ANALYTICS_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}ANALYTICS_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}ANALYTICS_DataBase"
 
 
     if (this.GlobalSettings.MDM_SaveOldValueTrace) {
       if (!this.GlobalSettings.validPath(globalSettings.MDM_OldValueTrace_Path, this.Environment))
-        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_Path"
+        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MDM_OldValueTrace_Path"
       if (!this.GlobalSettings.validPath(globalSettings.MDM_OldValueTrace_DataBase, this.Environment))
-        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_OldValueTrace_DataBase"
+        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MDM_OldValueTrace_DataBase"
     }
 
     if (this.GlobalSettings.MDM_SaveBackup) {
       if (!this.GlobalSettings.validPath(globalSettings.MDM_Backup_Path, this.Environment))
-        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}MDM_Backup_Path"
+        ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}MDM_Backup_Path"
     }
   }
 
   if (!this.GlobalSettings.validPath(globalSettings.TEMPORAL_Path, this.Environment))
-    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}TEMPORAL_Path"
+    ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}TEMPORAL_Path"
   if (this.GlobalSettings.DQ_SaveErrorDetails) {
     if (!this.GlobalSettings.validPath(globalSettings.DQError_Path, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_Path"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DQError_Path"
     if (!this.GlobalSettings.validPath(globalSettings.DQError_DataBase, this.Environment))
-      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.length() > 0) ", " else ""}DQError_DataBase"
+      ErrorGlobalSettings += s"${if (ErrorGlobalSettings.nonEmpty) ", " else ""}DQError_DataBase"
   }
   logMessageInfo("End Validating GlobalSetings..")
   
   
     
-  if (ErrorGlobalSettings.length()> 0) {
+  if (ErrorGlobalSettings.nonEmpty) {
     sys.error(s"Error: GlobalSettings incomplete!!, you must set $ErrorGlobalSettings ")
   }
   
@@ -469,29 +469,37 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     getColumnsAndTables(false)
     logMessageInfo("End get hive table metadata..")
   }
-
-  /*
-  if (!TestPlanMode) {
-    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
-    spark.sql("set").show()
-    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
-    spark.sql("set").filter("key='spark.driver.port'").show()
-    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
-    spark.sql("set").filter("key='spark.driver.port'").select("value").show()
-    logMessage(s"HuemulControlLog: [${huemul_getDateForLog()}] ")
-  }
-  * 
-  */
   
   val IdSparkPort: String = if (!TestPlanMode) spark.sql("set").filter("key='spark.driver.port'").select("value").collectAsList().get(0).getAs[String]("value") else ""
   logMessageInfo(s"Port_Id: $IdSparkPort")
   
-  //Process Registry
+  //Process Registry, check if port is still in use
   if (RegisterInControl) {
-    while (application_StillAlive(IdApplication)) {
-      logMessageWarn(s"waiting for singleton Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
+    val startWaitingTime: Calendar = Calendar.getInstance()
+    var continueWaiting: Boolean = application_StillAlive(IdApplication)
+    var numAttempt: Integer = 0
+    while (continueWaiting) {
       Thread.sleep(10000)
+      val minutesWait = this.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
+      val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
+
+      logMessageError(s"waiting for singleton (${minutesWaiting} out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
+
+      //from 2.6.3
+      if (application_StillAlive(IdApplication)) {
+        numAttempt = 0
+        continueWaiting = minutesWaiting < globalSettings.getMaxMinutesWaitInSingleton
+      } else {
+        //numAttempt is consecutive
+        if (numAttempt > globalSettings.getMaxAttemptApplicationInUse) {
+          //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
+          application_closeAll(IdApplication, false)
+          continueWaiting = false
+        } else
+          numAttempt += 1
+      }
     }
+
     val Result = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
                   insert into control_executors (application_id
                   							   , idsparkport
@@ -528,7 +536,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   def close(stopSpark: Boolean) {
     //println(s"this.IdApplication: ${this.IdApplication}, IdApplication: ${IdApplication}")
-    application_closeAll(IdApplication)
+    application_closeAll(IdApplication, closeExecutors = true)
     this.spark.catalog.clearCache()
     if (stopSpark) {
       this.spark.close()
@@ -558,10 +566,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     
   }
   
-  def application_closeAll(ApplicationInUse: String) {
+  def application_closeAll(ApplicationInUse: String, closeExecutors: Boolean) {
     if (RegisterInControl) {
-       val ExecResult1 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
-       val ExecResult2 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+      val ExecResult1 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+      if (closeExecutors) {
+        val ExecResult2 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+      }
        //println(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
     }
       
@@ -590,7 +600,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         if (result2 == 0)
           IdAppFromAPI = idFromURL2
         else
-          logMessageWarn("")
+          logMessageWarn(s"can't get url: return: ${result2}")
 
 
       } catch {
@@ -600,14 +610,17 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     }
                         
     //if URL Monitoring is for another execution
+    if (DebugMode) logMessageInfo(s"IdAppFromDataFrame: $IdAppFromDataFrame, IdAppFromAPI: $IdAppFromAPI")
     if (StillAlive && IdAppFromAPI != IdAppFromDataFrame)
         StillAlive = false
-                
+
+    /*
     //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
     if (!StillAlive) {
       application_closeAll(ApplicationInUse)
     }
-    
+    */
+
     StillAlive
   }
   
@@ -888,6 +901,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
  
   /**
    * Get execution Id from spark monitoring url
+   *
    */
   def getIdFromExecution(url: String, iterator: Int = 0): (String, Int) = {
     if (iterator >= 3)
@@ -905,6 +919,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     } catch {
       case _ : java.net.ConnectException =>
         //no connection found, stillAlive = false
+        if (DebugMode) logMessageInfo("no connection found, stillAlive = false")
         return ("", -1)
       case e : Exception =>
         //other error, return 0
@@ -918,9 +933,13 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       //spark.read.json(vals).show(truncate = false)
       idFromURL = spark.read.json(vals).select($"id").first().getString(0)
 
-      return (idFromURL, 1)
+      if (DebugMode) logMessageInfo("read from html to dataframe")
+      if (DebugMode) spark.read.json(vals).show()
+
+      return (idFromURL, 0)
     } catch {
-      case _ : Exception =>
+      case e : Exception =>
+        if (DebugMode) logMessageWarn(e)
         result = -2
     }
 
@@ -932,6 +951,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       return getIdFromExecution(newURL, iterator + 1)
     } else {
       //not redirect url, throw error
+      if (DebugMode) logMessageWarn("new URL doesn't exists, error -3")
       return ("", -3)
     }
 
