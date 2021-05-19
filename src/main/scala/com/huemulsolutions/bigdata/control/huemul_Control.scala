@@ -114,33 +114,63 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
   //*****************************************  
   if (IsSingleton && huemulBigDataGov.RegisterInControl) {
     NewStep("SET SINGLETON MODE")
-    var NumCycle: Int = 0
     var ContinueInLoop: Boolean = true
     
     var ApplicationInUse: String = null
+    val startWaitingTime: Calendar = Calendar.getInstance()
+    var numAttempt: Integer = -1
     while (ContinueInLoop) {
-      //Try to add Singleton Mode
-      val Ejec = control_singleton_Add(Control_ClassName, huemulBigDataGov.IdApplication, Control_ClassName)
-      
-      if (Ejec.ResultSet == null)
-        ApplicationInUse= null
-      else if (Ejec.ResultSet.length == 1)
-        ApplicationInUse = Ejec.ResultSet(0).getAs[String]("application_id".toLowerCase())        
-      
-      //if don't have error, exit
-      if (!Ejec.IsError && ApplicationInUse == null)
-        ContinueInLoop = false
-      else {      
-        phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, appId: ${huemulBigDataGov.IdApplication} )")
-        //if has error, verify other process still alive
-        if (NumCycle == 1) //First cicle don't wait
-          Thread.sleep(10000)
-        
-        NumCycle = 1
-        // Obtiene procesos pendientes
-        
-        huemulBigDataGov.application_StillAlive(ApplicationInUse)
-      }              
+      val minutesWait = phuemulBigDataGov.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
+      val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
+
+      if (numAttempt == -1 || numAttempt > phuemulBigDataGov.GlobalSettings.getMaxAttemptApplicationInUse) {
+        numAttempt = 0
+        //Try to add Singleton Mode
+        val ejec = control_singleton_Add(Control_ClassName, huemulBigDataGov.IdApplication, Control_ClassName)
+
+        if (ejec.ResultSet == null)
+          ApplicationInUse= null
+        else if (ejec.ResultSet.length == 1)
+          ApplicationInUse = ejec.ResultSet(0).getAs[String]("application_id".toLowerCase())
+
+        if (!ejec.IsError && ApplicationInUse == null) {
+          //numAttempt == -1 --> first attempt, exit immediately
+          ContinueInLoop = false
+        }
+      } else {
+        //get applicationInUse
+        val getSingleton = control_singleton_get(Control_ClassName)
+        if (getSingleton.ResultSet != null && getSingleton.ResultSet.nonEmpty) {
+          //check if applicationInuse change since last cycle
+          if (ApplicationInUse != getSingleton.ResultSet(0).getAs[String]("application_id".toLowerCase())) {
+            numAttempt = 0
+            ApplicationInUse = getSingleton.ResultSet(0).getAs[String]("application_id".toLowerCase())
+          }
+        }
+
+        phuemulBigDataGov.logMessageDebug(s"waiting for Singleton... (class: $Control_ClassName, current appId: ${huemulBigDataGov.IdApplication}, waiting for: $ApplicationInUse) $minutesWaiting out of ${phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton} minutes, attempt $numAttempt/${phuemulBigDataGov.GlobalSettings.getMaxAttemptApplicationInUse}")
+        Thread.sleep(10000)
+
+        if (huemulBigDataGov.application_StillAlive(ApplicationInUse)) {
+          numAttempt = 0
+
+          //last connection still alive, keep connected until getMaxMinutesWaitInSingleton
+          if (minutesWaiting > phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton) {
+            //force to close last connections
+            huemulBigDataGov.application_closeAll(ApplicationInUse, closeExecutors = false)
+            //force register record and exit
+            numAttempt = phuemulBigDataGov.GlobalSettings.getMaxMinutesWaitInSingleton + 1
+          }
+        } else {
+          //if last connection was dead, try for X times consecutive
+          numAttempt += 1
+
+          if (numAttempt > phuemulBigDataGov.GlobalSettings.getMaxAttemptApplicationInUse) {
+            //connection closed, force to delete last connections from control model
+            huemulBigDataGov.application_closeAll(ApplicationInUse, closeExecutors = false)
+          }
+        }
+      }
     }
   }
   
@@ -1286,6 +1316,16 @@ class huemul_Control (phuemulBigDataGov: huemul_BigDataGovernance, ControlParent
     }
     
      ExecResult
+  }
+
+  private def control_singleton_get (   p_singleton_id: String): huemul_JDBCResult =  {
+    var ExecResult = huemulBigDataGov.CONTROL_connection.ExecuteJDBC_WithResult(s"""
+              SELECT application_id
+              FROM control_singleton
+              WHERE singleton_id = ${ReplaceSQLStringNulls(p_singleton_id,100)}
+    """)
+
+    ExecResult
   }
   
   private def control_singleton_Add (   p_singleton_id: String

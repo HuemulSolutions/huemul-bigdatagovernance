@@ -85,6 +85,30 @@ class huemul_GlobalPath() extends Serializable {
   //set > 1 to cache hive metadata
   var HIVE_HourToUpdateMetadata: Integer = 0
 
+  //from 2.6.3
+  private var _MaxMinutesWaitInSingleton: Integer = 720
+  def getMaxMinutesWaitInSingleton: Integer =  _MaxMinutesWaitInSingleton
+
+  /**
+   * set max minutes to wait to singleton finish
+   * if minutes to wait > waiting elapsed time, continue with execution
+   * @param value
+   */
+  def setMaxMinutesWaitInSingleton(value: Integer): Unit = {
+    _MaxMinutesWaitInSingleton = value;
+  }
+
+  //from 2.6.3
+  private var _MaxAttemptApplicationInUse: Integer = 5
+  def getMaxAttemptApplicationInUse: Integer = _MaxAttemptApplicationInUse
+  /**
+   * set max attempt to check if applicationId is in use
+   * @param value
+   */
+  def setMaxAttemptApplicationInUse(value: Integer): Unit = {
+    _MaxAttemptApplicationInUse = value
+  }
+
   //from 2.4 --> bigData provider for technical configuration
   private var _bigDataProvider: huemulType_bigDataProvider = huemulType_bigDataProvider.None
   def getBigDataProvider(): huemulType_bigDataProvider =  _bigDataProvider
