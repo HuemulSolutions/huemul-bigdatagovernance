@@ -11,7 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: com.huemulsolutions.bigdata:huemul-sql-decode:1.0" level="project" />
+    <orderEntry type="library" name="Maven: com.huemulsolutions.bigdata:huemul-sql-decode_2.12:1.0" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.12.10" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.spark:spark-core_2.12:2.4.7" level="project" />
     <orderEntry type="library" name="Maven: com.thoughtworks.paranamer:paranamer:2.8" level="project" />
