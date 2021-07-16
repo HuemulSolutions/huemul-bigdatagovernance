@@ -114,6 +114,12 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	    <groupId>org.apache.hbase.connectors.spark</groupId>
      	<artifactId>hbase-spark</artifactId>
     	<version>1.0.0</version>
+          <exclusions>
+              <exclusion>
+                  <groupId>org.glassfish</groupId>
+                  <artifactId>javax.el</artifactId>
+              </exclusion>
+          </exclusions>
    	</dependency>
 
 
@@ -129,6 +135,12 @@ Finalmente, también automatiza la generación de código a partir de las defini
       <groupId>org.apache.hbase</groupId>
 	    <artifactId>hbase-client</artifactId>
 	    <version>1.1.2</version>
+        <exclusions>
+            <exclusion>
+                <groupId>org.glassfish</groupId>
+                <artifactId>javax.el</artifactId>
+            </exclusion>
+        </exclusions>
     </dependency>
     
     <dependency>
