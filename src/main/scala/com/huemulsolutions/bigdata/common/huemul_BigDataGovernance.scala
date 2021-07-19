@@ -41,7 +41,7 @@ import org.apache.log4j.{Level, Logger}
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.6.3"
+  val currentVersion: String = "2.6.3_2.12"
   val GlobalSettings: huemul_GlobalPath = globalSettings
   val warehouseLocation: String = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -483,7 +483,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       val minutesWait = this.getDateTimeDiff(startWaitingTime, Calendar.getInstance())
       val minutesWaiting = ((minutesWait.days * 24) + minutesWait.hour) * 60 + minutesWait.minute
 
-      logMessageError(s"waiting for singleton (${minutesWaiting} out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
+      logMessageError(s"waiting for singleton ($minutesWaiting out of ${globalSettings.getMaxMinutesWaitInSingleton} minutes) Application Id in use: $IdApplication, maybe you're creating two times a spark connection")
 
       //from 2.6.3
       if (application_StillAlive(IdApplication)) {
@@ -493,7 +493,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         //numAttempt is consecutive
         if (numAttempt > globalSettings.getMaxAttemptApplicationInUse) {
           //Si no existe ejecución vigente, debe invocar proceso que limpia proceso
-          application_closeAll(IdApplication, false)
+          application_closeAll(IdApplication, closeExecutors = false)
           continueWaiting = false
         } else
           numAttempt += 1
@@ -600,7 +600,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         if (result2 == 0)
           IdAppFromAPI = idFromURL2
         else
-          logMessageWarn(s"can't get url: return: ${result2}")
+          logMessageWarn(s"can't get url: return: $result2")
 
 
       } catch {
