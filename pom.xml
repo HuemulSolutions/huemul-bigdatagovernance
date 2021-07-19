@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.huemulsolutions.bigdata</groupId>
-  <artifactId>huemul-bigdatagovernance</artifactId>
+  <artifactId>huemul-bigdatagovernance_2.12</artifactId>
   <version>2.6.3</version>
   <name>HuemulSolutions - BigDataGovernance</name>
   <description>Enable full data quality and data lineage for BigData Projects.
@@ -69,16 +69,16 @@ Finalmente, también automatiza la generación de código a partir de las defini
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <encoding>UTF-8</encoding>
-    <scala.tools.version>2.11</scala.tools.version>
-    <scala.version>2.11.8</scala.version>
-    <spark.version>2.3.3</spark.version>
+    <scala.tools.version>2.12</scala.tools.version>
+    <scala.version>2.12.10</scala.version>
+    <spark.version>2.4.7</spark.version> <!-- spark version from sep 2020 -->
     <hbase.client.version>2.1.0</hbase.client.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.huemulsolutions.bigdata</groupId>
-      <artifactId>huemul-sql-decode</artifactId>
+      <artifactId>huemul-sql-decode_${scala.tools.version}</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>
@@ -107,13 +107,19 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	  <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-jdbc</artifactId>
-      <version>2.3.4</version>
+      <version>3.1.2</version>
 	  </dependency>
 
 	  <dependency>
 	    <groupId>org.apache.hbase.connectors.spark</groupId>
      	<artifactId>hbase-spark</artifactId>
     	<version>1.0.0</version>
+          <exclusions>
+              <exclusion>
+                  <groupId>org.glassfish</groupId>
+                  <artifactId>javax.el</artifactId>
+              </exclusion>
+          </exclusions>
    	</dependency>
 
 
@@ -129,6 +135,12 @@ Finalmente, también automatiza la generación de código a partir de las defini
       <groupId>org.apache.hbase</groupId>
 	    <artifactId>hbase-client</artifactId>
 	    <version>1.1.2</version>
+        <exclusions>
+            <exclusion>
+                <groupId>org.glassfish</groupId>
+                <artifactId>javax.el</artifactId>
+            </exclusion>
+        </exclusions>
     </dependency>
     
     <dependency>
@@ -252,19 +264,19 @@ Finalmente, también automatiza la generación de código a partir de las defini
     <dependency>
       <groupId>org.specs2</groupId>
       <artifactId>specs2-core_${scala.tools.version}</artifactId>
-      <version>3.7.2</version>
+      <version>4.12.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.specs2</groupId>
       <artifactId>specs2-junit_${scala.tools.version}</artifactId>
-      <version>3.7.2</version>
+      <version>4.12.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.tools.version}</artifactId>
-      <version>3.0.0-M15</version>
+      <version>3.2.9</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -277,7 +289,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	  	<plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-gpg-plugin</artifactId>
-	      <version>1.5</version>
+	      <version>3.0.1</version>
 	      <executions>
 	        <execution>
 	          <id>sign-artifacts</id>
@@ -292,7 +304,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	    <plugin>
 	      <groupId>org.apache.maven.plugins</groupId>
 	      <artifactId>maven-source-plugin</artifactId>
-	      <version>2.2.1</version>
+	      <version>3.2.1</version>
 	      <executions>
 	        <execution>
 	          <id>attach-sources</id>
@@ -306,7 +318,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
 	    <plugin>
 	      <groupId>net.alchim31.maven</groupId>
 	      <artifactId>scala-maven-plugin</artifactId>
-	      <version>3.4.2</version>
+	      <version>4.5.3</version>
 	      <executions>
 	        <execution>
 	          <id>attach-javadocs</id>
@@ -333,6 +345,12 @@ Finalmente, también automatiza la generación de código a partir de las defini
 
 
 <repositories>
+    <repository>
+        <id>central</id>
+        <name>Central Repository</name>
+        <url>https://repo.maven.apache.org/maven2</url>
+    </repository>
+
 	<repository>
      <id>hortonworks.extrepo</id>
      <name>Hortonworks HDP</name>
@@ -345,11 +363,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
      <url>http://repo.hortonworks.com/content/groups/public</url>
     </repository>
     
-    <repository>
-      <id>central</id>
-      <name>Central Repository</name>
-      <url>https://repo.maven.apache.org/maven2</url>
-    </repository>
+
 </repositories>
     <!--
    <repositories>
