@@ -20,7 +20,7 @@ class AppTest {
     
     
     @Test
-    def test_DifFechas_OK() = assertTrue(diffechas)
+    def test_DifFechas_OK(): Unit = assertTrue(diffechas())
     
     def diffechas(): Boolean = {
      
@@ -54,58 +54,58 @@ class AppTest {
       *  * 
       */
       
-      return true
+       true
      
     }
     
     //println(Control.ReplaceSQLStringNulls("1234", 3))
     
     @Test
-    def test_replaceSQLStringNulls_OK() = assertTrue(Control.ReplaceSQLStringNulls("1234", 3) == "'123'" )
+    def test_replaceSQLStringNulls_OK(): Unit = assertTrue(Control.ReplaceSQLStringNulls("1234", 3) == "'123'" )
     
     @Test
-    def test_replaceSQLStringNulls_null_OK() = assertTrue(Control.ReplaceSQLStringNulls("1234", null) == "'1234'" )
+    def test_replaceSQLStringNulls_null_OK(): Unit = assertTrue(Control.ReplaceSQLStringNulls("1234", null) == "'1234'" )
     
     @Test
-    def test_replaceSQLStringNulls_ISnull_OK() = assertTrue(Control.ReplaceSQLStringNulls(null, null) == "null" )
+    def test_replaceSQLStringNulls_ISnull_OK(): Unit = assertTrue(Control.ReplaceSQLStringNulls(null, null) == "null" )
     
     
     @Test
-    def test_HasName_OK() = assertTrue(huemulBigDataGov.HasName("si tiene"))
+    def test_HasName_OK(): Unit = assertTrue(huemulBigDataGov.HasName("si tiene"))
     
     @Test
-    def test_HasName_OK_Espacios() = assertTrue(huemulBigDataGov.HasName("  "))
+    def test_HasName_OK_Espacios(): Unit = assertTrue(huemulBigDataGov.HasName("  "))
    
     @Test
-    def test_HasName_OK_Nulo() = assertFalse(huemulBigDataGov.HasName(null))
+    def test_HasName_OK_Nulo(): Unit = assertFalse(huemulBigDataGov.HasName(null))
     
     @Test
-    def test_HasName_OK_Vacio() = assertFalse(huemulBigDataGov.HasName(""))
+    def test_HasName_OK_Vacio(): Unit = assertFalse(huemulBigDataGov.HasName(""))
     
     @Test
-    def test_GetYear() = assertTrue(huemulBigDataGov.getYear(huemulBigDataGov.setDate("2018-12-31")) == 2018) 
+    def test_GetYear(): Unit = assertTrue(huemulBigDataGov.getYear(huemulBigDataGov.setDate("2018-12-31")) == 2018)
     
     @Test
-    def test_GetMonth() = assertTrue(huemulBigDataGov.getMonth(huemulBigDataGov.setDate("2018-12-31")) == 12) 
+    def test_GetMonth(): Unit = assertTrue(huemulBigDataGov.getMonth(huemulBigDataGov.setDate("2018-12-31")) == 12)
      
     @Test
-    def test_GetDay() = assertTrue(huemulBigDataGov.getDay(huemulBigDataGov.setDate("2018-12-31")) == 31) 
+    def test_GetDay(): Unit = assertTrue(huemulBigDataGov.getDay(huemulBigDataGov.setDate("2018-12-31")) == 31)
     
     /*TEST PARA HUEMUL_TABLE, HUEMUL_COLUMN*/
-    var TestTable: tbl_demo_test = null
+    var TestTable: tbl_demo_test = _
     try {
        TestTable = new tbl_demo_test(huemulBigDataGov, Control)  
        println("***************************************TestTable.GetOrderByColumn()")
-       println(TestTable.getOrderByColumn())
+       println(TestTable.getOrderByColumn)
     } catch {
       case t: Throwable => t.printStackTrace() // TODO: handle error
     }
     
     @Test
-    def test_TableIsOK() = assertFalse(TestTable.Error_isError) 
+    def test_TableIsOK(): Unit = assertFalse(TestTable.Error_isError)
     
     /*TEST PARA HUEMUL_TABLE, HUEMUL_COLUMN, huemul_tablerelationship*/
-    var TestTable_padre: tbl_demo_test_padre = null
+    var TestTable_padre: tbl_demo_test_padre = _
     try {
        TestTable_padre = new tbl_demo_test_padre(huemulBigDataGov, Control)  
     } catch {
@@ -113,7 +113,7 @@ class AppTest {
     }
     
     @Test
-    def test_TablePadreIsOK() = assertFalse(TestTable_padre.Error_isError) 
+    def test_TablePadreIsOK(): Unit = assertFalse(TestTable_padre.Error_isError)
 
 
 }

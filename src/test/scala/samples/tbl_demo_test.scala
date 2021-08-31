@@ -8,7 +8,7 @@ import com.huemulsolutions.bigdata.tables.huemulType_StorageType
 import com.huemulsolutions.bigdata.tables.huemulType_Tables
 import com.huemulsolutions.bigdata.tables.huemulType_SecurityLevel
 import org.apache.spark.sql.types.DataTypes._
-import org.apache.spark.sql.types.DecimalType
+//import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.Decimal
 
 class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
@@ -32,24 +32,24 @@ class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_
   this.setNameForMDM_hash("myTempHash")
   
   val codigo_id: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo")
-  codigo_id.setIsPK (true)
-  codigo_id.setPartitionColumn(2,false, true)
-  codigo_id.setIsUnique ( true)
+  codigo_id.setIsPK ()
+  codigo_id.setPartitionColumn(2,dropBeforeInsert = false)
+  codigo_id.setIsUnique ( )
   codigo_id.setDQ_MaxDateTimeValue ( "")
   codigo_id.setDQ_MinDateTimeValue ( "")
   codigo_id.setDQ_MaxDecimalValue ( Decimal.apply(10))
   codigo_id.setDQ_MinDecimalValue ( Decimal.apply(10))
   codigo_id.setDQ_MaxLen ( 10)
   codigo_id.setDQ_MinLen ( 9)
-  codigo_id.setNullable ( true)
-  codigo_id.setDefaultValue ( "'nada'")
+  codigo_id.setNullable ()
+  codigo_id.setDefaultValues ( "'nada'")
   
-  codigo_id.setSecurityLevel ( huemulType_SecurityLevel.Public)
-  codigo_id.setEncryptedType ( "sin encriptar")
+  codigo_id.securityLevel ( huemulType_SecurityLevel.Public)
+  codigo_id.encryptedType ( "sin encriptar")
   
-  codigo_id.setMDM_EnableOldValue ( false)
-  codigo_id.setMDM_EnableDTLog( false)
-  codigo_id.setMDM_EnableProcessLog( false)
+  //codigo_id.setMDM_EnableOldValue ( false)
+  //codigo_id.setMDM_EnableDTLog( false)
+  //codigo_id.setMDM_EnableProcessLog( false)
   
   
   

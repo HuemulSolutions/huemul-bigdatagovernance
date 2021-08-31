@@ -28,9 +28,6 @@ class huemul_GlobalPath() extends Serializable {
 
   val IMPALA_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
 
-  //from 2.2 --> add HIVE connect
-  @deprecated("this method will be removed, instead use createExternalTableConf", "3.0")
-  val HIVE_Setting: ArrayBuffer[huemul_KeyValuePath] = new ArrayBuffer[huemul_KeyValuePath]()
 
   //from 2.3 --> add
   var externalBBDD_conf: huemul_ExternalDB = new huemul_ExternalDB()
@@ -92,10 +89,10 @@ class huemul_GlobalPath() extends Serializable {
   /**
    * set max minutes to wait to singleton finish
    * if minutes to wait > waiting elapsed time, continue with execution
-   * @param value
+   * @param value max attempts
    */
   def setMaxMinutesWaitInSingleton(value: Integer): Unit = {
-    _MaxMinutesWaitInSingleton = value;
+    _MaxMinutesWaitInSingleton = value
   }
 
   //from 2.6.3
@@ -103,7 +100,7 @@ class huemul_GlobalPath() extends Serializable {
   def getMaxAttemptApplicationInUse: Integer = _MaxAttemptApplicationInUse
   /**
    * set max attempt to check if applicationId is in use
-   * @param value
+   * @param value max attempts
    */
   def setMaxAttemptApplicationInUse(value: Integer): Unit = {
     _MaxAttemptApplicationInUse = value
@@ -111,7 +108,7 @@ class huemul_GlobalPath() extends Serializable {
 
   //from 2.4 --> bigData provider for technical configuration
   private var _bigDataProvider: huemulType_bigDataProvider = huemulType_bigDataProvider.None
-  def getBigDataProvider(): huemulType_bigDataProvider =  _bigDataProvider
+  def getBigDataProvider: huemulType_bigDataProvider =  _bigDataProvider
   def setBigDataProvider(value: huemulType_bigDataProvider) {
     _bigDataProvider = value
   }
@@ -119,7 +116,7 @@ class huemul_GlobalPath() extends Serializable {
   //FROM 2.2
   //Add Hbase available
   private var _HBase_available: Boolean = false
-  def getHBase_available(): Boolean =  _HBase_available
+  def getHBase_available: Boolean =  _HBase_available
   def setHBase_available() {
     _HBase_available = true
   }
@@ -135,28 +132,19 @@ class huemul_GlobalPath() extends Serializable {
   //FROM 2.5
   //ADD AVRO SUPPORT
   private var _avro_format: String = "com.databricks.spark.avro"
-  def getAVRO_format(): String =   _avro_format
+  def getAVRO_format: String =   _avro_format
   def setAVRO_format(value: String) {_avro_format = value}
 
   private var _avro_compression: String = "snappy"
-  def getAVRO_compression(): String =   _avro_compression
+  def getAVRO_compression: String =   _avro_compression
   def setAVRO_compression(value: String) {_avro_compression = value}
 
-  @deprecated("this method will be removed, instead use ValidPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String)", "3.0")
-  def ValidPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): Boolean = {
-    validPath(Division, ManualEnvironment)
-  }
   /**
    Returns true if path has value, otherwise return false
    */
   def validPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): Boolean = {
     val Result = Division.filter { x => x.environment == ManualEnvironment }
      if (Result == null || Result.isEmpty) false else true
-  }
-
-  @deprecated("this method will be removed, instead use getPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath])", "3.0")
-  def GetPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    getPath(huemulBigDataGov, Division)
   }
 
   def getPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
@@ -195,14 +183,11 @@ class huemul_GlobalPath() extends Serializable {
     Result(0).getPassword
   }
 
-  @deprecated("this method will be removed, instead use getPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String)", "3.0")
-  def GetPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    getPath(huemulBigDataGov, Division, ManualEnvironment)
-  }
+
   /**
    Get Path with manual environment setting
    */
-  def getPath(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
+  def getPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
     val Result = Division.filter { x => x.environment == ManualEnvironment }
     if (Result == null || Result.isEmpty)
       sys.error(s"DAPI Error: environment '$ManualEnvironment' must be set")
@@ -210,49 +195,32 @@ class huemul_GlobalPath() extends Serializable {
     Result(0).Value
   }
 
-  @deprecated("this method will be removed, instead use getDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath])", "3.0")
-  def GetDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    getDataBase(huemulBigDataGov, Division)
-  }
+
 
   def getDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath]): String = {
     getPath(huemulBigDataGov, Division)
   }
 
-  @deprecated("this method will be removed, instead use getDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String)", "3.0")
-  def GetDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    getDataBase(huemulBigDataGov,Division,ManualEnvironment)
-  }
+
   /**
    Get DataBase Name with manual environment setting
    */
-  def getDataBase(huemulBigDataGov: huemul_BigDataGovernance, Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    getPath(huemulBigDataGov, Division, ManualEnvironment)
+  def getDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
+    getPath(Division, ManualEnvironment)
   }
 
 
-  @deprecated("this method will be removed, instead use getDebugTempPath(huemulBigDataGov: huemul_BigDataGovernance, function_name: String, table_name: String)", "3.0")
-  def GetDebugTempPath(huemulBigDataGov: huemul_BigDataGovernance, function_name: String, table_name: String): String = {
-    getDebugTempPath(huemulBigDataGov,function_name, table_name)
-  }
+
   //TEMP
   def getDebugTempPath(huemulBigDataGov: huemul_BigDataGovernance, function_name: String, table_name: String): String = {
     s"${getPath(huemulBigDataGov, TEMPORAL_Path)}$function_name/$table_name"
   }
 
-  @deprecated("this method will be removed, instead use getPathForSaveTableWithoutDG(huemulBigDataGov: huemul_BigDataGovernance,globalPath: ArrayBuffer[huemul_KeyValuePath], localPath_name: String, table_name: String)", "3.0")
-  def GetPathForSaveTableWithoutDG(huemulBigDataGov: huemul_BigDataGovernance,globalPath: ArrayBuffer[huemul_KeyValuePath], localPath_name: String, table_name: String): String = {
-    getPathForSaveTableWithoutDG(huemulBigDataGov,globalPath,localPath_name,table_name)
-  }
   //to save DF directly from DF without DataGovernance
   def getPathForSaveTableWithoutDG(huemulBigDataGov: huemul_BigDataGovernance,globalPath: ArrayBuffer[huemul_KeyValuePath], localPath_name: String, table_name: String): String = {
     s"${getPath(huemulBigDataGov, globalPath)}$localPath_name/$table_name"
   }
 
-  @deprecated("this method will be removed, instead use raiseError(Environment: String) ", "3.0")
-  def RaiseError(Environment: String): Unit = {
-    raiseError(Environment)
-  }
 
   def raiseError(Environment: String) {
     sys.error(s"error, environment does't exist: '$Environment', must be '$GlobalEnvironments'  ")

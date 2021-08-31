@@ -34,7 +34,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     DataSchema = Schema
     NumCols = Schema.length
   }
-  def getDataSchema(): StructType =  DataSchema
+  def getDataSchema: StructType =  DataSchema
   
   /**
    * No Rows info
@@ -42,7 +42,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   
   //private var NumRows: Long = -1
   private var _NumRows: Long = -1
-  def getNumRows(): Long = {
+  def getNumRows: Long = {
     if (_NumRows == -1)
       _NumRows = DataFrame.count()
       
@@ -54,7 +54,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * num cols Info
    */
   private var NumCols: Integer = _
-  def getNumCols(): Integer =  NumCols
+  def getNumCols: Integer =  NumCols
   
   //var Data_isRead: java.lang.Boolean = false
   
@@ -64,7 +64,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   //val TempDir: String = 
   
   private val DQ_Result: ArrayBuffer[huemul_DQRecord] = new ArrayBuffer[huemul_DQRecord]()
-  def getDQResult(): ArrayBuffer[huemul_DQRecord] =  DQ_Result
+  def getDQResult: ArrayBuffer[huemul_DQRecord] =  DQ_Result
   
   private def local_setDataFrame(DF: DataFrame, Alias: String, SaveInTemp: Boolean ) {
     _NumRows = -1
@@ -99,14 +99,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     //huemulBigDataGov.DF_SaveLineage(Alias, sql,dt_start, dt_end, Control)
     _NumRows = -1
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
-    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava
     //Cambio en v1.3: optimiza tiempo al aplicar repartition para archivos pequeños             
     val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
       
     
     local_setDataFrame(DFTemp, Alias, SaveInTemp)
-    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava
     
     huemulBigDataGov.DF_SaveLineage(Alias
                                  , sql
@@ -127,7 +127,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     //WARNING: ANY CHANGE ON DF_from_SQL MUST BE REPLICATE IN THIS METHOD
     
     if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sql)
-    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava
     //Cambio en v1.3: optimiza tiempo al aplicar repartition para archivos pequeños             
     val DFTemp = if (NumPartitions == null || NumPartitions <= 0) huemulBigDataGov.spark.sql(sql)
                  else huemulBigDataGov.spark.sql(sql).repartition(NumPartitions)
@@ -138,7 +138,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     }
     
     local_setDataFrame(DFTemp, Alias, SaveInTemp)
-    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava
     
     huemulBigDataGov.DF_SaveLineage(Alias
                                  , sql
@@ -179,31 +179,32 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /**
    * DQ_NumRowsInterval: Test DQ for num Rows in DF
    */
-  def DQ_NumRowsInterval(ObjectData: Object, NumMin: Long, NumMax: Long, DQ_ExternalCode:String = null): huemul_DataQualityResult = {
-    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+  def DQ_NumRowsInterval(objectData: Object, NumMin: Long, NumMax: Long, DQ_ExternalCode:String = null): huemul_DataQualityResult = {
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava
     val DQResult = new huemul_DataQualityResult()
     //var Rows = NumRows
     if (getNumRows >= NumMin && getNumRows <= NumMax ) {
       DQResult.isError = false
     } else if (getNumRows < NumMin) {
       DQResult.isError = true
-      DQResult.Description = s"huemul_DataFrame Error: Rows(${getNumRows()}) < MinDef($NumMin)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($getNumRows) < MinDef($NumMin)"
       DQResult.Error_Code = 2001
     } else if (getNumRows > NumMax) {
       DQResult.isError = true
-      DQResult.Description = s"huemul_DataFrame Error: Rows(${getNumRows()}) > MaxDef($NumMax)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($getNumRows) > MaxDef($NumMax)"
       DQResult.Error_Code = 2002
     }
     
     var TableName: String = null
     var BBDDName: String = null
-    if (ObjectData.isInstanceOf[huemul_Table]) {
-      val Data = ObjectData.asInstanceOf[huemul_Table]
-      TableName = Data.TableName
-      BBDDName = Data.getCurrentDataBase()
+    objectData match {
+      case data: huemul_Table =>
+        TableName = data.TableName
+        BBDDName = data.getCurrentDataBase
+      case _ =>
     }
     
-    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
       
     val Values = new huemul_DQRecord(huemulBigDataGov)
@@ -223,7 +224,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_ExternalCode = DQ_ExternalCode
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
-    Values.DQ_NumRowsTotal =getNumRows()
+    Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
     Values.DQ_IsWarning = DQResult.isWarning
     Values.DQ_duration_hour = duration.hour.toInt
@@ -239,32 +240,33 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /****
    * DQ_NumRowsInterval: Test DQ for num Rows in DF
    */
-  def DQ_NumRows(ObjectData: Object, NumRowsExpected: Long, DQ_ExternalCode:String = null): huemul_DataQualityResult = {
-    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+  def DQ_NumRows(objectData: Object, NumRowsExpected: Long, DQ_ExternalCode:String = null): huemul_DataQualityResult = {
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava
     val DQResult = new huemul_DataQualityResult()
     //var Rows = NumRows
     if (getNumRows == NumRowsExpected ) {
       DQResult.isError = false
     } else if (getNumRows < NumRowsExpected) {
       DQResult.isError = true
-      DQResult.Description = s"huemul_DataFrame Error: Rows(${getNumRows()}) < NumExpected($NumRowsExpected)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($getNumRows) < NumExpected($NumRowsExpected)"
       DQResult.Error_Code = 2003
     } else if (getNumRows > NumRowsExpected) {
       DQResult.isError = true
-      DQResult.Description = s"huemul_DataFrame Error: Rows(${getNumRows()}) > NumExpected($NumRowsExpected)"
+      DQResult.Description = s"huemul_DataFrame Error: Rows($getNumRows) > NumExpected($NumRowsExpected)"
       DQResult.Error_Code = 2004
     }
     
     
     var TableName: String = null
     var BBDDName: String = null
-    if (ObjectData.isInstanceOf[huemul_Table]) {
-      val Data = ObjectData.asInstanceOf[huemul_Table]
-      TableName = Data.TableName
-      BBDDName = Data.getCurrentDataBase()
+    objectData match {
+      case data: huemul_Table =>
+        TableName = data.TableName
+        BBDDName = data.getCurrentDataBase
+      case _ =>
     }
     
-    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
     val Values = new huemul_DQRecord(huemulBigDataGov)
@@ -284,7 +286,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_ExternalCode = DQ_ExternalCode
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =0
-    Values.DQ_NumRowsTotal =getNumRows()
+    Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
     Values.DQ_IsWarning = DQResult.isWarning
     Values.DQ_duration_hour = duration.hour.toInt
@@ -301,7 +303,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   /**
    * Compare actual DF with other DF (only columns exist in Actual DF and other DF)
    */
-  def DQ_CompareDF(ObjectData: Object, DF_to_Compare: DataFrame, PKFields: String, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
+  def DQ_CompareDF(objectData: Object, DF_to_Compare: DataFrame, PKFields: String, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
     if (!huemulBigDataGov.HasName(PKFields)) {
       sys.error("HuemulError: PKFields must be set ")
     }
@@ -311,14 +313,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     
     var NumColumns: Long = 0
     var NumColumnsError: Long = 0
-    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava
     
     try {
       //Genera Select
       var SQL_Compare: String = ""
       var SQL_Resumen: String = "SELECT count(1) as total "
       this.DataSchema.foreach { x =>
-        if (DF_to_Compare.schema.filter { y => y.name.toUpperCase() == x.name.toUpperCase() }.length == 1) {
+        if (DF_to_Compare.schema.count { y => y.name.toUpperCase() == x.name.toUpperCase() } == 1) {
           SQL_Compare = SQL_Compare.concat(s",CAST(CASE WHEN DF.${x.name} = __Compare.${x.name} or (DF.${x.name} IS NULL AND __Compare.${x.name} IS NULL ) THEN 1 ELSE 0 END as Integer) as Equal_${x.name} \n  ")
           SQL_Resumen = SQL_Resumen.concat(s",CAST(SUM(Equal_${x.name}) AS BigInt) AS Total_Equal_${x.name} \n")  
         }
@@ -352,7 +354,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       val  DF_FinalResultFirst = DF_FinalResult.first()
       val totalCount = DF_FinalResultFirst.getAs[Long]("total")
       this.DataSchema.foreach { x =>
-        if (DF_to_Compare.schema.filter { y => y.name.toUpperCase() == x.name.toUpperCase() }.length == 1) {
+        if (DF_to_Compare.schema.count { y => y.name.toUpperCase() == x.name.toUpperCase() } == 1) {
        
           val currentColumn = DF_FinalResultFirst.getAs[Long](s"Total_Equal_${x.name}")
           if (currentColumn != totalCount) {
@@ -379,13 +381,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     
     var TableName: String = null
     var BBDDName: String = null
-    if (ObjectData.isInstanceOf[huemul_Table]) {
-      val Data = ObjectData.asInstanceOf[huemul_Table]
-      TableName = Data.TableName
-      BBDDName = Data.getCurrentDataBase()
+    objectData match {
+      case data: huemul_Table =>
+        TableName = data.TableName
+        BBDDName = data.getCurrentDataBase
+      case _ =>
     }
     
-    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
     val Values = new huemul_DQRecord(huemulBigDataGov)
@@ -421,12 +424,12 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   }
   
   
-  def DQ_StatsAllCols(ObjectData: Object) : huemul_DataQualityResult = {
+  def DQ_StatsAllCols() : huemul_DataQualityResult = {
     val DQResult = new huemul_DataQualityResult()
     DQResult.isError = false
     
     this.DataSchema.foreach { x =>
-      val Res = DQ_StatsByCol(ObjectData, x.name)
+      val Res = DQ_StatsByCol(x.name)
       
       if (Res.isError) {
         huemulBigDataGov.logMessageWarn(s"HuemulDataFrameLog: ERROR DQ")
@@ -448,7 +451,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * DQ_StatsByCol: Get Stats by Column
    * Max, Min, avg, sum, count(distinct), count, max(length), min(length)
    */
-  def DQ_StatsByCol(ObjectData: Object, Col: String) : huemul_DataQualityResult = {
+  def DQ_StatsByCol(Col: String) : huemul_DataQualityResult = {
     val DQResult = new huemul_DataQualityResult()
     DQResult.isError = false
     
@@ -506,7 +509,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * DQ_StatsByFunction: Returns all columns using "function" aggregate function
    * function: sum, max, min, count, count_distinct, max_length, min_length, 
    */
-  def DQ_StatsByFunction(ObjectData: Object, function: String) : huemul_DataQualityResult = {
+  def DQ_StatsByFunction(function: String) : huemul_DataQualityResult = {
     val DQResult = new huemul_DataQualityResult()
     DQResult.isError = false
     var SQL : String = s""" SELECT "$function" AS __function__ """
@@ -542,8 +545,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * DQ_DuplicateValues: validate duplicate rows for ColDuplicate
    *  
    */
-  def DQ_DuplicateValues2(ObjectData: Object, ColDuplicate: String, colMaxMin: String, TempFileName: String = null, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
-    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+  def DQ_DuplicateValues2(objectData: Object, ColDuplicate: String, colMaxMin: String, TempFileName: String = null, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava
     var colMaxMin_local = colMaxMin
     if (colMaxMin_local == null)
       colMaxMin_local = "0"
@@ -593,13 +596,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     
     var TableName: String = null
     var BBDDName: String = null
-    if (ObjectData.isInstanceOf[huemul_Table]) {
-      val Data = ObjectData.asInstanceOf[huemul_Table]
-      TableName = Data.TableName
-      BBDDName = Data.getCurrentDataBase()
+    objectData match {
+      case data: huemul_Table =>
+        TableName = data.TableName
+        BBDDName = data.getCurrentDataBase
+      case _ =>
     }
     
-    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
     
     val Values = new huemul_DQRecord(huemulBigDataGov)
@@ -619,7 +623,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     Values.DQ_ExternalCode = DQ_ExternalCode
     Values.DQ_NumRowsOK =0
     Values.DQ_NumRowsError =DQDup
-    Values.DQ_NumRowsTotal =getNumRows()
+    Values.DQ_NumRowsTotal =getNumRows
     Values.DQ_IsError = DQResult.isError
     Values.DQ_IsWarning = DQResult.isWarning
     Values.DQ_duration_hour = duration.hour.toInt
@@ -635,8 +639,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
    * DQ_NotNullValues: validate nulls rows
    *  
    */
-  def DQ_NotNullValues(ObjectData: Object, Col: String, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
-    val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+  def DQ_NotNullValues(objectData: Object, Col: String, DQ_ExternalCode:String = null) : huemul_DataQualityResult = {
+    val dt_start = huemulBigDataGov.getCurrentDateTimeJava
     val DQResult = new huemul_DataQualityResult()
     val talias = AliasDF
     DQResult.isError = false
@@ -675,13 +679,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
   
     var TableName: String = null
     var BBDDName: String = null
-    if (ObjectData.isInstanceOf[huemul_Table]) {
-      val Data = ObjectData.asInstanceOf[huemul_Table]
-      TableName = Data.TableName
-      BBDDName = Data.getCurrentDataBase()
+    objectData match {
+      case data: huemul_Table =>
+        TableName = data.TableName
+        BBDDName = data.getCurrentDataBase
+      case _ =>
     }
     
-    val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+    val dt_end = huemulBigDataGov.getCurrentDateTimeJava
     val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)    
     
     val Values = new huemul_DQRecord(huemulBigDataGov)
@@ -737,7 +742,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         
         x.setId(i)
         if (x.getMyName == null || x.getMyName == "")
-          x.setMyName(x.getDescription())
+          x.setMyName(x.getDescription)
         Result.append(x)
         i += 1
       }
@@ -751,7 +756,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     var SQLResult: String = ""
  
     getDataQualitySentences(OfficialDataQuality, RulesDQ).foreach { x =>  
-        SQLResult += s",CAST(${if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) "" else "SUM"}(CASE WHEN ${x.getSQLFormula()} THEN 1 ELSE 0 END) AS LONG) AS ___DQ_${x.getId()} \n"
+        SQLResult += s",CAST(${if (x.getQueryLevel == huemulType_DQQueryLevel.Aggregate) "" else "SUM"}(CASE WHEN ${x.getSQLFormula} THEN 1 ELSE 0 END) AS LONG) AS ___DQ_${x.getId} \n"
     }
     
         
@@ -808,7 +813,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
     var DF_ErrorDetails: DataFrame = null
     
     if (SQLDQ != ""){
-      val dt_start = huemulBigDataGov.getCurrentDateTimeJava()
+      val dt_start = huemulBigDataGov.getCurrentDateTimeJava
       //Execute DQ
       val AliasDQ = s"${AliasToQuery}__DQ_p0"
       ErrorLog.dqDF = huemulBigDataGov.DF_ExecuteQuery(AliasDQ
@@ -817,7 +822,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
       val FirstReg = ErrorLog.dqDF.collect()(0) // .first()
       val DQTotalRows = FirstReg.getAs[Long](s"___Total")
       
-      val dt_end = huemulBigDataGov.getCurrentDateTimeJava()
+      val dt_end = huemulBigDataGov.getCurrentDateTimeJava
       val duration = huemulBigDataGov.getDateTimeDiff(dt_start, dt_end)
       //import java.util.Calendar;
       //Get DQ Result from DF
@@ -829,8 +834,8 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         huemulBigDataGov.logMessageWarn("0 rows in DF, nothing to evaluate")
       } else {
         getDataQualitySentences(OfficialDataQuality, ManualRules).foreach { x =>
-          x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId()}")
-          x.NumRowsTotal = if (x.getQueryLevel() == huemulType_DQQueryLevel.Aggregate) 1L else DQTotalRows
+          x.NumRowsOK = FirstReg.getAs[Long](s"___DQ_${x.getId}")
+          x.NumRowsTotal = if (x.getQueryLevel == huemulType_DQQueryLevel.Aggregate) 1L else DQTotalRows
           x.ResultDQ = ""
           
           val DQWithError = x.NumRowsTotal - x.NumRowsOK
@@ -850,14 +855,14 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
           }
           
           //set user message
-          x.ResultDQ = s"DQ ${if (IsError) s"${x.getNotification()} (code:${x.getErrorCode()})" else "OK"}, Name: ${x.getMyName()} (___DQ_${x.getId()}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Not meets: $DQWithError(tolerance:${x.getToleranceError_Rows}), Not meets %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
+          x.ResultDQ = s"DQ ${if (IsError) s"${x.getNotification} (code:${x.getErrorCode})" else "OK"}, Name: ${x.getMyName} (___DQ_${x.getId}), num OK: ${x.NumRowsOK}, num Total: ${x.NumRowsTotal}, Not meets: $DQWithError(tolerance:${x.getToleranceError_Rows}), Not meets %: ${DQWithErrorPerc * Decimal.apply(100)}%(tolerance:${if (x.getToleranceError_Percent == null) 0 else x.getToleranceError_Percent * Decimal.apply(100)}%)"
           if (huemulBigDataGov.DebugMode || IsError) huemulBigDataGov.logMessageDebug(x.ResultDQ)
                          
           var dfTableName: String = null
           var dfDataBaseName: String = null
           if (dMaster != null) {
             dfTableName = dMaster.TableName
-            dfDataBaseName = dMaster.getCurrentDataBase()
+            dfDataBaseName = dMaster.getCurrentDataBase
           }
           
           
@@ -866,22 +871,22 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
           Values.Table_Name =dfTableName
           Values.BBDD_Name =dfDataBaseName
           Values.DF_Alias =AliasToQuery
-          Values.ColumnName =if (x.getFieldName == null) null else x.getFieldName().getMyName(dMaster.getStorageType)
-          Values.DQ_Name =x.getMyName()
-          Values.DQ_Description =s"(Id ${x.getId()}) ${x.getDescription()}"
-          Values.DQ_QueryLevel =x.getQueryLevel() // .getDQ_QueryLevel
-          Values.DQ_Notification =x.getNotification()
-          Values.DQ_SQLFormula =x.getSQLFormula()
+          Values.ColumnName =if (x.getFieldName == null) null else x.getFieldName.getMyName(dMaster.getStorageType)
+          Values.DQ_Name =x.getMyName
+          Values.DQ_Description =s"(Id ${x.getId}) ${x.getDescription}"
+          Values.DQ_QueryLevel =x.getQueryLevel // .getDQ_QueryLevel
+          Values.DQ_Notification =x.getNotification
+          Values.DQ_SQLFormula =x.getSQLFormula
           Values.DQ_toleranceError_Rows =x.getToleranceError_Rows
           Values.DQ_toleranceError_Percent =x.getToleranceError_Percent
           Values.DQ_ResultDQ =x.ResultDQ
-          Values.DQ_ExternalCode = x.getDQ_ExternalCode()
-          Values.DQ_ErrorCode = if (IsError) x.getErrorCode() else null 
+          Values.DQ_ExternalCode = x.getDQ_ExternalCode
+          Values.DQ_ErrorCode = if (IsError) x.getErrorCode else null
           Values.DQ_NumRowsOK =x.NumRowsOK
           Values.DQ_NumRowsError =DQWithError
           Values.DQ_NumRowsTotal =x.NumRowsTotal    
-          Values.DQ_IsError = x.getNotification() == huemulType_DQNotification.ERROR && IsError //IsError 
-          Values.DQ_IsWarning = (x.getNotification() == huemulType_DQNotification.WARNING || x.getNotification() == huemulType_DQNotification.WARNING_EXCLUDE) && IsError
+          Values.DQ_IsError = x.getNotification == huemulType_DQNotification.ERROR && IsError //IsError
+          Values.DQ_IsWarning = (x.getNotification == huemulType_DQNotification.WARNING || x.getNotification == huemulType_DQNotification.WARNING_EXCLUDE) && IsError
           Values.DQ_duration_hour = duration.hour.toInt
           Values.DQ_duration_minute = duration.minute.toInt
           Values.DQ_duration_second = duration.second.toInt
@@ -894,23 +899,23 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
             NumTotalWarnings += 1
             
           if (Values.DQ_IsError) {
-            txtTotalErrors += s"\nHuemulDataFrameLog: DQ Name (${x.getErrorCode()}): ${x.getMyName()} with error: ${x.ResultDQ}"
+            txtTotalErrors += s"\nHuemulDataFrameLog: DQ Name (${x.getErrorCode}): ${x.getMyName} with error: ${x.ResultDQ}"
             NumTotalErrors += 1
-            localErrorCode = x.getErrorCode()
+            localErrorCode = x.getErrorCode
           }
           
           //Save details to DF with errors
-          if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails()) {
+          if (dfTableName != null && huemulBigDataGov.GlobalSettings.DQ_SaveErrorDetails && IsError && x.getSaveErrorDetails) {
             //Query to get detail errors
-            Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId()}) ${x.getDescription()}) ")
+            Control.NewStep(s"Step: DQ Result: Get detail error for (Id ${x.getId}) ${x.getDescription}) ")
             val SQL_Detail = DQ_GenQuery(AliasToQuery
-                                        ,s"not (${x.getSQLFormula()})"
+                                        ,s"not (${x.getSQLFormula})"
                                         ,!(x.getFieldName == null) //asField
-                                        ,if (x.getFieldName == null) "all" else x.getFieldName().getMyName(dMaster.getStorageType) //fieldName
+                                        ,if (x.getFieldName == null) "all" else x.getFieldName.getMyName(dMaster.getStorageType) //fieldName
                                         ,Values.DQ_Id
-                                        ,x.getNotification()
-                                        ,x.getErrorCode()
-                                        ,s"(Id ${x.getId()}) ${x.getDescription()}"
+                                        ,x.getNotification
+                                        ,x.getErrorCode
+                                        ,s"(Id ${x.getId}) ${x.getDescription}"
                                         )
                                  
             //Execute query
@@ -1033,7 +1038,7 @@ class huemul_DataFrame(huemulBigDataGov: huemul_BigDataGovernance, Control: huem
         if (huemulBigDataGov.DebugMode && !huemulBigDataGov.HideLibQuery) huemulBigDataGov.logMessageDebug(sqlDrop01)
         try {
           val TablesListFromHive = huemulBigDataGov.spark.catalog.listTables(ddbbName).collect()
-          if (TablesListFromHive.filter { x => x.name.toUpperCase() == tableNameInHive.toUpperCase() }.length > 0) 
+          if (TablesListFromHive.exists { x => x.name.toUpperCase() == tableNameInHive.toUpperCase() })
             huemulBigDataGov.spark.sql(sqlDrop01)
             
         } catch {

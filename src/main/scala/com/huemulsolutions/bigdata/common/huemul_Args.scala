@@ -1,21 +1,22 @@
 package com.huemulsolutions.bigdata.common
 
-import java.util.HashMap;
+import java.util
+//import java.util.HashMap
 
 /**
  * huemul_Args: get all arguments from console
  */
 class huemul_Args() extends Serializable {
-  var argumentos: HashMap[String, String] = new HashMap[String, String]();
+  var argumentos: util.HashMap[String, String] = new util.HashMap[String, String]()
   
   /**
   * Setea variables definidas como parametros al ejecutar el programa, llevando a lower case tanto la llave
   * como el valor 
   * @param args Array de String que contiene los argumentos ingresados al ejecutar el programa  
   */
-  def setArgs(args: Array[String]) = {
+  def setArgs(args: Array[String]): Unit = {
     // caso existencia de parametros
-    argumentos = new HashMap[String, String]();
+    argumentos = new util.HashMap[String, String]()
     if (args == null) {
       val a = 1  
     }
@@ -29,11 +30,11 @@ class huemul_Args() extends Serializable {
           argumentos_completos.foreach { x => 
             argumentos.put(x(0).toLowerCase(), x(1).toLowerCase())
             //println(s"${x(0).toLowerCase()} = ${x(1).toLowerCase()}")
-          };  
+          }
           argumentos_incompletos.foreach { x => 
             argumentos.put(x(0).toLowerCase(), "")
             //println(s"${x(0).toLowerCase()} = null")
-          };
+          }
       }
     } 
     
@@ -44,25 +45,25 @@ class huemul_Args() extends Serializable {
    * GetValue(Key: String, DefaultValue: String): String
    * Get params value, if does't exist, return null
    */
-  def GetValue(Key: String, DefaultValue: String): String = {
+  def getValue(Key: String, DefaultValue: String): String = {
     val KeyLower = Key.toLowerCase()
     var Value: String = DefaultValue
 
     if (argumentos.containsKey(KeyLower)) Value = argumentos.get(KeyLower).toLowerCase()
     
-    return Value
+    Value
   }
   
   /***
    * GetValue(Key: String, DefaultValue: String, ErrorMessageIfNotExist: String)
    * Get params value, if does't exist, raiseError
    */
-  def GetValue(Key: String, DefaultValue: String, ErrorMessageIfNotExist: String): String = {
-    var Value: String = GetValue(Key, null)
+  def getValue(Key: String, defaultValue: String, ErrorMessageIfNotExist: String): String = {
+    val Value: String = getValue(Key, defaultValue)
     if (Value == null){
       sys.error(ErrorMessageIfNotExist)
     }
     
-    return Value
+    Value
   }
 }

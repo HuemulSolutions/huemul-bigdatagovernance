@@ -29,7 +29,7 @@ class huemul_DataQuality(FieldName: huemul_Columns
             ) extends Serializable {
   
   private var _DQ_ExternalCode: String = DQ_ExternalCode
-  private var ToleranceError_Percent: Decimal = null
+  private var ToleranceError_Percent: Decimal = _
   private var _QueryLevel: huemulType_DQQueryLevel = QueryLevel
   private var _Notification: huemulType_DQNotification = Notification
   private var _SaveErrorDetails: Boolean = SaveErrorDetails
@@ -37,46 +37,46 @@ class huemul_DataQuality(FieldName: huemul_Columns
   
   /**% of total for refuse validation. Example: 0.15 = 15% (null to not use)
    */
-  def getToleranceError_Percent: Decimal = {return ToleranceError_Percent}
+  def getToleranceError_Percent: Decimal = ToleranceError_Percent
   
   private var ToleranceError_Rows: java.lang.Long = 0
   /**N° of records for refuse validation. Example: 1000 = 1000 rows with error  (null to not use)
    */
-  def getToleranceError_Rows: java.lang.Long = {return ToleranceError_Rows}
+  def getToleranceError_Rows: java.lang.Long = ToleranceError_Rows
   
   /**SQL for validation, expressed in a positive way (boolean) . Example: Field1 < Field2 (field oK)
    */
-  def getSQLFormula(): String = {return sqlformula} //= null
+  def getSQLFormula: String = sqlformula //= null
   
-  private var _Id: Integer = null
+  private var _Id: Integer = _
   def setId(Id: Integer) {_Id = Id}
-  def getId(): Integer = {return _Id}
+  def getId: Integer = _Id
   
   
   
   
-  def getFieldName(): huemul_Columns = {return FieldName}
-  def getQueryLevel(): huemulType_DQQueryLevel  = {return _QueryLevel}
-  def getDescription(): String  ={return  Description}
-  def getNotification(): huemulType_DQNotification = {return _Notification}
-  def getSaveErrorDetails(): Boolean = {return if (_QueryLevel == huemulType_DQQueryLevel.Row) _SaveErrorDetails else false}
-  def getErrorCode(): Integer = {return Error_Code}
+  def getFieldName: huemul_Columns = FieldName
+  def getQueryLevel: huemulType_DQQueryLevel  = _QueryLevel
+  def getDescription: String  = Description
+  def getNotification: huemulType_DQNotification = _Notification
+  def getSaveErrorDetails: Boolean = {if (_QueryLevel == huemulType_DQQueryLevel.Row) _SaveErrorDetails else false}
+  def getErrorCode: Integer = Error_Code
   def setDQ_ExternalCode(value: String) {_DQ_ExternalCode = value }
-  def getDQ_ExternalCode(): String = {return _DQ_ExternalCode}
-  var NumRowsOK: java.lang.Long = null
-  var NumRowsTotal: java.lang.Long = null
+  def getDQ_ExternalCode: String =  _DQ_ExternalCode
+  var NumRowsOK: java.lang.Long = _
+  var NumRowsTotal: java.lang.Long = _
   
   
-  var ResultDQ: String = null
+  var ResultDQ: String = _
   
   /**
    * MyName
    */
-  private var MyName: String = null 
+  private var MyName: String = _
   def setMyName(name: String) {
     MyName = name
   }
-  def getMyName(): String = {return MyName}
+  def getMyName: String = MyName
   
   def setTolerance(toleranceRows: java.lang.Long, tolerancePercent: Decimal) {
     if (toleranceRows == null && tolerancePercent == null)

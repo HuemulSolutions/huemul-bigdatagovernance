@@ -6,7 +6,7 @@ import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification
 import com.huemulsolutions.bigdata.dataquality.huemulType_DQNotification.huemulType_DQNotification
 import com.huemulsolutions.bigdata.tables.huemulType_SecurityLevel.huemulType_SecurityLevel
 import com.huemulsolutions.bigdata.tables.huemulType_StorageType.huemulType_StorageType
-import org.apache.log4j.Level
+//import org.apache.log4j.Level
 import org.apache.spark.sql.types._
 
 /** A class to represent a ''Column'' from a table or modelo (Data Schema).
@@ -50,12 +50,6 @@ class huemul_Columns(dataType: DataType
   // Define if a column definition is close, not allowing any modification to its attribute
   private var _DefinitionIsClose: Boolean = false
 
-  /** Set column definition to close
-   * @since   1.1
-   * @group   column_other
-   */
-  @deprecated("this method will be removed, instead use setDefinitionIsClose(): huemul_Columns", "3.0")
-  def SetDefinitionIsClose() {_DefinitionIsClose = true}
 
   /** Set column definition to close
    * @since   1.1
@@ -129,17 +123,6 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Set column is PK
-   * @since   1.1
-   * @group   column_attribute
-   *
-   * @return  huemul_Columns
-   */
-  @deprecated("this method will be removed, instead use setIsPK(): huemul_Columns", "3.0")
-  def setIsPK(value: Boolean): Unit = {
-    if (checkNotCloseAndNotNull("PK",value))
-      _IsPK = value
-  }
 
   // ------------------------------------------------------------------------------------------------------------------
   // Unique column attribute ------------------------------------------------------------------------------------------
@@ -202,17 +185,6 @@ class huemul_Columns(dataType: DataType
   def getIsUnique_Notification:  huemulType_DQNotification = getDQHierarchyNotificationLevel(_IsUniqueNotification)
 
 
-  /** Set column attribute to unique
-   * @since   1.1
-   * @group   column_attribute
-   *
-   * @param value true/false
-   */
-  @deprecated("this method will be removed, instead use setIsUnique(externalCode:String = null): huemul_Columns", "3.0")
-  def setIsUnique(value: Boolean) {
-    if (checkNotCloseAndNotNull("IsUnique" , value))
-      _IsUnique = value
-  }
 
   // ------------------------------------------------------------------------------------------------------------------
   // Nullable column attribute ----------------------------------------------------------------------------------------
@@ -252,6 +224,29 @@ class huemul_Columns(dataType: DataType
     this
   }
 
+  /** Set column null attribute with optional error code (`externalCode`)
+   * @since   3.0
+   * @group   column_attribute
+   *
+   * @param externalCode    External Error Code String
+   * @return                [[com.huemulsolutions.bigdata.tables.huemul_Columns]]
+   */
+  def setIsNull(value: Boolean, externalCode: String = null): huemul_Columns = {
+    if (checkNotCloseDefinition("setIsNull")) {
+      _Nullable = !value
+      _NullableExternalCode = if (externalCode == null) _NullableExternalCode else externalCode
+    }
+    this
+  }
+
+
+  private[tables] def setIsNullInternal(value: Boolean): huemul_Columns = {
+    _Nullable = !value
+    this
+  }
+
+
+
   /** Set nullable data quality rule notification
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
@@ -275,19 +270,7 @@ class huemul_Columns(dataType: DataType
    */
   def getDQ_Nullable_Notification:  huemulType_DQNotification = getDQHierarchyNotificationLevel(_NullableNotification)
 
-  /** Set column null attribute
-   * @since   1.1
-   * @group   column_attribute
-   *
-   * @param value true/false
-   */
-  @deprecated("this method will be removed, instead use setNullable(externalCode:String = null): huemul_Columns", "3.0")
-  def setNullable(value: Boolean) {
-    if (getDefinitionIsClose && value)
-      sys.error("You can't change value of setNullable, definition is close")
-    else
-      _Nullable = value
-  }
+
 
   // ------------------------------------------------------------------------------------------------------------------
   // Default Value column attribute -----------------------------------------------------------------------------------
@@ -315,17 +298,6 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Set column default value
-   * @since   1.1
-   * @group   column_attribute
-   *
-   * @param value   Column default value
-   */
-  @deprecated("this method will be removed, instead use setDefaultValues(value: String): huemul_Columns", "3.0")
-  def setDefaultValue(value: String) {
-    if (checkNotCloseDefinition("Default"))
-      _DefaultValue = value
-  }
 
   // ------------------------------------------------------------------------------------------------------------------
   // Security level column attribute ----------------------------------------------------------------------------------
@@ -351,17 +323,7 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Set column security level
-   * @since   1.4
-   * @group   column_attribute
-   *
-   * @param value   [[com.huemulsolutions.bigdata.tables.huemulType_SecurityLevel]] security level
-   */
-  @deprecated("this method will be removed, instead use securityLevel(value: huemulType_SecurityLevel): huemul_Columns", "3.0")
-  def setSecurityLevel(value: huemulType_SecurityLevel) {
-    if (checkNotCloseAndNotNull("SecurityLevel", value))
-      _SecurityLevel = value
-  }
+
 
   // ------------------------------------------------------------------------------------------------------------------
   // Encryption type column attribute ---------------------------------------------------------------------------------
@@ -390,17 +352,6 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Set encryption type for column
-   * @since   2.1
-   * @group   column_attribute
-   *
-   * @param value   Set type of encryption: none, sha2
-   */
-  @deprecated("this method will be removed, instead use encryptedType(value: String): huemul_Columns", "3.0")
-  def setEncryptedType(value: String) {
-    if (checkNotCloseAndNotNull("EncryptedType",value))
-      _EncryptedType = value
-  }
 
   // ------------------------------------------------------------------------------------------------------------------
   // Arco data column attribute ---------------------------------------------------------------------------------------
@@ -428,15 +379,6 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Set column as ARCO data
-   *
-   * @param value   true/false
-   */
-  @deprecated("this method will be removed, instead use setARCO_Data(): huemul_Columns", "3.0")
-  def setARCO_Data(value: Boolean) {
-    if (checkNotCloseAndNotNull("ARCO_Data",value))
-      _ArcoData = value
-  }
 
   // ------------------------------------------------------------------------------------------------------------------
   // Business Glossary column attribute -------------------------------------------------------------------------------
@@ -468,18 +410,7 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Set column business glossary asset id
-   *
-   * @since   2.1
-   * @group
-   *
-   * @param value   Business glossary asset id
-   */
-  @deprecated("this method will be removed, instead use setBusinessGlossary(value: String): huemul_Columns", "3.0")
-  def setBusinessGlossary_Id(value: String) {
-    if (checkNotCloseAndNotNull("BusinessGlossaryId",value))
-      _BusinessGlossaryId = value
-  }
+
 
   // ******************************************************************************************************************
   // Data Quality Rules
@@ -557,17 +488,7 @@ class huemul_Columns(dataType: DataType
    */
   def getDQ_MinLen_Notification:  huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMinLenNotification)
 
-  /** Set data quality min length value
-   * @since   1.1
-   * @group   column_data_quality
-   *
-   * @param value   Min length value
-   */
-  @deprecated("this method will be removed, instead use setDQ_MinLen(value: Integer, externalCode: String = null): huemul_Columns", "3.0")
-  def setDQ_MinLen(value: Integer) {
-    if (checkNotCloseDefinition("DQ min length"))
-      _DQMinLen = value
-  }
+
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MAX length -----------------------------------------------------------------------------------
@@ -631,18 +552,7 @@ class huemul_Columns(dataType: DataType
    */
   def getDQ_MaxLen_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMaxLenNotification)
 
-  /** Set data quality max length value
-   * @author  christian.sattler@gmail.com
-   * @since   1.1
-   * @group   column_data_quality
-   *
-   * @param value   Max length value
-   */
-  @deprecated("this method will be removed, instead use setDQ_MaxLen(value: Integer, externalCode: String = null): huemul_Columns", "3.0")
-  def setDQ_MaxLen(value: Integer) {
-    if (checkNotCloseDefinition("DQ max length"))
-      _DQMaxLen = value
-  }
+
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MIN decimal value ----------------------------------------------------------------------------
@@ -707,17 +617,7 @@ class huemul_Columns(dataType: DataType
    */
   def getDQ_MinDecimalValue_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMinDecimalValueNotification)
 
-  /** Set data quality min decimal value
-   * @since   1.1
-   * @group   column_data_quality
-   *
-   * @param value   Min decimal value
-   */
-  @deprecated("this method will be removed, instead use setDQ_MinDecimalValue(value: Decimal, externalCode: String = null): huemul_Columns", "3.0")
-  def setDQ_MinDecimalValue(value: Decimal) {
-    if (checkNotCloseDefinition("DQ min decimal"))
-      _DQMinDecimalValue = value
-  }
+
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MAX decimal value ----------------------------------------------------------------------------
@@ -781,17 +681,7 @@ class huemul_Columns(dataType: DataType
    */
   def getDQ_MaxDecimalValue_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMaxDecimalValueNotification)
 
-  /** Set data quality max decimal value
-   * @since   1.1
-   * @group   column_data_quality
-   *
-   * @param value   Max decimal value
-   */
-  @deprecated("this method will be removed, instead use setDQ_MaxDecimalValue(value: Decimal, externalCode: String = null): huemul_Columns", "3.0")
-  def setDQ_MaxDecimalValue(value: Decimal) {
-    if (checkNotCloseDefinition("DQ max decimal"))
-      _DQMaxDecimalValue = value
-  }
+
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MIN DateTime value ---------------------------------------------------------------------------
@@ -858,17 +748,7 @@ class huemul_Columns(dataType: DataType
    */
   def getDQ_MinDateTimeValue_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMinDateTimeValueNotification)
 
-  /** Set data quality min date time value
-   * @since   1.1
-   * @group   column_data_quality
-   *
-   * @param value   Min date time value
-   */
-  @deprecated("this method will be removed, instead use setDQ_MinDateTimeValue(value: String, externalCode: String = null): huemul_Columns", "3.0")
-  def setDQ_MinDateTimeValue(value: String) {
-    if (checkNotCloseDefinition("DQ min datetime"))
-      _DQMinDateTimeValue = value
-  }
+
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MAX DateTime value ---------------------------------------------------------------------------
@@ -935,17 +815,7 @@ class huemul_Columns(dataType: DataType
    */
   def getDQ_MaxDateTimeValue_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQMaxDateTimeValueNotification)
 
-  /** Set data quality max date time value
-   * @since   1.1
-   * @group   column_data_quality
-   *
-   * @param value   Max date time value
-   */
-  @deprecated("this method will be removed, instead use setDQ_MaxDateTimeValue(value: String, externalCode: String = null): huemul_Columns", "3.0")
-  def setDQ_MaxDateTimeValue(value: String) {
-    if (checkNotCloseDefinition("DQ max datetime"))
-      _DQMaxDateTimeValue = value
-  }
+
 
 
   // ------------------------------------------------------------------------------------------------------------------
@@ -963,8 +833,6 @@ class huemul_Columns(dataType: DataType
    * @return  String error code
    */
   def getDQ_RegExpression_externalCode: String = _DQRegExpExternalCode
-  @deprecated("this method will be removed, instead use setDQ_RegExpression(value: String, externalCode: String = null): huemul_Columns", "3.0")
-  def getDQ_RegExp_externalCode: String = _DQRegExpExternalCode //depreciated to meet projects name pattern (getDQ_Expression....)
 
   /** Get data quality regular expression
    * @since   1.1
@@ -973,8 +841,6 @@ class huemul_Columns(dataType: DataType
    * @return  Max date time value
    */
   def getDQ_RegExpression: String = _DQRegExp
-  @deprecated("this method will be removed, instead use setDQ_RegExpression(value: String, externalCode: String = null): huemul_Columns", "3.0")
-  def getDQ_RegExp: String = _DQRegExp  //depreciated to meet projects name pattern (getDQ_Expression....)
 
   /** Set data quality regular expression
    * @since   2.1
@@ -1016,19 +882,6 @@ class huemul_Columns(dataType: DataType
    */
   def getDQ_RegExpression_Notification: huemulType_DQNotification = getDQHierarchyNotificationLevel(_DQRegExpNotification)
 
-  /** Set data quality regular expression
-   * @since   1.1
-   * @group   column_data_quality
-   *
-   * @param value   Regular expression statement
-   */
-  @deprecated("this method will be removed, instead use setDQ_RegExpression(value: String, externalCode: String = null): huemul_Columns", "3.0")
-  def setDQ_RegExp(value: String, dq_externalCode: String = null) {
-    if (checkNotCloseDefinition("DQ RegExpression")) {
-      _DQRegExp = value
-      _DQRegExpExternalCode = dq_externalCode
-    }
-  }
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality notification ---------------------------------------------------------------------------------
@@ -1093,20 +946,6 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Set MDM old value full trace.
-   *
-   * Save all old values trace in other table
-   *
-   * @since   1.4
-   * @group   column_mdm
-   *
-   * @param  value  true/false
-   */
-  @deprecated("this method will be removed, instead use setMDM_EnableOldValue_FullTrace(): huemul_Columns", "3.0")
-  def setMDM_EnableOldValue_FullTrace(value: Boolean) {
-    if (checkNotCloseAndNotNull("MDM EnableOldValue FullTrace", value))
-      _MDMEnableOldValueFullTrace = value
-  }
 
 
   // ------------------------------------------------------------------------------------------------------------------
@@ -1139,20 +978,7 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Set MDM old value full trace.
-   *
-   * Save old value when new value arrive (default false)
-   *
-   * @since   2.1
-   * @group   column_mdm
-   *
-   * @param  value  true/false
-   */
-  @deprecated("this method will be removed, instead use setMDM_EnableOldValue(): huemul_Columns", "3.0")
-  def setMDM_EnableOldValue(value: Boolean) {
-    if (checkNotCloseAndNotNull("MDM EnableOldValue", value))
-      _MDMEnableOldValue = value
-  }
+
 
 
   // ------------------------------------------------------------------------------------------------------------------
@@ -1182,21 +1008,6 @@ class huemul_Columns(dataType: DataType
     if (checkNotCloseDefinition("MDM EnableDTLog"))
       _MDMEnableDTLog = true
     this
-  }
-
-  /** Enable MDM old value datetime log on additional column/field.
-   *
-   * create a new field with datetime log for change value (default false)
-   *
-   * @since  2.1
-   * @group  column_mdm
-   *
-   * @param  value  true/false
-   */
-  @deprecated("this method will be removed, instead use setMDM_EnableDTLog(): huemul_Columns", "3.0")
-  def setMDM_EnableDTLog(value: Boolean) {
-    if (checkNotCloseAndNotNull("MDM EnableDTLog", value))
-      _MDMEnableDTLog = value
   }
 
 
@@ -1229,20 +1040,6 @@ class huemul_Columns(dataType: DataType
     this
   }
 
-  /** Enable MDM old value datetime log on additional column/field.
-   *
-   * Create a new field with Process Name, who did the change value (default false)
-   *
-   * @since   2.1
-   * @group   column_mdm
-   *
-   * @param  value  true/false
-   */
-  @deprecated("this method will be removed, instead use setMDM_EnableProcessLog(): huemul_Columns", "3.0")
-  def setMDM_EnableProcessLog(value: Boolean) {
-    if (checkNotCloseAndNotNull("MDM EnableProcessLog", value))
-      _MDMEnableProcessLog = value
-  }
 
   // ------------------------------------------------------------------------------------------------------------------
   // User mapping attributes
@@ -1252,11 +1049,6 @@ class huemul_Columns(dataType: DataType
   private var _ReplaceValueOnUpdate: Boolean = false
   private var _SQLForUpdate: String = _
   private var _SQLForInsert: String = _
-
-  @deprecated("this method will be removed, instead use setMapping(): huemul_Columns", "3.0")
-  def Set_MyName(name: String) {
-    setMyName(name)
-  }
 
   /** Set Column Name
    *
@@ -1278,13 +1070,6 @@ class huemul_Columns(dataType: DataType
     getCaseType(tableStorage,this._MyName)
   }
 
-  /**
-   *
-   * @param tableStorage  [[com.huemulsolutions.bigdata.tables.huemulType_StorageType]] Identify storage type PARQUET, etc.
-   * @return
-   */
-  @deprecated("this method will be removed, instead use getMyName(): huemul_Columns", "3.0")
-  def get_MyName(tableStorage: huemulType_StorageType): String = getMyName(tableStorage)
 
   /** Convert column name caso for compatibility between table storage's
    *
@@ -1303,12 +1088,7 @@ class huemul_Columns(dataType: DataType
    */
   def getMappedName: String = this._MappedName
 
-  /** Get the mapping name
-   *
-   * @return String
-   */
-  @deprecated("this method will be removed, instead use getMappedName(): huemul_Columns", "3.0")
-  def get_MappedName(): String = getMappedName
+
 
   /**
    *
@@ -1316,12 +1096,7 @@ class huemul_Columns(dataType: DataType
    */
   def getReplaceValueOnUpdate: Boolean = this._ReplaceValueOnUpdate
 
-  /**
-   *
-   * @return
-   */
-  @deprecated("this method will be removed, instead use getReplaceValueOnUpdate(): huemul_Columns", "3.0")
-  def get_ReplaceValueOnUpdate(): Boolean = getReplaceValueOnUpdate
+
 
   /**
    *
@@ -1333,21 +1108,8 @@ class huemul_Columns(dataType: DataType
    *
    * @return
    */
-  @deprecated("this method will be removed, instead use setMapping(): huemul_Columns", "3.0")
-  def get_SQLForUpdate(): String = getSQLForUpdate
-
-  /**
-   *
-   * @return
-   */
   def getSQLForInsert: String = this._SQLForInsert
 
-  /**
-   *
-   * @return
-   */
-  @deprecated("this method will be removed, instead use getSQLForInsert(): huemul_Columns", "3.0")
-  def get_SQLForInsert(): String = getSQLForInsert
 
   /** Set mapping DataFrame fields to Table Fields for insert and update.
    *
@@ -1366,20 +1128,7 @@ class huemul_Columns(dataType: DataType
     this._SQLForInsert = SQLForInsert
   }
 
-  /** Set mapping DataFrame fields to Table Fields for insert and update.
-   *
-   * For SQLForUpdate and SQLForInsert, in both cases, don't include "as Namefield" instead "old" is a reference to
-   * the table and "new" is reference to your DataFrame
-   *
-   * @param param_name            fields name in DataFrame
-   * @param ReplaceValueOnUpdate  true (default) for replace values in table
-   * @param SQLForUpdate          example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)
-   * @param SQLForInsert          example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)
-   */
-  @deprecated("this method will be removed, instead use setMapping(): huemul_Columns", "3.0")
-  def SetMapping(param_name: String, ReplaceValueOnUpdate: Boolean = true, SQLForUpdate: String = null, SQLForInsert: String = null) {
-    setMapping(param_name, ReplaceValueOnUpdate, SQLForUpdate, SQLForInsert)
-  }
+
 
   /** Get DataType to be deployed
    *
@@ -1431,19 +1180,19 @@ class huemul_Columns(dataType: DataType
    *
    * @return
    */
-  def getHBaseCatalogFamily(): String = _hive_df
+  def getHBaseCatalogFamily: String = _hive_df
 
   /**
    *
    * @return
    */
-  def getHBaseCatalogColumn(): String = if (_hive_col == null) getMyName(huemulType_StorageType.HBASE) else _hive_col
+  def getHBaseCatalogColumn: String = if (_hive_col == null) getMyName(huemulType_StorageType.HBASE) else _hive_col
 
   /** Get hbase data type
    *
    * @return  String data type
    */
-  def getHBaseDataType(): String = {
+  def getHBaseDataType: String = {
     if (DataType == DataTypes.StringType) "string"
     else if (DataType == DataTypes.IntegerType) "int"
     else if (DataType == DataTypes.ShortType) "smallint"    //TODO: Repetido ShortType

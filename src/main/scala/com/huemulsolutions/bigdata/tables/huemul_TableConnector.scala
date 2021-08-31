@@ -22,7 +22,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor
 class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends Serializable {
   
   def tableDeleteHBase(HBase_Namespace: String
-                     , HBase_tableName: String) = {
+                     , HBase_tableName: String): Unit = {
 
     //Crea tabla
     
@@ -159,8 +159,8 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       val rowKey = row(indexPK).toString //Bytes.toBytes(x._1)
       
       for (ii <- 0 until __numCols2) yield {
-          val colName = __valCols2(ii)._1.toString()
-          val famName = __valCols2(ii)._2.toString()
+          val colName = __valCols2(ii)._1
+          val famName = __valCols2(ii)._2
           val colDataType = __valCols2(ii)._3
           var colValue: Array[Byte] = null
           val y = __valCols2(ii)._4
@@ -176,11 +176,11 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
           //else if (colDataType == DataTypes.BinaryType)
           //  colValue = Bytes.toBytes(row.getBinary(y))
           else if (colDataType == DataTypes.StringType)
-            colValue = Bytes.toBytes(row(y).toString())
+            colValue = Bytes.toBytes(row(y).toString)
           //else if (colDataType == DataTypes.NullType)
           //  colValue = Bytes.toBytes(row.getAs[NullType](columnName)
           else if (colDataType == DecimalType || colDataType.typeName.toLowerCase().contains("decimal"))
-            colValue = Bytes.toBytes(row(y).toString())
+            colValue = Bytes.toBytes(row(y).toString)
             //colValue = Bytes.toBytes(row.getDecimal(y))
           else if (colDataType == DataTypes.IntegerType)
             colValue = Bytes.toBytes(row.getInt(y))
@@ -189,11 +189,11 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
           else if (colDataType == DataTypes.DoubleType)
             colValue = Bytes.toBytes(row.getDouble(y))
           else if (colDataType == DataTypes.DateType)
-            colValue = Bytes.toBytes(row(y).toString())
+            colValue = Bytes.toBytes(row(y).toString)
           else if (colDataType == DataTypes.TimestampType)
-            colValue = Bytes.toBytes(row(y).toString())
+            colValue = Bytes.toBytes(row(y).toString)
           else
-            colValue = Bytes.toBytes(row(y).toString())
+            colValue = Bytes.toBytes(row(y).toString)
                 
           (rowKey, (famName, colName, colValue))
         }
@@ -201,7 +201,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     ).rdd
     
     __pdd_2.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
-    val numRowsTot = __pdd_2.count()
+    //val numRowsTot = __pdd_2.count()
         
      //Table Assign
     Control.NewStep(s"HBase: Set staging Folder and Family:Table Name")
@@ -224,7 +224,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
     
     //Create namespace if it doesn't exist
     //_listNamespace.foreach { x => println(x.getName) }
-    if (_listNamespace.filter { x => x.getName == HBase_Namespace }.length == 0) {
+    if (!_listNamespace.exists { x => x.getName == HBase_Namespace }) {
       admin.createNamespace(org.apache.hadoop.hbase.NamespaceDescriptor.create(HBase_Namespace).build())
     }
     
@@ -241,7 +241,7 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
       val __newTable = new org.apache.hadoop.hbase.HTableDescriptor(tableName)
       
       //Add families
-      val a = __valCols2.map(x=>x._2).distinct.foreach { x =>
+      __valCols2.map(x=>x._2).distinct.foreach { x =>
         __newTable.addFamily(new HColumnDescriptor(x))  
       }
       
@@ -263,9 +263,9 @@ class huemul_TableConnector(huemulBigDataGov: huemul_BigDataGovernance, Control:
             }
       
       //Add new families
-      if (_newFamilies.length > 0) {
+      if (_newFamilies.nonEmpty) {
         Control.NewStep(s"HBase: creating new families ")
-        val a = _newFamilies.foreach { x => 
+        _newFamilies.foreach { x =>
           //println(s"nuevas: ${x}")
         __oldTable.addFamily(new HColumnDescriptor(x))  
         }

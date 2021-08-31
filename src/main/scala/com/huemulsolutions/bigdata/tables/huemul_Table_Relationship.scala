@@ -19,7 +19,7 @@ class huemul_Table_Relationship(Class_TableName: Object, allowNull: Boolean) {
     _Notification = value
     this
   } 
-  def getNotification(): huemulType_DQNotification =  _Notification
+  def getNotification: huemulType_DQNotification =  _Notification
   
   //From 2.1 --> apply broadcast
   private var _BroadcastJoin: Boolean = false
@@ -27,10 +27,16 @@ class huemul_Table_Relationship(Class_TableName: Object, allowNull: Boolean) {
     _BroadcastJoin = value
     this
   } 
-  def getBroadcastJoin(): Boolean =  _BroadcastJoin
+  def getBroadcastJoin: Boolean =  _BroadcastJoin
   
   private var _externalCode: String = "HUEMUL_DQ_001"
-  def getExternalCode: String = {return if (_externalCode==null) "HUEMUL_DQ_001" else _externalCode }
+  def getExternalCode: String = {
+    //return
+    if (_externalCode==null)
+      "HUEMUL_DQ_001"
+    else
+      _externalCode
+  }
   def setExternalCode(value: String): huemul_Table_Relationship = {
     _externalCode = value  
     this

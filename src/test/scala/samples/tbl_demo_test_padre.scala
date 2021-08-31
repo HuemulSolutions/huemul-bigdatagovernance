@@ -8,10 +8,9 @@ import com.huemulsolutions.bigdata.tables.huemulType_StorageType
 import com.huemulsolutions.bigdata.tables.huemulType_Tables
 import com.huemulsolutions.bigdata.tables.huemulType_SecurityLevel
 import org.apache.spark.sql.types.DataTypes._
-import org.apache.spark.sql.types.DecimalType
+//import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.Decimal
 import com.huemulsolutions.bigdata.tables.huemul_Table_Relationship
-import javax.naming.ldap.Control
 
 class tbl_demo_test_padre(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
   this.setAutoCast(true)
@@ -33,23 +32,24 @@ class tbl_demo_test_padre(huemulBigDataGov: huemul_BigDataGovernance, Control: h
   
   
   val miClave_id: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo")
-  miClave_id.setIsPK(true)
-  miClave_id.setIsUnique(true)
+  miClave_id.setIsPK()
+  miClave_id.setIsUnique()
   miClave_id.setDQ_MaxDateTimeValue ("")
   miClave_id.setDQ_MinDateTimeValue ("")
   miClave_id.setDQ_MaxDecimalValue ( Decimal.apply(10))
   miClave_id.setDQ_MinDecimalValue ( Decimal.apply(10))
   miClave_id.setDQ_MaxLen ( 10)
   miClave_id.setDQ_MinLen ( 9)
-  miClave_id.setNullable ( true)
-  miClave_id.setDefaultValue ( "'nada'")
+  miClave_id.setNullable ()
+  miClave_id.setDefaultValues ( "'nada'")
+
+  //se quita set
+  miClave_id.securityLevel ( huemulType_SecurityLevel.Public)
+  miClave_id.encryptedType( "nada")
   
-  miClave_id.setSecurityLevel ( huemulType_SecurityLevel.Public)
-  miClave_id.setEncryptedType ( "nada")
-  
-  miClave_id.setMDM_EnableOldValue ( false)
-  miClave_id.setMDM_EnableDTLog( false)
-  miClave_id.setMDM_EnableProcessLog( false)
+  //miClave_id.setMDM_EnableOldValue ( )
+  //miClave_id.setMDM_EnableDTLog( )
+  //miClave_id.setMDM_EnableProcessLog()
   
   val codigo_id_aca: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo fk")
   

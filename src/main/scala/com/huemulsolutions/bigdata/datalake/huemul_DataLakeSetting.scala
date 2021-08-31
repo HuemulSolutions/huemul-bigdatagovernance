@@ -274,19 +274,19 @@ class huemul_DataLakeSetting(huemulBigDataGov: huemul_BigDataGovernance) extends
   
   
   def GetDataBase(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division)
+    huemulBigDataGov.GlobalSettings.getDataBase(huemulBigDataGov, Division)
   }
   
   def GetDataBase(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    huemulBigDataGov.GlobalSettings.GetDataBase(huemulBigDataGov, Division, ManualEnvironment)
+    huemulBigDataGov.GlobalSettings.getDataBase( Division, ManualEnvironment)
   }
   
   def GetPath(Division: ArrayBuffer[huemul_KeyValuePath]): String = {
-    huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division)
+    huemulBigDataGov.GlobalSettings.getPath(huemulBigDataGov, Division)
   }
   
   def GetPath(Division: ArrayBuffer[huemul_KeyValuePath], ManualEnvironment: String): String = {
-    huemulBigDataGov.GlobalSettings.GetPath(huemulBigDataGov, Division, ManualEnvironment)
+    huemulBigDataGov.GlobalSettings.getPath( Division, ManualEnvironment)
   }
   
 }

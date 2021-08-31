@@ -41,7 +41,7 @@ import org.apache.log4j.{Level, Logger}
  *  @param LocalSparkSession(opcional) permite enviar una sesión de Spark ya iniciada.
  */
 class huemul_BigDataGovernance (appName: String, args: Array[String], globalSettings: huemul_GlobalPath, LocalSparkSession: SparkSession = null) extends Serializable  {
-  val currentVersion: String = "2.6.3_2.12"
+  val currentVersion: String = "3.0.0_2.12"
   val GlobalSettings: huemul_GlobalPath = globalSettings
   val warehouseLocation: String = new File("spark-warehouse").getAbsolutePath
   //@transient lazy val log_info = org.apache.log4j.LogManager.getLogger(s"$appName [with huemul]")
@@ -53,7 +53,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   private var _ColumnsAndTables: ArrayBuffer[huemul_sql_tables_and_columns] = new ArrayBuffer[huemul_sql_tables_and_columns]()
   def getColumnsAndTables(OnlyRefreshTempTables: Boolean): ArrayBuffer[huemul_sql_tables_and_columns] = {
-    val inicio = this.getCurrentDateTimeJava()
+    val inicio = this.getCurrentDateTimeJava
     
     //try to get hive metadata from cache
     //var getFromHive: Boolean = true
@@ -74,7 +74,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
           //println(datetime_insert)
           val start_hive_date = Calendar.getInstance
           start_hive_date.setTime(dateTimeFormat.parse(datetime_insert))
-          val current_date = this.getCurrentDateTimeJava()
+          val current_date = this.getCurrentDateTimeJava
           val diff_date = this.getDateTimeDiff(start_hive_date, current_date)
           //println(start_hive_date)
           //println(current_date)
@@ -183,7 +183,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     }
     
     
-    val duration = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava())
+    val duration = this.getDateTimeDiff(inicio, this.getCurrentDateTimeJava)
     logMessageInfo(s"duration (hh:mm:ss): ${"%02d".format(duration.hour)}:${"%02d".format(duration.minute)}:${"%02d".format(duration.second)}")
     //println(s"duracion: ${duracion.hour}: ${duracion.minute}; ${duracion.second} ")
     
@@ -223,7 +223,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   private var isEnableSQLDecode: Boolean = true
   def enableSQLDecode() { isEnableSQLDecode = true }
   def disableSQLDecode() {isEnableSQLDecode = false}
-  def getIsEnableSQLDecode(): Boolean = isEnableSQLDecode
+  def getIsEnableSQLDecode: Boolean = isEnableSQLDecode
   
   /**
    * logMessageDebug: Send {message} to log4j - Debug
@@ -263,7 +263,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
         
   val arguments: huemul_Args = new huemul_Args()
   arguments.setArgs(args)  
-  val Environment: String = arguments.GetValue("Environment", null, s"MUST be set environment parameter: '${GlobalSettings.GlobalEnvironments}' " )
+  val Environment: String = arguments.getValue("Environment", null, s"MUST be set environment parameter: '${GlobalSettings.GlobalEnvironments}' " )
   
   
    //Validating GlobalSettings
@@ -331,28 +331,28 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   var getMetadataFromHive: Boolean = true
   try {
-    getMetadataFromHive = arguments.GetValue("getMetadataFromHive", "true" ).toBoolean
+    getMetadataFromHive = arguments.getValue("getMetadataFromHive", "true" ).toBoolean
   } catch {    
     case _: Exception => logMessageError("getMetadataFromHive: error values (true or false)")
   }
   
-  val Malla_Id: String = arguments.GetValue("Malla_Id", "" )
+  val Malla_Id: String = arguments.getValue("Malla_Id", "" )
   var HideLibQuery: Boolean = false
   try {
-    HideLibQuery = arguments.GetValue("HideLibQuery", "false" ).toBoolean
+    HideLibQuery = arguments.getValue("HideLibQuery", "false" ).toBoolean
   } catch {    
     case _: Exception => logMessageError("HideLibQuery: error values (true or false)")
   }
   var SaveTempDF: Boolean = true
   try {
-    SaveTempDF = arguments.GetValue("SaveTempDF", "true" ).toBoolean
+    SaveTempDF = arguments.getValue("SaveTempDF", "true" ).toBoolean
   } catch {    
     case _: Exception => logMessageError("SaveTempDF: error values (true or false)")
   }
   
   var SaveTempTables: Boolean = true
   try {
-    SaveTempTables = arguments.GetValue("SaveTempTables", "true" ).toBoolean
+    SaveTempTables = arguments.getValue("SaveTempTables", "true" ).toBoolean
   } catch {    
     case _: Exception => logMessageError("SaveTempTables: error values (true or false)")
   }
@@ -360,14 +360,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   
   var ImpalaEnabled: Boolean = GlobalSettings.ImpalaEnabled
   try {
-    ImpalaEnabled = arguments.GetValue("ImpalaEnabled", s"${GlobalSettings.ImpalaEnabled}" ).toBoolean
+    ImpalaEnabled = arguments.getValue("ImpalaEnabled", s"${GlobalSettings.ImpalaEnabled}" ).toBoolean
   } catch {    
     case _: Exception => logMessageError("ImpalaEnabled: error values (true or false)")
   }
   
   var getHiveMetadata: Boolean = true
   try {
-    getHiveMetadata = arguments.GetValue("getHiveMetadata", "true" ).toBoolean
+    getHiveMetadata = arguments.getValue("getHiveMetadata", "true" ).toBoolean
   } catch {    
     case _: Exception => logMessageError("getHiveMetadata: error values (true or false)")
   }
@@ -377,12 +377,12 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    */
   var RegisterInControl: Boolean = true
   try {
-    RegisterInControl = arguments.GetValue("RegisterInControl", "true" ).toBoolean
+    RegisterInControl = arguments.getValue("RegisterInControl", "true" ).toBoolean
   } catch {    
     case _: Exception => logMessageError("RegisterInControl: error values (true or false)")
   }
   
-  val TestPlanMode: Boolean = arguments.GetValue("TestPlanMode", "false" ).toBoolean
+  val TestPlanMode: Boolean = arguments.getValue("TestPlanMode", "false" ).toBoolean
   if (TestPlanMode)
     RegisterInControl = false
   
@@ -391,7 +391,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    */
   val standardDateFormat: String = "yyyy-MM-dd HH:mm:ss"
   val standardDateFormatMilisec: String = "yyyy-MM-dd HH:mm:ss:SSS"
-  val DebugMode : Boolean = arguments.GetValue("debugmode","false").toBoolean
+  val DebugMode : Boolean = arguments.getValue("debugmode","false").toBoolean
   val dateFormatNumeric: DateFormat = new SimpleDateFormat("yyyyMMdd")
   val dateTimeFormat: DateFormat = new SimpleDateFormat(standardDateFormat)
   val dateTimeText: String = "{{YYYY}}-{{MM}}-{{DD}} {{hh}}:{{mm}}:{{ss}}"
@@ -500,7 +500,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
       }
     }
 
-    val Result = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
+    CONTROL_connection.ExecuteJDBC_NoResulSet(s"""
                   insert into control_executors (application_id
                   							   , idsparkport
                   							   , idportmonitoring
@@ -518,7 +518,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   private var hive_HWC: huemul_ExternalHWC = _
   def getHive_HWC: huemul_ExternalHWC = { hive_HWC}
   
-  if (GlobalSettings.externalBBDD_conf.Using_HWC.getActive()  || GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE() ) {
+  if (GlobalSettings.externalBBDD_conf.Using_HWC.getActive  || GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE ) {
     hive_HWC = new huemul_ExternalHWC(this)
   }
   
@@ -545,7 +545,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     if (RegisterInControl) this.CONTROL_connection.connection.close()
     if (ImpalaEnabled) this.impala_connection.connection.close()
     
-    if (GlobalSettings.externalBBDD_conf.Using_HIVE.getActive()  || GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE()  ) {
+    if (GlobalSettings.externalBBDD_conf.Using_HIVE.getActive  || GlobalSettings.externalBBDD_conf.Using_HIVE.getActiveForHBASE  ) {
       val connHIVE = GlobalSettings.externalBBDD_conf.Using_HIVE.getJDBC_connection(this)
       if (connHIVE != null) {
         if (connHIVE.connection != null)
@@ -554,23 +554,23 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
     }
     
     //FROM 2.5 --> ADD HORTONWORKS WAREHOSUE CONNECTOR
-    if (GlobalSettings.externalBBDD_conf.Using_HWC.getActive()  || GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE() ) {
+    if (GlobalSettings.externalBBDD_conf.Using_HWC.getActive  || GlobalSettings.externalBBDD_conf.Using_HWC.getActiveForHBASE ) {
       if (getHive_HWC != null)
-        getHive_HWC.close
+        getHive_HWC.close()
     }
         
   }
   
   def close() {
-    close(if (GlobalSettings.getBigDataProvider() == huemulType_bigDataProvider.databricks) false else true)
+    close(if (GlobalSettings.getBigDataProvider == huemulType_bigDataProvider.databricks) false else true)
     
   }
   
   def application_closeAll(ApplicationInUse: String, closeExecutors: Boolean) {
     if (RegisterInControl) {
-      val ExecResult1 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+      CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_singleton WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
       if (closeExecutors) {
-        val ExecResult2 = CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
+        CONTROL_connection.ExecuteJDBC_NoResulSet(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
       }
        //println(s"""DELETE FROM control_executors WHERE application_id = ${ReplaceSQLStringNulls(ApplicationInUse)}""")
     }
@@ -627,7 +627,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   private val TableRegistered: ArrayBuffer[String] = new ArrayBuffer[String]() 
   def IsTableRegistered(tableName: String): Boolean = {
     var IsRegister: Boolean = false
-    if (TableRegistered.filter { x => x == tableName }.length > 0)
+    if (TableRegistered.contains(tableName))
       IsRegister = true
     else {
       TableRegistered.append(tableName)
@@ -696,7 +696,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
    * getCurrentDateTime: returns current datetime
    * from version 1.1
    */
-  def getCurrentDateTimeJava (): java.util.Calendar = Calendar.getInstance()
+  def getCurrentDateTimeJava: java.util.Calendar = Calendar.getInstance()
   
   /**
    * Return day, hour, minute and second difference from two datetime
@@ -751,13 +751,13 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   def IsNumericType(Type: DataType): Boolean = {
-     (Type == ByteType ||
+     Type == ByteType ||
             Type == ShortType ||
             Type == IntegerType ||
             Type == LongType ||
             Type == FloatType ||
             Type == DoubleType ||
-            Type == DecimalType )
+            Type == DecimalType
   }
   
   def IsDateType(Type: DataType): Boolean = {
@@ -948,14 +948,14 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
 
     if (newURL != null) {
       //get new url, try to get Id
-      return getIdFromExecution(newURL, iterator + 1)
+      getIdFromExecution(newURL, iterator + 1)
     } else {
       //not redirect url, throw error
       if (DebugMode) logMessageWarn("new URL doesn't exists, error -3")
-      return ("", -3)
+      ("", -3)
     }
 
-    (idFromURL, result)
+    //(idFromURL, result)
   }
   
   
@@ -1058,7 +1058,7 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   def DF_SaveLineage(Alias: String, sql: String,dt_start: java.util.Calendar, dt_end: java.util.Calendar, Control: huemul_Control, FinalTable: huemul_Table, isQuery: Boolean, isReferenced: Boolean ) {
-    if (getIsEnableSQLDecode()) {
+    if (this.getIsEnableSQLDecode) {
       val res = huemul_SQL_decode.decodeSQL(sql, _ColumnsAndTables)
       
       if (DebugMode)
@@ -1110,9 +1110,9 @@ class huemul_BigDataGovernance (appName: String, args: Array[String], globalSett
   }
   
   def DF_ExecuteQuery(Alias: String, SQL: String, Control: huemul_Control ): DataFrame = {
-    val dt_start = getCurrentDateTimeJava()
+    val dt_start = this.getCurrentDateTimeJava
     val Result = DF_ExecuteQuery(Alias, SQL, 0)
-    val dt_end = getCurrentDateTimeJava()
+    val dt_end = this.getCurrentDateTimeJava
     
     DF_SaveLineage(Alias
                 , SQL
