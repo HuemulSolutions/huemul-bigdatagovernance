@@ -1,16 +1,16 @@
 package com.huemulsolutions.bigdata.common
 
-import com.huemulsolutions.bigdata.control.huemul_Control
-import com.huemulsolutions.bigdata.control.huemulType_Frequency
+import com.huemulsolutions.bigdata.control.HuemulControl
+import com.huemulsolutions.bigdata.control.HuemulTypeFrequency
 
 object Init {
   def main(args: Array[String]): Unit = {
-    val Global: huemul_GlobalPath = new huemul_GlobalPath()
+    val Global: HuemulGlobalPath = new HuemulGlobalPath()
     Global.GlobalEnvironments = "production,experimental"
  
-    val huemulBigDataGov  = new huemul_BigDataGovernance(s"BigData API", args, Global)
+    val huemulBigDataGov  = new HuemulBigDataGovernance(s"BigData API", args, Global)
     
-    new huemul_Control(huemulBigDataGov,null, huemulType_Frequency.ANY_MOMENT, false, false)
+    new HuemulControl(huemulBigDataGov,null, HuemulTypeFrequency.ANY_MOMENT, false, false)
     //Control.Init_CreateTables()
 
     huemulBigDataGov.close()
@@ -19,18 +19,18 @@ object Init {
 
 object testReadUrlMonitoring {
   def main(args: Array[String]): Unit = {
-    val Global: huemul_GlobalPath = new huemul_GlobalPath()
+    val Global: HuemulGlobalPath = new HuemulGlobalPath()
     Global.GlobalEnvironments = "production, experimental"
-    Global.CONTROL_Setting.append(new huemul_KeyValuePath("production",s"file.txt"))
-    Global.IMPALA_Setting.append(new huemul_KeyValuePath("production",s"file.txt"))
-    Global.TEMPORAL_Path.append(new huemul_KeyValuePath("production",s"/usr/production/temp/"))
-    Global.DQError_Path.append(new huemul_KeyValuePath("production",s"/usr/production/temp/"))
-    Global.DQError_DataBase.append(new huemul_KeyValuePath("production",s"dqerror_database"))
+    Global.CONTROL_Setting.append(new HuemulKeyValuePath("production",s"file.txt"))
+    Global.IMPALA_Setting.append(new HuemulKeyValuePath("production",s"file.txt"))
+    Global.TEMPORAL_Path.append(new HuemulKeyValuePath("production",s"/usr/production/temp/"))
+    Global.DQError_Path.append(new HuemulKeyValuePath("production",s"/usr/production/temp/"))
+    Global.DQError_DataBase.append(new HuemulKeyValuePath("production",s"dqerror_database"))
     Global.setValidationLight()
 
-    val huemulBigDataGov  = new huemul_BigDataGovernance(s"BigData API test URL Monitoring", args, Global)
+    val huemulBigDataGov  = new HuemulBigDataGovernance(s"BigData API test URL Monitoring", args, Global)
 
-    val control_test = new huemul_Control(huemulBigDataGov,null, huemulType_Frequency.ANY_MOMENT, false, false)
+    val control_test = new HuemulControl(huemulBigDataGov,null, HuemulTypeFrequency.ANY_MOMENT, false, false)
 
     control_test.NewStep(s"start test")
     //get url from spark

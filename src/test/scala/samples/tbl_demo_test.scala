@@ -2,16 +2,16 @@ package samples
 
 import com.huemulsolutions.bigdata.common._
 import com.huemulsolutions.bigdata.control._
-import com.huemulsolutions.bigdata.tables.huemul_Table
-import com.huemulsolutions.bigdata.tables.huemul_Columns
-import com.huemulsolutions.bigdata.tables.huemulType_StorageType
-import com.huemulsolutions.bigdata.tables.huemulType_Tables
-import com.huemulsolutions.bigdata.tables.huemulType_SecurityLevel
+import com.huemulsolutions.bigdata.tables.HuemulTable
+import com.huemulsolutions.bigdata.tables.HuemulColumns
+import com.huemulsolutions.bigdata.tables.HuemulTypeStorageType
+import com.huemulsolutions.bigdata.tables.HuemulTypeTables
+import com.huemulsolutions.bigdata.tables.HuemulTypeSecurityLevel
 import org.apache.spark.sql.types.DataTypes._
 //import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.types.Decimal
 
-class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_Control) extends huemul_Table(huemulBigDataGov, Control) with Serializable {
+class tbl_demo_test(huemulBigDataGov: HuemulBigDataGovernance, Control: HuemulControl) extends HuemulTable(huemulBigDataGov, Control) with Serializable {
   this.setAutoCast(true)
   this.setBusiness_ResponsibleName("Nombre 1")
   this.setDataBase(huemulBigDataGov.GlobalSettings.DIM_DataBase)
@@ -21,17 +21,17 @@ class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_
   this.setGlobalPaths(huemulBigDataGov.GlobalSettings.DIM_BigFiles_Path)
   this.setIT_ResponsibleName("IT Responsible")
   this.setLocalPath("demo/")
-  this.setFrequency(huemulType_Frequency.MONTHLY)
+  this.setFrequency(HuemulTypeFrequency.MONTHLY)
   //this.setPartitionField("periodo_id")
-  this.setStorageType(huemulType_StorageType.ORC)
-  this.setTableType(huemulType_Tables.Reference)
+  this.setStorageType(HuemulTypeStorageType.ORC)
+  this.setTableType(HuemulTypeTables.Reference)
   this.WhoCanRun_executeFull_addAccess("classname","package") 
   this.WhoCanRun_executeOnlyInsert_addAccess("classname","package")
   this.WhoCanRun_executeOnlyUpdate_addAccess("classname","package")
 
   this.setNameForMDM_hash("myTempHash")
   
-  val codigo_id: huemul_Columns = new huemul_Columns(StringType, true, "descripción del campo")
+  val codigo_id: HuemulColumns = new HuemulColumns(StringType, true, "descripción del campo")
   codigo_id.setIsPK ()
   codigo_id.setPartitionColumn(2,dropBeforeInsert = false)
   codigo_id.setIsUnique ( )
@@ -44,7 +44,7 @@ class tbl_demo_test(huemulBigDataGov: huemul_BigDataGovernance, Control: huemul_
   codigo_id.setNullable ()
   codigo_id.setDefaultValues ( "'nada'")
   
-  codigo_id.securityLevel ( huemulType_SecurityLevel.Public)
+  codigo_id.securityLevel ( HuemulTypeSecurityLevel.Public)
   codigo_id.encryptedType ( "sin encriptar")
   
   //codigo_id.setMDM_EnableOldValue ( false)
