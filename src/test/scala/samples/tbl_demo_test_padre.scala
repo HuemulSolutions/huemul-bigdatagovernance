@@ -14,32 +14,32 @@ import com.huemulsolutions.bigdata.tables.HuemulTableRelationship
 
 class tbl_demo_test_padre(huemulBigDataGov: HuemulBigDataGovernance, Control: HuemulControl) extends HuemulTable(huemulBigDataGov, Control) with Serializable {
   this.setAutoCast(true)
-  this.setBusiness_ResponsibleName("Nombre 1")
-  this.setDataBase(huemulBigDataGov.GlobalSettings.DIM_DataBase)
+  this.setBusinessResponsibleName("Nombre 1")
+  this.setDataBase(huemulBigDataGov.globalSettings.dimDataBase)
   this.setDescription("descripcion")
   this.setFrequency(HuemulTypeFrequency.MONTHLY)
-  this.setDQ_MaxNewRecords_Num(10)
-  this.setDQ_MaxNewRecords_Perc(Decimal.apply(0.20))
-  this.setGlobalPaths(huemulBigDataGov.GlobalSettings.DIM_BigFiles_Path)
-  this.setIT_ResponsibleName("IT Responsible")
+  this.setDQMaxNewRecordsNum(10)
+  this.setDqMaxNewRecordsPerc(Decimal.apply(0.20))
+  this.setGlobalPaths(huemulBigDataGov.globalSettings.dimBigFilesPath)
+  this.setItResponsibleName("IT Responsible")
   this.setLocalPath("demo/")
   //this.setPartitionField("periodo_id")
   this.setStorageType(HuemulTypeStorageType.ORC)
   this.setTableType(HuemulTypeTables.Reference)
-  this.WhoCanRun_executeFull_addAccess("classname","package") 
-  this.WhoCanRun_executeOnlyInsert_addAccess("classname","package")
-  this.WhoCanRun_executeOnlyUpdate_addAccess("classname","package")
+  this.whoCanRunExecuteFullAddAccess("classname","package")
+  this.whoCanRunExecuteOnlyInsertAddAccess("classname","package")
+  this.whoCanRunExecuteOnlyUpdateAddAccess("classname","package")
   
   
   val miClave_id: HuemulColumns = new HuemulColumns(StringType, true, "descripción del campo")
   miClave_id.setIsPK()
   miClave_id.setIsUnique()
-  miClave_id.setDQ_MaxDateTimeValue ("")
-  miClave_id.setDQ_MinDateTimeValue ("")
-  miClave_id.setDQ_MaxDecimalValue ( Decimal.apply(10))
-  miClave_id.setDQ_MinDecimalValue ( Decimal.apply(10))
-  miClave_id.setDQ_MaxLen ( 10)
-  miClave_id.setDQ_MinLen ( 9)
+  miClave_id.setDqMaxDateTimeValue ("")
+  miClave_id.setDqMinDateTimeValue ("")
+  miClave_id.setDqMaxDecimalValue ( Decimal.apply(10))
+  miClave_id.setDqMinDecimalValue ( Decimal.apply(10))
+  miClave_id.setDqMaxLen ( 10)
+  miClave_id.setDqMinLen ( 9)
   miClave_id.setNullable ()
   miClave_id.setDefaultValues ( "'nada'")
 
@@ -55,9 +55,9 @@ class tbl_demo_test_padre(huemulBigDataGov: HuemulBigDataGovernance, Control: Hu
   
   val instancia_tbl_demo_test = new tbl_demo_test(huemulBigDataGov, Control)
   val FK_Rel = new HuemulTableRelationship(instancia_tbl_demo_test, false)
-  FK_Rel.AddRelationship(instancia_tbl_demo_test.codigo_id, this.codigo_id_aca)
+  FK_Rel.addRelationship(instancia_tbl_demo_test.codigo_id, this.codigo_id_aca)
   
   
   
-  this.ApplyTableDefinition()
+  this.applyTableDefinition()
 }

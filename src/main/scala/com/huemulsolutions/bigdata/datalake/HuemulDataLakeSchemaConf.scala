@@ -9,12 +9,12 @@ class HuemulDataLakeSchemaConf extends Serializable {
   /***
    * Type of fields separator: POSITION or CHARACTER
    */
-  var ColSeparatorType: HuemulTypeSeparator = HuemulTypeSeparator.CHARACTER
+  var colSeparatorType: HuemulTypeSeparator = HuemulTypeSeparator.CHARACTER
   
   /***
    * RowSeparator for Type CHARACTER
    */
-  var ColSeparator: String = ";"
+  var colSeparator: String = ";"
   
   /***
    * List of fields with fixed position
@@ -28,34 +28,34 @@ class HuemulDataLakeSchemaConf extends Serializable {
    */
   def setHeaderColumnsString(List: String) {
     List.split(";").foreach { x => 
-        AddColumns(x)
+        addColumns(x)
     }
   }
   //var HeaderColumnsString: String = ""
-  
-  
-  var ColumnsDef: ArrayBuffer[HuemulDataLakeColumns] = new  ArrayBuffer[HuemulDataLakeColumns]()
-  
+
+
+  var columnsDef: ArrayBuffer[HuemulDataLakeColumns] = new  ArrayBuffer[HuemulDataLakeColumns]()
+
   /**
    * Add DataLake Columns information
    */
-  def AddColumns(columnName_Business: String
-                , columnName_TI: String = null
-                , DataType: DataType = StringType
-                , Description: String = "[[missing description]]"
-                , PosIni: Integer = null
-                , PosFin: Integer = null
-                , ApplyTrim: Boolean = false
-                , ConvertToNull: Boolean = false
+  def addColumns(columnNameBusiness: String
+                 , columnNameTi: String = null
+                 , dataType: DataType = StringType
+                 , description: String = "[[missing description]]"
+                 , posIni: Integer = null
+                 , posFin: Integer = null
+                 , applyTrim: Boolean = false
+                 , convertToNull: Boolean = false
                 ) {
-    ColumnsDef.append(new HuemulDataLakeColumns( columnName_Business
-                                                , if (columnName_TI == null) columnName_Business else columnName_TI
-                                                , if (DataType == null) StringType else DataType
-                                                , if (Description == null) "[[missing description]]" else Description
-                                                , PosIni
-                                                , PosFin
-                                                , ApplyTrim
-                                                , ConvertToNull
+    columnsDef.append(new HuemulDataLakeColumns( columnNameBusiness
+                                                , if (columnNameTi == null) columnNameBusiness else columnNameTi
+                                                , if (dataType == null) StringType else dataType
+                                                , if (description == null) "[[missing description]]" else description
+                                                , posIni
+                                                , posFin
+                                                , applyTrim
+                                                , convertToNull
                                                 ))
   }
   
@@ -66,13 +66,13 @@ class HuemulDataLakeSchemaConf extends Serializable {
   /**
    * Add Custom column
    */
-  def AddCustomColumn(columnName: String
-                      , Description: String = "[[missing description]]") {
-    
+  def addCustomColumn(columnName: String
+                      , description: String = "[[missing description]]") {
+
     customColumn = new HuemulDataLakeColumns( columnName
                                                 , columnName
-                                                , StringType 
-                                                , if (Description == null) "[[missing description]]" else Description
+                                                , StringType
+                                                , if (description == null) "[[missing description]]" else description
                                                 , 0
                                                 , 0
                                                 , false

@@ -13,13 +13,13 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
   /***
    * Start date for this configuration
    */
-  var StartDate : Calendar = _
-  def getStartDate: Calendar = StartDate
+  var startDate : Calendar = _
+  def getStartDate: Calendar = startDate
   /*** set Start date for this configuration
    * @param value: date
    */
   def setStartDate(value: Calendar): HuemulDataLakeSetting = {
-    StartDate = value
+    startDate = value
     this
   }
   /*** set Start date for this configuration
@@ -31,19 +31,19 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * @param second: Int
    */
   def setStartDate(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int): HuemulDataLakeSetting = {
-    StartDate = huemulBigDataGov.setDateTime(year, month, day, hour, minute, second)
+    startDate = huemulBigDataGov.setDateTime(year, month, day, hour, minute, second)
     this
   }
   /***
    * End date for this configuration
    */
-  var EndDate : Calendar = _
-  def getEndDate: Calendar = EndDate
+  var endDate : Calendar = _
+  def getEndDate: Calendar = endDate
   /*** set end date for this configuration
    * @param value: date
    */
   def setEndDate(value: Calendar): HuemulDataLakeSetting = {
-    EndDate = value
+    endDate = value
     this
   }
   /*** set end date for this configuration
@@ -55,28 +55,28 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * @param second: Int
    */
   def setEndDate(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int): HuemulDataLakeSetting = {
-    EndDate = huemulBigDataGov.setDateTime(year, month, day, hour, minute, second)
+    endDate = huemulBigDataGov.setDateTime(year, month, day, hour, minute, second)
     this
   }
 
   /***
    * Type (example: TEXT_FILE, EXCEL_FILE)
    */
-  var FileType: HuemulTypeFileType = _
-  def getFileType: HuemulTypeFileType = FileType
+  var fileType: HuemulTypeFileType = _
+  def getFileType: HuemulTypeFileType = fileType
   /*** set FileType to read
    * Type (example: TEXT_FILE, EXCEL_FILE)
    */
   def setFileType(value: HuemulTypeFileType): HuemulDataLakeSetting = {
-    FileType = value
+    fileType = value
     this
   }
 
   /***
    * File Name (example: "PLAN-CTAS.TXT")
    */
-  var FileName    : String = ""
-  def getFileName: String = FileName
+  var fileName    : String = ""
+  def getFileName: String = fileName
   /*** File Name (example: "PLAN-CTAS.TXT")
    * {{YYYY}} = replace 4 digits year
    * {{YY}} = replace 2 digits year
@@ -84,7 +84,7 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * {{DD}} = replace 2 digits day
    */
   def setFileName(value: String): HuemulDataLakeSetting = {
-    FileName = value
+    fileName = value
     this
   }
   /*** Local path (example "SBIF\\{{YYYY}}{{MM}}\\"
@@ -93,35 +93,35 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * * {{MM}} = replace with month
    * * {{DD}} = replace 2 digits day
    */
-  var LocalPath   : String= ""
-  def getLocalPath: String = LocalPath
+  var localPath   : String= ""
+  def getLocalPath: String = localPath
   def setLocalPath(value: String): HuemulDataLakeSetting = {
-    LocalPath = value
+    localPath = value
     this
   }
   /***
    * from Global path
    */
-  var GlobalPath  : ArrayBuffer[HuemulKeyValuePath] = _
-  def getGlobalPath: ArrayBuffer[HuemulKeyValuePath] = GlobalPath
+  var globalPath  : ArrayBuffer[HuemulKeyValuePath] = _
+  def getGlobalPath: ArrayBuffer[HuemulKeyValuePath] = globalPath
   def setGlobalPath(value: ArrayBuffer[HuemulKeyValuePath]): HuemulDataLakeSetting = {
-    GlobalPath = value
+    globalPath = value
     this
   }
   /***
    * Responsible contact to resolve doubt or errors
    */
-  var ContactName :  String= ""
-  def getContactName: String = ContactName
+  var contactName :  String= ""
+  def getContactName: String = contactName
   def setContactName(value: String): HuemulDataLakeSetting = {
-    ContactName = value
+    contactName = value
     this
   }
 
   /***
    * Data Schema configuration
    */
-  var DataSchemaConf: HuemulDataLakeSchemaConf = new  HuemulDataLakeSchemaConf()
+  var dataSchemaConf: HuemulDataLakeSchemaConf = new  HuemulDataLakeSchemaConf()
 
   /**
    * set column delimiter type
@@ -129,12 +129,12 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * @return
    */
   def setColumnDelimiterType(value: HuemulTypeSeparator): HuemulDataLakeSetting = {
-    DataSchemaConf.ColSeparatorType = value
+    dataSchemaConf.colSeparatorType = value
     this
   }
 
   def setColumnDelimiter(value: String): HuemulDataLakeSetting = {
-    DataSchemaConf.ColSeparator = value
+    dataSchemaConf.colSeparator = value
     this
   }
 
@@ -144,7 +144,7 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * @return
    */
   def setColumnsString(columnsList: String): HuemulDataLakeSetting = {
-    DataSchemaConf.setHeaderColumnsString(columnsList)
+    dataSchemaConf.setHeaderColumnsString(columnsList)
     this
   }
 
@@ -171,7 +171,7 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
                  , applyTrim: Boolean = false
                  , convertToNull: Boolean = false
                 ): HuemulDataLakeSetting = {
-    DataSchemaConf.AddColumns(columnNameBusiness
+    dataSchemaConf.addColumns(columnNameBusiness
             , columnNameTI
             , dataType
             , description
@@ -185,7 +185,7 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
   /***
    * Log Schema configuration
    */
-  var LogSchemaConf: HuemulDataLakeSchemaConf = new  HuemulDataLakeSchemaConf()
+  var logSchemaConf: HuemulDataLakeSchemaConf = new  HuemulDataLakeSchemaConf()
 
   /**
    * set column delimiter type for Header (if exists)
@@ -193,7 +193,7 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * @return
    */
   def setHeaderColumnDelimiterType(value: HuemulTypeSeparator): HuemulDataLakeSetting = {
-    LogSchemaConf.ColSeparatorType = value
+    logSchemaConf.colSeparatorType = value
     this
   }
 
@@ -203,7 +203,7 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * @return
    */
   def setHeaderColumnDelimiter(value: String): HuemulDataLakeSetting = {
-    LogSchemaConf.ColSeparator = value
+    logSchemaConf.colSeparator = value
     this
   }
 
@@ -213,20 +213,20 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
    * @return
    */
   def setHeaderColumnsString(columnsList: String): HuemulDataLakeSetting = {
-    LogSchemaConf.setHeaderColumnsString(columnsList)
+    logSchemaConf.setHeaderColumnsString(columnsList)
     this
   }
 
   /***
    * FieldName for N° Rows in control line
    */
-  var LogNumRows_FieldName: String = ""
-  def getLogNumRowsColumnName: String = LogNumRows_FieldName
+  var logNumRowsFieldName: String = ""
+  def getLogNumRowsColumnName: String = logNumRowsFieldName
   /*** for Header, set column name that have the rows count
    *
    */
   def setLogNumRowsColumnName(value: String ): HuemulDataLakeSetting = {
-    LogNumRows_FieldName = value
+    logNumRowsFieldName = value
     this
   }
 
@@ -242,51 +242,51 @@ class HuemulDataLakeSetting(huemulBigDataGov: HuemulBigDataGovernance) extends S
   }
   
   
-  private var use_year: Integer = _
-  def getuse_year: Integer =  use_year
-  private var use_month: Integer = _
-  def getuse_month: Integer =  use_month
-  private var use_day: Integer = _
-  def getuse_day: Integer =  use_day
-  private var use_hour: Integer = _
-  def getuse_hour: Integer =  use_hour
-  private var use_minute: Integer = _
-  def getuse_minute: Integer =  use_minute
-  private var use_second: Integer = _
-  def getuse_second: Integer =  use_second
-  private var use_params: String = ""
-  def getuse_params: String =  use_params
+  private var useYear: Integer = _
+  def getUseYear: Integer =  useYear
+  private var useMonth: Integer = _
+  def getUseMonth: Integer =  useMonth
+  private var useDay: Integer = _
+  def getUseDay: Integer =  useDay
+  private var useHour: Integer = _
+  def getUseHour: Integer =  useHour
+  private var useMinute: Integer = _
+  def getUseMinute: Integer =  useMinute
+  private var useSecond: Integer = _
+  def getUseSecond: Integer =  useSecond
+  private var useParams: String = ""
+  def getUseParams: String =  useParams
   
-  def SetParamsInUse(year: Integer, month: Integer, day: Integer, hour: Integer, min: Integer, sec: Integer, AdditionalParams: String){
-    use_year = year
-    use_month = month
-    use_day = day
-    use_hour = hour
-    use_minute = min
-    use_second = sec
-    use_params = AdditionalParams
+  def setParamsInUse(year: Integer, month: Integer, day: Integer, hour: Integer, min: Integer, sec: Integer, AdditionalParams: String){
+    useYear = year
+    useMonth = month
+    useDay = day
+    useHour = hour
+    useMinute = min
+    useSecond = sec
+    useParams = AdditionalParams
   }
   
   
-  def GetFullNameWithPath() : String = {
-    GetPath(getGlobalPath) + getLocalPath + getFileName
+  def getFullNameWithPath: String = {
+    getPath(getGlobalPath) + getLocalPath + getFileName
+  }
+
+
+  def getDataBase(division: ArrayBuffer[HuemulKeyValuePath]): String = {
+    huemulBigDataGov.globalSettings.getDataBase(huemulBigDataGov, division)
+  }
+
+  def getDataBase(division: ArrayBuffer[HuemulKeyValuePath], manualEnvironment: String): String = {
+    huemulBigDataGov.globalSettings.getDataBase( division, manualEnvironment)
+  }
+
+  def getPath(Division: ArrayBuffer[HuemulKeyValuePath]): String = {
+    huemulBigDataGov.globalSettings.getPath(huemulBigDataGov, Division)
   }
   
-  
-  def GetDataBase(Division: ArrayBuffer[HuemulKeyValuePath]): String = {
-    huemulBigDataGov.GlobalSettings.getDataBase(huemulBigDataGov, Division)
-  }
-  
-  def GetDataBase(Division: ArrayBuffer[HuemulKeyValuePath], ManualEnvironment: String): String = {
-    huemulBigDataGov.GlobalSettings.getDataBase( Division, ManualEnvironment)
-  }
-  
-  def GetPath(Division: ArrayBuffer[HuemulKeyValuePath]): String = {
-    huemulBigDataGov.GlobalSettings.getPath(huemulBigDataGov, Division)
-  }
-  
-  def GetPath(Division: ArrayBuffer[HuemulKeyValuePath], ManualEnvironment: String): String = {
-    huemulBigDataGov.GlobalSettings.getPath( Division, ManualEnvironment)
+  def getPath(division: ArrayBuffer[HuemulKeyValuePath], manualEnvironment: String): String = {
+    huemulBigDataGov.globalSettings.getPath( division, manualEnvironment)
   }
   
 }

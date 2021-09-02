@@ -42,9 +42,9 @@ private[bigdata] class HuemulControlModel(huemulBigDataGov: HuemulBigDataGoverna
                                  , envCategoryName: String
                                  , envName: String
                                  , envValue: String
-                                 , mdmProcessName: String): HuemulJDBCResult =  {
+                                 , mdmProcessName: String): HuemulJdbcResult =  {
 
-    _huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(
+    _huemulBigDataGov.CONTROL_connection.executeJdbcNoResultSet(
       s"""
          |insert into control_processexecenv (
          |  processexec_id
@@ -92,7 +92,7 @@ private[bigdata] class HuemulControlModel(huemulBigDataGov: HuemulBigDataGoverna
     if (_huemulBigDataGov.RegisterInControl) {
       val errorId = _huemulBigDataGov.huemul_GetUniqueId()
 
-      val jdbcResult:HuemulJDBCResult =_huemulBigDataGov.CONTROL_connection.ExecuteJDBC_NoResulSet(
+      val jdbcResult:HuemulJdbcResult =_huemulBigDataGov.CONTROL_connection.executeJdbcNoResultSet(
         s"""
               insert into control_error (error_id
                                     ,error_message
@@ -119,9 +119,9 @@ private[bigdata] class HuemulControlModel(huemulBigDataGov: HuemulBigDataGoverna
           )
              """, CallErrorRegister = false)
 
-      if (jdbcResult.IsError) {
+      if (jdbcResult.isError) {
         _huemulBigDataGov.logMessageError("**** Error Inserting into control error tabla *****")
-        _huemulBigDataGov.logMessageError(jdbcResult.ErrorDescription)
+        _huemulBigDataGov.logMessageError(jdbcResult.errorDescription)
       }
     }
   }
@@ -136,13 +136,13 @@ private[bigdata] class HuemulControlModel(huemulBigDataGov: HuemulBigDataGoverna
    * @param whoWriteError   Name of the error write
    */
   def registerError(huemulError: HuemulControlError, whoWriteError: String):Unit = {
-    registerError(huemulError.ControlError_ErrorCode
-      , huemulError.ControlError_Message
-      , huemulError.ControlError_Trace
-      , huemulError.ControlError_FileName
-      , huemulError.ControlError_MethodName
-      , huemulError.ControlError_ClassName
-      , huemulError.ControlError_LineNumber
+    registerError(huemulError.controlErrorErrorCode
+      , huemulError.controlErrorMessage
+      , huemulError.controlErrorTrace
+      , huemulError.controlErrorFileName
+      , huemulError.controlErrorMethodName
+      , huemulError.controlErrorClassName
+      , huemulError.controlErrorLineNumber
       , whoWriteError)
   }
 

@@ -2,21 +2,21 @@ package com.huemulsolutions.bigdata.datalake
 
 import org.apache.spark.sql.types.{DataType, StringType}
 
-class HuemulDataLakeColumns(columnName_Business: String
-                            , columnName_TI: String
-                            , DataType: DataType = StringType
-                            , Description: String = null
-                            , PosIni: Integer = null
-                            , PosFin: Integer = null
-                            , ApplyTrim: Boolean = false
-                            , ConvertToNull: Boolean = false) extends Serializable {
-  def getcolumnName_Business: String =  columnName_Business
-  def getcolumnName_TI: String  =  columnName_TI
-  def getDataType: DataType =  DataType
-  def getDescription: String =  Description
-  def getPosIni: Integer  =  PosIni
-  def getPosFin: Integer  =  PosFin
-  def getApplyTrim: Boolean =  ApplyTrim
-  def getConvertToNull: Boolean  =  ConvertToNull
+class HuemulDataLakeColumns(columnNameBusiness: String
+                            , columnNameTi: String
+                            , dataType: DataType = StringType
+                            , description: String = null
+                            , posIni: Integer = null
+                            , posFin: Integer = null
+                            , applyTrim: Boolean = false
+                            , convertToNull: Boolean = false) extends Serializable {
+  def getColumnNameBusiness: String =  columnNameBusiness
+  def getColumnNameTi: String  =  columnNameTi
+  def getDataType: DataType =  dataType
+  def getDescription: String =  description
+  def getPosIni: Integer  =  posIni
+  def getPosFin: Integer  =  posFin
+  def getApplyTrim: Boolean =  applyTrim
+  def getConvertToNull: Boolean  =  convertToNull
 
 }

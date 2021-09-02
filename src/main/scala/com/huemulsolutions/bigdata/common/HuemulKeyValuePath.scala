@@ -1,12 +1,13 @@
 package com.huemulsolutions.bigdata.common
 
-class HuemulKeyValuePath(Environment: String, PathOrDataBase: String) extends Serializable {
+class HuemulKeyValuePath(environment: String, pathOrDataBase: String) extends Serializable {
   /**example: "prod, desa, qa"
    **/
-  val environment: String = Environment
+  //val environment: String = environment
   /** Value: Path for Files, DataBase Name for hive tables
    */
-  val Value: String = PathOrDataBase
+  val value: String = pathOrDataBase
+  def getEnvironment: String = environment;
 
 
   //from 2.6.1 add user and password, issue #111

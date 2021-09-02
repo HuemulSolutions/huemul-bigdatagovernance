@@ -51,18 +51,18 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
                      , HBase_tableName: String): Boolean = {
     var result: Boolean = false
     //Crea tabla
-    Control.NewStep(s"HBase: Create hBaseConfiguration and HBaseContext")
+    Control.newStep(s"HBase: Create hBaseConfiguration and HBaseContext")
     val hbaseConf = HBaseConfiguration.create()
     //val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
     
-    Control.NewStep("HBase: Create connection")
+    Control.newStep("HBase: Create connection")
     val connection = ConnectionFactory.createConnection(hbaseConf)
     val admin = connection.getAdmin
     
     val tableNameString: String = s"$HBase_Namespace:$HBase_tableName"
     val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
     
-    Control.NewStep(s"HBase: Namespaces validation...")
+    Control.newStep(s"HBase: Namespaces validation...")
     result = admin.tableExists(tableName)
     
     admin.close()
@@ -108,7 +108,7 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
     val result: Boolean = true
     
     val numPartition: String = if (numPartitions > 5) numPartitions.toString else "5"
-    Control.NewStep(s"HBase: num partitions = $numPartition")
+    Control.newStep(s"HBase: num partitions = $numPartition")
 
     //get Schema
     val __schema = DF_to_save.schema
@@ -151,7 +151,7 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
     //get num cols
     @transient lazy  val __numCols2: Int = __valCols2.length
 
-    Control.NewStep(s"HBase: Map to HBase format ")
+    Control.newStep(s"HBase: Map to HBase format ")
     
     //map to HBase format (keyValue, family, colname, value)
     import huemulBigDataGov.spark.implicits._ 
@@ -204,22 +204,22 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
     //val numRowsTot = __pdd_2.count()
         
      //Table Assign
-    Control.NewStep(s"HBase: Set staging Folder and Family:Table Name")
+    Control.newStep(s"HBase: Set staging Folder and Family:Table Name")
     
     val tableNameString: String = s"$HBase_Namespace:$HBase_tableName"
     val tableName: org.apache.hadoop.hbase.TableName = org.apache.hadoop.hbase.TableName.valueOf(tableNameString)
     
     //Starting HBase
-    Control.NewStep(s"HBase: Create hBaseConfiguration and HBaseContext")
+    Control.newStep(s"HBase: Create hBaseConfiguration and HBaseContext")
     val hbaseConf = HBaseConfiguration.create()
     val hbaseContext = new HBaseContext(huemulBigDataGov.spark.sparkContext, hbaseConf)
     
     //create table
-    Control.NewStep("HBase: Create connection")
+    Control.newStep("HBase: Create connection")
     val connection = ConnectionFactory.createConnection(hbaseConf)
     val admin = connection.getAdmin
     
-    Control.NewStep(s"HBase: Namespaces validation...")
+    Control.newStep(s"HBase: Namespaces validation...")
     val _listNamespace = admin.listNamespaceDescriptors()
     
     //Create namespace if it doesn't exist
@@ -228,7 +228,7 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
       admin.createNamespace(org.apache.hadoop.hbase.NamespaceDescriptor.create(HBase_Namespace).build())
     }
     
-    Control.NewStep("HBase: TableExists validation...")
+    Control.newStep("HBase: TableExists validation...")
     if (!admin.tableExists(tableName)) {
       /* desde hbase 2.0
       val __newTable = TableDescriptorBuilder.newBuilder(tableName)
@@ -237,7 +237,7 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
                   * 
                   */
      
-      Control.NewStep(s"HBase: Table doesn't exists, creating table... ")
+      Control.newStep(s"HBase: Table doesn't exists, creating table... ")
       val __newTable = new org.apache.hadoop.hbase.HTableDescriptor(tableName)
       
       //Add families
@@ -247,7 +247,7 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
       
       admin.createTable(__newTable)
     } else {
-      Control.NewStep(s"HBase: Table exists, get families ")
+      Control.newStep(s"HBase: Table exists, get families ")
       val __oldTable = admin.getTableDescriptor(tableName)
       val _getFamilies = __oldTable.getFamilies.toArray()
       var _newFamilies = __valCols2.map(x=>x._2).distinct
@@ -264,7 +264,7 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
       
       //Add new families
       if (_newFamilies.nonEmpty) {
-        Control.NewStep(s"HBase: creating new families ")
+        Control.newStep(s"HBase: creating new families ")
         _newFamilies.foreach { x =>
           //println(s"nuevas: ${x}")
         __oldTable.addFamily(new HColumnDescriptor(x))  
@@ -280,9 +280,9 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
     //elimina los registros que tengan algún valor en null
     //si es OnlyInsert no existen los registros anteriormente, por tanto no hay registros nulos que eliminar.
     if (!isOnlyInsert) {
-      Control.NewStep(s"HBase: set null when previous values were not null")
+      Control.newStep(s"HBase: set null when previous values were not null")
       val __tdd_null = __pdd_2.filter(x=> x._2._3 == null).map(x=>x._1).distinct().map(x=> Bytes.toBytes(x))
-      Control.NewStep("HBase: Delete nulls")
+      Control.newStep("HBase: Delete nulls")
       hbaseContext.bulkDelete[Array[Byte]](__tdd_null
               ,tableName
               ,putRecord => new Delete( putRecord)
@@ -290,13 +290,13 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
               ,4)
     }
         
-    Control.NewStep(s"HBase: exclude null values ")
+    Control.newStep(s"HBase: exclude null values ")
     val __tdd_notnull = __pdd_2.filter(x=> x._2._3 != null)
     
     val stagingFolder = s"/tmp/user/${Control.getStepId}"
     huemulBigDataGov.logMessageDebug(s"staging folder: $stagingFolder")
   
-    Control.NewStep(s"HBase: insert and update values ")
+    Control.newStep(s"HBase: insert and update values ")
     if (__tdd_notnull.count() > 0) {
       __tdd_notnull.hbaseBulkLoad(hbaseContext
                             , tableName
@@ -312,7 +312,7 @@ class HuemulTableConnector(huemulBigDataGov: HuemulBigDataGovernance, Control: H
                             }
                             , stagingFolder)
       
-      Control.NewStep(s"HBase: execute HBase job ")
+      Control.newStep(s"HBase: execute HBase job ")
       val load = new LoadIncrementalHFiles(hbaseConf)
       load.run(Array(stagingFolder, tableNameString))
     }

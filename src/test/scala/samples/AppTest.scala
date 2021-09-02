@@ -71,16 +71,16 @@ class AppTest {
     
     
     @Test
-    def test_HasName_OK(): Unit = assertTrue(huemulBigDataGov.HasName("si tiene"))
+    def test_HasName_OK(): Unit = assertTrue(huemulBigDataGov.hasName("si tiene"))
     
     @Test
-    def test_HasName_OK_Espacios(): Unit = assertTrue(huemulBigDataGov.HasName("  "))
+    def test_HasName_OK_Espacios(): Unit = assertTrue(huemulBigDataGov.hasName("  "))
    
     @Test
-    def test_HasName_OK_Nulo(): Unit = assertFalse(huemulBigDataGov.HasName(null))
+    def test_HasName_OK_Nulo(): Unit = assertFalse(huemulBigDataGov.hasName(null))
     
     @Test
-    def test_HasName_OK_Vacio(): Unit = assertFalse(huemulBigDataGov.HasName(""))
+    def test_HasName_OK_Vacio(): Unit = assertFalse(huemulBigDataGov.hasName(""))
     
     @Test
     def test_GetYear(): Unit = assertTrue(huemulBigDataGov.getYear(huemulBigDataGov.setDate("2018-12-31")) == 2018)
@@ -102,7 +102,7 @@ class AppTest {
     }
     
     @Test
-    def test_TableIsOK(): Unit = assertFalse(TestTable.Error_isError)
+    def test_TableIsOK(): Unit = assertFalse(TestTable.errorIsError)
     
     /*TEST PARA HUEMUL_TABLE, HUEMUL_COLUMN, huemul_tablerelationship*/
     var TestTable_padre: tbl_demo_test_padre = _
@@ -113,7 +113,7 @@ class AppTest {
     }
     
     @Test
-    def test_TablePadreIsOK(): Unit = assertFalse(TestTable_padre.Error_isError)
+    def test_TablePadreIsOK(): Unit = assertFalse(TestTable_padre.errorIsError)
 
 
 }

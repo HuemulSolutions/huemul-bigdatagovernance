@@ -5,10 +5,10 @@ import com.huemulsolutions.bigdata.control.HuemulTypeFrequency
 
 object Init {
   def main(args: Array[String]): Unit = {
-    val Global: HuemulGlobalPath = new HuemulGlobalPath()
-    Global.GlobalEnvironments = "production,experimental"
+    val global: HuemulGlobalPath = new HuemulGlobalPath()
+    global.globalEnvironments = "production,experimental"
  
-    val huemulBigDataGov  = new HuemulBigDataGovernance(s"BigData API", args, Global)
+    val huemulBigDataGov  = new HuemulBigDataGovernance(s"BigData API", args, global)
     
     new HuemulControl(huemulBigDataGov,null, HuemulTypeFrequency.ANY_MOMENT, false, false)
     //Control.Init_CreateTables()
@@ -19,29 +19,29 @@ object Init {
 
 object testReadUrlMonitoring {
   def main(args: Array[String]): Unit = {
-    val Global: HuemulGlobalPath = new HuemulGlobalPath()
-    Global.GlobalEnvironments = "production, experimental"
-    Global.CONTROL_Setting.append(new HuemulKeyValuePath("production",s"file.txt"))
-    Global.IMPALA_Setting.append(new HuemulKeyValuePath("production",s"file.txt"))
-    Global.TEMPORAL_Path.append(new HuemulKeyValuePath("production",s"/usr/production/temp/"))
-    Global.DQError_Path.append(new HuemulKeyValuePath("production",s"/usr/production/temp/"))
-    Global.DQError_DataBase.append(new HuemulKeyValuePath("production",s"dqerror_database"))
-    Global.setValidationLight()
+    val global: HuemulGlobalPath = new HuemulGlobalPath()
+    global.globalEnvironments = "production, experimental"
+    global.controlSetting.append(new HuemulKeyValuePath("production",s"file.txt"))
+    global.impalaSetting.append(new HuemulKeyValuePath("production",s"file.txt"))
+    global.temporalPath.append(new HuemulKeyValuePath("production",s"/usr/production/temp/"))
+    global.dqErrorPath.append(new HuemulKeyValuePath("production",s"/usr/production/temp/"))
+    global.dqErrorDataBase.append(new HuemulKeyValuePath("production",s"dqerror_database"))
+    global.setValidationLight()
 
-    val huemulBigDataGov  = new HuemulBigDataGovernance(s"BigData API test URL Monitoring", args, Global)
+    val huemulBigDataGov  = new HuemulBigDataGovernance(s"BigData API test URL Monitoring", args, global)
 
-    val control_test = new HuemulControl(huemulBigDataGov,null, HuemulTypeFrequency.ANY_MOMENT, false, false)
+    val controlTest = new HuemulControl(huemulBigDataGov,null, HuemulTypeFrequency.ANY_MOMENT, false, false)
 
-    control_test.NewStep(s"start test")
+    controlTest.newStep(s"start test")
     //get url from spark
-    val URLMonitor = s"${huemulBigDataGov.IdPortMonitoring}/api/v1/applications/"
-    control_test.NewStep(s"url monitoring: $URLMonitor")
+    val urlMonitor = s"${huemulBigDataGov.IdPortMonitoring}/api/v1/applications/"
+    controlTest.newStep(s"url monitoring: $urlMonitor")
     //Get Id App from Spark URL Monitoring
     try {
       var i = 1
       while (i <= 5) {
-        val (idAppFromAPI, status) = huemulBigDataGov.getIdFromExecution(URLMonitor)
-        control_test.NewStep(s"wait for 10 seconds, cycle $i/5, read from port: $idAppFromAPI, $status ")
+        val (idAppFromAPI, status) = huemulBigDataGov.getIdFromExecution(urlMonitor)
+        controlTest.newStep(s"wait for 10 seconds, cycle $i/5, read from port: $idAppFromAPI, $status ")
         Thread.sleep(10000)
 
         i += 1

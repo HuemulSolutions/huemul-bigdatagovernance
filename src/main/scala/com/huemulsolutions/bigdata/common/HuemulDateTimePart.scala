@@ -1,7 +1,7 @@
 package com.huemulsolutions.bigdata.common
 
-class HuemulDateTimePart(MiliSeconds: Long) extends Serializable {
-  private var calc = MiliSeconds / 1000
+class HuemulDateTimePart(miliSeconds: Long) extends Serializable {
+  private var calc = miliSeconds / 1000
   val second: Long = calc % 60
   calc /= 60
   val minute: Long = calc % 60

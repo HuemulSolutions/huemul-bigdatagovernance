@@ -2,8 +2,8 @@ package com.huemulsolutions.bigdata.tables
 
 import com.huemulsolutions.bigdata.common.HuemulTypeBigDataProvider
 import com.huemulsolutions.bigdata.common.HuemulTypeBigDataProvider._
-import com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification
-import com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification.HuemulTypeDQNotification
+import com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification
+import com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification.HuemulTypeDqNotification
 import com.huemulsolutions.bigdata.tables.HuemulTypeSecurityLevel.HuemulTypeSecurityLevel
 import com.huemulsolutions.bigdata.tables.HuemulTypeStorageType.HuemulTypeStorageType
 //import org.apache.log4j.Level
@@ -41,27 +41,31 @@ class HuemulColumns(dataType: DataType
                     , description: String
                     , usedForCheckSum: Boolean = true) extends Serializable {
 
-  val DataType: DataType = dataType
-  val Description: String = description
-  val Required: Boolean = isRequired
-  val UsedForCheckSum: Boolean = usedForCheckSum
+  //val dataType: DataType = dataType
+  //val description: String = description
+  val required: Boolean = isRequired
+  //val usedForCheckSum: Boolean = usedForCheckSumParam
+
+  def getDataType: DataType = dataType;
+  def getUsedForCheckSum: Boolean = usedForCheckSum;
+  def getDescription: String = description;
 
 
   // Define if a column definition is close, not allowing any modification to its attribute
-  private var _DefinitionIsClose: Boolean = false
+  private var _definitionIsClose: Boolean = false
 
 
   /** Set column definition to close
    * @since   1.1
    * @group   column_other
    */
-  def setDefinitionIsClose() {_DefinitionIsClose = true}
+  def setDefinitionIsClose() {_definitionIsClose = true}
 
   /** Set column definition to close
    * @since   2.6
    * @group   column_other
    */
-  def getDefinitionIsClose: Boolean =  _DefinitionIsClose
+  def getDefinitionIsClose: Boolean =  _definitionIsClose
 
 
   // ------------------------------------------------------------------------------------------------------------------
@@ -101,7 +105,7 @@ class HuemulColumns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   // Primary Key column attribute -------------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _IsPK: Boolean = false
+  private var _isPk: Boolean = false
 
   /** Check if columns is Primary key
    * @since   1.1
@@ -109,7 +113,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Boolean
    */
-  def getIsPK: Boolean = _IsPK
+  def getIsPk: Boolean = _isPk
 
   /** Set column is PK
    * @since   2.1
@@ -119,7 +123,7 @@ class HuemulColumns(dataType: DataType
    */
   def setIsPK(): HuemulColumns = {
     if (checkNotCloseDefinition("PK"))
-      _IsPK = true
+      _isPk = true
     this
   }
 
@@ -127,9 +131,9 @@ class HuemulColumns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   // Unique column attribute ------------------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _IsUnique: Boolean = false
-  private var _IsUniqueExternalCode: String = "HUEMUL_DQ_003"
-  private var _IsUniqueNotification: HuemulTypeDQNotification = _
+  private var _isUnique: Boolean = false
+  private var _isUniqueExternalCode: String = "HUEMUL_DQ_003"
+  private var _isUniqueNotification: HuemulTypeDqNotification = _
 
   /** Get Unique External Error Code
    * @since   2.1
@@ -137,7 +141,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String Error Code
    */
-  def getIsUnique_externalCode: String = _IsUniqueExternalCode
+  def getIsUniqueExternalCode: String = _isUniqueExternalCode
 
   /** Checks if column is unique
    * @since   1.1
@@ -145,7 +149,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Boolean
    */
-  def getIsUnique: Boolean = _IsUnique
+  def getIsUnique: Boolean = _isUnique
 
   /** Set column attribute to unique with optional error code (`externalCode`)
    *
@@ -156,8 +160,8 @@ class HuemulColumns(dataType: DataType
    */
   def setIsUnique(externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("IsUnique")) {
-      _IsUnique = true
-      _IsUniqueExternalCode = if (externalCode == null) _IsUniqueExternalCode else externalCode
+      _isUnique = true
+      _isUniqueExternalCode = if (externalCode == null) _isUniqueExternalCode else externalCode
     }
     this
   }
@@ -168,10 +172,10 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
-   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setIsUnique_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
-    if (checkNotCloseAndNotNull("IsUnique",notification )) _IsUniqueNotification = notification
+  def setIsUniqueNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
+    if (checkNotCloseAndNotNull("IsUnique",notification )) _isUniqueNotification = notification
     this
   }
 
@@ -180,18 +184,18 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getIsUnique_Notification:  HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_IsUniqueNotification)
+  def getIsUniqueNotification:  HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_isUniqueNotification)
 
 
 
   // ------------------------------------------------------------------------------------------------------------------
   // Nullable column attribute ----------------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _Nullable: Boolean = false
-  private var _NullableExternalCode: String = "HUEMUL_DQ_004"
-  private var _NullableNotification: HuemulTypeDQNotification = _
+  private var _nullable: Boolean = false
+  private var _nullableExternalCode: String = "HUEMUL_DQ_004"
+  private var _nullableNotification: HuemulTypeDqNotification = _
 
   /** Get Nullable External Error Code
    * @since   2.1
@@ -199,7 +203,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String Error Code
    */
-  def getNullable_externalCode: String = _NullableExternalCode
+  def getNullableExternalCode: String = _nullableExternalCode
 
   /** Checks if column is nullable
    * @since   1.1
@@ -207,7 +211,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Boolean
    */
-  def getNullable: Boolean = _Nullable
+  def getNullable: Boolean = _nullable
 
   /** Set column null attribute with optional error code (`externalCode`)
    *
@@ -218,8 +222,8 @@ class HuemulColumns(dataType: DataType
    */
   def setNullable(externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("Nullable")) {
-      _Nullable = true
-      _NullableExternalCode = if (externalCode == null) _NullableExternalCode else externalCode
+      _nullable = true
+      _nullableExternalCode = if (externalCode == null) _nullableExternalCode else externalCode
     }
     this
   }
@@ -233,15 +237,15 @@ class HuemulColumns(dataType: DataType
    */
   def setIsNull(value: Boolean, externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("setIsNull")) {
-      _Nullable = !value
-      _NullableExternalCode = if (externalCode == null) _NullableExternalCode else externalCode
+      _nullable = !value
+      _nullableExternalCode = if (externalCode == null) _nullableExternalCode else externalCode
     }
     this
   }
 
 
   private[tables] def setIsNullInternal(value: Boolean): HuemulColumns = {
-    _Nullable = !value
+    _nullable = !value
     this
   }
 
@@ -253,11 +257,11 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
-   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setDQ_Nullable_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
+  def setDqNullableNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
     if (checkNotCloseAndNotNull("Nullable", notification))
-      _NullableNotification = notification
+      _nullableNotification = notification
     this
   }
 
@@ -266,16 +270,16 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_Nullable_Notification:  HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_NullableNotification)
+  def getDqNullableNotification:  HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_nullableNotification)
 
 
 
   // ------------------------------------------------------------------------------------------------------------------
   // Default Value column attribute -----------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _DefaultValue: String = "null"
+  private var _defaultValue: String = "null"
 
   /** Get the assigned default value
    * @since   2.1
@@ -283,7 +287,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String default value assigned
    */
-  def getDefaultValue: String = _DefaultValue
+  def getDefaultValue: String = _defaultValue
 
   /** Set column default value
    *
@@ -294,7 +298,7 @@ class HuemulColumns(dataType: DataType
    */
   def setDefaultValues(value: String): HuemulColumns = {
     if (checkNotCloseDefinition("Default"))
-      _DefaultValue = value
+      _defaultValue = value
     this
   }
 
@@ -303,9 +307,9 @@ class HuemulColumns(dataType: DataType
   // Security level column attribute ----------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // Secret, Restricted, Confidential, Intern, Departamental, Public
-  private var _SecurityLevel: HuemulTypeSecurityLevel = HuemulTypeSecurityLevel.Public
+  private var _securityLevel: HuemulTypeSecurityLevel = HuemulTypeSecurityLevel.Public
 
-  def getSecurityLevel: HuemulTypeSecurityLevel = _SecurityLevel
+  def getSecurityLevel: HuemulTypeSecurityLevel = _securityLevel
 
   /** Set column security level
    *
@@ -318,7 +322,7 @@ class HuemulColumns(dataType: DataType
    */
   def securityLevel(value: HuemulTypeSecurityLevel): HuemulColumns = {
     if (checkNotCloseAndNotNull("SecurityLevel", value))
-      _SecurityLevel = value
+      _securityLevel = value
     this
   }
 
@@ -328,7 +332,7 @@ class HuemulColumns(dataType: DataType
   // Encryption type column attribute ---------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // none, sha2
-  private var _EncryptedType: String = "none" //none, sha2,
+  private var _encryptedType: String = "none" //none, sha2,
 
   /** Get encryption type
    * @since   1.1
@@ -336,7 +340,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String
    */
-  def getEncryptedType: String = _EncryptedType
+  def getEncryptedType: String = _encryptedType
 
   /** Set encryption type for column
    *
@@ -347,7 +351,7 @@ class HuemulColumns(dataType: DataType
    */
   def encryptedType(value: String): HuemulColumns = {
     if (checkNotCloseDefinition("EncryptedType"))
-      _EncryptedType = value
+      _encryptedType = value
     this
   }
 
@@ -356,13 +360,13 @@ class HuemulColumns(dataType: DataType
   // Arco data column attribute ---------------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // set true for customers data that can be used for identify a unique customer (name, address, phone number)
-  private var _ArcoData: Boolean = false
+  private var _arcoData: Boolean = false
 
   /** Check if column is a ARCO Data Type
    *
    * @return  Boolean
    */
-  def getARCO_Data: Boolean = _ArcoData
+  def getArcoData: Boolean = _arcoData
 
   /** Set column as ARCO data
    *
@@ -371,9 +375,9 @@ class HuemulColumns(dataType: DataType
    * @since 2.1
    * @return  [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setARCO_Data(): HuemulColumns = {
+  def setArcoData(): HuemulColumns = {
     if (checkNotCloseDefinition("ARCO_Data"))
-      _ArcoData = true
+      _arcoData = true
     this
   }
 
@@ -382,7 +386,7 @@ class HuemulColumns(dataType: DataType
   // Business Glossary column attribute -------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // associate an external id to link with business glossary concepts
-  private var _BusinessGlossaryId: String = ""
+  private var _businessGlossaryId: String = ""
 
   /** Get business glossary id
    * @since   1.1
@@ -390,7 +394,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return String
    */
-  def getBusinessGlossary_Id: String = _BusinessGlossaryId
+  def getBusinessGlossaryId: String = _businessGlossaryId
 
   /** Set column business glossary asset id
    *
@@ -403,7 +407,7 @@ class HuemulColumns(dataType: DataType
    */
   def setBusinessGlossary(value: String): HuemulColumns = {
     if (checkNotCloseAndNotNull("BusinessGlossaryId",value))
-      _BusinessGlossaryId = value
+      _businessGlossaryId = value
     this
   }
 
@@ -421,15 +425,15 @@ class HuemulColumns(dataType: DataType
    * @param attributeNotification  Notification level attribute data quality rule
    * @return                      Notification level
    */
-  private[bigdata] def getDQHierarchyNotificationLevel(attributeNotification: HuemulTypeDQNotification) :HuemulTypeDQNotification =
-    if (attributeNotification == null) getDQ_Notification else attributeNotification
+  private[bigdata] def getDQHierarchyNotificationLevel(attributeNotification: HuemulTypeDqNotification) :HuemulTypeDqNotification =
+    if (attributeNotification == null) getDqNotification else attributeNotification
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MIN length -----------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _DQMinLen: Integer = _
-  private var _DQMinLenExternalCode: String = "HUEMUL_DQ_006"
-  private var _DQMinLenNotification: HuemulTypeDQNotification = _
+  private var _dqMinLen: Integer = _
+  private var _dqMinLenExternalCode: String = "HUEMUL_DQ_006"
+  private var _dqMinLenNotification: HuemulTypeDqNotification = _
 
   /** Get data quality min length error code
    * @since   1.1
@@ -437,14 +441,14 @@ class HuemulColumns(dataType: DataType
    *
    * @return String error code
    */
-  def getDQ_MinLen_externalCode: String = _DQMinLenExternalCode
+  def getDqMinLenExternalCode: String = _dqMinLenExternalCode
 
   /** Get data quality min length value
    * @group   column_data_quality
    *
    * @return  Min length value
    */
-  def getDQ_MinLen: Integer = _DQMinLen
+  def getDqMinLen: Integer = _dqMinLen
 
   /** Set data quality min length value
    * @since   2.1
@@ -454,10 +458,10 @@ class HuemulColumns(dataType: DataType
    * @param externalCode  Externa error code
    * @return              [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setDQ_MinLen(value: Integer, externalCode: String = null): HuemulColumns = {
+  def setDqMinLen(value: Integer, externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("DQ min length")){
-      _DQMinLen = value
-      _DQMinLenExternalCode = if (externalCode==null) _DQMinLenExternalCode else externalCode
+      _dqMinLen = value
+      _dqMinLenExternalCode = if (externalCode==null) _dqMinLenExternalCode else externalCode
     }
     this
   }
@@ -468,11 +472,11 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
-   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setDQ_MinLen_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
+  def setDqMinLenNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
     if (checkNotCloseAndNotNull("DQ min length", notification))
-      _DQMinLenNotification = notification
+      _dqMinLenNotification = notification
     this
   }
 
@@ -481,18 +485,18 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_MinLen_Notification:  HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_DQMinLenNotification)
+  def getDqMinLenNotification:  HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_dqMinLenNotification)
 
 
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MAX length -----------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _DQMaxLen: Integer = _
-  private var _DQMaxLenExternalCode: String = "HUEMUL_DQ_006"
-  private var _DQMaxLenNotification: HuemulTypeDQNotification = _
+  private var _dqMaxLen: Integer = _
+  private var _dqMaxLenExternalCode: String = "HUEMUL_DQ_006"
+  private var _DqMaxLenNotification: HuemulTypeDqNotification = _
 
   /** Get data quality max length error code
    * @since   1.1
@@ -500,7 +504,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return String error code
    */
-  def getDQ_MaxLen_externalCode: String = _DQMaxLenExternalCode
+  def getDqMaxLenExternalCode: String = _dqMaxLenExternalCode
 
   /** Get data quality max length value
    * @since   1.1
@@ -508,7 +512,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  max length value
    */
-  def getDQ_MaxLen: Integer = _DQMaxLen
+  def getDqMaxLen: Integer = _dqMaxLen
 
   /** Set data quality max length value
    * @since   2.1
@@ -518,10 +522,10 @@ class HuemulColumns(dataType: DataType
    * @param externalCode  Externa error code
    * @return              [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setDQ_MaxLen(value: Integer, externalCode: String = null): HuemulColumns = {
+  def setDqMaxLen(value: Integer, externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("DQ max length")) {
-      _DQMaxLen = value
-      _DQMaxLenExternalCode = if (externalCode == null) _DQMaxLenExternalCode else externalCode
+      _dqMaxLen = value
+      _dqMaxLenExternalCode = if (externalCode == null) _dqMaxLenExternalCode else externalCode
     }
     this
   }
@@ -532,11 +536,11 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
-   * @return              [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return              [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setDQ_MaxLen_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
+  def setDqMaxLenNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
     if (checkNotCloseAndNotNull("DQ max length",notification))
-      _DQMaxLenNotification = notification
+      _DqMaxLenNotification = notification
     this
   }
 
@@ -545,18 +549,18 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_MaxLen_Notification: HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_DQMaxLenNotification)
+  def getDqMaxLenNotification: HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_DqMaxLenNotification)
 
 
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MIN decimal value ----------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _DQMinDecimalValue: Decimal = _
-  private var _DQMinDecimalValueExternalCode: String = "HUEMUL_DQ_007"
-  private var _DQMinDecimalValueNotification: HuemulTypeDQNotification = _
+  private var _dqMinDecimalValue: Decimal = _
+  private var _dqMinDecimalValueExternalCode: String = "HUEMUL_DQ_007"
+  private var _dqMinDecimalValueNotification: HuemulTypeDqNotification = _
 
   /** Get data quality min decimal value error code
    * @since   1.1
@@ -564,7 +568,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String error code
    */
-  def getDQ_MinDecimalValue_externalCode: String = _DQMinDecimalValueExternalCode
+  def getDqMinDecimalValueExternalCode: String = _dqMinDecimalValueExternalCode
 
   /** Get data quality min decimal value
    * @since   1.1
@@ -572,7 +576,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Min decimal value
    */
-  def getDQ_MinDecimalValue: Decimal = _DQMinDecimalValue
+  def getDqMinDecimalValue: Decimal = _dqMinDecimalValue
 
   /** Set data quality min decimal value
    * @since   2.1
@@ -582,10 +586,10 @@ class HuemulColumns(dataType: DataType
    * @param externalCode  Externa error code
    * @return              [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setDQ_MinDecimalValue(value: Decimal, externalCode: String = null): HuemulColumns = {
+  def setDqMinDecimalValue(value: Decimal, externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("DQ min decimal")) {
-      _DQMinDecimalValue = value
-      _DQMinDecimalValueExternalCode = if (externalCode == null) _DQMinDecimalValueExternalCode else externalCode
+      _dqMinDecimalValue = value
+      _dqMinDecimalValueExternalCode = if (externalCode == null) _dqMinDecimalValueExternalCode else externalCode
     }
     this
   }
@@ -596,11 +600,11 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
-   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setDQ_MinDecimalValue_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
+  def setDqMinDecimalValueNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
     if (checkNotCloseAndNotNull("DQ min length",notification))
-      _DQMinDecimalValueNotification = notification
+      _dqMinDecimalValueNotification = notification
 
     this
   }
@@ -610,18 +614,18 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_MinDecimalValue_Notification: HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_DQMinDecimalValueNotification)
+  def getDqMinDecimalValueNotification: HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_dqMinDecimalValueNotification)
 
 
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MAX decimal value ----------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _DQMaxDecimalValue: Decimal = _
-  private var _DQMaxDecimalValueExternalCode: String = "HUEMUL_DQ_007"
-  private var _DQMaxDecimalValueNotification: HuemulTypeDQNotification = _
+  private var _dqMaxDecimalValue: Decimal = _
+  private var _dqMaxDecimalValueExternalCode: String = "HUEMUL_DQ_007"
+  private var _dqMaxDecimalValueNotification: HuemulTypeDqNotification = _
 
   /** Get data quality max decimal value error code
    * @since   1.1
@@ -629,7 +633,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String error code
    */
-  def getDQ_MaxDecimalValue_externalCode: String = _DQMaxDecimalValueExternalCode
+  def getDqMaxDecimalValueExternalCode: String = _dqMaxDecimalValueExternalCode
 
   /** Get data quality max decimal value
    * @since   1.1
@@ -637,7 +641,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Max decimal value
    */
-  def getDQ_MaxDecimalValue: Decimal = _DQMaxDecimalValue
+  def getDqMaxDecimalValue: Decimal = _dqMaxDecimalValue
 
   /** Set data quality max decimal value
    * @since   2.1
@@ -647,10 +651,10 @@ class HuemulColumns(dataType: DataType
    * @param externalCode  Externa error code
    * @return              [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setDQ_MaxDecimalValue(value: Decimal, externalCode: String = null): HuemulColumns = {
+  def setDqMaxDecimalValue(value: Decimal, externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("DQ max decimal")) {
-      _DQMaxDecimalValue = value
-      _DQMaxDecimalValueExternalCode = if (externalCode == null) _DQMaxDecimalValueExternalCode else externalCode
+      _dqMaxDecimalValue = value
+      _dqMaxDecimalValueExternalCode = if (externalCode == null) _dqMaxDecimalValueExternalCode else externalCode
     }
     this
   }
@@ -661,11 +665,11 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
-   * @return              [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return              [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setDQ_MaxDecimalValue_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
+  def setDqMaxDecimalValueNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
     if (checkNotCloseAndNotNull("DQ max decimal", notification))
-      _DQMaxDecimalValueNotification = notification
+      _dqMaxDecimalValueNotification = notification
     this
   }
 
@@ -674,18 +678,18 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_MaxDecimalValue_Notification: HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_DQMaxDecimalValueNotification)
+  def getDqMaxDecimalValueNotification: HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_dqMaxDecimalValueNotification)
 
 
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MIN DateTime value ---------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _DQMinDateTimeValue: String = _
-  private var _DQMinDateTimeValueExternalCode: String = "HUEMUL_DQ_008"
-  private var _DQMinDateTimeValueNotification: HuemulTypeDQNotification = _
+  private var _dqMinDateTimeValue: String = _
+  private var _dqMinDateTimeValueExternalCode: String = "HUEMUL_DQ_008"
+  private var _dqMinDateTimeValueNotification: HuemulTypeDqNotification = _
 
   /** Get data quality min date time value error code
    * @since   1.1
@@ -693,7 +697,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String error code
    */
-  def getDQ_MinDateTimeValue_externalCode: String = _DQMinDateTimeValueExternalCode
+  def getDqMinDateTimeValueExternalCode: String = _dqMinDateTimeValueExternalCode
 
   /** Get data quality min date time value
    * @since   1.1
@@ -701,7 +705,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Min date time value
    */
-  def getDQ_MinDateTimeValue: String = _DQMinDateTimeValue
+  def getDqMinDateTimeValue: String = _dqMinDateTimeValue
 
   /** Set data quality min date time value
    *
@@ -714,10 +718,10 @@ class HuemulColumns(dataType: DataType
    * @param externalCode  Externa error code
    * @return              [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setDQ_MinDateTimeValue(value: String, externalCode: String = null): HuemulColumns = {
+  def setDqMinDateTimeValue(value: String, externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("DQ min datetime")) {
-      _DQMinDateTimeValue = value
-      _DQMinDateTimeValueExternalCode = if (externalCode == null) _DQMinDateTimeValueExternalCode  else externalCode
+      _dqMinDateTimeValue = value
+      _dqMinDateTimeValueExternalCode = if (externalCode == null) _dqMinDateTimeValueExternalCode  else externalCode
     }
     this
   }
@@ -728,11 +732,11 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
-   * @return              [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return              [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setDQ_MinDateTimeValue_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
+  def setDqMinDateTimeValueNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
     if (checkNotCloseAndNotNull("DQ min datetime", notification))
-      _DQMinDateTimeValueNotification = notification
+      _dqMinDateTimeValueNotification = notification
     this
   }
 
@@ -741,18 +745,18 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_MinDateTimeValue_Notification: HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_DQMinDateTimeValueNotification)
+  def getDqMinDateTimeValueNotification: HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_dqMinDateTimeValueNotification)
 
 
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality MAX DateTime value ---------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
-  private var _DQMaxDateTimeValue: String = _
-  private var _DQMaxDateTimeValueExternalCode: String = "HUEMUL_DQ_008"
-  private var _DQMaxDateTimeValueNotification: HuemulTypeDQNotification = _
+  private var _dqMaxDateTimeValue: String = _
+  private var _dqMaxDateTimeValueExternalCode: String = "HUEMUL_DQ_008"
+  private var _dqMaxDateTimeValueNotification: HuemulTypeDqNotification = _
 
   /** Get data quality max date time value error code
    * @since   1.1
@@ -760,7 +764,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String error code
    */
-  def getDQ_MaxDateTimeValue_externalCode: String = _DQMaxDateTimeValueExternalCode
+  def getDqMaxDateTimeValueExternalCode: String = _dqMaxDateTimeValueExternalCode
 
   /** Get data quality max date time value
    * @since   1.1
@@ -768,7 +772,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Max date time value
    */
-  def getDQ_MaxDateTimeValue: String = _DQMaxDateTimeValue
+  def getDqMaxDateTimeValue: String = _dqMaxDateTimeValue
 
   /** Set data quality max date time value
    *
@@ -781,10 +785,10 @@ class HuemulColumns(dataType: DataType
    * @param externalCode  Externa error code
    * @return              [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setDQ_MaxDateTimeValue(value: String, externalCode: String = null): HuemulColumns = {
+  def setDqMaxDateTimeValue(value: String, externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("DQ max datetime")) {
-      _DQMaxDateTimeValue = value
-      _DQMaxDateTimeValueExternalCode = if (externalCode == null )  _DQMaxDateTimeValueExternalCode else externalCode
+      _dqMaxDateTimeValue = value
+      _dqMaxDateTimeValueExternalCode = if (externalCode == null )  _dqMaxDateTimeValueExternalCode else externalCode
     }
     this
   }
@@ -795,11 +799,11 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
-   * @return              [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return              [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setDQ_MaxDateTimeValue_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
+  def setDqMaxDateTimeValueNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
     if (checkNotCloseAndNotNull("DQ max datetime", notification))
-      _DQMaxDateTimeValueNotification = notification
+      _dqMaxDateTimeValueNotification = notification
     this
   }
 
@@ -808,9 +812,9 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_MaxDateTimeValue_Notification: HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_DQMaxDateTimeValueNotification)
+  def getDqMaxDateTimeValueNotification: HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_dqMaxDateTimeValueNotification)
 
 
 
@@ -819,9 +823,9 @@ class HuemulColumns(dataType: DataType
   // Column data quality Regular Expression value ---------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // ToDo: Validate Regular Expression
-  private var _DQRegExp: String = _
-  private var _DQRegExpExternalCode: String = "HUEMUL_DQ_005"
-  private var _DQRegExpNotification: HuemulTypeDQNotification = _
+  private var _dqRegExp: String = _
+  private var _dqRegExpExternalCode: String = "HUEMUL_DQ_005"
+  private var _dqRegExpNotification: HuemulTypeDqNotification = _
 
   /** Get data quality regular expression error code
    * @since   1.1
@@ -829,7 +833,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  String error code
    */
-  def getDQ_RegExpression_externalCode: String = _DQRegExpExternalCode
+  def getDqRegExpressionExternalCode: String = _dqRegExpExternalCode
 
   /** Get data quality regular expression
    * @since   1.1
@@ -837,7 +841,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Max date time value
    */
-  def getDQ_RegExpression: String = _DQRegExp
+  def getDqRegExpression: String = _dqRegExp
 
   /** Set data quality regular expression
    * @since   2.1
@@ -847,10 +851,10 @@ class HuemulColumns(dataType: DataType
    * @param externalCode  Externa error code
    * @return              [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setDQ_RegExpression(value: String, externalCode: String = null): HuemulColumns = {
+  def setDqRegExpression(value: String, externalCode: String = null): HuemulColumns = {
     if (checkNotCloseDefinition("DQ RegExpression")) {
-      _DQRegExp = value
-      _DQRegExpExternalCode = if (externalCode == null) _DQRegExpExternalCode  else externalCode
+      _dqRegExp = value
+      _dqRegExpExternalCode = if (externalCode == null) _dqRegExpExternalCode  else externalCode
     }
     this
   }
@@ -864,9 +868,9 @@ class HuemulColumns(dataType: DataType
    * @param notification  ERROR, WARNING, WARNING_EXCLUDE
    * @return              [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setDQ_RegExpression_Notification(notification: HuemulTypeDQNotification): HuemulColumns = {
+  def setDqRegExpressionNotification(notification: HuemulTypeDqNotification): HuemulColumns = {
     if (checkNotCloseAndNotNull("DQ RegExpression", notification))
-      _DQRegExpNotification = notification
+      _dqRegExpNotification = notification
     this
   }
 
@@ -875,16 +879,16 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_RegExpression_Notification: HuemulTypeDQNotification = getDQHierarchyNotificationLevel(_DQRegExpNotification)
+  def getDqRegExpressionNotification: HuemulTypeDqNotification = getDQHierarchyNotificationLevel(_dqRegExpNotification)
 
 
   // ------------------------------------------------------------------------------------------------------------------
   // Column data quality notification ---------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // Column Data Rule Notification Level ERROR(default), WARNING or WARNING_EXCLUDE for all column data rules
-  private var _DQNotification: HuemulTypeDQNotification = HuemulTypeDQNotification.ERROR
+  private var _dqNotification: HuemulTypeDqNotification = HuemulTypeDqNotification.ERROR
 
   /** Set de Error Notification Level for the column data quality for all column data rules
    *
@@ -892,10 +896,10 @@ class HuemulColumns(dataType: DataType
    * @since   2.[6]
    * @group   column_data_quality
    * @param value   Notification Level ERROR (default), WARNING or WARNING_EXCLUDE
-   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return        [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def setDQ_Notification(value: HuemulTypeDQNotification ): HuemulColumns = {
-    _DQNotification = value
+  def setDqNotification(value: HuemulTypeDqNotification ): HuemulColumns = {
+    _dqNotification = value
     this
   }
 
@@ -904,10 +908,9 @@ class HuemulColumns(dataType: DataType
    * @author  christian.sattler@gmail.com
    * @since   2.[6]
    * @group   column_data_quality
-   *
-   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDQNotification]]
+   * @return  [[com.huemulsolutions.bigdata.dataquality.HuemulTypeDqNotification]]
    */
-  def getDQ_Notification: HuemulTypeDQNotification = _DQNotification
+  def getDqNotification: HuemulTypeDqNotification = _dqNotification
 
   // ******************************************************************************************************************
   // MDM Properties
@@ -917,7 +920,7 @@ class HuemulColumns(dataType: DataType
   // MDM Enable old value full trace ----------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // save all old values trace in other table (default disable)
-  private var _MDMEnableOldValueFullTrace: Boolean = false
+  private var _mdmEnableOldValueFullTrace: Boolean = false
 
   /** Check if MDM old value full trace is enabled
    * @since   1.1
@@ -925,7 +928,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Boolean
    */
-  def getMDM_EnableOldValue_FullTrace: Boolean = _MDMEnableOldValueFullTrace
+  def getMdmEnableOldValueFullTrace: Boolean = _mdmEnableOldValueFullTrace
 
   /** Set MDM old value full trace
    *
@@ -936,9 +939,9 @@ class HuemulColumns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setMDM_EnableOldValue_FullTrace(): HuemulColumns = {
+  def setMdmEnableOldValueFullTrace(): HuemulColumns = {
     if (checkNotCloseDefinition("MDM EnableOldValue FullTrace"))
-      _MDMEnableOldValueFullTrace = true
+      _mdmEnableOldValueFullTrace = true
     this
   }
 
@@ -948,7 +951,7 @@ class HuemulColumns(dataType: DataType
   // MDM Enable old value ---------------------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // save old value when new value arrive
-  private var _MDMEnableOldValue: Boolean = false
+  private var _mdmEnableOldValue: Boolean = false
 
   /** Check if MDM old value is enabled
    * @since   1.4
@@ -956,7 +959,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Boolean
    */
-  def getMDM_EnableOldValue: Boolean = _MDMEnableOldValue
+  def getMdmEnableOldValue: Boolean = _mdmEnableOldValue
 
 
   /** Set MDM old value full trace.
@@ -968,9 +971,9 @@ class HuemulColumns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setMDM_EnableOldValue(): HuemulColumns = {
+  def setMdmEnableOldValue(): HuemulColumns = {
     if (checkNotCloseDefinition("MDM EnableOldValue"))
-      _MDMEnableOldValue = true
+      _mdmEnableOldValue = true
     this
   }
 
@@ -981,7 +984,7 @@ class HuemulColumns(dataType: DataType
   // MDM Enable old value add datetime column -------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // create a new field with datetime log for change value
-  private var _MDMEnableDTLog: Boolean = false
+  private var _mdmEnableDTLog: Boolean = false
 
   /** Check if MDM old value Datetime log is enabled
    * @since   1.4
@@ -989,7 +992,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Boolean
    */
-  def getMDM_EnableDTLog: Boolean = _MDMEnableDTLog
+  def getMdmEnableDTLog: Boolean = _mdmEnableDTLog
 
   /** Enable MDM old value datetime log on additional column/field.
    *
@@ -1000,9 +1003,9 @@ class HuemulColumns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setMDM_EnableDTLog(): HuemulColumns = {
+  def setMdmEnableDTLog(): HuemulColumns = {
     if (checkNotCloseDefinition("MDM EnableDTLog"))
-      _MDMEnableDTLog = true
+      _mdmEnableDTLog = true
     this
   }
 
@@ -1011,7 +1014,7 @@ class HuemulColumns(dataType: DataType
   // MDM Enable old value add datetime column -------------------------------------------------------------------------
   // ------------------------------------------------------------------------------------------------------------------
   // Create a new field with Process Log for change value
-  private var _MDMEnableProcessLog: Boolean = false
+  private var _mdmEnableProcessLog: Boolean = false
 
   /** Check if MDM old value process name log is enabled
    * @since   1.4
@@ -1019,7 +1022,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return  Boolean
    */
-  def getMDM_EnableProcessLog: Boolean = _MDMEnableProcessLog
+  def getMdmEnableProcessLog: Boolean = _mdmEnableProcessLog
 
   /** Enable MDM old value datetime log on additional column/field.
    *
@@ -1030,9 +1033,9 @@ class HuemulColumns(dataType: DataType
    *
    * @return  [[com.huemulsolutions.bigdata.tables.HuemulColumns]]
    */
-  def setMDM_EnableProcessLog(): HuemulColumns = {
+  def setMdmEnableProcessLog(): HuemulColumns = {
     if (checkNotCloseDefinition("MDM EnableProcessLog"))
-      _MDMEnableProcessLog = true
+      _mdmEnableProcessLog = true
     this
   }
 
@@ -1040,18 +1043,18 @@ class HuemulColumns(dataType: DataType
   // ------------------------------------------------------------------------------------------------------------------
   // User mapping attributes
   // ------------------------------------------------------------------------------------------------------------------
-  private var _MappedName: String = _
-  private var _MyName: String = _
-  private var _ReplaceValueOnUpdate: Boolean = false
-  private var _SQLForUpdate: String = _
-  private var _SQLForInsert: String = _
+  private var _mappedName: String = _
+  private var _myName: String = _
+  private var _replaceValueOnUpdate: Boolean = false
+  private var _sqlForUpdate: String = _
+  private var _sqlForInsert: String = _
 
   /** Set Column Name
    *
    * @param name  Column Name
    */
   private[bigdata] def setMyName(name: String) {
-    this._MyName = name
+    this._myName = name
   }
 
   /**
@@ -1060,10 +1063,10 @@ class HuemulColumns(dataType: DataType
    * @return
    */
   def getMyName(tableStorage: HuemulTypeStorageType): String = {
-    if (this._MyName == null || this._MyName == "")
-      throw new Exception(s"Huemul ERROR: MUST call 'ApplyTableDefinition' in table definition, (field description: ${this.Description} )")
+    if (this._myName == null || this._myName == "")
+      throw new Exception(s"Huemul ERROR: MUST call 'ApplyTableDefinition' in table definition, (field description: ${this.description} )")
 
-    getCaseType(tableStorage,this._MyName)
+    getCaseType(tableStorage,this._myName)
   }
 
 
@@ -1082,7 +1085,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return String
    */
-  def getMappedName: String = this._MappedName
+  def getMappedName: String = this._mappedName
 
 
 
@@ -1090,7 +1093,7 @@ class HuemulColumns(dataType: DataType
    *
    * @return
    */
-  def getReplaceValueOnUpdate: Boolean = this._ReplaceValueOnUpdate
+  def getReplaceValueOnUpdate: Boolean = this._replaceValueOnUpdate
 
 
 
@@ -1098,13 +1101,13 @@ class HuemulColumns(dataType: DataType
    *
    * @return
    */
-  def getSQLForUpdate: String = this._SQLForUpdate
+  def getSQLForUpdate: String = this._sqlForUpdate
 
   /**
    *
    * @return
    */
-  def getSQLForInsert: String = this._SQLForInsert
+  def getSQLForInsert: String = this._sqlForInsert
 
 
   /** Set mapping DataFrame fields to Table Fields for insert and update.
@@ -1113,15 +1116,15 @@ class HuemulColumns(dataType: DataType
    * the table and "new" is reference to your DataFrame
    *
    * @param param_name            fields name in DataFrame
-   * @param ReplaceValueOnUpdate  true (default) for replace values in table
-   * @param SQLForUpdate          example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)
-   * @param SQLForInsert          example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)
+   * @param replaceValueOnUpdate  true (default) for replace values in table
+   * @param sqlForUpdate          example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)
+   * @param sqlForInsert          example: cast(case when old.[field] > new.[field] then old.[field] else new.[field] end as Integer)
    */
-  def setMapping(param_name: String, ReplaceValueOnUpdate: Boolean = true, SQLForUpdate: String = null, SQLForInsert: String = null) {
-    this._MappedName = param_name
-    this._ReplaceValueOnUpdate = ReplaceValueOnUpdate
-    this._SQLForUpdate = SQLForUpdate
-    this._SQLForInsert = SQLForInsert
+  def setMapping(param_name: String, replaceValueOnUpdate: Boolean = true, sqlForUpdate: String = null, sqlForInsert: String = null) {
+    this._mappedName = param_name
+    this._replaceValueOnUpdate = replaceValueOnUpdate
+    this._sqlForUpdate = sqlForUpdate
+    this._sqlForInsert = sqlForInsert
   }
 
 
@@ -1137,7 +1140,7 @@ class HuemulColumns(dataType: DataType
    * @return                  DataType
    */
   def getDataTypeDeploy(bigDataProvider: HuemulTypeBigDataProvider, storageType: HuemulTypeStorageType ): DataType = {
-    var result = this.DataType
+    var result = this.dataType
     if (storageType == HuemulTypeStorageType.AVRO
       && bigDataProvider != HuemulTypeBigDataProvider.databricks
       && ( result.sql.toUpperCase().contains("DATE") || result.sql.toUpperCase().contains("TIMESTAMP"))
@@ -1156,8 +1159,8 @@ class HuemulColumns(dataType: DataType
   // HBase attributes
   // ------------------------------------------------------------------------------------------------------------------
   //from 2.2 --> add setting to HBase
-  private var _hive_df: String = "default"
-  private var _hive_col: String = _
+  private var _hiveDf: String = "default"
+  private var _hiveCol: String = _
 
   /** Define family and column name on HBase Tables
    *
@@ -1166,8 +1169,8 @@ class HuemulColumns(dataType: DataType
    * @return
    */
   def setHBaseCatalogMapping(df: String, col: String = null): HuemulColumns = {
-    _hive_df = df
-    _hive_col = col
+    _hiveDf = df
+    _hiveCol = col
     this
   }
 
@@ -1175,28 +1178,28 @@ class HuemulColumns(dataType: DataType
    *
    * @return
    */
-  def getHBaseCatalogFamily: String = _hive_df
+  def getHBaseCatalogFamily: String = _hiveDf
 
   /**
    *
    * @return
    */
-  def getHBaseCatalogColumn: String = if (_hive_col == null) getMyName(HuemulTypeStorageType.HBASE) else _hive_col
+  def getHBaseCatalogColumn: String = if (_hiveCol == null) getMyName(HuemulTypeStorageType.HBASE) else _hiveCol
 
   /** Get hbase data type
    *
    * @return  String data type
    */
   def getHBaseDataType: String = {
-    if (DataType == DataTypes.StringType) "string"
-    else if (DataType == DataTypes.IntegerType) "int"
-    else if (DataType == DataTypes.ShortType) "smallint"    //TODO: Repetido ShortType
-    else if (DataType == DataTypes.BooleanType) "boolean"
-    else if (DataType == DataTypes.DoubleType) "double"
-    else if (DataType == DataTypes.FloatType) "float"
-    else if (DataType == DataTypes.LongType) "bigint"
-    else if (DataType == DataTypes.ShortType) "tinyint"     //TODO: Repetido ShortType
-    else if (DataType == DataTypes.BinaryType) "binary"
+    if (dataType == DataTypes.StringType) "string"
+    else if (dataType == DataTypes.IntegerType) "int"
+    else if (dataType == DataTypes.ShortType) "smallint"    //TODO: Repetido ShortType
+    else if (dataType == DataTypes.BooleanType) "boolean"
+    else if (dataType == DataTypes.DoubleType) "double"
+    else if (dataType == DataTypes.FloatType) "float"
+    else if (dataType == DataTypes.LongType) "bigint"
+    else if (dataType == DataTypes.ShortType) "tinyint"     //TODO: Repetido ShortType
+    else if (dataType == DataTypes.BinaryType) "binary"
     else "string"
   }
 

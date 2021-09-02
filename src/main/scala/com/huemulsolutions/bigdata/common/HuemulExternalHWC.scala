@@ -9,27 +9,27 @@ import com.hortonworks.spark.sql.hive.llap.HiveWarehouseSessionImpl
  * used by huemul_ExternalDB.Using_HWC 
  */
 class HuemulExternalHWC(huemulBigDataGov: HuemulBigDataGovernance) extends Serializable {
-  @transient private var _HWC_Hive: HiveWarehouseSessionImpl = _
-  def getHWC_Hive: HiveWarehouseSessionImpl = {
-    if (_HWC_Hive != null)
-      return _HWC_Hive
-      
-    _HWC_Hive = HiveWarehouseSession.session(huemulBigDataGov.spark).build()
-    
+  @transient private var _hwcHive: HiveWarehouseSessionImpl = _
+  def getHwcHive: HiveWarehouseSessionImpl = {
+    if (_hwcHive != null)
+      return _hwcHive
 
-    _HWC_Hive
+    _hwcHive = HiveWarehouseSession.session(huemulBigDataGov.spark).build()
+
+
+    _hwcHive
   }
-  
-  def execute_NoResulSet(sql: String): Boolean = {
-    val _hive = getHWC_Hive
+
+  def executeNoResultSet(sql: String): Boolean = {
+    val _hive = getHwcHive
     if (_hive == null)
       sys.error("can't connect with HIVE, HiveWarehouseSession.session doesnt works")
-      
+
     _hive.executeUpdate(sql)
   }
-  
+
   def close() {
-    val _hive = getHWC_Hive
+    val _hive = getHwcHive
     if (_hive != null)
       _hive.session().close()
   }

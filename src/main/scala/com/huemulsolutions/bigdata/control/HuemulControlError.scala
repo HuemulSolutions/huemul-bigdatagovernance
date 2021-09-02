@@ -4,85 +4,84 @@ import com.huemulsolutions.bigdata.common.HuemulBigDataGovernance
 import com.huemulsolutions.bigdata.datalake.HuemulDataLake
 
 class HuemulControlError(huemulBigDataGov: HuemulBigDataGovernance) extends Serializable  {
-  var ControlError_Trace: String = _
-  var ControlError_ClassName: String = _
-  var ControlError_FileName: String = _
-  var ControlError_LineNumber: Integer = _
-  var ControlError_MethodName: String = _
-  var ControlError_Message: String = _
-  var ControlError_IsError: Boolean = false
-  var ControlError_ErrorCode: Integer = _
-  
-  def IsOK(): Boolean = {
-    !ControlError_IsError
+  var controlErrorTrace: String = _
+  var controlErrorClassName: String = _
+  var controlErrorFileName: String = _
+  var controlErrorLineNumber: Integer = _
+  var controlErrorMethodName: String = _
+  var controlErrorMessage: String = _
+  var controlErrorIsError: Boolean = false
+  var controlErrorErrorCode: Integer = _
+
+  def isOK: Boolean = {
+    !controlErrorIsError
   }
-  
+
   /**
-   * GetError(e: Exception, GetClassName: String, DataLakeInstance: huemul_DataLake )
+   * setError(e: Exception, GetClassName: String, DataLakeInstance: huemul_DataLake )
    * get error from exception and set huemul_DataLake error info
    */
-  def GetError(e: Exception, GetClassName: String, DataLakeInstance: HuemulDataLake, Error_Code: Integer ) {
+  def setError(e: Exception, getClassName: String, dataLakeInstance: HuemulDataLake, errorCode: Integer ) {
     //Get Error Info
-    GetError(e,GetClassName, Error_Code)
-    
-    
-    if (DataLakeInstance != null)
-      DataLakeInstance.Error_isError = true
+    setError(e,getClassName, errorCode)
+
+    if (dataLakeInstance != null)
+      dataLakeInstance.errorIsError = true
 
   }
-  
+
   /**
-   * GetError(e: Exception, GetClassName: String)
-   * get error from exception 
+   * setError(e: Exception, GetClassName: String)
+   * set error from exception
    */
-  def GetError(e: Exception, GetClassName: String, Error_Code: Integer) {
-    ControlError_IsError = true
-    ControlError_ErrorCode = if (Error_Code == null) ControlError_ErrorCode else Error_Code
-    ControlError_Trace = ""
-    e.getStackTrace.foreach { x => ControlError_Trace = ControlError_Trace + x + "\n" }
-    
+  def setError(e: Exception, GetClassName: String, Error_Code: Integer) {
+    controlErrorIsError = true
+    controlErrorErrorCode = if (Error_Code == null) controlErrorErrorCode else Error_Code
+    controlErrorTrace = ""
+    e.getStackTrace.foreach { x => controlErrorTrace = controlErrorTrace + x + "\n" }
+
     e.getStackTrace.foreach { x =>
-      if (x.getClassName == GetClassName && ControlError_ClassName == null){
-        ControlError_ClassName = x.getClassName
-        ControlError_FileName = x.getFileName
-        ControlError_LineNumber = x.getLineNumber
-        ControlError_MethodName = x.getMethodName
-        
+      if (x.getClassName == GetClassName && controlErrorClassName == null){
+        controlErrorClassName = x.getClassName
+        controlErrorFileName = x.getFileName
+        controlErrorLineNumber = x.getLineNumber
+        controlErrorMethodName = x.getMethodName
+
       }
     }
-    
-    if (ControlError_ClassName == null) {
+
+    if (controlErrorClassName == null) {
       if (e.getStackTrace == null || e.getStackTrace.length == 0 ) {
-        println(e.getStackTrace)
-        ControlError_ClassName = "NO INFORMATION AVAILABLE"
-        ControlError_FileName = "NO INFORMATION AVAILABLE"
-        ControlError_LineNumber = -1
-        ControlError_MethodName = "NO INFORMATION AVAILABLE"
+        println(e.getStackTrace.mkString("Array(", ", ", ")"))
+        controlErrorClassName = "NO INFORMATION AVAILABLE"
+        controlErrorFileName = "NO INFORMATION AVAILABLE"
+        controlErrorLineNumber = -1
+        controlErrorMethodName = "NO INFORMATION AVAILABLE"
       } else if (e.getStackTrace()(0).getClassName == "scala.sys.package$") {
-        ControlError_ClassName = e.getStackTrace()(1).getClassName
-        ControlError_FileName = e.getStackTrace()(1).getFileName
-        ControlError_LineNumber = e.getStackTrace()(1).getLineNumber
-        ControlError_MethodName = e.getStackTrace()(1).getMethodName
+        controlErrorClassName = e.getStackTrace()(1).getClassName
+        controlErrorFileName = e.getStackTrace()(1).getFileName
+        controlErrorLineNumber = e.getStackTrace()(1).getLineNumber
+        controlErrorMethodName = e.getStackTrace()(1).getMethodName
       } else {
-        ControlError_ClassName = e.getStackTrace()(0).getClassName
-        ControlError_FileName = e.getStackTrace()(0).getFileName
-        ControlError_LineNumber = e.getStackTrace()(0).getLineNumber
-        ControlError_MethodName = e.getStackTrace()(0).getMethodName
+        controlErrorClassName = e.getStackTrace()(0).getClassName
+        controlErrorFileName = e.getStackTrace()(0).getFileName
+        controlErrorLineNumber = e.getStackTrace()(0).getLineNumber
+        controlErrorMethodName = e.getStackTrace()(0).getMethodName
       }
     }
-    
-    ControlError_Message = e.toString
-    
+
+    controlErrorMessage = e.toString
+
     huemulBigDataGov.logMessageError("***************************************************************")
     huemulBigDataGov.logMessageError("huemulBigDataGov: Error Detail")
     huemulBigDataGov.logMessageError("***************************************************************")
-    huemulBigDataGov.logMessageError(s"ControlError_ClassName: $ControlError_ClassName")
-    huemulBigDataGov.logMessageError(s"ControlError_FileName: $ControlError_FileName")
-    huemulBigDataGov.logMessageError(s"ControlError_ErrorCode: $ControlError_ErrorCode")
-    huemulBigDataGov.logMessageError(s"ControlError_LineNumber: $ControlError_LineNumber")
-    huemulBigDataGov.logMessageError(s"ControlError_MethodName: $ControlError_MethodName")
-    huemulBigDataGov.logMessageError(s"ControlError_Message: $ControlError_Message")
-    huemulBigDataGov.logMessageError(s"ControlError_Trace: $ControlError_Trace")
+    huemulBigDataGov.logMessageError(s"ControlError_ClassName: $controlErrorClassName")
+    huemulBigDataGov.logMessageError(s"ControlError_FileName: $controlErrorFileName")
+    huemulBigDataGov.logMessageError(s"ControlError_ErrorCode: $controlErrorErrorCode")
+    huemulBigDataGov.logMessageError(s"ControlError_LineNumber: $controlErrorLineNumber")
+    huemulBigDataGov.logMessageError(s"ControlError_MethodName: $controlErrorMethodName")
+    huemulBigDataGov.logMessageError(s"ControlError_Message: $controlErrorMessage")
+    huemulBigDataGov.logMessageError(s"ControlError_Trace: $controlErrorTrace")
     
     huemulBigDataGov.logMessageError(s"Detail")
     huemulBigDataGov.logMessageError(e)

@@ -1,7 +1,7 @@
 package com.huemulsolutions.bigdata.dataquality
 
-object HuemulTypeDQNotification extends Enumeration {
-  type HuemulTypeDQNotification = Value
+object HuemulTypeDqNotification extends Enumeration {
+  type HuemulTypeDqNotification = Value
   val ERROR, WARNING, WARNING_EXCLUDE = Value
 }
 
