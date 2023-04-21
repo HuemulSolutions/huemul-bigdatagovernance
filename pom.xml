@@ -71,7 +71,7 @@ Finalmente, también automatiza la generación de código a partir de las defini
     <encoding>UTF-8</encoding>
     <scala.tools.version>2.12</scala.tools.version>
     <scala.version>2.12.10</scala.version>
-    <spark.version>2.4.7</spark.version> <!-- spark version from sep 2020 -->
+    <spark.version>3.4.0</spark.version> <!-- spark version from sep 2020 -->
     <hbase.client.version>2.1.0</hbase.client.version>
   </properties>
 
